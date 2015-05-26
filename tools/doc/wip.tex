@@ -1,0 +1,52 @@
+\documentclass{revtex4}
+\usepackage{amsmath}
+\usepackage{latexsym}
+\usepackage{graphicx}
+\usepackage[usenames]{color}
+\usepackage{ulem}
+\newcommand{\x}{{\mathrm{x}}}
+
+
+\begin{document}
+\title{Method for direct integration of complex functions with smooth amplitude and phase.}
+\begin{abstract}
+In gravitational wave data analysis studies we encounter integrals of complex functions for which we have smooth and often slowly varying representations for each phase and amplitude.  Such integrals can be computed in segments with polynomial representations of the phase and amplitude for each segment.  Expressions for each integral can be derived by a combination of analytic expressions, recursion relations, and rapidly convering power series.
+\end{abstract}
+\author{John Baker}
+\maketitle
+
+In gravitational wave data analysis studies, we frequently must integrate waveform inner products.  In the Fourier domain, the signals may have some very fine features related to the long duration of the signals while spreading across a broad band.  If uniformly sampled in frequency, as with an FFT a very large number of samples (up to $10^7$ or more for LISA) would be needed to accurately represent the signals, and to carry out colored noise signal inner products. It is now recognized that for many signals, with more optimal spacing of frequency samples, far fewer frequency evaluations are needed for accurate spline representations.  We present a way to compute signal inner products with comparably few frequency samples by analytically integrating the spline-represented inner product. 
+
+For example, we compute the signal-to-noise ratio (SNR) for a signal $\tilde s(f)$ by
+\begin{eqnarray}
+\rho^2&=&2\int_0^\infty\frac{\tilde s(f)\tilde s(f)^*}{S_n(f)}df\\
+      &=&\sum_{k=0}^{N-1}\int_{f_k}^{f_{k+1}} A(f)e^{i p(f)}df.
+\end{eqnarray}
+Consistent with a spline approximation, in  each of the component integrals we can approximate $A(f)$ and $p(f)$ locally as polynomials (cubic in this particular case).  Then given $p(f)$ the  task is to compute integrals of the general form:
+\begin{equation}
+I_{n,m}[p](\epsilon)=\int_{0}^{\epsilon} x^nE_m[p](x)dx
+\end{equation}
+where we have defined
+\begin{equation}
+E_m[p](x)=e^{i\sum\limits_{k=1}^{m}p_kx^k}.
+\end{equation}
+The task is made managable by recursion relations in either $n$ or $m$.  For $n\geq m$, integration by parts yields, suppressing unnecessary $p$ and $\epsilon$ arguments:
+\begin{equation}
+I_{n,m}=\frac{n-m+1}{i m p_m}\left[I_{n-m,0}E_m-I_{n-m,m}\right]-\sum_{k=1}^{m-1}\frac{k}{m}\frac{p_k}{p_m}I_{n-m+k,m}
+\end{equation}
+which for fixed $m$ provides a convenient way to compute all $n$-order integrals given the first few.  And for the case $0<n=m-1$,
+\begin{equation}
+I_{n,m}=\frac{E_{m-1}}{i m p_m}-\sum_{k=1}^{m-1}\frac{k}{m}\frac{p_k}{p_m}I_{k-1,m}
+\end{equation}
+For those first few with $n<m-1$ (or if $p_m$ is computationally small)  we need another way to compute the integral.  We an compute cases up to $m<=2$ with one additional closed form solution,
+\begin{equation}
+I_{0,2}=-\frac{e^{\frac{i\pi}4}}2\sqrt{\frac{\pi}{p_2}}\left(E_2w\left(e^{\frac{i\pi}4}\left(\epsilon \sqrt{p_2}+z_0\right)\right)-w\left(e^{\frac{i\pi}4}\left(z_0\right)\right)\right),
+\end{equation}
+where we have written the result in terms of the Faddeeva function $w(z)=e^{-z^2}\left(1-{\mathrm{erf}}(-iz)\right)$.  We implement this using an open source numerical implementation\cite{FaddeevaPackage}, based on the algorthims in \cite{Poppe1990,Zaghloul2011}.
+
+For cases with small $p_m$ or $m>2$, expanding $e^{ip_m x^m}$ yields a rapidly converging series, allowing an rapidly converging infinite series type recursion relation,
+\begin{equation}
+I_{n,m}=\sum_{k=0}^{\infty}\frac{(i p_m)^k}{k!}I_{n+km,m-1}
+\end{equation}
+expresssing the integral in terms of lower-$m$ integrals.
+\end{document}
