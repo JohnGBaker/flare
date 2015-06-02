@@ -1,16 +1,18 @@
-CFLAGS= -O3 
+GSLROOT = /opt/local
+GSLINC = $(GSLROOT)/include
+CC = gcc
+CFLAGS := -g -std=c99 -I$(GSLINC) -I../tools -I../integration -I../EOBNRv2HMROM -I../LISAsim -I../LLVsim
 
-_splinecspagh.so: spline.c spline.h spline.i
-	swig -python spline.i
-	cc -c `python-config --cflags` spline.c spline_wrap.c
-	mv spline.o splinepy.o
-	cc -bundle `python-config --ldflags` splinepy.o spline_wrap.o -o _splinecspagh.so
+OBJ = struct.o likelihood.o
 
 
-Faddeeva.o: Faddeeva.h Faddeeva.c Faddeeva.cc
+all: $(OBJ)
 
-wip.o: wip.c wip.h Faddeeva.o
+struct.o: struct.c constants.h struct.h
+	$(CC) -c $(CFLAGS) struct.c
 
-spline.o: spline.c spline.h	
+likelihood.o: likelihood.c constants.h struct.h likelihood.h ../integration/wip.h
+	$(CC) -c $(CFLAGS) likelihood.c
 
-wiptest: wiptest.c wip.o spline.o Faddeeva.o
+clean:
+	-rm *.o
