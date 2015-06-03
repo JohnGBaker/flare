@@ -34,7 +34,8 @@ int wip_count;
 // To avoid loss of precision at small z, cexpm1i(zi) implements cos(zi)-1 + i*sin(zi)
 // The real analogue of this function is part of the standard library, and the C99 standard
 // reserves the name, but it is not generally implemented
-inline double complex cexpm1i(double zi){
+// inline double complex cexpm1i(double zi){
+double complex cexpm1i(double zi){
   double rr;//rr=cos(x)-1=2*sin(x/2)**2
   double ri=sin(zi);
   double sinhalf=sin(zi/2.0);

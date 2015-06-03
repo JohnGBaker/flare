@@ -32,6 +32,7 @@
 #include <gsl/gsl_complex.h>
 
 #include "constants.h"
+#include "struct.h"
 #include "LLVnoise.h"
 
 
@@ -59,7 +60,7 @@ int __LLVSimFD_Noise_setup = FAILURE;
 /****** Functions loading and evaluating the noise PSD  *******/
 
 /* Function parsing the environment variable $LLV_NOISE_DATA_PATH and trying to run LLVSimFD_Noise_Init in each */
-void LLVSimFD_Noise_Init_ParsePath(void)
+int LLVSimFD_Noise_Init_ParsePath(void)
 {
   if (!__LLVSimFD_Noise_setup) return(SUCCESS);
 
@@ -73,7 +74,7 @@ void LLVSimFD_Noise_Init_ParsePath(void)
 
   for(word=strtok_r(path,":",&brkt); word; word=strtok_r(NULL,":",&brkt))
   {
-    ret = LLVSimFD_Noise_Init_File(word);
+    ret = LLVSimFD_Noise_Init(word);
     if(ret == SUCCESS) break;
   }
   if(ret!=SUCCESS) {

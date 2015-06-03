@@ -85,8 +85,35 @@ void SetMatrixD(
     }
   }
 }
-/* Function setting the cartesian coordinates of the wave frame vectors (X,Y,Z), given the position in the sky and polarization */
+
+/* Function setting the position of a detector, in cartesian coordinates */
 void SetVectorXd(
+  gsl_vector* Xd,                      /* Output: position vector of the detector */
+  const detectortag tag)               /* Tag identifying the detector */
+{
+  if(tag==LHO) {
+    gsl_vector_set(Xd, 0, LAL_LHO_4K_VERTEX_LOCATION_X_SI);
+    gsl_vector_set(Xd, 1, LAL_LHO_4K_VERTEX_LOCATION_Y_SI);
+    gsl_vector_set(Xd, 2, LAL_LHO_4K_VERTEX_LOCATION_Z_SI);
+  }
+  else if(tag==LLO) {
+    gsl_vector_set(Xd, 0, LAL_LLO_4K_VERTEX_LOCATION_X_SI);
+    gsl_vector_set(Xd, 1, LAL_LLO_4K_VERTEX_LOCATION_Y_SI);
+    gsl_vector_set(Xd, 2, LAL_LLO_4K_VERTEX_LOCATION_Z_SI);
+  }
+  else if(tag==VIRGO) {
+    gsl_vector_set(Xd, 0, LAL_VIRGO_VERTEX_LOCATION_X_SI);
+    gsl_vector_set(Xd, 1, LAL_VIRGO_VERTEX_LOCATION_Y_SI);
+    gsl_vector_set(Xd, 2, LAL_VIRGO_VERTEX_LOCATION_Z_SI);
+  }
+  else {
+    printf("Error: invalid detector tag\n");
+    exit(1);
+  }
+}
+
+/* Function setting the cartesian coordinates of the wave frame vectors (X,Y,Z), given the position in the sky and polarization */
+void SetVectorsXYZ(
   gsl_vector* X,                       /* Output: cartesian vector of the wave frame unit vector X */
   gsl_vector* Y,                       /* Output: cartesian vector of the wave frame unit vector Y */
   gsl_vector* Z,                       /* Output: cartesian vector of the wave frame unit vector Z */
@@ -137,7 +164,7 @@ int LLVSimFDResponse(
   gsl_vector* X = gsl_vector_alloc(3);
   gsl_vector* Y = gsl_vector_alloc(3);
   gsl_vector* Z = gsl_vector_alloc(3);
-  SetVectorXd(X, Y, Z, theta, phi, psi);
+  SetVectorsXYZ(X, Y, Z, theta, phi, psi);
 
   /* Compute the delay from geocenter to the detector */
   double* delay;

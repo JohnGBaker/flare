@@ -55,9 +55,13 @@ int LLVSimFDResponse(
 void SetMatrixD(
   gsl_matrix* D,                       /* Output: matrix of the detector response Dij */
   const detectortag tag);              /* Tag identifying the detector */
+/* Function setting the position of a detector, in cartesian coordinates */
+void SetVectorXd(
+  gsl_vector* Xd,                      /* Output: position vector of the detector */
+  const detectortag tag);              /* Tag identifying the detector */
 
 /* Function setting the cartesian coordinates of the wave frame vectors (X,Y,Z), given the position in the sky and polarization */
-void SetVectorXd(
+void SetVectorsXYZ(
   gsl_vector* X,                       /* Output: cartesian vector of the wave frame unit vector X */
   gsl_vector* Y,                       /* Output: cartesian vector of the wave frame unit vector Y */
   gsl_vector* Z,                       /* Output: cartesian vector of the wave frame unit vector Z */

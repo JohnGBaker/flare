@@ -57,9 +57,15 @@ typedef struct tagListmodesCAmpPhaseFrequencySeries
   struct tagListmodesCAmpPhaseFrequencySeries*    next; /* Next pointer */
 } ListmodesCAmpPhaseFrequencySeries;
 
-/*********************************************************/
-/************** Error handler for GSL ********************/
-extern void Err_Handler(const char *reason, const char *file, int line, int gsl_errno);
+/**************************************************************/
+/************** GSL error handling and I/O ********************/
+
+/* GSL error handler */
+void Err_Handler(const char *reason, const char *file, int line, int gsl_errno);
+
+/* Functions to read data from files */
+int Read_Vector(const char dir[], const char fname[], gsl_vector *v);
+int Read_Matrix(const char dir[], const char fname[], gsl_matrix *m);
 
 /**********************************************************/
 /**************** Internal functions **********************/

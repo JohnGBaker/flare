@@ -72,9 +72,7 @@ void EOBNRHMROMdata_Cleanup(EOBNRHMROMdata *data);
 void EOBNRHMROMdata_interp_Cleanup(EOBNRHMROMdata_interp *data_interp);
 void EOBNRHMROMdata_coeff_Cleanup(EOBNRHMROMdata_coeff *data_coeff);
 
-/* Functions to read data */
-int Read_Vector(const char dir[], const char fname[], gsl_vector *v);
-int Read_Matrix(const char dir[], const char fname[], gsl_matrix *m);
+/* Function to read data */
 int Read_Data_Mode(const char dir[], const int mode[2], EOBNRHMROMdata *data);
 
 /* Functions to interpolate the data and to evaluate the interpolated data for a given q */

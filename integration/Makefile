@@ -14,3 +14,6 @@ wip.o: wip.c wip.h Faddeeva.o
 spline.o: spline.c spline.h	
 
 wiptest: wiptest.c wip.o spline.o Faddeeva.o
+
+clean:
+	rm -f *.o *.so

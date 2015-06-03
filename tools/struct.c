@@ -34,9 +34,47 @@
 #include "struct.h"
 
 
-/******** Error handler for GSL ********/
+/************** GSL error handling and I/O ********************/
+
+/* GSL error handler */
 void Err_Handler(const char *reason, const char *file, int line, int gsl_errno) {
   printf("gsl: %s:%d: %s - %d\n", file, line, reason, gsl_errno);
+}
+
+/* Functions to read data from files */
+int Read_Vector(const char dir[], const char fname[], gsl_vector *v) {
+  char *path=malloc(strlen(dir)+64);
+
+  sprintf(path,"%s/%s", dir, fname);
+  FILE *f = fopen(path, "rb");
+  if (!f) {
+      return(FAILURE);
+  }
+  int ret = gsl_vector_fread(f, v);
+  if (ret != 0) {
+      fprintf(stderr, "Error reading data from %s.\n",path);
+      return(FAILURE);
+  }
+  fclose(f);
+  free(path);
+  return(SUCCESS);
+}
+int Read_Matrix(const char dir[], const char fname[], gsl_matrix *m) {
+  char *path=malloc(strlen(dir)+64);
+
+  sprintf(path,"%s/%s", dir, fname);
+  FILE *f = fopen(path, "rb");
+  if (!f) {
+      return(FAILURE);
+  }
+  int ret = gsl_matrix_fread(f, m);
+  if (ret != 0) {
+      fprintf(stderr, "Error reading data from %s.\n", path);
+      return(FAILURE);
+  }
+  fclose(f);
+  free(path);
+  return(SUCCESS);
 }
 
 /******** Functions to initialize and clean up CAmpPhaseFrequencySeries structure ********/

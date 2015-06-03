@@ -33,13 +33,13 @@
 #include <gsl/gsl_complex.h>
 
 #include "constants.h"
+#include "struct.h"
 #include "EOBNRv2HMROMstruct.h"
 #include "EOBNRv2HMROM.h"
+#include "wip.h"
 #include "LLVgeometry.h"
 #include "LLVFDresponse.h"
 
-#include <time.h> /* for testing */
-#include "integrationc/wip.h"
 
 /* Parameters for the generation of a ROM waveform (in the form of a list of modes) */
 /* All parameters are to be given in SI units! */
@@ -224,7 +224,7 @@ int main (int argc , char **argv) {
     params = parse_args_LLV(argc, argv);
 
     /* Generate the waveform with the ROM */
-    SimIMREOBNRv2HMROM(&listROM, params->nbmode, params->tRef, params->phiRef, params->fRef, params->m1, params->m2, params->distance);
+    SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef, params->phiRef, params->fRef, params->m1, params->m2, params->distance);
     /* Process the waveform through the LISA response */
     LLVSimFDResponse(&listROM, &listLHO, params->inclination, params->theta, params->phi, params->psi, LHO);
     LLVSimFDResponse(&listROM, &listLLO, params->inclination, params->theta, params->phi, params->psi, LLO);

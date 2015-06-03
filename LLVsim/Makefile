@@ -18,7 +18,7 @@ LLVexampleSNR.o: LLVexampleSNR.c LLVFDresponse.h LLVnoise.h LLVgeometry.h ../too
 	$(CC) -c $(CFLAGS) LLVexampleSNR.c
 
 LLVexampleSNR: LLVexampleSNR.o LLVFDresponse.o LLVnoise.o ../tools/struct.o ../tools/likelihood.o ../EOBNRv2HMROM/EOBNRv2HMROM.o ../EOBNRv2HMROM/EOBNRv2HMROMstruct.o ../integration/wip.o ../integration/spline.o ../integration/Faddeeva.o
-	$(CC) $(CFLAGS) -lgsl -lgslcblas -lm -o LLVexampleSNR LLVexampleSNR.o LLVFDresponse.o LLVnoise.o../tools/struct.o ../tools/likelihood.o ../EOBNRv2HMROM/EOBNRv2HMROM.o ../EOBNRv2HMROM/EOBNRv2HMROMstruct.o ../integration/wip.o ../integration/spline.o ../integration/Faddeeva.o -lgsl -L$(GSLROOT)/lib
+	$(CC) $(CFLAGS) -lgsl -lgslcblas -lm -o LLVexampleSNR LLVexampleSNR.o LLVFDresponse.o LLVnoise.o ../tools/struct.o ../tools/likelihood.o ../EOBNRv2HMROM/EOBNRv2HMROM.o ../EOBNRv2HMROM/EOBNRv2HMROMstruct.o ../integration/wip.o ../integration/spline.o ../integration/Faddeeva.o -lgsl -L$(GSLROOT)/lib
 
 clean:
 	-rm *.o

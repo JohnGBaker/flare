@@ -192,43 +192,6 @@ void EOBNRHMROMdata_interp_Cleanup(EOBNRHMROMdata_interp *data_interp) {
   free(data_interp);
 }
 
-/* Helper functions to read gsl_vector and gsl_matrix data with error checking */
-int Read_Vector(const char dir[], const char fname[], gsl_vector *v) {
-  char *path=malloc(strlen(dir)+64);
-
-  sprintf(path,"%s/%s", dir, fname);
-  FILE *f = fopen(path, "rb");
-  if (!f) {
-      return(FAILURE);
-  }
-  int ret = gsl_vector_fread(f, v);
-  if (ret != 0) {
-      fprintf(stderr, "Error reading data from %s.\n",path);
-      return(FAILURE);
-  }
-  fclose(f);
-  free(path);
-  return(SUCCESS);
-}
-
-int Read_Matrix(const char dir[], const char fname[], gsl_matrix *m) {
-  char *path=malloc(strlen(dir)+64);
-
-  sprintf(path,"%s/%s", dir, fname);
-  FILE *f = fopen(path, "rb");
-  if (!f) {
-      return(FAILURE);
-  }
-  int ret = gsl_matrix_fread(f, m);
-  if (ret != 0) {
-      fprintf(stderr, "Error reading data from %s.\n", path);
-      return(FAILURE);
-  }
-  fclose(f);
-  free(path);
-  return(SUCCESS);
-}
-
 /* Read binary ROM data for frequency vectors, coefficients matrices, basis functions matrices, and shiftvectors in time and phase */ 
 int Read_Data_Mode(const char dir[], const int mode[2], EOBNRHMROMdata *data) {
   /* Load binary data for amplitude and phase spline coefficients as computed in Mathematica */

@@ -41,7 +41,7 @@
 /****** Prototypes: functions loading and evaluating the noise PSD  *******/
 
 /* Function parsing the environment variable $LLV_NOISE_DATA_PATH and trying to run LLVSimFD_Noise_Init in each */
-void LLVSimFD_Noise_Init_ParsePath(void);
+int LLVSimFD_Noise_Init_ParsePath(void);
 /* Function loading the noise data from a directory */
 int LLVSimFD_Noise_Init(const char dir[]);
 
