@@ -64,7 +64,9 @@ double FDListmodesOverlapNoCrossTerms(
 double FDLogLikelihood(
   struct tagListmodesCAmpPhaseFrequencySeries *lists,  /* Input: list of modes for the signal s, in Frequency-domain amplitude and phase form */
   struct tagListmodesCAmpPhaseFrequencySeries *listh,  /* Input: list of modes for the template, in Frequency-domain amplitude and phase form */
-  double (*Snoise)(double) ); /* Noise function */
+  double (*Snoise)(double),                            /* Noise function */
+  double ss,                                           /* Inner product (s|s), constant to be computed elsewhere and passed as an argument */
+  double hh );                                         /* Inner product (h|h), constant to be computed elsewhere and passed as an argument */
 
 #if 0
 { /* so that editors will match succeeding brace */

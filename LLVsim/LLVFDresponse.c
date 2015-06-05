@@ -167,23 +167,23 @@ int LLVSimFDResponse(
   SetVectorsXYZ(X, Y, Z, theta, phi, psi);
 
   /* Compute the delay from geocenter to the detector */
-  double* delay;
-  gsl_blas_ddot(Xd, Z, delay);
-  double twopidelay = 2*PI*(*delay)/C_SI;
+  double delay;
+  gsl_blas_ddot(Xd, Z, &delay);
+  double twopidelay = 2*PI*delay/C_SI;
 
   /* Compute the value of pattern functions Fplus, Fcross */
   gsl_vector* DX = gsl_vector_calloc(3); /* Temporary vector D.X, initialized to 0 */
   gsl_vector* DY = gsl_vector_calloc(3); /* Temporary vector D.Y, initialized to 0 */
   gsl_blas_dgemv( CblasNoTrans, 1., D, X, 0, DX);
   gsl_blas_dgemv( CblasNoTrans, 1., D, Y, 0, DY);
-  double* XDX;
-  double* XDY;
-  double* YDY;
-  gsl_blas_ddot(X, DX, XDX);
-  gsl_blas_ddot(X, DY, XDY);
-  gsl_blas_ddot(Y, DY, YDY);
-  double Fplus = (*XDX) - (*YDY);
-  double Fcross = 2*(*XDY);
+  double XDX;
+  double XDY;
+  double YDY;
+  gsl_blas_ddot(X, DX, &XDX);
+  gsl_blas_ddot(X, DY, &XDY);
+  gsl_blas_ddot(Y, DY, &YDY);
+  double Fplus = XDX - YDY;
+  double Fcross = 2*XDY;
 
   /* Main loop over the modes - goes through all the modes present, stopping when encountering NULL */
   ListmodesCAmpPhaseFrequencySeries* listelement = *listhlm;
@@ -251,4 +251,6 @@ int LLVSimFDResponse(
   gsl_vector_free(Z);
   gsl_vector_free(DX);
   gsl_vector_free(DY);
+
+  return SUCCESS;
 }

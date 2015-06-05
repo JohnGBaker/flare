@@ -51,6 +51,12 @@ gsl_interp_accel* __LLVSimFD_LLONoiseAccel_init = NULL; /* for initialization on
 gsl_interp_accel** const __LLVSimFD_LLONoiseAccel = &__LLVSimFD_LLONoiseAccel_init;
 gsl_interp_accel* __LLVSimFD_VIRGONoiseAccel_init = NULL; /* for initialization only */
 gsl_interp_accel** const __LLVSimFD_VIRGONoiseAccel = &__LLVSimFD_VIRGONoiseAccel_init;
+double __LLVSimFD_LHONoise_fLow;
+double __LLVSimFD_LHONoise_fHigh;
+double __LLVSimFD_LLONoise_fLow;
+double __LLVSimFD_LLONoise_fHigh;
+double __LLVSimFD_VIRGONoise_fLow;
+double __LLVSimFD_VIRGONoise_fHigh;
 int __LLVSimFD_Noise_setup = FAILURE;
 
 /* The number of points in the noise data files - required as the Read_Vector function needs a gsl vector already initialized to the right length */
@@ -69,11 +75,15 @@ int LLVSimFD_Noise_Init_ParsePath(void)
   char path[32768];
   char *brkt, *word;
   envpath = getenv("LLV_NOISE_DATA_PATH");
-  if(!envpath) return(1);
+  if(!envpath) {
+    printf("Error: the environment variable LLV_NOISE_DATA_PATH, giving the path to the noise data, seems undefined\n");
+    exit(1);
+  }
   strncpy(path, envpath, sizeof(path));
 
   for(word=strtok_r(path,":",&brkt); word; word=strtok_r(NULL,":",&brkt))
   {
+    printf("%s\n", word);
     ret = LLVSimFD_Noise_Init(word);
     if(ret == SUCCESS) break;
   }
@@ -100,26 +110,46 @@ int LLVSimFD_Noise_Init(const char dir[]) {
   char* file_VIRGO = malloc(strlen(dir)+64);
   sprintf(file_LIGO, "%s", "LIGO-P1200087-v18-aLIGO_DESIGN.txt");
   sprintf(file_VIRGO, "%s", "LIGO-P1200087-v18-AdV_DESIGN.txt");
-  ret |= Read_Matrix(dir, file_LIGO, noise_LHO);
-  ret |= Read_Matrix(dir, file_LIGO, noise_LLO);
-  ret |= Read_Matrix(dir, file_VIRGO, noise_VIRGO);
+  ret |= Read_Text_Matrix(dir, file_LIGO, noise_LHO);
+  ret |= Read_Text_Matrix(dir, file_LIGO, noise_LLO);
+  ret |= Read_Text_Matrix(dir, file_VIRGO, noise_VIRGO);
 
-  /* Linear interpolation of the data, and setting the gsl_spline structures */
+  /* Linear interpolation of the data, after setting the gsl_spline structures */
   if(ret==SUCCESS) {
+    /* Extracting te vectors for the frequencies and data */
     gsl_vector* noise_LHO_freq = gsl_vector_alloc(noisedata_pts);
     gsl_vector* noise_LLO_freq = gsl_vector_alloc(noisedata_pts);
     gsl_vector* noise_VIRGO_freq = gsl_vector_alloc(noisedata_pts);
     gsl_vector* noise_LHO_data = gsl_vector_alloc(noisedata_pts);
     gsl_vector* noise_LLO_data = gsl_vector_alloc(noisedata_pts);
     gsl_vector* noise_VIRGO_data = gsl_vector_alloc(noisedata_pts);
+    gsl_matrix_get_col(noise_LHO_freq, noise_LHO, 0);
+    gsl_matrix_get_col(noise_LLO_freq, noise_LLO, 0);
+    gsl_matrix_get_col(noise_VIRGO_freq, noise_VIRGO, 0);
+    gsl_matrix_get_col(noise_LHO_data, noise_LHO, 1);
+    gsl_matrix_get_col(noise_LLO_data, noise_LLO, 1);
+    gsl_matrix_get_col(noise_VIRGO_data, noise_VIRGO, 1);
+    /* Setting the global variables that indicate the range in frequency of these splines */
+    __LLVSimFD_LHONoise_fLow = gsl_vector_get(noise_LHO_freq, 0);
+    __LLVSimFD_LHONoise_fHigh = gsl_vector_get(noise_LHO_freq, noise_LHO_freq->size - 1);
+    __LLVSimFD_LLONoise_fLow = gsl_vector_get(noise_LLO_freq, 0);
+    __LLVSimFD_LLONoise_fHigh = gsl_vector_get(noise_LLO_freq, noise_LLO_freq->size - 1);
+    __LLVSimFD_VIRGONoise_fLow = gsl_vector_get(noise_VIRGO_freq, 0);
+    __LLVSimFD_VIRGONoise_fHigh = gsl_vector_get(noise_VIRGO_freq, noise_VIRGO_freq->size - 1);
+    /* Initializing the splines and accelerators */
     *__LLVSimFD_LHONoiseSpline = gsl_spline_alloc(gsl_interp_linear, noisedata_pts);
     *__LLVSimFD_LLONoiseSpline = gsl_spline_alloc(gsl_interp_linear, noisedata_pts);
     *__LLVSimFD_VIRGONoiseSpline = gsl_spline_alloc(gsl_interp_linear, noisedata_pts);
+    *__LLVSimFD_LHONoiseAccel = gsl_interp_accel_alloc();
+    *__LLVSimFD_LLONoiseAccel = gsl_interp_accel_alloc();
+    *__LLVSimFD_VIRGONoiseAccel = gsl_interp_accel_alloc();
     gsl_spline_init(*__LLVSimFD_LHONoiseSpline, gsl_vector_const_ptr(noise_LHO_freq, 0), gsl_vector_const_ptr(noise_LHO_data, 0), noisedata_pts);
     gsl_spline_init(*__LLVSimFD_LLONoiseSpline, gsl_vector_const_ptr(noise_LLO_freq, 0), gsl_vector_const_ptr(noise_LLO_data, 0), noisedata_pts);
     gsl_spline_init(*__LLVSimFD_VIRGONoiseSpline, gsl_vector_const_ptr(noise_VIRGO_freq, 0), gsl_vector_const_ptr(noise_VIRGO_data, 0), noisedata_pts);
+    /* Setting the global tag to success */
+    __LLVSimFD_Noise_setup = SUCCESS;
   }
-
+  
   /* Cleaning and output */
   free(file_LIGO);
   free(file_VIRGO);
@@ -132,22 +162,37 @@ double NoiseSnLHO(const double f) {
     printf("Error: noise interpolation has not been set up\n");
     exit(1);
   }
-  double sqrtSn = gsl_spline_eval(*__LLVSimFD_LHONoiseSpline, f, *__LLVSimFD_LHONoiseAccel);
-  return sqrtSn * sqrtSn;
+  if ((f < __LLVSimFD_LHONoise_fLow) || (f > __LLVSimFD_LHONoise_fHigh)) {
+    return INFINITY;
+  }
+  else { 
+    double sqrtSn = gsl_spline_eval(*__LLVSimFD_LHONoiseSpline, f, *__LLVSimFD_LHONoiseAccel);
+    return sqrtSn * sqrtSn;
+  }
 }
 double NoiseSnLLO(const double f) {
   if(__LLVSimFD_Noise_setup==FAILURE) {
     printf("Error: noise interpolation has not been set up\n");
     exit(1);
   }
-  double sqrtSn = gsl_spline_eval(*__LLVSimFD_LLONoiseSpline, f, *__LLVSimFD_LLONoiseAccel);
-  return sqrtSn * sqrtSn;
+  if ((f < __LLVSimFD_LLONoise_fLow) || (f > __LLVSimFD_LLONoise_fHigh)) {
+    return INFINITY;
+  }
+  else { 
+    double sqrtSn = gsl_spline_eval(*__LLVSimFD_LLONoiseSpline, f, *__LLVSimFD_LLONoiseAccel);
+    return sqrtSn * sqrtSn;
+  }
 }
 double NoiseSnVIRGO(const double f) {
   if(__LLVSimFD_Noise_setup==FAILURE) {
     printf("Error: noise interpolation has not been set up\n");
     exit(1);
   }
-  double sqrtSn = gsl_spline_eval(*__LLVSimFD_VIRGONoiseSpline, f, *__LLVSimFD_VIRGONoiseAccel);
-  return sqrtSn * sqrtSn;
+  if ((f < __LLVSimFD_VIRGONoise_fLow) || (f > __LLVSimFD_VIRGONoise_fHigh)) {
+    return INFINITY;
+  }
+  else { 
+    double sqrtSn = gsl_spline_eval(*__LLVSimFD_VIRGONoiseSpline, f, *__LLVSimFD_VIRGONoiseAccel);
+    return sqrtSn * sqrtSn;
+  }
 }

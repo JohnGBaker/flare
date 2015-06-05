@@ -54,9 +54,8 @@ typedef struct tagROMParams {
   char outname[256];         /* file to which output should be written */
 } ROMParams;
 
-/* Parameters for the generation of a ROM waveform (in the form of a list of modes) */
+/* Parameters for the generation of a LLV waveform (in the form of a list of modes) */
 /* All parameters are in SI units in the internals */
-/* Angle definitions are taken from the Krolak&al paper gr-qc/0401108 */
 typedef struct tagLLVParams {
   int nbmode;                /* Number of modes to generate (starting with the 22) - defaults to 1 (22 mode only) */
   double tRef;               /* shift in time with respect to the 22-fit-removed waveform */
@@ -120,7 +119,7 @@ static ROMParams* parse_args_ROM(ssize_t argc, char **argv) {
     exit(1);
 }
 
-/* Parse command line and return a newly allocated LISAParams object
+/* Parse command line and return a newly allocated LLVParams object
  * Masses are input in solar masses and distances in Mpc - converted in SI for the internals */
 static LLVParams* parse_args_LLV(ssize_t argc, char **argv) {
     ssize_t i;
@@ -225,7 +224,7 @@ int main (int argc , char **argv) {
 
     /* Generate the waveform with the ROM */
     SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef, params->phiRef, params->fRef, params->m1, params->m2, params->distance);
-    /* Process the waveform through the LISA response */
+    /* Process the waveform through the LLV response */
     LLVSimFDResponse(&listROM, &listLHO, params->inclination, params->theta, params->phi, params->psi, LHO);
     LLVSimFDResponse(&listROM, &listLLO, params->inclination, params->theta, params->phi, params->psi, LLO);
     LLVSimFDResponse(&listROM, &listVIRGO, params->inclination, params->theta, params->phi, params->psi, VIRGO);

@@ -115,11 +115,13 @@ double FDListmodesOverlapNoCrossTerms(
   return overlap;
 }
 
-/* Function computing the log likelihood (h|s) - 1/2 (h|h), with s the signal, h the template, and where we discarded the constant term (s|s) - all the cross-products between modes are taken into account */
+/* Function computing the log likelihood (h|s) - 1/2 (h|h) - 1/2 (s|s), with s the signal, h the template, and where we keep the constant term (s|s) - passed to the function as a parameter - all the cross-products between modes are taken into account */
 double FDLogLikelihood(
   struct tagListmodesCAmpPhaseFrequencySeries *lists,  /* Input: list of modes for the signal s, in Frequency-domain amplitude and phase form */
   struct tagListmodesCAmpPhaseFrequencySeries *listh,  /* Input: list of modes for the template, in Frequency-domain amplitude and phase form */
-  double (*Snoise)(double)) /* Noise function */
+  double (*Snoise)(double),                            /* Noise function */
+  double ss,                                           /* Inner product (s|s), constant to be computed elsewhere and passed as an argument */
+  double hh )                                         /* Inner product (h|h), constant to be computed elsewhere and passed as an argument */
 {
-  return FDListmodesOverlap(lists, listh, Snoise) - 1./2 * FDListmodesOverlap(listh, listh, Snoise);
+  return FDListmodesOverlap(lists, listh, Snoise) - 1./2 * hh - 1/2 * ss;
 }

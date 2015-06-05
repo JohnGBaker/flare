@@ -47,8 +47,6 @@
 #include "EOBNRv2HMROMstruct.h"
 #include "EOBNRv2HMROM.h"
 
-#include <time.h> /* for testing */
-
 /*************************************************/
 /********* Some general definitions **************/
 
