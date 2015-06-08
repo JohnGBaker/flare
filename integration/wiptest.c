@@ -80,6 +80,7 @@ int main (){
   }
 
   double complex rex=a0*(cexp(I*testfn_I_p(fmax, c2, c3, x0))*testfn_I_A(fmax, sig, xc)-cexp(I*testfn_I_p(fmin, c2, c3, x0))*testfn_I_A(fmin, sig, xc));
+  rex=conj(rex);
   printf("rex=%g + %gi\n",creal(rex),cimag(rex));
 
   if(1){
@@ -98,7 +99,7 @@ int main (){
       s2p[i] = testfn_I_p(ff[i], c2, c3, x0);
     }
     double start=((double)clock())/CLOCKS_PER_SEC;
-    double complex rs0=wip_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0);  
+    double complex rs0=wip_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0,-1,-1);  
     double end=((double)clock())/CLOCKS_PER_SEC;
     double complex err=rs0-rex;
     printf( "ran %i steps.\n",wip_count);
@@ -123,7 +124,7 @@ int main (){
       s2p[i] = testfn_I_p(ff[i], c2, c3, x0);
     }
     double start=((double)clock())/CLOCKS_PER_SEC;
-    double complex rs0=wip_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0);  
+    double complex rs0=wip_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0,-1.0,-1.0);  
     double end=((double)clock())/CLOCKS_PER_SEC;
     double complex err=rs0-rex;
     printf( "ran %i steps.\n",wip_count);
@@ -148,7 +149,7 @@ int main (){
       s2p[i] = testfn_I_p(ff[i], c2, c3, x0);
     }
     double start=((double)clock())/CLOCKS_PER_SEC;
-    double complex rs0=wip_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0);  
+    double complex rs0=wip_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0,-1.0,-1.0);  
     double end=((double)clock())/CLOCKS_PER_SEC;
     double complex err=rs0-rex;
     printf( "ran %i steps.\n",wip_count);
@@ -173,7 +174,7 @@ int main (){
       s2p[i] = testfn_I_p(ff[i], c2, c3, x0);
     }
     double start=((double)clock())/CLOCKS_PER_SEC;
-    double complex rs0=wip_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0);  
+    double complex rs0=wip_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0,-1.0,-1.0);  
     double end=((double)clock())/CLOCKS_PER_SEC;
     double complex err=rs0-rex;
     printf( "ran %i steps.\n",wip_count);
@@ -198,7 +199,7 @@ int main (){
       s2p[i] = testfn_I_p(ff[i], c2, c3, x0);
     }
     double start=((double)clock())/CLOCKS_PER_SEC;
-    double complex rs0=wip_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0);  
+    double complex rs0=wip_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0,-1.0,-1.0);  
     double end=((double)clock())/CLOCKS_PER_SEC;
     double complex err=rs0-rex;
     printf( "ran %i steps.\n",wip_count);

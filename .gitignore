@@ -1,3 +1,6 @@
 *.bk*
 *.o
-
+LISAsim/LISAexampleSNR
+LLVinference/LLVinference
+LLVsim/LLVexampleSNR
+integration/wiptest

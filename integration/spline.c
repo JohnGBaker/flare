@@ -150,7 +150,8 @@ void spline_intd3(double xp, const double xs[],const double ys[],const double zs
   dx = xs[i+1]-xs[i];
   t  = (xp-xs[i])/dx;
   if(t<0 || t>1){//do we allow extrapolation?
-    printf("spline_intd3 t=%7.4f",t);
+    //printf("spline_intd3 t=%7.4f\n",t);
+    printf("spline_intd3: Extrapolating? t=%7.4f, xp=%7.4f, xs[%i]=%7.4f,dx=%7.4f\n",t,xp,i,xs[i],dx);
   }
   ct = 1 - t ;
   tct = t*ct;
@@ -184,15 +185,19 @@ double spline_int(double xp, const double xs[],const double ys[],const double zs
   double dx,t,ct,tct,ctmt,zL,zR,dA,Ax,yL,yR;
   int i;
   i=spline_findix(xp,xs,n);
-  //printf("spline_intd3: %g < xp = %g < %g, i=%i\n",xs[0],xp,xs[n-1], i);
+  //printf("spline_int: %g < xp = %g < %g, i=%i\n",xs[0],xp,xs[n-1], i);
   if(i<0){
-    printf("spline_intd3: xp is out of range.\n");
+    printf("spline_int: xp is out of range.\n");
     exit(1);
   }
   dx = xs[i+1]-xs[i];
   t  = (xp-xs[i])/dx;
   if(t<0 || t>1){//do we allow extrapolation?
-    printf("spline_int t=%7.4f",t);
+    printf("spline_int: Extrapolating? t=%7.4f, xp=%7.4f, xs[%i]=%7.4f,dx=%7.4f\n",t,xp,i,xs[i],dx);
+    //int verbosetmp=verbose;verbose=1;
+    //i=spline_findix(xp,xs,n);
+    //printf("got i=%i\n",i);
+    //verbose=verbosetmp;
   }
   ct = 1 - t ;
   tct = t*ct;
@@ -219,12 +224,16 @@ int spline_findix(double xp, const double xs[],int n){
   iL=0;
   iR=n-1;
   ic=spline_iold;
-  /*if(verbose){
-    xL=xs[iL];
-    xR=xs[iR];
+  if(ic>n-2)ic=n-2;
+  if(ic<1)ic=1;
+  if(verbose){
+    double xL=xs[iL];
+    double xR=xs[iR];
     xc=xs[ic];
     printf( "Entering search for %g < %g < %g with x[%i < %i < %i ]= %g\n",xL,xp,xR,iL,ic,iR,xc);
-    }*/
+    //for(int i=0;i<n;i++)printf(" xs[%i]=%7.4f\n",i,xs[i]);
+    printf(" %7.4f<=xs[i]<=%7.4f\n",xs[0],xs[n-1]);
+  }
 
   //first we try near the last location, hoping to get lucky
   if(xs[ic]<=xp){

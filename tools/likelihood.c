@@ -62,17 +62,21 @@ double FDSinglemodeOverlap(
   double *f2 = h2->freq->data;
   int n2 = h2->freq->size;
   double *h2Ar = h2->amp_real->data;
-  /* Here we add the complex conjugate apparently missing, copying the data to do it in a non-destructive way -  would be better to implement directly in wip_phase */
+  /* Here we add the complex conjugate apparently missing, copying the data to do it in a non-destructive way -  would be better to implement directly in wip_phase */  
+  //JGB: This shouldn't be necessary.  Before 6/8/15 there was a bug making phase sign inconsistent.)
   gsl_vector* amp_imag2 = gsl_vector_alloc(n2);
   gsl_vector* phase2 = gsl_vector_alloc(n2);
   gsl_vector_memcpy(amp_imag2, h2->amp_imag);
   gsl_vector_memcpy(phase2, h2->phase);
-  gsl_vector_scale(amp_imag2, -1);
-  gsl_vector_scale(phase2, -1);
+  //JGB:So I'm commenting these out...
+  //gsl_vector_scale(amp_imag2, -1);
+  //gsl_vector_scale(phase2, -1);
   double *h2Ai = amp_imag2->data;
   double *h2p = phase2->data;
-
-  double overlap = wip_phase(f1, n1, f2, n2, h1Ar, h1Ai, h1p, h2Ar, h2Ai, h2p, Snoise, 1.0);
+  //JGB: Set these somehwere else where it makes sense.  f_min or f_max <= 0 means use intersection of signal domains.
+  double f_min=10.0;
+  double f_max=-1.0;
+  double overlap = wip_phase(f1, n1, f2, n2, h1Ar, h1Ai, h1p, h2Ar, h2Ai, h2p, Snoise, 1.0,f_min,f_max);
   return overlap;
 }
 

@@ -275,7 +275,10 @@ int main (int argc , char **argv) {
       double *s2p=listelementLHO->freqseries->phase->data;
 
       double start=((double)clock())/CLOCKS_PER_SEC;
-      double rho2= wip_phase (f1, n1, f2, n2, s1Ar, s1Ai, s1p, s2Ar, s2Ai, s2p, Swhitenoise, 1.0);
+      //JGB: Set these somehwere else where it makes sense.  f_min or f_max <= 0 means use intersection of signal domains.
+      double f_min=10.0;
+      double f_max=-1.0;
+      double rho2= wip_phase (f1, n1, f2, n2, s1Ar, s1Ai, s1p, s2Ar, s2Ai, s2p, Swhitenoise, 1.0, f_min, f_max);
       double end=((double)clock())/CLOCKS_PER_SEC;
       printf( "SNR2 = %g,   SNR time = %g\n", rho2, end-start);
       printf( "SNR = %g,   SNR time = %g\n",sqrt(rho2), end-start);

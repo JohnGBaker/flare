@@ -43,8 +43,10 @@ double complex cexpm1i(double zi){
   return rr+I*ri;
 };
 
-//interpolation integrand on a new f-grid
-void interpolate_ip_integrand(double *f1, double *s1Ar, double *s1Ai, double  *s1p, int n1, double *f2, double *s2Ar, double*s2Ai, double *s2p, int n2,  double (*Snoise)(double), double scalefactor, double *fnew, double *Ars,  double *Ais, double *dphis, int *nnew){
+///Interpolation of integrand on a new f-grid
+///If min_f and max_f are nonpositive then the integrand is defined over the intersection of the f1 and f2 domains.
+///If either of these is greater than zero, then that value is used for the repsective bound.
+void interpolate_ip_integrand(double *f1, double *s1Ar, double *s1Ai, double  *s1p, int n1, double *f2, double *s2Ar, double*s2Ai, double *s2p, int n2,  double (*Snoise)(double), double scalefactor, double *fnew, double *Ars,  double *Ais, double *dphis, int *nnew, double min_f, double max_f){
   //#returns fnew, integrand
   //#f1,f2 should be arrays of ordered positive values
   //#s1,s2,Sn should be a function
@@ -68,8 +70,21 @@ void interpolate_ip_integrand(double *f1, double *s1Ar, double *s1Ai, double  *s
   //#  dfnew ~ df12/2                 when mu is maximal, mu ~ df12/4
   //#  so
   //#  dfnew = mu*(1+4*mu/df12)
-  double f_max=fmax(f1[n1-1],f2[n2-1]);
-  double f_min=fmin(f1[0],f2[0]);
+
+  double f_max=fmin(f1[n1-1],f2[n2-1]);
+  if(max_f>0){
+    if(f_max>=max_f)f_max=max_f;
+    else{
+      printf("wip:interpolate_ip_integrand: Specified upper range bound max_f is beyond data range.\n");
+    }
+  }      
+  double f_min=fmax(f1[0],f2[0]);
+  if(min_f>0){
+    if(f_min<=min_f)f_min=min_f;
+    else{
+      printf("wip:interpolate_ip_integrand: Specified lower range bound min_f is beyond data range.\n");
+    }
+  }      
   double f=f_min;
   int NnewMax=*nnew;
   int i1=0,i2=0,inew=0;
@@ -79,9 +94,10 @@ void interpolate_ip_integrand(double *f1, double *s1Ar, double *s1Ai, double  *s
       while(f1[i1]<f && i1<n1-2) i1+=1;//#must keep i<nf-1
       while(f2[i2]<f && i2<n2-2) i2+=1;
       double df1= f1[i1+1]-f1[i1];  
-      double df2= f2[i2+1]-f2[i1];
+      double df2= f2[i2+1]-f2[i2];
       double df12=df1+df2;
       double mu=df1*df2/df12;
+      //printf(" %i: df1=%7.4f ->df2=%7.4f\n",inew,df1,df2);
       df=mu*(1+4.0*mu/df12)/scalefactor;  
     }
     f+=df;
@@ -92,6 +108,7 @@ void interpolate_ip_integrand(double *f1, double *s1Ar, double *s1Ai, double  *s
       exit(1);
     }
     fnew[inew]=f;
+    //printf(" %i: df=%7.4f ->f=%7.4f\n",inew,df,f);
     //#now we compute the integrand on the new grid
     double A1r=spline_int(f,f1,s1Ar,s1Arz,n1);
     double A1i=spline_int(f,f1,s1Ai,s1Aiz,n1);
@@ -100,16 +117,16 @@ void interpolate_ip_integrand(double *f1, double *s1Ar, double *s1Ai, double  *s
     double A2i=spline_int(f,f2,s2Ai,s2Aiz,n2);
     double p2=spline_int(f,f2,s2p,s2pz,n2);
     double Sn=Snoise(f);
-    //Ars[inew]=(A1r*A2r-A1i*A2i)/Sn;//previously hadn't taken CC of S2
+    //Ars[inew]=(A1r*A2r-A1i*A2i)/Sn;
     //Ais[inew]=(A1r*A2i+A1i*A2r)/Sn;
-    Ars[inew]=(A1r*A2r+A1i*A2i)/Sn;
+    Ars[inew]=(A1r*A2r+A1i*A2i)/Sn;//previously hadn't taken CC of S2
     Ais[inew]=(-A1r*A2i+A1i*A2r)/Sn;
     if(wip_uselogf){
       double ef=exp(f);
       Ars[inew]*=ef;
       Ais[inew]*=ef;
     }
-    dphis[inew]=p2-p1;
+    dphis[inew]=-p2+p1;
     if(f>=f_max)break;
     inew++;
   }
@@ -119,7 +136,7 @@ void interpolate_ip_integrand(double *f1, double *s1Ar, double *s1Ai, double  *s
         
     
 //#Now perform the integration...
-double complex wip_phase (double *f1, int n1, double *f2, int n2, double *s1Ar, double *s1Ai, double  *s1p, double *s2Ar, double*s2Ai, double *s2p, double (*Snoise)(double), double scalefactor){
+double complex wip_phase (double *f1, int n1, double *f2, int n2, double *s1Ar, double *s1Ai, double  *s1p, double *s2Ar, double*s2Ai, double *s2p, double (*Snoise)(double), double scalefactor, double min_f, double max_f){
   int i;
   double f1x[n1],f2x[n2];
   if(wip_uselogf){
@@ -142,7 +159,7 @@ double complex wip_phase (double *f1, int n1, double *f2, int n2, double *s1Ar, 
   int NfMax=(n1+n2)*scalefactor;//should be adequately large. 
   double fs[NfMax],Ars[NfMax],Ais[NfMax],Arz[NfMax],Aiz[NfMax],dphis[NfMax],dphiz[NfMax];//(does this work in C?)
   int nf=NfMax;
-  interpolate_ip_integrand(f1x, s1Ar, s1Ai, s1p, n1, f2x, s2Ar, s2Ai, s2p, n2, Snoise, scalefactor, fs, Ars, Ais, dphis, &nf);
+  interpolate_ip_integrand(f1x, s1Ar, s1Ai, s1p, n1, f2x, s2Ar, s2Ai, s2p, n2, Snoise, scalefactor, fs, Ars, Ais, dphis, &nf, min_f, max_f);
   wip_count=nf;//just for testing/reference
   spline_construct(fs,Ars,Arz,nf);
   spline_construct(fs,Ais,Aiz,nf);
