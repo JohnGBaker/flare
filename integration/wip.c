@@ -197,8 +197,8 @@ double complex wip_phase (double *f1, int n1, double *f2, int n2, double *s1Ar, 
     //printf("i=%i: As = %g+%gi ,  %g+%gi ,  %g+%gi , %g+%gi \n",i,a0r,a0i,a1r,a1i,a2r/2,a2i/2,a3r/6,a3i/6);
     double complex ampscale=1;
     if(wip_relative){
-      ampscale=a0;
-      a0=1;
+      ampscale=fabs(a0r)+fabs(a0i)+1.0e-50;
+      a0=a0/ampscale;
       a1=a1/ampscale;
       a2=a2/ampscale;
       a3=a3/ampscale;
@@ -277,6 +277,7 @@ double complex wip_phase (double *f1, int n1, double *f2, int n2, double *s1Ar, 
     //#finish
     //printf("i=%i cofac=%g+%gi\n",i,creal(ampscale*E0),cimag(ampscale*E0));
     //printf("i=%i: ampscale=%g+%gi, E0=%g+%gi\n",i,creal(ampscale),cimag(ampscale),creal(E0),cimag(E0));
+    //printf("i=%i: As = %g+%gi ,  %g+%gi ,  %g+%gi , %g+%gi \n",i,creal(a0),cimag(a0),creal(a1),cimag(a1),creal(a2),cimag(a2),creal(a3),cimag(a3));
     double complex dint=ampscale*E0*(a0*I03 + a1*I13 + a2*I23 + a3*I33);
     // #step
     intsum += dint;
