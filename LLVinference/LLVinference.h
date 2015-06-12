@@ -45,8 +45,7 @@ typedef struct tagLLVParams {
   double inclination;        /* inclination of L relative to line of sight (rad) */
   double polarization;       /* polarization angle (rad) */
   double fRef;               /* reference frequency (Hz) */
-  int nbmodeinj;             /* number of modes to generate the injection (starting with 22) - defaults to 5 (all modes) */
-  int nbmodetemp;            /* number of modes to generate the templates (starting with 22) - defaults to 5 (all modes) */
+  int nbmode;             /* number of modes to generate (starting with 22) - defaults to 5 (all modes) */
 } LLVParams;
 
 typedef struct tagLLVSignal

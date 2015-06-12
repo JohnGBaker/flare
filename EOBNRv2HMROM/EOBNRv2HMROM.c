@@ -478,6 +478,12 @@ int EOBNRv2HMROMCore(
     /* Append the computed mode to the ListmodesCAmpPhaseFrequencySeries structure */
     *listhlm = ListmodesCAmpPhaseFrequencySeries_AddModeNoCopy(*listhlm, modefreqseries, l, m);
 
+    //
+    //printf("Mode (%d,%d) generated:\n", l, m);
+    //for( int j=0; j<len; j++ ){
+    //  printf("%g %g %g %g\n", gsl_vector_get(modefreqseries->freq, j), gsl_vector_get(modefreqseries->amp_real, j), gsl_vector_get(modefreqseries->amp_imag, j), gsl_vector_get(modefreqseries->phase, j));
+    //}
+
     /* Cleanup for the mode */
     gsl_vector_free(freq_ds);
     gsl_vector_free(amp_f);

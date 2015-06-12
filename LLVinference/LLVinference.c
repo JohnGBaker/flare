@@ -40,16 +40,15 @@ LLVParams* parse_args_LLV(ssize_t argc, char **argv) {
     /* Set default values to the arguments */
     params->tRef = 0.;
     params->phiRef = 0.;
-    params->m1 = 10.;
+    params->m1 = 20.;
     params->m2 = 10.;
     params->distance = 100. * 1e6;
     params->ra = 0.;
     params->dec = 0.;
-    params->inclination = 0.;
+    params->inclination = PI/3.;
     params->polarization = 0.;
     params->fRef = 0.;
-    params->nbmodeinj = 5;
-    params->nbmodetemp = 5;
+    params->nbmode = 1;
 
     /* Consume command line */
     for (i = 1; i < argc; ++i) {
@@ -73,13 +72,16 @@ LLVParams* parse_args_LLV(ssize_t argc, char **argv) {
             params->polarization = atof(argv[++i]);
         } else if (strcmp(argv[i], "--fRef") == 0) {
             params->fRef = atof(argv[++i]);
-        } else if (strcmp(argv[i], "--nbmodeinj") == 0) {
-            params->nbmodeinj = atof(argv[++i]);
-        } else if (strcmp(argv[i], "--nbmodetemp") == 0) {
-            params->nbmodetemp = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--nbmode") == 0) {
+            params->nbmode = atof(argv[++i]);
         } else {
+<<<<<<< HEAD
             //printf("Error: invalid option: %s\n", argv[i]);
             //goto fail;
+=======
+	  printf("Error: invalid option: %s\n", argv[i]);
+	  goto fail;
+>>>>>>> daf9ea2ca361b5398f3bd2e37fdb657ad901b781
         }
     }
 
@@ -102,25 +104,19 @@ int LLVGenerateSignal(
 
   /* Should add error checking ? */
   /* Generate the waveform with the ROM */
-  printf("aa\n");
-  SimEOBNRv2HMROM(&listROM, 5, params->tRef, params->phiRef, params->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*PC_SI);
+  SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef, params->phiRef, params->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*PC_SI);
   /* Process the waveform through the LLV response */
   /* TO BE MODIFIED FOR RA DEC */
-  printf("bb\n");
   LLVSimFDResponse(&listROM, &listLHO, params->inclination, params->ra, params->dec, params->polarization, LHO);
   LLVSimFDResponse(&listROM, &listLLO, params->inclination, params->ra, params->dec, params->polarization, LLO);
   LLVSimFDResponse(&listROM, &listVIRGO, params->inclination, params->ra, params->dec, params->polarization, VIRGO);
 
   /* Precompute the inner products (h|h) and (s|s) */
-  printf("cc\n");
-  printf("sqrtSn(100): %g\n", sqrt(NoiseSnLHO(100.)));
-  printf("sqrtSn(200): %g\n", sqrt(NoiseSnLHO(200.)));
-  double LHOhh = FDListmodesOverlap(listLHO, listLHO, NoiseSnLHO);
-  double LLOhh = FDListmodesOverlap(listLLO, listLLO, NoiseSnLLO);
-  double VIRGOhh = FDListmodesOverlap(listVIRGO, listVIRGO, NoiseSnVIRGO);
+  double LHOhh = FDListmodesOverlap(listLHO, listLHO, NoiseSnLHO, __LLVSimFD_LHONoise_fLow, __LLVSimFD_LHONoise_fHigh);
+  double LLOhh = FDListmodesOverlap(listLLO, listLLO, NoiseSnLLO, __LLVSimFD_LLONoise_fLow, __LLVSimFD_LLONoise_fHigh);
+  double VIRGOhh = FDListmodesOverlap(listVIRGO, listVIRGO, NoiseSnVIRGO, __LLVSimFD_VIRGONoise_fLow, __LLVSimFD_VIRGONoise_fHigh);
 
-  /* Output */
-  printf("dd\n");
+  /* Output and clean up */
   signal->LHOSignal = listLHO;
   signal->LLOSignal = listLLO;
   signal->VIRGOSignal = listVIRGO;
@@ -128,6 +124,7 @@ int LLVGenerateSignal(
   signal->LLOhh = LLOhh;
   signal->VIRGOhh = VIRGOhh;
 
+  ListmodesCAmpPhaseFrequencySeries_Destroy(listROM);
   return SUCCESS;
 }
 
@@ -221,9 +218,9 @@ void getLogLike(LLVParams *params, double *lnew, void *context)
   LLVGenerateSignal(params, generatedsignal);
 
   /* Computing the likelihood for each detector */
-  double loglikelihoodLHO = FDLogLikelihood(injection->LHOSignal, generatedsignal->LHOSignal, NoiseSnLHO, injection->LHOhh, generatedsignal->LHOhh);
-  double loglikelihoodLLO = FDLogLikelihood(injection->LLOSignal, generatedsignal->LLOSignal, NoiseSnLLO, injection->LLOhh, generatedsignal->LLOhh);
-  double loglikelihoodVIRGO = FDLogLikelihood(injection->VIRGOSignal, generatedsignal->VIRGOSignal, NoiseSnVIRGO, injection->VIRGOhh, generatedsignal->VIRGOhh);
+  double loglikelihoodLHO = FDLogLikelihood(injection->LHOSignal, generatedsignal->LHOSignal, NoiseSnLHO, __LLVSimFD_LHONoise_fLow, __LLVSimFD_LHONoise_fHigh, injection->LHOhh, generatedsignal->LHOhh);
+  double loglikelihoodLLO = FDLogLikelihood(injection->LLOSignal, generatedsignal->LLOSignal, NoiseSnLLO, __LLVSimFD_LLONoise_fLow, __LLVSimFD_LLONoise_fHigh, injection->LLOhh, generatedsignal->LLOhh);
+  double loglikelihoodVIRGO = FDLogLikelihood(injection->VIRGOSignal, generatedsignal->VIRGOSignal, NoiseSnVIRGO, __LLVSimFD_VIRGONoise_fLow, __LLVSimFD_VIRGONoise_fHigh, injection->VIRGOhh, generatedsignal->VIRGOhh);
 
   /* Output: value of the loglikelihood for the combined signals, assuming noise independence */
   *lnew = loglikelihoodLHO + loglikelihoodLLO + loglikelihoodVIRGO;
@@ -301,33 +298,34 @@ int main(int argc, char *argv[])
 	/*********** Addendum *************/
 
 	/* Parse commandline to read parameters of injection */
+<<<<<<< HEAD
 	printf("a\n");
 	injectedparams = parse_args_LLV(argc, argv);
+=======
+	LLVParams* injectedparams = parse_args_LLV(argc, argv);
+>>>>>>> daf9ea2ca361b5398f3bd2e37fdb657ad901b781
 
 	/* Load and initialize the detector noise */
-	printf("b\n");
 	LLVSimFD_Noise_Init_ParsePath();
 
 	/* Initialize the data structure for the injection */
-	printf("c\n");
 	LLVSignal* injectedsignal = NULL;
 	LLVSignal_Init(&injectedsignal);
 
 	/* Generate the injection */
-	printf("d\n");
 	LLVGenerateSignal(injectedparams, injectedsignal);
 
 	/* Set the context pointer */
-	printf("e\n");
 	void *context = injectedsignal;
 
 	/********** End of addendum ****************/
 
 	/********** Test ****************/
-	printf("f\n");
-	double* l;
-	getLogLike(injectedparams, l, context);
-	printf("Likelihood: %g\n", *l);
+	double l;
+	getLogLike(injectedparams, &l, context);
+	printf("LogLikelihood: %g\n", l);
+	free(injectedparams);
+	LLVSignal_Cleanup(injectedsignal);
 	/********** End of test ****************/
 
   /* Initialize the prior */
