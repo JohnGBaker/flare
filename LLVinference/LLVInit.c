@@ -5,8 +5,8 @@ LLVPrior* LLVInitializePrior(ssize_t argc, char **argv)
 	ssize_t i;
     LLVPrior* prior;
     prior = (LLVPrior*) malloc(sizeof(LLVPrior));
-    memset(prior, 0, sizeof(LLVPrior));
 
+    // set defaults
     prior->deltaT = 0.1;
     prior->comp_min = 4.0;
     prior->comp_max = 50.0;
@@ -94,4 +94,48 @@ double LALInferenceCubeToSinPrior(double r, double x1, double x2)
 double LALInferenceCubeToCosPrior(double r, double x1, double x2)
 {
     return asin((1.0-r)*sin(x1)+r*sin(x2));
+}
+
+LLVRunParams* LLInitializeRunParams(ssize_t argc, char **argv)
+{
+	ssize_t i;
+    LLVRunParams* runParams;
+    runParams = (LLVRunParams*) malloc(sizeof(LLVRunParams));
+
+    // set defaults
+    runParams->eff = 0.1;
+    runParams->tol = 0.5;
+    runParams->nlive = 1000;
+    strcpy(runParams->outroot, "chains/LLVinference_");
+    runParams->bambi = 0;
+    runParams->resume = 0;
+    strcpy(runParams->netfile, "LLVinference.inp");
+
+    /* Consume command line */
+    for (i = 1; i < argc; ++i) {
+        if (strcmp(argv[i], "--eff") == 0) {
+            runParams->eff = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--tol") == 0) {
+            runParams->tol = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--nlive") == 0) {
+            runParams->nlive = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "--bambi") == 0) {
+            runParams->bambi = 1;
+        } else if (strcmp(argv[i], "--resume") == 0) {
+            runParams->resume = 1;
+        } else if (strcmp(argv[i], "--outroot") == 0) {
+            strcpy(runParams->outroot, argv[++i]);
+        } else if (strcmp(argv[i], "--netfile") == 0) {
+            strcpy(runParams->netfile, argv[++i]);
+        } else {
+            //printf("Error: invalid option: %s\n", argv[i]);
+            //goto fail;
+        }
+    }
+
+    return runParams;
+
+    /*fail:
+    free(prior);
+    exit(1);*/
 }

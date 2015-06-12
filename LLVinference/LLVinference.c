@@ -320,6 +320,7 @@ int main(int argc, char *argv[])
 
   /* Initialize the prior */
   priorParams = LLVInitializePrior(argc, argv);
+  LLVRunParams *runParams = LLVInitializeRunParams(argc, argv);
 
   /* Initialize Bambi run settings */
 
@@ -332,19 +333,19 @@ int main(int argc, char *argv[])
 
 	int ceff = 0;					// run in constant efficiency mode?
 
-	int nlive = 4000;				// number of live points
+	int nlive = runParams->nlive;				// number of live points
 
-	double efr = 0.8;				// set the required efficiency
+	double efr = runParams->eff;				// set the required efficiency
 
-	double tol = 0.5;				// tol, defines the stopping criteria
+	double tol = runParams->tol;				// tol, defines the stopping criteria
 
-	int ndims = 2;					// dimensionality (no. of free parameters)
+	int ndims = 9;					// dimensionality (no. of free parameters)
 
-	int nPar = 2;					// total no. of parameters including free & derived parameters
+	int nPar = 9;					// total no. of parameters including free & derived parameters
 
 	int nClsPar = 2;				// no. of parameters to do mode separation on
 
-	int updInt = 4000;				// after how many iterations feedback is required & the output files should be updated
+	int updInt = 50;				// after how many iterations feedback is required & the output files should be updated
 							// note: posterior files are updated & dumper routine is called after every updInt*10 iterations
 
 	double Ztol = -1E90;				// all the modes with logZ < Ztol are ignored
@@ -353,15 +354,16 @@ int main(int argc, char *argv[])
 
 	int pWrap[ndims];				// which parameters to have periodic boundary conditions?
 	for(i = 0; i < ndims; i++) pWrap[i] = 0;
+  pWrap[4] = pWrap[6] = pWrap[8] = 1;
 
-	strcpy(root, "chains/eggboxC_");			// root for output files
-	strcpy(networkinputs, "example_eggbox_C/eggbox_net.inp");			// file with input parameters for network training
+	strcpy(root, runParams->outroot);			// root for output files
+	strcpy(networkinputs, runParams->netfile);			// file with input parameters for network training
 
 	int seed = -1;					// random no. generator seed, if < 0 then take the seed from system clock
 
 	int fb = 1;					// need feedback on standard output?
 
-	resume = 0;					// resume from a previous job?
+	resume = runParams->resume;					// resume from a previous job?
 
 	int outfile = 1;				// write output files?
 
@@ -375,7 +377,7 @@ int main(int argc, char *argv[])
 
 	// void *context = 0;				// not required by MultiNest, any additional information user wants to pass
 
-	doBAMBI = 1;					// BAMBI?
+	doBAMBI = runParams->bambi;					// BAMBI?
 
 	useNN = 0;
 
@@ -385,6 +387,9 @@ int main(int argc, char *argv[])
 	logZero, maxiter, LogLikeFctn, dumper, BAMBIfctn, context);
 
 */
+
+  free(priorParams);
+  free(runParams);
 
 #ifdef PARALLEL
  	MPI_Finalize();
