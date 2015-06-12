@@ -1,5 +1,9 @@
 #include "LLVinference.h"
 
+// Global parameters
+LLVParams* injectedparams = NULL, templateparams = NULL;
+LLVPrior* priorParams = NULL;
+
 /************ Functions to initalize and clean up structure for the signals ************/
 
 void LLVSignal_Cleanup(LLVSignal* signal) {
@@ -26,6 +30,8 @@ void LLVSignal_Init(LLVSignal** signal) {
 /* Parse command line and return a newly allocated LLVParams object */
 /* Masses are input in solar masses and distances in Mpc - converted in SI for the internals */
 LLVParams* parse_args_LLV(ssize_t argc, char **argv) {
+    char help[] = ""
+
     ssize_t i;
     LLVParams* params;
     params = (LLVParams*) malloc(sizeof(LLVParams));
@@ -72,16 +78,16 @@ LLVParams* parse_args_LLV(ssize_t argc, char **argv) {
         } else if (strcmp(argv[i], "--nbmodetemp") == 0) {
             params->nbmodetemp = atof(argv[++i]);
         } else {
-            printf("Error: invalid option: %s\n", argv[i]);
-            goto fail;
+            //printf("Error: invalid option: %s\n", argv[i]);
+            //goto fail;
         }
     }
 
     return params;
 
-    fail:
+    /*fail:
     free(params);
-    exit(1);
+    exit(1);*/
 }
 
 /* Function generating a LLV signal from LLV parameters */
@@ -123,15 +129,54 @@ int LLVGenerateSignal(
   signal->VIRGOhh = VIRGOhh;
 
   return SUCCESS;
-} 
+}
 
 /******************************************** getphysparams routine ****************************************************/
 
 void getphysparams(double *Cube, int *ndim)
 {
-	int i;
-	for(i = 0; i < *ndim; i++) Cube[i] = Cube[i]*10.0*M_PI;
-	//for(int i = 0; i < *ndim; i++) Cube[i] = 2.0*M_PI+(Cube[i]-0.5)*M_PI*0.5;
+	int i = 0;
+
+  // component masses
+  double m1 = CubeToFlatPrior(Cube[i++], priorParams->comp_min, priorParams->comp_max);
+  double m2 = CubeToFlatPrior(Cube[i++], priorParams->comp_min, priorParams->comp_max);
+  if (m2 > m1) {
+    double tmp = m1;
+    m1 = m2;
+    m2 = tmp;
+  }
+  templateparams->m1 = m1;
+  templateparams->m2 = m2;
+
+  // time
+  templateparams->tRef = CubeToFlatPrior(Cube[i++], injectedparams->tRef - priorParams->deltaT, injectedparams->tRef + priorParams->deltaT);
+
+  // distance
+  templateparams->distance = CubeToPowerPrior(2.0, Cube[i++], priorParams->dist_min, priorParams->dist_max);
+
+  // orbital phase
+  templateparams->phiRef = CubeToFlatPrior(Cube[i++], 0.0, 2.0 * M_PI);
+
+  // inclination
+  templateparams->inclination = CubeToSinPrior(Cube[i++], 0.0, M_PI);
+
+  // sky location
+  templateparams->ra = CubeToFlatPrior(Cube[i++], 0.0, 2.0 * M_PI);
+  templateparams->dec = CubeToCosPrior(Cube[i++], -M_PI / 2.0, M_PI / 2.0);
+
+  // polarization
+  templateparams->polarization = CubeToFlatPrior(Cube[i++], 0.0, M_PI);
+
+  // put all values back in Cube as well
+  Cube[0] = m1;
+  Cube[1] = m2;
+  Cube[2] = templateparams->tRef;
+  Cube[3] = templateparams->distance;
+  Cube[4] = templateparams->phiRef;
+  Cube[5] = templateparams->inclination;
+  Cube[6] = templateparams->ra;
+  Cube[7] = templateparams-dec;
+  Cube[8] = templateparams->polarization;
 }
 
 /******************************************** getallparams routine ****************************************************/
@@ -152,7 +197,7 @@ void getallparams(double *Cube, int *ndim)
 // Input/Output arguments
 // Cube[npars] 						= on entry has the ndim parameters in unit-hypercube
 //	 						on exit, the physical parameters plus copy any derived parameters you want to store with the free parameters
-//	 
+//
 // Output arguments
 // lnew 						= loglikelihood
 
@@ -161,7 +206,11 @@ void getallparams(double *Cube, int *ndim)
 void getLogLike(LLVParams *params, double *lnew, void *context)
 {
   /*  */
-  //getallparams(Cube,ndim);
+  /*getallparams(Cube,ndim);
+  if (PriorBoundaryCheck(Cube)) {
+    *lnew = -DBL_MAX;
+    return;
+  } */
 
   /* Note: context points to a LLVContext structure containing a LLVSignal* */
   LLVSignal* injection = ((LLVSignal*) context);
@@ -210,23 +259,23 @@ void getLogLike(LLVParams *params, double *lnew, void *context)
 void dumper(int *nSamples, int *nlive, int *nPar, double **physLive, double **posterior, double **paramConstr, double *maxLogLike, double *logZ, double *logZerr, void *context)
 {
 	// convert the 2D Fortran arrays to C arrays
-	
-	
+
+
 	// the posterior distribution
 	// postdist will have nPar parameters in the first nPar columns & loglike value & the posterior probability in the last two columns
-	
+
 	int i, j;
-	
+
 	double postdist[*nSamples][*nPar + 2];
 	for( i = 0; i < *nPar + 2; i++ )
 		for( j = 0; j < *nSamples; j++ )
 			postdist[j][i] = posterior[0][i * (*nSamples) + j];
-	
-	
-	
+
+
+
 	// last set of live points
 	// pLivePts will have nPar parameters in the first nPar columns & loglike value in the last column
-	
+
 	double pLivePts[*nlive][*nPar + 1];
 	for( i = 0; i < *nPar + 1; i++ )
 		for( j = 0; j < *nlive; j++ )
@@ -253,7 +302,7 @@ int main(int argc, char *argv[])
 
 	/* Parse commandline to read parameters of injection */
 	printf("a\n");
-	LLVParams* injectedparams = parse_args_LLV(argc, argv);
+	injectedparams = parse_args_LLV(argc, argv);
 
 	/* Load and initialize the detector noise */
 	printf("b\n");
@@ -281,69 +330,74 @@ int main(int argc, char *argv[])
 	printf("Likelihood: %g\n", *l);
 	/********** End of test ****************/
 
-/*	
+  /* Initialize the prior */
+  priorParams = LLVInitializePrior(argc, argv);
+
+  /* Initialize Bambi run settings */
+
+/*
 	int i;
-	
+
 	// set the MultiNest sampling parameters
-	
+
 	int mmodal = 0;					// do mode separation?
-	
+
 	int ceff = 0;					// run in constant efficiency mode?
-	
+
 	int nlive = 4000;				// number of live points
-	
+
 	double efr = 0.8;				// set the required efficiency
-	
+
 	double tol = 0.5;				// tol, defines the stopping criteria
-	
+
 	int ndims = 2;					// dimensionality (no. of free parameters)
-	
+
 	int nPar = 2;					// total no. of parameters including free & derived parameters
-	
+
 	int nClsPar = 2;				// no. of parameters to do mode separation on
-	
+
 	int updInt = 4000;				// after how many iterations feedback is required & the output files should be updated
 							// note: posterior files are updated & dumper routine is called after every updInt*10 iterations
-	
+
 	double Ztol = -1E90;				// all the modes with logZ < Ztol are ignored
-	
+
 	int maxModes = 1;				// expected max no. of modes (used only for memory allocation)
-	
+
 	int pWrap[ndims];				// which parameters to have periodic boundary conditions?
 	for(i = 0; i < ndims; i++) pWrap[i] = 0;
-	
+
 	strcpy(root, "chains/eggboxC_");			// root for output files
 	strcpy(networkinputs, "example_eggbox_C/eggbox_net.inp");			// file with input parameters for network training
-	
+
 	int seed = -1;					// random no. generator seed, if < 0 then take the seed from system clock
-	
+
 	int fb = 1;					// need feedback on standard output?
-	
+
 	resume = 0;					// resume from a previous job?
-	
+
 	int outfile = 1;				// write output files?
-	
+
 	int initMPI = 0;				// initialize MPI routines?, relevant only if compiling with MPI
 							// set it to F if you want your main program to handle MPI initialization
-	
+
 	logZero = -1E90;				// points with loglike < logZero will be ignored by MultiNest
-	
-	int maxiter = 0;				// max no. of iterations, a non-positive value means infinity. MultiNest will terminate if either it 
+
+	int maxiter = 0;				// max no. of iterations, a non-positive value means infinity. MultiNest will terminate if either it
 							// has done max no. of iterations or convergence criterion (defined through tol) has been satisfied
-	
+
 	// void *context = 0;				// not required by MultiNest, any additional information user wants to pass
-	
+
 	doBAMBI = 1;					// BAMBI?
 
 	useNN = 0;
-	
+
 	// calling MultiNest
 
 	BAMBIrun(mmodal, ceff, nlive, tol, efr, ndims, nPar, nClsPar, maxModes, updInt, Ztol, root, seed, pWrap, fb, resume, outfile, initMPI,
 	logZero, maxiter, LogLikeFctn, dumper, BAMBIfctn, context);
 
 */
-	
+
 #ifdef PARALLEL
  	MPI_Finalize();
 #endif

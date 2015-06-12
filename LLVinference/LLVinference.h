@@ -1,5 +1,5 @@
-#ifndef __EGGBOX_H__
-#define __EGGBOX_H__ 1
+#ifndef __LLVINFERENCE_H__
+#define __LLVINFERENCE_H__ 1
 
 #ifdef PARALLEL
 #include "mpi.h"
@@ -19,6 +19,7 @@
 #include "likelihood.h"
 #include "LLVFDresponse.h"
 #include "LLVnoise.h"
+#include "LLVInit.h"
 //#include "bambi.h"
 
 #ifdef __INTEL_COMPILER 			// if the MultiNest library was compiled with ifort
@@ -55,7 +56,7 @@ typedef struct tagLLVSignal
   struct tagListmodesCAmpPhaseFrequencySeries* VIRGOSignal; /* Signal in VIRGO, in the form of a list of the contribution of each mode */
   double LHOhh;                                             /* Inner product (h|h) for LHO */
   double LLOhh;                                             /* Inner product (h|h) for LLO */
-  double VIRGOhh;                                           /* Inner product (h|h) for VIRGO */            
+  double VIRGOhh;                                           /* Inner product (h|h) for VIRGO */
 } LLVSignal;
 
 /************ Functions for LLV parameters, injection, likelihood ************/
@@ -67,7 +68,7 @@ LLVParams* parse_args_LLV(ssize_t argc, char **argv);
 /* Function generating a LLV signal from LLV parameters */
 int LLVGenerateSignal(
   struct tagLLVParams* params,   /* Input: set of LLV parameters of the signal */
-  struct tagLLVSignal* signal);  /* Output: structure for the generated signal */ 
+  struct tagLLVSignal* signal);  /* Output: structure for the generated signal */
 
 /***************************************** BAMBI declarations **************************************************/
 
@@ -82,16 +83,16 @@ extern int doBAMBI,useNN,whitenin,whitenout,resume;
 
 /***************************************** C Interface to BAMBI **************************************************/
 
-/*extern void NESTRUN(int *, int *, int *, double *, double *, int *, int *, int *, int *, int *, double *, 
-char *, int *, int *, int *, int *, int *, int *, double *, int *, void (*Loglike)(double *, int *, int *, 
-double *, void *), void (*dumper)(int *, int *, int *, double **, double **, double **, double *, 
+/*extern void NESTRUN(int *, int *, int *, double *, double *, int *, int *, int *, int *, int *, double *,
+char *, int *, int *, int *, int *, int *, int *, double *, int *, void (*Loglike)(double *, int *, int *,
+double *, void *), void (*dumper)(int *, int *, int *, double **, double **, double **, double *,
 double *, double *, void *), void *context);*/
 
 /*
-void BAMBIrun(int mmodal, int ceff, int nlive, double tol, double efr, int ndims, int nPar, int nClsPar, 
-	int maxModes, int updInt, double Ztol, char root[], int seed, int *pWrap, int fb, int resume, int outfile, 
-	int initMPI, double logZero, int maxiter, void (*LogLike)(double *, int *, int *, double *, void *), 
-	void (*dumper)(int *, int *, int *, double **, double **, double **, double *, double *, double *, void *), 
+void BAMBIrun(int mmodal, int ceff, int nlive, double tol, double efr, int ndims, int nPar, int nClsPar,
+	int maxModes, int updInt, double Ztol, char root[], int seed, int *pWrap, int fb, int resume, int outfile,
+	int initMPI, double logZero, int maxiter, void (*LogLike)(double *, int *, int *, double *, void *),
+	void (*dumper)(int *, int *, int *, double **, double **, double **, double *, double *, double *, void *),
 	void (*bambi)(int *, int *, double **, double *), void *context)
 {
 	int i;
@@ -108,7 +109,7 @@ void BAMBIfctn(int *ndata, int *ndim, double **BAMBIData, double *lowlike)
 	// Do "nm bambi.o | grep bambi" to find the name of the function to put here.
 	// "c++filt <fctn name>" should return "bambi(...)"
 	// Remove one leading underscore for the name here.
-	
+
 	_Z5bambiPiS_PPdS0_(ndata, ndim, BAMBIData, lowlike);
 }
 
@@ -117,7 +118,7 @@ void LogLikeFctn(double *Cube, int *ndim, int *npars, double *lnew, void *contex
 	// Do "nm bambi.o | grep LogLike" to find the name of the function to put here.
 	// "c++filt <fctn name>" should return "LogLike(...)"
 	// Remove one leading underscore for the name here.
-	
+
 	_Z7LogLikePdPiS0_S_Pv(Cube, ndim, npars, lnew, context);
 }
 */
