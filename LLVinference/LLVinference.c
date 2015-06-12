@@ -75,13 +75,8 @@ LLVParams* parse_args_LLV(ssize_t argc, char **argv) {
         } else if (strcmp(argv[i], "--nbmode") == 0) {
             params->nbmode = atof(argv[++i]);
         } else {
-<<<<<<< HEAD
             //printf("Error: invalid option: %s\n", argv[i]);
             //goto fail;
-=======
-	  printf("Error: invalid option: %s\n", argv[i]);
-	  goto fail;
->>>>>>> daf9ea2ca361b5398f3bd2e37fdb657ad901b781
         }
     }
 
@@ -204,7 +199,7 @@ void getLogLike(LLVParams *params, double *lnew, void *context)
 {
   /*  */
   /*getallparams(Cube,ndim);
-  if (PriorBoundaryCheck(Cube)) {
+  if (PriorBoundaryCheck(priorParams, Cube)) {
     *lnew = -DBL_MAX;
     return;
   } */
@@ -298,12 +293,7 @@ int main(int argc, char *argv[])
 	/*********** Addendum *************/
 
 	/* Parse commandline to read parameters of injection */
-<<<<<<< HEAD
-	printf("a\n");
 	injectedparams = parse_args_LLV(argc, argv);
-=======
-	LLVParams* injectedparams = parse_args_LLV(argc, argv);
->>>>>>> daf9ea2ca361b5398f3bd2e37fdb657ad901b781
 
 	/* Load and initialize the detector noise */
 	LLVSimFD_Noise_Init_ParsePath();
