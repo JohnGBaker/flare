@@ -45,6 +45,7 @@ int main (){
   xc=3.47;
   x0=-20;
   a0=10.0;
+  //a0=0;
   sig=1.51e2;
 
   //Defin the f grid
