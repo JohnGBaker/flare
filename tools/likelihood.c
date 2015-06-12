@@ -47,7 +47,9 @@
 double FDSinglemodeOverlap(
   struct tagCAmpPhaseFrequencySeries *freqseries1, /* First mode h1, in amplitude/phase form */
   struct tagCAmpPhaseFrequencySeries *freqseries2, /* Second mode h2, in amplitude/phase form */
-  double (*Snoise)(double) ) /* Noise function */
+  double (*Snoise)(double),                        /* Noise function */
+  double fLow,                                     /* Lower bound of the frequency window for the detector */
+  double fHigh)                                    /* Upper bound of the frequency window for the detector */
 {
   /* Should add some error checking */
   CAmpPhaseFrequencySeries* h1 = freqseries1;
@@ -62,21 +64,16 @@ double FDSinglemodeOverlap(
   double *f2 = h2->freq->data;
   int n2 = h2->freq->size;
   double *h2Ar = h2->amp_real->data;
-  /* Here we add the complex conjugate apparently missing, copying the data to do it in a non-destructive way -  would be better to implement directly in wip_phase */  
-  //JGB: This shouldn't be necessary.  Before 6/8/15 there was a bug making phase sign inconsistent.)
-  gsl_vector* amp_imag2 = gsl_vector_alloc(n2);
-  gsl_vector* phase2 = gsl_vector_alloc(n2);
-  gsl_vector_memcpy(amp_imag2, h2->amp_imag);
-  gsl_vector_memcpy(phase2, h2->phase);
-  //JGB:So I'm commenting these out...
-  //gsl_vector_scale(amp_imag2, -1);
-  //gsl_vector_scale(phase2, -1);
-  double *h2Ai = amp_imag2->data;
-  double *h2p = phase2->data;
-  //JGB: Set these somehwere else where it makes sense.  f_min or f_max <= 0 means use intersection of signal domains.
-  double f_min=10.0;
-  double f_max=-1.0;
-  double overlap = wip_phase(f1, n1, f2, n2, h1Ar, h1Ai, h1p, h2Ar, h2Ai, h2p, Snoise, 1.0,f_min,f_max);
+  double *h2Ai = h2->amp_imag->data;
+  double *h2p = h2->phase->data;
+
+    //
+  //for( int j=0; j<n1; j++ ){
+  //  printf("%g %g %g %g || %g %g %g %g\n", f1[j], h1Ar[j], h1Ai[j], h1p[j], f2[j], h2Ar[j], h2Ai[j], h2p[j]);
+  //}
+
+  /* fLow or fHigh <= 0 means use intersection of signal domains  */
+  double overlap = wip_phase(f1, n1, f2, n2, h1Ar, h1Ai, h1p, h2Ar, h2Ai, h2p, Snoise, 1.0, fLow, fHigh);
   return overlap;
 }
 
@@ -84,16 +81,20 @@ double FDSinglemodeOverlap(
 double FDListmodesOverlap(
   struct tagListmodesCAmpPhaseFrequencySeries *listh1, /* First mode h1, list of modes in amplitude/phase form */
   struct tagListmodesCAmpPhaseFrequencySeries *listh2, /* Second mode h2, list of modes in amplitude/phase form */
-  double (*Snoise)(double)) /* Noise function */
+  double (*Snoise)(double),                            /* Noise function */
+  double fLow,                                         /* Lower bound of the frequency window for the detector */
+  double fHigh)                                        /* Upper bound of the frequency window for the detector */
 {
   double overlap = 0;
 
   /* Main loop over the modes - goes through all the modes present */
+  printf("FDListmodesOverlap:\n");
   ListmodesCAmpPhaseFrequencySeries* listelementh1 = listh1;
   while(listelementh1) {
     ListmodesCAmpPhaseFrequencySeries* listelementh2 = listh2;
     while(listelementh2) {
-      overlap += FDSinglemodeOverlap(listelementh1->freqseries, listelementh2->freqseries, Snoise);
+      printf("(%d%d,%d%d): %g\n", listelementh1->l, listelementh1->m, listelementh2->l, listelementh2->m, FDSinglemodeOverlap(listelementh1->freqseries, listelementh2->freqseries, Snoise, fLow, fHigh));
+      overlap += FDSinglemodeOverlap(listelementh1->freqseries, listelementh2->freqseries, Snoise, fLow, fHigh);
 	listelementh2 = listelementh2->next;
     }
     listelementh1 = listelementh1->next;
@@ -105,7 +106,9 @@ double FDListmodesOverlap(
 double FDListmodesOverlapNoCrossTerms(
   struct tagListmodesCAmpPhaseFrequencySeries *listh1, /* First mode h1, list of modes in amplitude/phase form */
   struct tagListmodesCAmpPhaseFrequencySeries *listh2, /* Second mode h2, list of modes in amplitude/phase form */
-  double (*Snoise)(double)) /* Noise function */
+  double (*Snoise)(double),                            /* Noise function */
+  double fLow,                                         /* Lower bound of the frequency window for the detector */
+  double fHigh)                                        /* Upper bound of the frequency window for the detector */
 {
   double overlap = 0;
 
@@ -113,7 +116,7 @@ double FDListmodesOverlapNoCrossTerms(
   ListmodesCAmpPhaseFrequencySeries* listelementh1 = listh1;
   while(listelementh1) {
     ListmodesCAmpPhaseFrequencySeries* listelementh2 = ListmodesCAmpPhaseFrequencySeries_GetMode(listh2, listelementh1->l, listelementh1->m);
-    overlap += FDSinglemodeOverlap(listelementh1->freqseries, listelementh2->freqseries, Snoise);
+    overlap += FDSinglemodeOverlap(listelementh1->freqseries, listelementh2->freqseries, Snoise, fLow, fHigh);
     listelementh1 = listelementh1->next;
   }
   return overlap;
@@ -124,8 +127,10 @@ double FDLogLikelihood(
   struct tagListmodesCAmpPhaseFrequencySeries *lists,  /* Input: list of modes for the signal s, in Frequency-domain amplitude and phase form */
   struct tagListmodesCAmpPhaseFrequencySeries *listh,  /* Input: list of modes for the template, in Frequency-domain amplitude and phase form */
   double (*Snoise)(double),                            /* Noise function */
+  double fLow,                                         /* Lower bound of the frequency window for the detector */
+  double fHigh,                                        /* Upper bound of the frequency window for the detector */
   double ss,                                           /* Inner product (s|s), constant to be computed elsewhere and passed as an argument */
-  double hh )                                         /* Inner product (h|h), constant to be computed elsewhere and passed as an argument */
+  double hh )                                          /* Inner product (h|h), constant to be computed elsewhere and passed as an argument */
 {
-  return FDListmodesOverlap(lists, listh, Snoise) - 1./2 * hh - 1/2 * ss;
+  return FDListmodesOverlap(lists, listh, Snoise, fLow, fHigh) - 1./2 * hh - 1./2 * ss;
 }

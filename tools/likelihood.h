@@ -46,27 +46,35 @@
 double FDSinglemodeOverlap(
   struct tagCAmpPhaseFrequencySeries *freqseries1, /* First mode h1, in amplitude/phase form */
   struct tagCAmpPhaseFrequencySeries *freqseries2, /* Second mode h2, in amplitude/phase form */
-  double (*Snoise)(double) ); /* Noise function */
+  double (*Snoise)(double),                        /* Noise function */
+  double fLow,                                     /* Lower bound of the frequency window for the detector */
+  double fHigh);                                   /* Upper bound of the frequency window for the detector */
 
 /* Function computing the overlap (h1|h2) between two waveforms given as list of modes, for a given noise function - all the cross-products between modes are taken into account */
 double FDListmodesOverlap(
   struct tagListmodesCAmpPhaseFrequencySeries *listh1, /* First mode h1, list of modes in amplitude/phase form */
   struct tagListmodesCAmpPhaseFrequencySeries *listh2, /* Second mode h2, list of modes in amplitude/phase form */
-  double (*Snoise)(double) ); /* Noise function */
+  double (*Snoise)(double),                            /* Noise function */
+  double fLow,                                         /* Lower bound of the frequency window for the detector */
+  double fHigh);                                       /* Upper bound of the frequency window for the detector */
 
 /* Function computing the overlap (h1|h2) between two waveforms given as list of modes, for a given noise function - no cross-products between modes are taken into account */
 double FDListmodesOverlapNoCrossTerms(
   struct tagListmodesCAmpPhaseFrequencySeries *listh1, /* First mode h1, list of modes in amplitude/phase form */
   struct tagListmodesCAmpPhaseFrequencySeries *listh2, /* Second mode h2, list of modes in amplitude/phase form */
-  double (*Snoise)(double) ); /* Noise function */
+  double (*Snoise)(double),                            /* Noise function */
+  double fLow,                                         /* Lower bound of the frequency window for the detector */
+  double fHigh);                                       /* Upper bound of the frequency window for the detector */
 
 /* Function computing the log likelihood (h|s) - 1/2 (h|h), with s the signal, h the template, and where we discarded the constant term (s|s) - all the cross-products between modes are taken into account */
 double FDLogLikelihood(
   struct tagListmodesCAmpPhaseFrequencySeries *lists,  /* Input: list of modes for the signal s, in Frequency-domain amplitude and phase form */
   struct tagListmodesCAmpPhaseFrequencySeries *listh,  /* Input: list of modes for the template, in Frequency-domain amplitude and phase form */
   double (*Snoise)(double),                            /* Noise function */
+  double fLow,                                         /* Lower bound of the frequency window for the detector */
+  double fHigh,                                        /* Upper bound of the frequency window for the detector */
   double ss,                                           /* Inner product (s|s), constant to be computed elsewhere and passed as an argument */
-  double hh );                                         /* Inner product (h|h), constant to be computed elsewhere and passed as an argument */
+  double hh);                                          /* Inner product (h|h), constant to be computed elsewhere and passed as an argument */
 
 #if 0
 { /* so that editors will match succeeding brace */

@@ -37,6 +37,16 @@
 #include "constants.h"
 
 
+/************************************************************************/
+/****** Global variables storing min and max f for the noise PSD  *******/
+
+extern double __LLVSimFD_LHONoise_fLow;
+extern double __LLVSimFD_LHONoise_fHigh;
+extern double __LLVSimFD_LLONoise_fLow;
+extern double __LLVSimFD_LLONoise_fHigh;
+extern double __LLVSimFD_VIRGONoise_fLow;
+extern double __LLVSimFD_VIRGONoise_fHigh;
+
 /**************************************************************************/
 /****** Prototypes: functions loading and evaluating the noise PSD  *******/
 

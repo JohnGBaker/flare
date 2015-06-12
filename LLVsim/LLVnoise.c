@@ -51,12 +51,12 @@ gsl_interp_accel* __LLVSimFD_LLONoiseAccel_init = NULL; /* for initialization on
 gsl_interp_accel** const __LLVSimFD_LLONoiseAccel = &__LLVSimFD_LLONoiseAccel_init;
 gsl_interp_accel* __LLVSimFD_VIRGONoiseAccel_init = NULL; /* for initialization only */
 gsl_interp_accel** const __LLVSimFD_VIRGONoiseAccel = &__LLVSimFD_VIRGONoiseAccel_init;
-double __LLVSimFD_LHONoise_fLow;
-double __LLVSimFD_LHONoise_fHigh;
-double __LLVSimFD_LLONoise_fLow;
-double __LLVSimFD_LLONoise_fHigh;
-double __LLVSimFD_VIRGONoise_fLow;
-double __LLVSimFD_VIRGONoise_fHigh;
+double __LLVSimFD_LHONoise_fLow = 0;
+double __LLVSimFD_LHONoise_fHigh = 0;
+double __LLVSimFD_LLONoise_fLow = 0;
+double __LLVSimFD_LLONoise_fHigh = 0;
+double __LLVSimFD_VIRGONoise_fLow = 0;
+double __LLVSimFD_VIRGONoise_fHigh = 0;
 int __LLVSimFD_Noise_setup = FAILURE;
 
 /* The number of points in the noise data files - required as the Read_Vector function needs a gsl vector already initialized to the right length */
@@ -146,7 +146,16 @@ int LLVSimFD_Noise_Init(const char dir[]) {
     gsl_spline_init(*__LLVSimFD_LHONoiseSpline, gsl_vector_const_ptr(noise_LHO_freq, 0), gsl_vector_const_ptr(noise_LHO_data, 0), noisedata_pts);
     gsl_spline_init(*__LLVSimFD_LLONoiseSpline, gsl_vector_const_ptr(noise_LLO_freq, 0), gsl_vector_const_ptr(noise_LLO_data, 0), noisedata_pts);
     gsl_spline_init(*__LLVSimFD_VIRGONoiseSpline, gsl_vector_const_ptr(noise_VIRGO_freq, 0), gsl_vector_const_ptr(noise_VIRGO_data, 0), noisedata_pts);
-    /* Setting the global tag to success */
+    /* Setting the global tag to success and clean up */
+    gsl_matrix_free(noise_LHO);
+    gsl_matrix_free(noise_LLO);
+    gsl_matrix_free(noise_VIRGO);
+    gsl_vector_free(noise_LHO_freq);
+    gsl_vector_free(noise_LLO_freq);
+    gsl_vector_free(noise_VIRGO_freq);
+    gsl_vector_free(noise_LHO_data);
+    gsl_vector_free(noise_LLO_data);
+    gsl_vector_free(noise_VIRGO_data);
     __LLVSimFD_Noise_setup = SUCCESS;
   }
   

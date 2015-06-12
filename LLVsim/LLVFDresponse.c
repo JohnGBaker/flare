@@ -84,6 +84,8 @@ void SetMatrixD(
       gsl_matrix_set(D, i, j, 1./2*(gsl_vector_get(nx, i)*gsl_vector_get(nx, j) - gsl_vector_get(ny, i)*gsl_vector_get(ny, j)));
     }
   }
+  gsl_vector_free(nx);
+  gsl_vector_free(ny);
 }
 
 /* Function setting the position of a detector, in cartesian coordinates */

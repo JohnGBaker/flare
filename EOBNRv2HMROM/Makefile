@@ -1,7 +1,7 @@
 GSLROOT = /opt/local
 GSLINC = $(GSLROOT)/include
 CC = gcc
-CFLAGS := -g -std=c99 -I$(GSLINC) -I../tools -I../integration -I../EOBNRv2HMROM -I../LISAsim -I../LLVsim -I../LLVinference
+CFLAGS := -g -O0 -std=c99 -I$(GSLINC) -I../tools -I../integration -I../EOBNRv2HMROM -I../LISAsim -I../LLVsim -I../LLVinference
 
 OBJ = EOBNRv2HMROM.o EOBNRv2HMROMstruct.o
 
