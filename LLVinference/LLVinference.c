@@ -1,8 +1,8 @@
 #include "LLVinference.h"
 
 // Global parameters
-LLVParams* injectedparams = NULL, templateparams = NULL;
-LLVPrior* priorParams = NULL;
+LLVParams *injectedparams = NULL, *templateparams = NULL;
+LLVPrior *priorParams = NULL;
 
 /************ Functions to initalize and clean up structure for the signals ************/
 
@@ -30,7 +30,7 @@ void LLVSignal_Init(LLVSignal** signal) {
 /* Parse command line and return a newly allocated LLVParams object */
 /* Masses are input in solar masses and distances in Mpc - converted in SI for the internals */
 LLVParams* parse_args_LLV(ssize_t argc, char **argv) {
-    char help[] = ""
+    char help[] = "";
 
     ssize_t i;
     LLVParams* params;
@@ -167,7 +167,7 @@ void getphysparams(double *Cube, int *ndim)
   Cube[4] = templateparams->phiRef;
   Cube[5] = templateparams->inclination;
   Cube[6] = templateparams->ra;
-  Cube[7] = templateparams-dec;
+  Cube[7] = templateparams->dec;
   Cube[8] = templateparams->polarization;
 }
 
