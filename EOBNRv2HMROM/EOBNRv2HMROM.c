@@ -457,7 +457,7 @@ int EOBNRv2HMROMCore(
       double f22peak = fmin(omega22peakOfq(q)/(2*PI), Mf_ROM_max_ref); /* We ensure we evaluate the spline within its range */
       tpeak22estimate = -1./(2*PI) * gsl_spline_eval_deriv(spline_phi22, f22peak, accel_phi22);
       /* Determine the change in phase (to be propagated to all modes) required to have phi22(fRef) = phiRef */
-      phase_change_ref = phiRef + (gsl_spline_eval(spline_phi22, fRef_geom, accel_phi22) - (twopishifttime - 2*PI*tpeak22estimate) * fRef_geom - shiftphase);
+      phase_change_ref = phiRef + (gsl_spline_eval(spline_phi22, fRef_geom, accel_phi22) - (twopishifttime - 2*PI*tpeak22estimate + 2*PI*deltatRef_geom) * fRef_geom - shiftphase);
       gsl_spline_free(spline_phi22);
       gsl_interp_accel_free(accel_phi22);
       }
@@ -467,7 +467,7 @@ int EOBNRv2HMROMCore(
       }
     }
     /* Total shift in time, and total change in phase for this mode */
-    double totaltwopishifttime = twopishifttime - 2*PI*tpeak22estimate;
+    double totaltwopishifttime = twopishifttime - 2*PI*tpeak22estimate + 2*PI*deltatRef_geom;
     double constphaseshift = (double) m/listmode[0][1] * phase_change_ref + shiftphase;
 
     /* Initialize the complex series for the mode */
