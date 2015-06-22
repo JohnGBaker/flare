@@ -81,22 +81,22 @@ double CubeToPowerPrior(double p, double r, double x1, double x2)
     return pow(r * pow(x2, pp) + (1.0 - r) * pow(x1, pp), 1.0 / pp);
 }
 
-double LALInferenceCubeToGaussianPrior(double r, double mean, double sigma)
+double CubeToGaussianPrior(double r, double mean, double sigma)
 {
     return gsl_cdf_gaussian_Pinv(r,sigma) + mean;
 }
 
-double LALInferenceCubeToSinPrior(double r, double x1, double x2)
+double CubeToSinPrior(double r, double x1, double x2)
 {
     return acos((1.0-r)*cos(x1)+r*cos(x2));
 }
 
-double LALInferenceCubeToCosPrior(double r, double x1, double x2)
+double CubeToCosPrior(double r, double x1, double x2)
 {
     return asin((1.0-r)*sin(x1)+r*sin(x2));
 }
 
-LLVRunParams* LLInitializeRunParams(ssize_t argc, char **argv)
+LLVRunParams* LLVInitializeRunParams(ssize_t argc, char **argv)
 {
 	ssize_t i;
     LLVRunParams* runParams;

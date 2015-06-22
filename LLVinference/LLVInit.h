@@ -1,6 +1,8 @@
 #ifndef __LLVINIT_H__
 #define __LLVINIT_H__ 1
 
+#include <stdlib.h>
+#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include <gsl/gsl_cdf.h>
@@ -30,7 +32,7 @@ typedef struct tagLLVRunParams {
 LLVPrior* LLVInitializePrior(ssize_t argc, char **argv);
 
 // checks prior boundaires
-int PriorBoundaryCheck(LLVPrior *prior, LLVParams *template);
+int PriorBoundaryCheck(LLVPrior *prior, double *Cube);
 
 // Prior functions from Cube to physical parameters
 // x1 is min, x2 is max when specified
@@ -38,9 +40,9 @@ int PriorBoundaryCheck(LLVPrior *prior, LLVParams *template);
 double CubeToFlatPrior(double r, double x1, double x2);
 double CubeToLogFlatPrior(double r, double x1, double x2);
 double CubeToPowerPrior(double p, double r, double x1, double x2);
-double LALInferenceCubeToGaussianPrior(double r, double mean, double sigma);
-double LALInferenceCubeToSinPrior(double r, double x1, double x2);
-double LALInferenceCubeToCosPrior(double r, double x1, double x2);
+double CubeToGaussianPrior(double r, double mean, double sigma);
+double CubeToSinPrior(double r, double x1, double x2);
+double CubeToCosPrior(double r, double x1, double x2);
 
 // initialize BAMBI run parameters
 LLVRunParams* LLVInitializeRunParams(ssize_t argc, char **argv);
