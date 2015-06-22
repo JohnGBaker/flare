@@ -99,9 +99,15 @@ static double Scaling55(const double q) {
 static double EtaOfq(const double q) {
   return q/(1.+q)/(1.+q);
 }
-/* Function evaluating delta m/m = (m1-m2)/(m1+m2) as a function of q*/
+/* Function evaluating delta m/m = (m1-m2)/(m1+m2) as a function of q */
 static double DeltaOfq(const double q) {
   return( (q-1.)/(q+1.) );
+}
+
+/* Fit of the frequency of the 22 mode at the peak amplitude - from table III in the EOBNRv2HM paper, Pan&al 1106 */
+static double omega22peakOfq(const double q) {
+  double eta = EtaOfq(q);
+  return 0.2733 + 0.2316*eta + 0.4463*eta*eta;
 }
 
 /* Amplitude factors scaled out for each mode; this does not include the global amplitude factor scaled out from all modes. */
@@ -330,7 +336,7 @@ int Evaluate_Spline_Data(const double q, const EOBNRHMROMdata_interp* data_inter
 int EOBNRv2HMROMCore(
   struct tagListmodesCAmpPhaseFrequencySeries **listhlm,
   int nbmode,
-  double tRef,
+  double deltatRef,
   double phiRef,
   double fRef,
   double Mtot_sec,
@@ -371,7 +377,7 @@ int EOBNRv2HMROMCore(
   EOBNRHMROMdata* data_ref = listdata_ref->data;
   double Mf_ROM_max_ref = gsl_vector_get(data_ref->freq, nbfreq-1);
   /* Convert to geometric units the reference time and frequency */
-  double tRef_geom = tRef / Mtot_sec;
+  double deltatRef_geom = deltatRef / Mtot_sec;
   double fRef_geom = fRef * Mtot_sec;
 
   /* Enforce allowed geometric frequency range for fRef */
@@ -422,35 +428,46 @@ int EOBNRv2HMROMCore(
     if ( l==5 && m==5) gsl_vector_scale( freq_ds, 1./Scaling55(q));
 
     /* Evaluating the shifts in time and phase - conditional scaling for the 44 and 55 modes */
+    /* Note: the stored values of 'shittime' correspond actually to 2pi*Deltat */
     SplineList* shifttime_splinelist = listdata_interp_mode->data_interp->shifttime_interp;
     SplineList* shiftphase_splinelist = listdata_interp_mode->data_interp->shiftphase_interp;
-    double shifttime;
+    double twopishifttime;
     if( l==4 && m==4) {
-      shifttime = gsl_spline_eval(shifttime_splinelist->spline, q, shifttime_splinelist->accel) * Scaling44(q);
+      twopishifttime = gsl_spline_eval(shifttime_splinelist->spline, q, shifttime_splinelist->accel) * Scaling44(q);
     }
     else if( l==5 && m==5) {
-      shifttime = gsl_spline_eval(shifttime_splinelist->spline, q, shifttime_splinelist->accel) * Scaling55(q);
+      twopishifttime = gsl_spline_eval(shifttime_splinelist->spline, q, shifttime_splinelist->accel) * Scaling55(q);
     }
     else {
-      shifttime = gsl_spline_eval(shifttime_splinelist->spline, q, shifttime_splinelist->accel);
+      twopishifttime = gsl_spline_eval(shifttime_splinelist->spline, q, shifttime_splinelist->accel);
     }
     double shiftphase = gsl_spline_eval(shiftphase_splinelist->spline, q, shiftphase_splinelist->accel);
 
-    /* Adding to the internal shifttime the time shift (forward for a + sign) specified by the user with tRef - put in geometric units first */
-    shifttime = shifttime + tRef_geom;
-
-    /* If first mode in the list, set the value of phase_change_ref */
+    /* If first mode in the list, assumed to be the 22 mode, set totalshifttime and phase_change_ref */
+    double tpeak22estimate;
     if( i==0 ) {
-      /* Setup 1d cubic spline in phase and determine phase_change_ref */
-      gsl_interp_accel* accel_phi = gsl_interp_accel_alloc();
-      gsl_spline* spline_phi = gsl_spline_alloc(gsl_interp_cspline, nbfreq);
-      gsl_spline_init(spline_phi, gsl_vector_const_ptr(freq_ds,0), gsl_vector_const_ptr(phi_f,0), nbfreq);
-      phase_change_ref = phiRef + (gsl_spline_eval(spline_phi, fRef_geom, accel_phi) - shifttime * fRef_geom - shiftphase);
-      gsl_spline_free(spline_phi);
-      gsl_interp_accel_free(accel_phi);
+      if(l==2 && m==2) {
+      /* Setup 1d cubic spline for the phase of the 22 mode */
+      gsl_interp_accel* accel_phi22 = gsl_interp_accel_alloc();
+      gsl_spline* spline_phi22 = gsl_spline_alloc(gsl_interp_cspline, nbfreq);
+      gsl_spline_init(spline_phi22, gsl_vector_const_ptr(freq_ds,0), gsl_vector_const_ptr(phi_f,0), nbfreq);
+      /* Compute the shift in time needed to set the peak of the 22 mode roughly at deltatRef */
+      /* We use the SPA formula tf = -(1/2pi)*dPsi/df to estimate the correspondence between frequency and time */
+      /* The frequency corresponding to the 22 peak is omega22peak/2pi, with omega22peak taken from the fit to NR in Pan&al 1106 EOBNRv2HM paper */
+      double f22peak = fmin(omega22peakOfq(q)/(2*PI), Mf_ROM_max_ref); /* We ensure we evaluate the spline within its range */
+      tpeak22estimate = -1./(2*PI) * gsl_spline_eval_deriv(spline_phi22, f22peak, accel_phi22);
+      /* Determine the change in phase (to be propagated to all modes) required to have phi22(fRef) = phiRef */
+      phase_change_ref = phiRef + (gsl_spline_eval(spline_phi22, fRef_geom, accel_phi22) - (twopishifttime - 2*PI*tpeak22estimate) * fRef_geom - shiftphase);
+      gsl_spline_free(spline_phi22);
+      gsl_interp_accel_free(accel_phi22);
+      }
+      else {
+	printf("Error: the first mode in listmode must be the 22 mode to set the changes in phase and time \n");
+	return FAILURE;
+      }
     }
-    /* Propagation to this mode of the ref phase change with the proper factor of m
-     * and sum with shiftphase */
+    /* Total shift in time, and total change in phase for this mode */
+    double totaltwopishifttime = twopishifttime - 2*PI*tpeak22estimate;
     double constphaseshift = (double) m/listmode[0][1] * phase_change_ref + shiftphase;
 
     /* Initialize the complex series for the mode */
@@ -468,7 +485,7 @@ int EOBNRv2HMROMCore(
     gsl_vector_set_zero(modefreqseries->amp_imag); /* Amplitudes are real at this stage */
     /* Add the linear term and the constant (including the shift to phiRef), and set the phases */
     gsl_vector_scale(phi_f, -1.); /* Change the sign of the phases: ROM convention Psi=-phase */
-    gsl_blas_daxpy(shifttime, freq_ds, phi_f); /*Beware: here freq_ds must still be in geometric units*/
+    gsl_blas_daxpy(totaltwopishifttime, freq_ds, phi_f); /*Beware: here freq_ds must still be in geometric units*/
     gsl_vector_add_constant(phi_f, constphaseshift);
     gsl_vector_memcpy(modefreqseries->phase, phi_f);
     /* Scale (to physical units) and set the frequencies */
@@ -500,7 +517,7 @@ int EOBNRv2HMROMCore(
 int SimEOBNRv2HMROM(
   struct tagListmodesCAmpPhaseFrequencySeries **listhlm,  /* Output: list of modes in Frequency-domain amplitude and phase form */
   int nbmode,                                    /* Number of modes to generate (starting with the 22) */
-  double tRef,                                   /* Time shift with respect to the 22-fit removed waveform (s) */
+  double deltatRef,                              /* Time shift so that the peak of the 22 mode occurs at deltatRef */
   double phiRef,                                 /* Phase at reference frequency */
   double fRef,                                   /* Reference frequency (Hz); 0 defaults to fLow */
   double m1SI,                                   /* Mass of companion 1 (kg) */
@@ -526,7 +543,7 @@ int SimEOBNRv2HMROM(
   //printf("Initialization time: %g s\n", (double)(end - beg) / CLOCKS_PER_SEC);
   
   //beg = clock();
-  int retcode = EOBNRv2HMROMCore(listhlm, nbmode, tRef, phiRef, fRef, Mtot_sec, q, distance);
+  int retcode = EOBNRv2HMROMCore(listhlm, nbmode, deltatRef, phiRef, fRef, Mtot_sec, q, distance);
   //end = clock();
   //printf("ROM evaluation time: %g s\n", (double)(end - beg) / CLOCKS_PER_SEC);
 

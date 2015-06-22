@@ -37,6 +37,8 @@
 #include "constants.h"
 #include "LLVgeometry.h"
 #include "struct.h"
+#include "timeconversion.h"
+
 
 /**************************************************/
 /**************** Prototypes **********************/
@@ -44,12 +46,13 @@
 /* Core function processing a signal (in the form of a list of modes) through the Fourier-domain LLV response (for a given detector), for given values of the inclination, position in the sky and polarization angle */
 int LLVSimFDResponse(
   struct tagListmodesCAmpPhaseFrequencySeries **listhlm,  /* Input: list of modes in Frequency-domain amplitude and phase form as produced by the ROM */
-  struct tagListmodesCAmpPhaseFrequencySeries **lists,  /* Output: list of contribution of each mode in the detector signal, in Frequency-domain amplitude and phase form, for the given detector and sky position */
-  const double inclination,                                   /* Inclination of the source */
-  const double theta,                                         /* First angle for the position in the sky */
-  const double phi,                                           /* Second angle for the position in the sky */
-  const double psi,                                           /* Polarization angle */
-  const detectortag tag);                                     /* Tag identifying the detector */
+  struct tagListmodesCAmpPhaseFrequencySeries **lists,    /* Output: list of contribution of each mode in the detector signal, in Frequency-domain amplitude and phase form, for the given detector and sky position */
+  const double gpstime,                                   /* GPS time (s) when the signal at coalescence reaches geocenter */
+  const double ra,                                        /* Position in the sky: J2000.0 right ascension (rad) */
+  const double dec,                                       /* Position in the sky: J2000.0 declination (rad) */
+  const double inclination,                               /* Inclination of the source (rad) */
+  const double psi,                                       /* Polarization angle (rad) */
+  const detectortag tag);                                 /* Tag identifying the detector */
 
 /* Function setting the response matrix of a given detector, in cartesian coordinates */
 void SetMatrixD(
@@ -65,8 +68,8 @@ void SetVectorsXYZ(
   gsl_vector* X,                       /* Output: cartesian vector of the wave frame unit vector X */
   gsl_vector* Y,                       /* Output: cartesian vector of the wave frame unit vector Y */
   gsl_vector* Z,                       /* Output: cartesian vector of the wave frame unit vector Z */
-  const double theta,                  /* First angle for the position in the sky */
-  const double phi,                    /* Second angle for the position in the sky */
+  const double theta,                  /* First angle for the position in the sky (Earth-based spherical angle) */
+  const double phi,                    /* Second angle for the position in the sky (Earth-based spherical angle) */
   const double psi);                   /* Polarization angle */
 
 #if 0

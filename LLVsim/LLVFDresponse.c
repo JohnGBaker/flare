@@ -35,8 +35,8 @@
 #include "LLVgeometry.h"
 #include "struct.h"
 #include "LLVFDresponse.h"
+#include "timeconversion.h"
 
-#include <time.h> /* for testing */
 
 /************************************************************/
 /********* Functions setting detector geometry **************/
@@ -119,8 +119,8 @@ void SetVectorsXYZ(
   gsl_vector* X,                       /* Output: cartesian vector of the wave frame unit vector X */
   gsl_vector* Y,                       /* Output: cartesian vector of the wave frame unit vector Y */
   gsl_vector* Z,                       /* Output: cartesian vector of the wave frame unit vector Z */
-  const double theta,                  /* First angle for the position in the sky */
-  const double phi,                    /* Second angle for the position in the sky */
+  const double theta,                  /* First angle for the position in the sky (Earth-based spherical angle) */
+  const double phi,                    /* Second angle for the position in the sky (Earth-based spherical angle) */
   const double psi)                    /* Polarization angle */
 {
   double cospsi = cos(psi);
@@ -149,18 +149,24 @@ void SetVectorsXYZ(
 /* Core function processing a signal (in the form of a list of modes) through the Fourier-domain LLV response (for a given detector), for given values of the inclination, position in the sky and polarization angle */
 int LLVSimFDResponse(
   struct tagListmodesCAmpPhaseFrequencySeries **listhlm,  /* Input: list of modes in Frequency-domain amplitude and phase form as produced by the ROM */
-  struct tagListmodesCAmpPhaseFrequencySeries **lists,  /* Output: list of contribution of each mode in the detector signal, in Frequency-domain amplitude and phase form, for the given detector and sky position */
-  const double inclination,                                   /* Inclination of the source */
-  const double theta,                                         /* First angle for the position in the sky */
-  const double phi,                                           /* Second angle for the position in the sky */
-  const double psi,                                           /* Polarization angle */
-  const detectortag tag)                                      /* Tag identifying the detector */
+  struct tagListmodesCAmpPhaseFrequencySeries **lists,    /* Output: list of contribution of each mode in the detector signal, in Frequency-domain amplitude and phase form, for the given detector and sky position */
+  const double gpstime,                                   /* GPS time (s) when the signal at coalescence reaches geocenter */
+  const double ra,                                        /* Position in the sky: J2000.0 right ascension (rad) */
+  const double dec,                                       /* Position in the sky: J2000.0 declination (rad) */
+  const double inclination,                               /* Inclination of the source (rad) */
+  const double psi,                                       /* Polarization angle (rad) */
+  const detectortag tag)                                  /* Tag identifying the detector */
 {
   /* Define matrix D and position vector Xd of the detector */
   gsl_matrix* D = gsl_matrix_alloc(3,3);
   gsl_vector* Xd = gsl_vector_alloc(3);
   SetVectorXd(Xd, tag);
   SetMatrixD(D, tag);
+
+  /* Conversion from (ra, dec) to the Earth-based spherical angles (theta, phi) - neglecting nutation and precession, and identifying UT1 and UTC, so accurate roughly to a second of time */
+  double gmst_angle = gmst_angle_from_gpstime(gpstime);
+  double theta = PI/2 - dec;
+  double phi = ra - gmst_angle;
 
   /* Define waveframe unit vectors (X,Y,Z) */
   gsl_vector* X = gsl_vector_alloc(3);
@@ -225,18 +231,18 @@ int LLVSimFDResponse(
     gsl_vector* amp_imags = modefreqseriess->amp_imag;
     gsl_vector* phases = modefreqseriess->phase;
 
-    /* Loop over the frequencies - multiplying by F+, Fx, and phase due to the delay from geocenter to the detector */
+    /* Loop over the frequencies - multiplying by F+, Fx, and add phase due to the delay from geocenter to the detector */
     double complex factorcamp = Fplus*Yfactorplus + Fcross*Yfactorcross;
     for(int j=0; j<len; j++) {
       f = gsl_vector_get(freq, j);
       camp = gsl_vector_get(amp_real, j) + I*gsl_vector_get(amp_imag, j);
-      camps = camp * factorcamp * cexp(I*twopidelay*f);
+      camps = camp * factorcamp;
       gsl_vector_set(amp_reals, j, creal(camps));
       gsl_vector_set(amp_imags, j, cimag(camps));
+      gsl_vector_set(phases, j, gsl_vector_get(phase, j) + twopidelay*f);
     }
-    /* Copying the vectors of frequencies and phases */
+    /* Copying the vectors of frequencies */
     gsl_vector_memcpy(freqs, freq);
-    gsl_vector_memcpy(phases, phase);
     
     /* Append the modes to the ouput list-of-modes structures */
     *lists = ListmodesCAmpPhaseFrequencySeries_AddModeNoCopy(*lists, modefreqseriess, l, m);

@@ -1,7 +1,8 @@
 #include "LLVinference.h"
 
 // Global parameters
-LLVParams* injectedparams = NULL, templateparams = NULL;
+LLVParams* injectedparams = NULL;
+LLVParams* templateparams = NULL;
 LLVPrior* priorParams = NULL;
 
 /************ Functions to initalize and clean up structure for the signals ************/
@@ -28,9 +29,8 @@ void LLVSignal_Init(LLVSignal** signal) {
 /************ Functions for LLV parameters, injection, likelihood ************/
 
 /* Parse command line and return a newly allocated LLVParams object */
-/* Masses are input in solar masses and distances in Mpc - converted in SI for the internals */
 LLVParams* parse_args_LLV(ssize_t argc, char **argv) {
-    char help[] = ""
+    char help[] = "";
 
     ssize_t i;
     LLVParams* params;
@@ -61,7 +61,7 @@ LLVParams* parse_args_LLV(ssize_t argc, char **argv) {
         } else if (strcmp(argv[i], "--m2") == 0) {
             params->m2 = atof(argv[++i]) * MSUN_SI;
         } else if (strcmp(argv[i], "--distance") == 0) {
-            params->distance = atof(argv[++i]) * 1e6 * PC_SI;
+            params->distance = atof(argv[++i]) * PC_SI;
         } else if (strcmp(argv[i], "--ra") == 0) {
             params->ra = atof(argv[++i]);
         } else if (strcmp(argv[i], "--dec") == 0) {
@@ -97,14 +97,19 @@ int LLVGenerateSignal(
   ListmodesCAmpPhaseFrequencySeries* listLLO = NULL;
   ListmodesCAmpPhaseFrequencySeries* listVIRGO = NULL;
 
-  /* Should add error checking ? */
+  /* Checking that the global injectedparams has been set up */
+  if (!injectedparams) {
+    printf("Error: when calling LLVGenerateSignal, injectedparams points to NULL.\n");
+    exit(1);
+  }
+  /* Should add more error checking ? */
   /* Generate the waveform with the ROM */
-  SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef, params->phiRef, params->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*PC_SI);
+  SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, params->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*PC_SI);
   /* Process the waveform through the LLV response */
   /* TO BE MODIFIED FOR RA DEC */
-  LLVSimFDResponse(&listROM, &listLHO, params->inclination, params->ra, params->dec, params->polarization, LHO);
-  LLVSimFDResponse(&listROM, &listLLO, params->inclination, params->ra, params->dec, params->polarization, LLO);
-  LLVSimFDResponse(&listROM, &listVIRGO, params->inclination, params->ra, params->dec, params->polarization, VIRGO);
+  LLVSimFDResponse(&listROM, &listLHO, params->tRef, params->ra, params->dec, params->inclination, params->polarization, LHO);
+  LLVSimFDResponse(&listROM, &listLLO, params->tRef, params->ra, params->dec, params->inclination, params->polarization, LLO);
+  LLVSimFDResponse(&listROM, &listVIRGO, params->tRef, params->ra, params->dec, params->inclination, params->polarization, VIRGO);
 
   /* Precompute the inner products (h|h) and (s|s) */
   double LHOhh = FDListmodesOverlap(listLHO, listLHO, NoiseSnLHO, __LLVSimFD_LHONoise_fLow, __LLVSimFD_LHONoise_fHigh);
@@ -167,7 +172,7 @@ void getphysparams(double *Cube, int *ndim)
   Cube[4] = templateparams->phiRef;
   Cube[5] = templateparams->inclination;
   Cube[6] = templateparams->ra;
-  Cube[7] = templateparams-dec;
+  Cube[7] = templateparams->dec;
   Cube[8] = templateparams->polarization;
 }
 

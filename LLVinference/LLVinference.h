@@ -33,19 +33,18 @@
 /***************** Structure definitions *****************/
 
 /* Parameters for the generation of a LLV waveform (in the form of a list of modes) */
-/* All parameters are in SI units in the internals */
 typedef struct tagLLVParams {
-  double tRef;               /* reference time (s) - time at the frequency representing coalescence */
+  double tRef;               /* reference time (s) - GPS time at the frequency representing coalescence */
   double phiRef;             /* reference phase (rad) - phase at the frequency representing coalescence (or at fRef if specified) */
-  double m1;                 /* mass of companion 1 (solar masses) (default 10) */
-  double m2;                 /* mass of companion 2 (solar masses) (default 10) */
-  double distance;           /* distance of source (pc) (default 100*1e6) */
+  double m1;                 /* mass of companion 1 (solar masses) */
+  double m2;                 /* mass of companion 2 (solar masses) */
+  double distance;           /* distance of source (pc) */
   double ra;                 /* right ascension of the source (rad) */
   double dec;                /* declination of the source (rad) */
   double inclination;        /* inclination of L relative to line of sight (rad) */
   double polarization;       /* polarization angle (rad) */
   double fRef;               /* reference frequency (Hz) */
-  int nbmode;             /* number of modes to generate (starting with 22) - defaults to 5 (all modes) */
+  int nbmode;                /* number of modes to generate (starting with 22) - defaults to 5 (all modes) */
 } LLVParams;
 
 typedef struct tagLLVSignal

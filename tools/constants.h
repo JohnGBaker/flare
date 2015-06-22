@@ -60,6 +60,15 @@
 #define L_SI 1.0e9 /* Arm length of the detector: 10^6 km */
 #define R_SI 1.4959787066e11 /* Radius of the orbit around the sun: 1AU */
 
+/**********************************************************/
+/********** Constants used to relate time scales **********/
+
+#define EPOCH_J2000_0_TAI_UTC 32           /* Leap seconds (TAI-UTC) on the J2000.0 epoch (2000 JAN 1 12h UTC) */
+#define EPOCH_J2000_0_GPS 630763213        /* GPS seconds of the J2000.0 epoch (2000 JAN 1 12h UTC) */
+
+/*******************************************/
+/**************** NaN **********************/
+
 #ifndef NAN
 # define NAN (INFINITY-INFINITY)
 #endif 
