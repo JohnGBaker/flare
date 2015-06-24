@@ -14,11 +14,8 @@ LLVInit.o: LLVInit.c LLVInit.h
 LLVinference.o: LLVinference.c LLVinference.h ../LLVsim/LLVFDresponse.h ../LLVsim/LLVnoise.h ../LLVsim/LLVgeometry.h ../tools/constants.h ../tools/struct.h ../tools/likelihood.h ../EOBNRv2HMROM/EOBNRv2HMROM.h ../EOBNRv2HMROM/EOBNRv2HMROMstruct.h ../integration/wip.h
 	$(CC) -c $(CFLAGS) LLVinference.c
 
-LLVInit.o: LLVInit.c LLVInit.h
-	$(CC) -c $(CFLAGS) LLVInit.c
-
-LLVinference: LLVinference.o LLVInit.o ../LLVsim/LLVFDresponse.o ../LLVsim/LLVnoise.o ../tools/struct.o ../tools/likelihood.o ../EOBNRv2HMROM/EOBNRv2HMROM.o ../EOBNRv2HMROM/EOBNRv2HMROMstruct.o ../integration/wip.o ../integration/spline.o ../integration/Faddeeva.o
-	$(CC) $(CFLAGS) -lgsl -lgslcblas -lm -o LLVinference LLVinference.o LLVInit.o ../LLVsim/LLVFDresponse.o ../LLVsim/LLVnoise.o ../tools/struct.o ../tools/likelihood.o ../EOBNRv2HMROM/EOBNRv2HMROM.o ../EOBNRv2HMROM/EOBNRv2HMROMstruct.o ../integration/wip.o ../integration/spline.o ../integration/Faddeeva.o -lgsl -L$(GSLROOT)/lib
+LLVinference: LLVinference.o LLVInit.o ../LLVsim/LLVFDresponse.o ../LLVsim/LLVnoise.o ../tools/struct.o ../tools/timeconversion.o ../tools/likelihood.o ../EOBNRv2HMROM/EOBNRv2HMROM.o ../EOBNRv2HMROM/EOBNRv2HMROMstruct.o ../integration/wip.o ../integration/spline.o ../integration/Faddeeva.o
+	$(CC) $(CFLAGS) -lgsl -lgslcblas -lm -o LLVinference LLVinference.o LLVInit.o ../LLVsim/LLVFDresponse.o ../LLVsim/LLVnoise.o ../tools/struct.o ../tools/timeconversion.o ../tools/likelihood.o ../EOBNRv2HMROM/EOBNRv2HMROM.o ../EOBNRv2HMROM/EOBNRv2HMROMstruct.o ../integration/wip.o ../integration/spline.o ../integration/Faddeeva.o -lgsl -L$(GSLROOT)/lib
 
 clean:
 	-rm *.o

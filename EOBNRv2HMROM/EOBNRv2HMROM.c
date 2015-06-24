@@ -428,7 +428,7 @@ int EOBNRv2HMROMCore(
     if ( l==5 && m==5) gsl_vector_scale( freq_ds, 1./Scaling55(q));
 
     /* Evaluating the shifts in time and phase - conditional scaling for the 44 and 55 modes */
-    /* Note: the stored values of 'shittime' correspond actually to 2pi*Deltat */
+    /* Note: the stored values of 'shifttime' correspond actually to 2pi*Deltat */
     SplineList* shifttime_splinelist = listdata_interp_mode->data_interp->shifttime_interp;
     SplineList* shiftphase_splinelist = listdata_interp_mode->data_interp->shiftphase_interp;
     double twopishifttime;
