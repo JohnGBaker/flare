@@ -38,7 +38,7 @@ typedef struct tagLLVParams {
   double phiRef;             /* reference phase (rad) - phase at the frequency representing coalescence (or at fRef if specified) */
   double m1;                 /* mass of companion 1 (solar masses) */
   double m2;                 /* mass of companion 2 (solar masses) */
-  double distance;           /* distance of source (pc) */
+  double distance;           /* distance of source (Mpc) */
   double ra;                 /* right ascension of the source (rad) */
   double dec;                /* declination of the source (rad) */
   double inclination;        /* inclination of L relative to line of sight (rad) */

@@ -67,11 +67,6 @@ double FDSinglemodeOverlap(
   double *h2Ai = h2->amp_imag->data;
   double *h2p = h2->phase->data;
 
-    //
-  //for( int j=0; j<n1; j++ ){
-  //  printf("%g %g %g %g || %g %g %g %g\n", f1[j], h1Ar[j], h1Ai[j], h1p[j], f2[j], h2Ar[j], h2Ai[j], h2p[j]);
-  //}
-
   /* fLow or fHigh <= 0 means use intersection of signal domains  */
   double overlap = wip_phase(f1, n1, f2, n2, h1Ar, h1Ai, h1p, h2Ar, h2Ai, h2p, Snoise, 1.0, fLow, fHigh);
   return overlap;
@@ -95,7 +90,7 @@ double FDListmodesOverlap(
     while(listelementh2) {
       printf("(%d%d,%d%d): %g\n", listelementh1->l, listelementh1->m, listelementh2->l, listelementh2->m, FDSinglemodeOverlap(listelementh1->freqseries, listelementh2->freqseries, Snoise, fLow, fHigh));
       overlap += FDSinglemodeOverlap(listelementh1->freqseries, listelementh2->freqseries, Snoise, fLow, fHigh);
-	listelementh2 = listelementh2->next;
+      listelementh2 = listelementh2->next;
     }
     listelementh1 = listelementh1->next;
   }

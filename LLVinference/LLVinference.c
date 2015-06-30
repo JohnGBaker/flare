@@ -42,7 +42,7 @@ LLVParams* parse_args_LLV(ssize_t argc, char **argv) {
     params->phiRef = 0.;
     params->m1 = 20.;
     params->m2 = 10.;
-    params->distance = 100. * 1e6;
+    params->distance = 100.;
     params->ra = 0.;
     params->dec = 0.;
     params->inclination = PI/3.;
@@ -57,11 +57,11 @@ LLVParams* parse_args_LLV(ssize_t argc, char **argv) {
         } else if (strcmp(argv[i], "--phiRef") == 0) {
             params->phiRef = atof(argv[++i]);
         } else if (strcmp(argv[i], "--m1") == 0) {
-            params->m1 = atof(argv[++i]) * MSUN_SI;
+            params->m1 = atof(argv[++i]);
         } else if (strcmp(argv[i], "--m2") == 0) {
-            params->m2 = atof(argv[++i]) * MSUN_SI;
+            params->m2 = atof(argv[++i]);
         } else if (strcmp(argv[i], "--distance") == 0) {
-            params->distance = atof(argv[++i]) * PC_SI;
+            params->distance = atof(argv[++i]);
         } else if (strcmp(argv[i], "--ra") == 0) {
             params->ra = atof(argv[++i]);
         } else if (strcmp(argv[i], "--dec") == 0) {
@@ -104,7 +104,8 @@ int LLVGenerateSignal(
   }
   /* Should add more error checking ? */
   /* Generate the waveform with the ROM */
-  SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, params->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*PC_SI);
+  /* Note: SimEOBNRv2HMROM accepts masses and distances in SI units, whereas LLV params is in solar masses and Mpc */
+  SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, params->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
   /* Process the waveform through the LLV response */
   /* TO BE MODIFIED FOR RA DEC */
   LLVSimFDResponse(&listROM, &listLHO, params->tRef, params->ra, params->dec, params->inclination, params->polarization, LHO);
