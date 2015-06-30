@@ -48,7 +48,7 @@ LLVParams* parse_args_LLV(ssize_t argc, char **argv) {
     params->inclination = PI/3.;
     params->polarization = 0.;
     params->fRef = 0.;
-    params->nbmode = 1;
+    params->nbmode = 5;
 
     /* Consume command line */
     for (i = 1; i < argc; ++i) {

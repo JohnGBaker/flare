@@ -175,9 +175,10 @@ int LLVSimFDResponse(
   SetVectorsXYZ(X, Y, Z, theta, phi, psi);
 
   /* Compute the delay from geocenter to the detector */
-  double delay;
-  gsl_blas_ddot(Xd, Z, &delay);
-  double twopidelay = 2*PI*delay/C_SI;
+  double delaylength;
+  gsl_blas_ddot(Xd, Z, &delaylength);
+  double twopidelay = 2*PI*delaylength/C_SI;
+  //printf("Delay: %g\n", twopidelay/(2*PI));
 
   /* Compute the value of pattern functions Fplus, Fcross */
   gsl_vector* DX = gsl_vector_calloc(3); /* Temporary vector D.X, initialized to 0 */
@@ -192,6 +193,8 @@ int LLVSimFDResponse(
   gsl_blas_ddot(Y, DY, &YDY);
   double Fplus = XDX - YDY;
   double Fcross = 2*XDY;
+  //printf("Fplus: %g\n", Fplus);
+  //printf("Fcross: %g\n", Fcross);
 
   /* Main loop over the modes - goes through all the modes present, stopping when encountering NULL */
   ListmodesCAmpPhaseFrequencySeries* listelement = *listhlm;
@@ -214,14 +217,24 @@ int LLVSimFDResponse(
     /* Capital Phi is set to 0 by convention */
     double complex Yfactorplus;
     double complex Yfactorcross;
-    if (!l%2) {
-      Yfactorplus = 1/2 * (SpinWeightedSphericalHarmonic(inclination, 0., -2, l, m) + conj(SpinWeightedSphericalHarmonic(inclination, 0., -2, l, -m)));
+    if (!(l%2)) {
+      Yfactorplus = 1./2 * (SpinWeightedSphericalHarmonic(inclination, 0., -2, l, m) + conj(SpinWeightedSphericalHarmonic(inclination, 0., -2, l, -m)));
       Yfactorcross = I/2 * (SpinWeightedSphericalHarmonic(inclination, 0., -2, l, m) - conj(SpinWeightedSphericalHarmonic(inclination, 0., -2, l, -m)));
     }
     else {
-      Yfactorplus = 1/2 * (SpinWeightedSphericalHarmonic(inclination, 0., -2, l, m) - conj(SpinWeightedSphericalHarmonic(inclination, 0., -2, l, -m)));
+      Yfactorplus = 1./2 * (SpinWeightedSphericalHarmonic(inclination, 0., -2, l, m) - conj(SpinWeightedSphericalHarmonic(inclination, 0., -2, l, -m)));
       Yfactorcross = I/2 * (SpinWeightedSphericalHarmonic(inclination, 0., -2, l, m) + conj(SpinWeightedSphericalHarmonic(inclination, 0., -2, l, -m)));
     }
+    //if(l==2 && m==2){
+    //  if (!(l%2)) {
+    //printf("even\n");
+    //}
+    //else {printf("odd\n");}
+    //printf("SpinWeightedSphericalHarmonic(inclination, 0., -2, l, m): %g+I*%g\n", creal(SpinWeightedSphericalHarmonic(inclination, 0., -2, l, m)), cimag(SpinWeightedSphericalHarmonic(inclination, 0., -2, l, m)));
+    //printf("SpinWeightedSphericalHarmonic(inclination, 0., -2, l, -m): %g+I*%g\n", creal(SpinWeightedSphericalHarmonic(inclination, 0., -2, l, -m)), cimag(SpinWeightedSphericalHarmonic(inclination, 0., -2, l, -m)));
+    //printf("Yfactorplus: %g + I*%g\n", creal(Yfactorplus), cimag(Yfactorplus));
+    //printf("Yfactorcross: %g + I*%g\n", creal(Yfactorcross), cimag(Yfactorcross));
+    //}
     
     /* Initializing frequency series structure for this mode, for the signal s = F+ h+ + Fx hx */
     CAmpPhaseFrequencySeries *modefreqseriess = NULL;

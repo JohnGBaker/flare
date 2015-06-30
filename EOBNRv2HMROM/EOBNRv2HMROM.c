@@ -444,7 +444,7 @@ int EOBNRv2HMROMCore(
     double shiftphase = gsl_spline_eval(shiftphase_splinelist->spline, q, shiftphase_splinelist->accel);
 
     /* If first mode in the list, assumed to be the 22 mode, set totalshifttime and phase_change_ref */
-    double tpeak22estimate;
+    double tpeak22estimate = 0;
     if( i==0 ) {
       if(l==2 && m==2) {
       /* Setup 1d cubic spline for the phase of the 22 mode */
