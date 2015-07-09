@@ -92,6 +92,7 @@ int LLVGenerateSignal(
   struct tagLLVParams* params,   /* Input: set of LLV parameters of the signal */
   struct tagLLVSignal* signal)   /* Output: structure for the generated signal */
 {
+  int ret;
   ListmodesCAmpPhaseFrequencySeries* listROM = NULL;
   ListmodesCAmpPhaseFrequencySeries* listLHO = NULL;
   ListmodesCAmpPhaseFrequencySeries* listLLO = NULL;
@@ -105,9 +106,12 @@ int LLVGenerateSignal(
   /* Should add more error checking ? */
   /* Generate the waveform with the ROM */
   /* Note: SimEOBNRv2HMROM accepts masses and distances in SI units, whereas LLV params is in solar masses and Mpc */
-  SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, params->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+  ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, params->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+
+  /* If the ROM waveform generation failed (e.g. parameters were out of bounds) return FAILURE */
+  if(ret==FAILURE) return FAILURE;
+
   /* Process the waveform through the LLV response */
-  /* TO BE MODIFIED FOR RA DEC */
   LLVSimFDResponse(&listROM, &listLHO, params->tRef, params->ra, params->dec, params->inclination, params->polarization, LHO);
   LLVSimFDResponse(&listROM, &listLLO, params->tRef, params->ra, params->dec, params->inclination, params->polarization, LLO);
   LLVSimFDResponse(&listROM, &listVIRGO, params->tRef, params->ra, params->dec, params->inclination, params->polarization, VIRGO);
@@ -203,6 +207,7 @@ void getallparams(double *Cube, int *ndim)
 //void getLogLike(double *Cube, int *ndim, int *npars, double *lnew, void *context)
 void getLogLike(LLVParams *params, double *lnew, void *context)
 {
+  int ret;
   /*  */
   /*getallparams(Cube,ndim);
   if (PriorBoundaryCheck(priorParams, Cube)) {
@@ -216,15 +221,21 @@ void getLogLike(LLVParams *params, double *lnew, void *context)
   /* Generating the signal in the three detectors for the input parameters */
   LLVSignal* generatedsignal = NULL;
   LLVSignal_Init(&generatedsignal);
-  LLVGenerateSignal(params, generatedsignal);
+  ret = LLVGenerateSignal(params, generatedsignal);
 
-  /* Computing the likelihood for each detector */
-  double loglikelihoodLHO = FDLogLikelihood(injection->LHOSignal, generatedsignal->LHOSignal, NoiseSnLHO, __LLVSimFD_LHONoise_fLow, __LLVSimFD_LHONoise_fHigh, injection->LHOhh, generatedsignal->LHOhh);
-  double loglikelihoodLLO = FDLogLikelihood(injection->LLOSignal, generatedsignal->LLOSignal, NoiseSnLLO, __LLVSimFD_LLONoise_fLow, __LLVSimFD_LLONoise_fHigh, injection->LLOhh, generatedsignal->LLOhh);
-  double loglikelihoodVIRGO = FDLogLikelihood(injection->VIRGOSignal, generatedsignal->VIRGOSignal, NoiseSnVIRGO, __LLVSimFD_VIRGONoise_fLow, __LLVSimFD_VIRGONoise_fHigh, injection->VIRGOhh, generatedsignal->VIRGOhh);
+  /* If LLVGenerateSignal failed (e.g. parameters out of bound), silently return -Infinity logL */
+  if(ret==FAILURE) {
+    *lnew = -DBL_MAX;
+  }
+  else if(ret==SUCCESS) {
+    /* Computing the likelihood for each detector */
+    double loglikelihoodLHO = FDLogLikelihood(injection->LHOSignal, generatedsignal->LHOSignal, NoiseSnLHO, __LLVSimFD_LHONoise_fLow, __LLVSimFD_LHONoise_fHigh, injection->LHOhh, generatedsignal->LHOhh);
+    double loglikelihoodLLO = FDLogLikelihood(injection->LLOSignal, generatedsignal->LLOSignal, NoiseSnLLO, __LLVSimFD_LLONoise_fLow, __LLVSimFD_LLONoise_fHigh, injection->LLOhh, generatedsignal->LLOhh);
+    double loglikelihoodVIRGO = FDLogLikelihood(injection->VIRGOSignal, generatedsignal->VIRGOSignal, NoiseSnVIRGO, __LLVSimFD_VIRGONoise_fLow, __LLVSimFD_VIRGONoise_fHigh, injection->VIRGOhh, generatedsignal->VIRGOhh);
 
-  /* Output: value of the loglikelihood for the combined signals, assuming noise independence */
-  *lnew = loglikelihoodLHO + loglikelihoodLLO + loglikelihoodVIRGO;
+    /* Output: value of the loglikelihood for the combined signals, assuming noise independence */
+    *lnew = loglikelihoodLHO + loglikelihoodLLO + loglikelihoodVIRGO;
+  }
 
   /* Clean up */
   LLVSignal_Cleanup(generatedsignal);
@@ -317,20 +328,20 @@ int main(int argc, char *argv[])
 	/********** End of addendum ****************/
 
 	/********** Test ****************/
-	double l;
-	getLogLike(injectedparams, &l, context);
-	printf("LogLikelihood: %g\n", l);
-	free(injectedparams);
-	LLVSignal_Cleanup(injectedsignal);
+	/*double l;
+	  getLogLike(injectedparams, &l, context);
+	  printf("LogLikelihood: %g\n", l);
+	  free(injectedparams);
+	  LLVSignal_Cleanup(injectedsignal);*/
 	/********** End of test ****************/
 
-  /* Initialize the prior */
-  priorParams = LLVInitializePrior(argc, argv);
-  LLVRunParams *runParams = LLVInitializeRunParams(argc, argv);
+	/* Initialize the prior */
+	priorParams = LLVInitializePrior(argc, argv);
+	LLVRunParams *runParams = LLVInitializeRunParams(argc, argv);
 
   /* Initialize Bambi run settings */
 
-/*
+
 	int i;
 
 	// set the MultiNest sampling parameters
@@ -392,7 +403,7 @@ int main(int argc, char *argv[])
 	BAMBIrun(mmodal, ceff, nlive, tol, efr, ndims, nPar, nClsPar, maxModes, updInt, Ztol, root, seed, pWrap, fb, resume, outfile, initMPI,
 	logZero, maxiter, LogLikeFctn, dumper, BAMBIfctn, context);
 
-*/
+
 
   free(priorParams);
   free(runParams);

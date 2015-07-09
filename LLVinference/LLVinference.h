@@ -20,7 +20,7 @@
 #include "LLVFDresponse.h"
 #include "LLVnoise.h"
 #include "LLVInit.h"
-//#include "bambi.h"
+#include "bambi.h"
 
 #ifdef __INTEL_COMPILER 			// if the MultiNest library was compiled with ifort
        #define NESTRUN nested_mp_nestrun_
@@ -86,7 +86,7 @@ char *, int *, int *, int *, int *, int *, int *, double *, int *, void (*Loglik
 double *, void *), void (*dumper)(int *, int *, int *, double **, double **, double **, double *,
 double *, double *, void *), void *context);*/
 
-/*
+
 void BAMBIrun(int mmodal, int ceff, int nlive, double tol, double efr, int ndims, int nPar, int nClsPar,
 	int maxModes, int updInt, double Ztol, char root[], int seed, int *pWrap, int fb, int resume, int outfile,
 	int initMPI, double logZero, int maxiter, void (*LogLike)(double *, int *, int *, double *, void *),
@@ -119,7 +119,7 @@ void LogLikeFctn(double *Cube, int *ndim, int *npars, double *lnew, void *contex
 
 	_Z7LogLikePdPiS0_S_Pv(Cube, ndim, npars, lnew, context);
 }
-*/
+
 
 /***********************************************************************************************************************/
 

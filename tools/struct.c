@@ -111,6 +111,47 @@ int Read_Text_Matrix(const char dir[], const char fname[], gsl_matrix *m) {
   free(path);
   return(0);
 }
+/* Functions to write text data to files */
+int Write_Text_Vector(const char dir[], const char fname[], gsl_vector *v) {
+  char *path=malloc(strlen(dir)+64);
+
+  sprintf(path,"%s/%s", dir, fname);
+  FILE *f = fopen(path, "w");
+  if (!f) {
+    return(1);
+  }
+  int ret = gsl_vector_fprintf(f, v, "%.16e");
+  if (ret != 0) {
+    fprintf(stderr, "Error writing data in %s.\n",path);
+    return(1);
+  }
+  fclose(f);
+  return(0);
+}
+int Write_Text_Matrix(const char dir[], const char fname[], gsl_matrix *m) {
+  char *path=malloc(strlen(dir)+64);
+  int ret = 0;
+
+  sprintf(path,"%s/%s", dir, fname);
+  FILE *f = fopen(path, "w");
+  if (!f) {
+    return(1);
+  }
+  int N = (int) m->size1;
+  int M = (int) m->size2;
+  for(int i=0; i<N; i++){
+    for(int j=0; j<M; j++){
+      ret |= (fprintf(f, "%.16e ", gsl_matrix_get(m, i, j)) < 0);
+    }
+    if(i < N-1) ret |= (fprintf(f, "\n") < 0);
+  }
+  if (ret != 0) {
+    fprintf(stderr, "Error writing data in %s.\n",path);
+    return(1);
+  }
+  fclose(f);
+  return(0);
+}
 
 /******** Functions to initialize and clean up CAmpPhaseFrequencySeries structure ********/
 void CAmpPhaseFrequencySeries_Init(CAmpPhaseFrequencySeries **freqseries, const int n) {

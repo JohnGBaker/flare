@@ -83,7 +83,7 @@ int LLVSimFD_Noise_Init_ParsePath(void)
 
   for(word=strtok_r(path,":",&brkt); word; word=strtok_r(NULL,":",&brkt))
   {
-    printf("%s\n", word);
+    //printf("%s\n", word);
     ret = LLVSimFD_Noise_Init(word);
     if(ret == SUCCESS) break;
   }

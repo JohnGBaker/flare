@@ -345,6 +345,7 @@ int EOBNRv2HMROMCore(
 {
   int ret = SUCCESS;
   int j;
+  double tpeak22estimate = 0;
   /* Check output arrays */
   if(!listhlm) exit(1);
   if(*listhlm)
@@ -444,7 +445,6 @@ int EOBNRv2HMROMCore(
     double shiftphase = gsl_spline_eval(shiftphase_splinelist->spline, q, shiftphase_splinelist->accel);
 
     /* If first mode in the list, assumed to be the 22 mode, set totalshifttime and phase_change_ref */
-    double tpeak22estimate = 0;
     if( i==0 ) {
       if(l==2 && m==2) {
       /* Setup 1d cubic spline for the phase of the 22 mode */
@@ -456,8 +456,8 @@ int EOBNRv2HMROMCore(
       /* The frequency corresponding to the 22 peak is omega22peak/2pi, with omega22peak taken from the fit to NR in Pan&al 1106 EOBNRv2HM paper */
       double f22peak = fmin(omega22peakOfq(q)/(2*PI), Mf_ROM_max_ref); /* We ensure we evaluate the spline within its range */
       tpeak22estimate = -1./(2*PI) * gsl_spline_eval_deriv(spline_phi22, f22peak, accel_phi22);
-      /* Determine the change in phase (to be propagated to all modes) required to have phi22(fRef) = phiRef */
-      phase_change_ref = phiRef + (gsl_spline_eval(spline_phi22, fRef_geom, accel_phi22) - (twopishifttime - 2*PI*tpeak22estimate + 2*PI*deltatRef_geom) * fRef_geom - shiftphase);
+      /* Determine the change in phase (to be propagated to all modes) required to have phi22(fRef) = 2*phiRef */
+      phase_change_ref = 2*phiRef + (gsl_spline_eval(spline_phi22, fRef_geom, accel_phi22) - (twopishifttime - 2*PI*tpeak22estimate + 2*PI*deltatRef_geom) * fRef_geom - shiftphase);
       gsl_spline_free(spline_phi22);
       gsl_interp_accel_free(accel_phi22);
       }
@@ -532,8 +532,8 @@ int SimEOBNRv2HMROM(
   double Mtot_sec = Mtot * MTSUN_SI; /* Total mass in seconds */
 
   if ( q > q_max ) {
-    printf( "Error - %s: q out of range!\nEOBNRv2HMROM is only available for a mass ratio in the range q <= %g.\n", __func__, q_max);
-    exit(1);
+    /*printf( "Error - %s: q out of range!\nEOBNRv2HMROM is only available for a mass ratio in the range q <= %g.\n", __func__, q_max); */
+    return FAILURE;
   }
 
   /* Set up (load and build interpolation) ROM data if not setup already */

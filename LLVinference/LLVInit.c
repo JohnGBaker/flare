@@ -2,7 +2,7 @@
 
 LLVPrior* LLVInitializePrior(ssize_t argc, char **argv)
 {
-	ssize_t i;
+    ssize_t i;
     LLVPrior* prior;
     prior = (LLVPrior*) malloc(sizeof(LLVPrior));
 
@@ -98,7 +98,7 @@ double CubeToCosPrior(double r, double x1, double x2)
 
 LLVRunParams* LLVInitializeRunParams(ssize_t argc, char **argv)
 {
-	ssize_t i;
+    ssize_t i;
     LLVRunParams* runParams;
     runParams = (LLVRunParams*) malloc(sizeof(LLVRunParams));
 
