@@ -14,6 +14,7 @@ void LLVSignal_Cleanup(LLVSignal* signal) {
   if(signal->VIRGOSignal) ListmodesCAmpPhaseFrequencySeries_Destroy(signal->VIRGOSignal);
   free(signal);
 }
+
 void LLVSignal_Init(LLVSignal** signal) {
   if(!signal) exit(1);
   /* Create storage for structures */
@@ -27,18 +28,37 @@ void LLVSignal_Init(LLVSignal** signal) {
   (*signal)->VIRGOSignal = NULL;
 }
 
-/************ Functions for LLV parameters, injection, likelihood ************/
+/************ Functions for LLV parameters, injection, likelihood, prior ************/
 
-/* Parse command line and return a newly allocated LLVParams object */
-LLVParams* parse_args_LLV(ssize_t argc, char **argv) {
-    char help[] = "";
+/* Parse command line to initialize LLVParams, LLVPrior, and LLVRunParams objects */
+void parse_args_LLV(ssize_t argc, char **argv, 
+    LLVParams* params, 
+    LLVPrior *prior, 
+    LLVRunParams *run) 
+{
+    char help[] = "\
+LLVInference by Sylvain Marsat, John Baker, and Philip Graff\n\
+Copyright July 2015\n\
+\n\
+This program performs rapid parameter estimation for LIGO and LISA CBC sources in the no-noise case.\n\
+Arguments are as follows:\n\
+\n\
+--------------------------------------------------\n\
+----- Injected Signal Parameters -----------------\n\
+--------------------------------------------------\n\
+\n\
+--------------------------------------------------\n\
+----- Prior Boundary Settings --------------------\n\
+--------------------------------------------------\n\
+\n\
+--------------------------------------------------\n\
+----- BAMBI Sampler Settings ---------------------\n\
+--------------------------------------------------\n\
+";
 
     ssize_t i;
-    LLVParams* params;
-    params = (LLVParams*) malloc(sizeof(LLVParams));
-    memset(params, 0, sizeof(LLVParams));
 
-    /* Set default values to the arguments */
+    /* set default values for the injection params */
     params->tRef = 0.;
     params->phiRef = 0.;
     params->m1 = 20.;
@@ -51,9 +71,31 @@ LLVParams* parse_args_LLV(ssize_t argc, char **argv) {
     params->fRef = 0.;
     params->nbmode = 5;
 
+    /* set default values for the prior limits */
+    prior->deltaT = 0.1;
+    prior->comp_min = 4.0;
+    prior->comp_max = 50.0;
+    prior->mtot_min = 8.0;
+    prior->mtot_max = 100.0;
+    prior->qmax = 11.98;
+    prior->dist_min = 1.0e6;
+    prior->dist_max = 1.0e10;
+
+    /* set default values for the run settings */
+    run->eff = 0.1;
+    run->tol = 0.5;
+    run->nlive = 1000;
+    strcpy(run->outroot, "chains/LLVinference_");
+    run->bambi = 0;
+    run->resume = 0;
+    strcpy(run->netfile, "LLVinference.inp");
+
     /* Consume command line */
     for (i = 1; i < argc; ++i) {
-        if (strcmp(argv[i], "--tRef") == 0) {
+        if (strcmp(argv[i], "--help") == 0) {
+            fprintf(stdout,"%s", help);
+            exit(0);
+        } else if (strcmp(argv[i], "--tRef") == 0) {
             params->tRef = atof(argv[++i]);
         } else if (strcmp(argv[i], "--phiRef") == 0) {
             params->phiRef = atof(argv[++i]);
@@ -75,17 +117,46 @@ LLVParams* parse_args_LLV(ssize_t argc, char **argv) {
             params->fRef = atof(argv[++i]);
         } else if (strcmp(argv[i], "--nbmode") == 0) {
             params->nbmode = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--deltaT") == 0) {
+            prior->deltaT = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--comp-min") == 0) {
+            prior->comp_min = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--comp-max") == 0) {
+            prior->comp_max = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--mtot-min") == 0) {
+            prior->mtot_min = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--mtot-max") == 0) {
+            prior->mtot_max = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--qmax") == 0) {
+            prior->qmax = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--dist-min") == 0) {
+            prior->dist_min = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--dist-max") == 0) {
+            prior->dist_max = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--eff") == 0) {
+            run->eff = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--tol") == 0) {
+            run->tol = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--nlive") == 0) {
+            run->nlive = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "--bambi") == 0) {
+            run->bambi = 1;
+        } else if (strcmp(argv[i], "--resume") == 0) {
+            run->resume = 1;
+        } else if (strcmp(argv[i], "--outroot") == 0) {
+            strcpy(run->outroot, argv[++i]);
+        } else if (strcmp(argv[i], "--netfile") == 0) {
+            strcpy(run->netfile, argv[++i]);
         } else {
-            //printf("Error: invalid option: %s\n", argv[i]);
-            //goto fail;
+            printf("Error: invalid option: %s\n", argv[i]);
+            goto fail;
         }
     }
 
-    return params;
+    return;
 
-    /*fail:
-    free(params);
-    exit(1);*/
+    fail:
+    exit(1);
 }
 
 /* Function generating a LLV signal from LLV parameters */
@@ -134,53 +205,7 @@ int LLVGenerateSignal(
   return SUCCESS;
 }
 
-LLVPrior* LLVInitializePrior(ssize_t argc, char **argv)
-{
-    ssize_t i;
-    LLVPrior* prior;
-    prior = (LLVPrior*) malloc(sizeof(LLVPrior));
-
-    // set defaults
-    prior->deltaT = 0.1;
-    prior->comp_min = 4.0;
-    prior->comp_max = 50.0;
-    prior->mtot_min = 8.0;
-    prior->mtot_max = 100.0;
-    prior->qmax = 12.0;
-    prior->dist_min = 1.0e6;
-    prior->dist_max = 1.0e10;
-
-    /* Consume command line */
-    for (i = 1; i < argc; ++i) {
-        if (strcmp(argv[i], "--deltaT") == 0) {
-            prior->deltaT = atof(argv[++i]);
-        } else if (strcmp(argv[i], "--comp-min") == 0) {
-            prior->comp_min = atof(argv[++i]);
-        } else if (strcmp(argv[i], "--comp-max") == 0) {
-            prior->comp_max = atof(argv[++i]);
-        } else if (strcmp(argv[i], "--mtot-min") == 0) {
-            prior->mtot_min = atof(argv[++i]);
-        } else if (strcmp(argv[i], "--mtot-max") == 0) {
-            prior->mtot_max = atof(argv[++i]);
-        } else if (strcmp(argv[i], "--qmax") == 0) {
-            prior->qmax = atof(argv[++i]);
-        } else if (strcmp(argv[i], "--dist-min") == 0) {
-            prior->dist_min = atof(argv[++i]);
-        } else if (strcmp(argv[i], "--dist-max") == 0) {
-            prior->dist_max = atof(argv[++i]);
-        } else {
-            //printf("Error: invalid option: %s\n", argv[i]);
-            //goto fail;
-        }
-    }
-
-    return prior;
-
-    /*fail:
-    free(prior);
-    exit(1);*/
-}
-
+/* Function to check that returned parameter values fit in prior boundaries */
 int PriorBoundaryCheck(LLVPrior *prior, double *Cube)
 {
 	if (Cube[0] < prior->comp_min || Cube[0] > prior->comp_max ||
@@ -195,6 +220,8 @@ int PriorBoundaryCheck(LLVPrior *prior, double *Cube)
 
 	return 0;
 }
+
+/* Utility prior functions to convert from Cube to common distributions */
 
 double CubeToFlatPrior(double r, double x1, double x2)
 {
@@ -228,48 +255,4 @@ double CubeToSinPrior(double r, double x1, double x2)
 double CubeToCosPrior(double r, double x1, double x2)
 {
     return asin((1.0-r)*sin(x1)+r*sin(x2));
-}
-
-LLVRunParams* LLVInitializeRunParams(ssize_t argc, char **argv)
-{
-    ssize_t i;
-    LLVRunParams* runParams;
-    runParams = (LLVRunParams*) malloc(sizeof(LLVRunParams));
-
-    // set defaults
-    runParams->eff = 0.1;
-    runParams->tol = 0.5;
-    runParams->nlive = 1000;
-    strcpy(runParams->outroot, "chains/LLVinference_");
-    runParams->bambi = 0;
-    runParams->resume = 0;
-    strcpy(runParams->netfile, "LLVinference.inp");
-
-    /* Consume command line */
-    for (i = 1; i < argc; ++i) {
-        if (strcmp(argv[i], "--eff") == 0) {
-            runParams->eff = atof(argv[++i]);
-        } else if (strcmp(argv[i], "--tol") == 0) {
-            runParams->tol = atof(argv[++i]);
-        } else if (strcmp(argv[i], "--nlive") == 0) {
-            runParams->nlive = atoi(argv[++i]);
-        } else if (strcmp(argv[i], "--bambi") == 0) {
-            runParams->bambi = 1;
-        } else if (strcmp(argv[i], "--resume") == 0) {
-            runParams->resume = 1;
-        } else if (strcmp(argv[i], "--outroot") == 0) {
-            strcpy(runParams->outroot, argv[++i]);
-        } else if (strcmp(argv[i], "--netfile") == 0) {
-            strcpy(runParams->netfile, argv[++i]);
-        } else {
-            //printf("Error: invalid option: %s\n", argv[i]);
-            //goto fail;
-        }
-    }
-
-    return runParams;
-
-    /*fail:
-    free(prior);
-    exit(1);*/
 }

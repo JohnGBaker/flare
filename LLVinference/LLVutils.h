@@ -64,11 +64,14 @@ typedef struct tagLLVRunParams {
 	char   netfile[200];       /* NN settings file (default "LLVinference.inp") */
 } LLVRunParams;
 
-/************ Functions for LLV parameters, injection, likelihood ************/
+/************ Functions for LLV parameters, injection, likelihood, prior ************/
 
 /* Parsing parameters for the generation of a LLV waveform, from the command line */
 /* Masses are input in solar masses and distances in Mpc - converted in SI for the internals */
-LLVParams* parse_args_LLV(ssize_t argc, char **argv);
+void parse_args_LLV(ssize_t argc, char **argv, 
+    LLVParams* params, 
+    LLVPrior *prior, 
+    LLVRunParams *run);
 
 void LLVSignal_Cleanup(LLVSignal* signal);
 void LLVSignal_Init(LLVSignal** signal);
@@ -77,9 +80,6 @@ void LLVSignal_Init(LLVSignal** signal);
 int LLVGenerateSignal(
   struct tagLLVParams* params,   /* Input: set of LLV parameters of the signal */
   struct tagLLVSignal* signal);  /* Output: structure for the generated signal */
-
-// initializes the prior boundaries
-LLVPrior* LLVInitializePrior(ssize_t argc, char **argv);
 
 // checks prior boundaires
 int PriorBoundaryCheck(LLVPrior *prior, double *Cube);
@@ -93,9 +93,6 @@ double CubeToPowerPrior(double p, double r, double x1, double x2);
 double CubeToGaussianPrior(double r, double mean, double sigma);
 double CubeToSinPrior(double r, double x1, double x2);
 double CubeToCosPrior(double r, double x1, double x2);
-
-// initialize BAMBI run parameters
-LLVRunParams* LLVInitializeRunParams(ssize_t argc, char **argv);
 
 /************ Global Parameters ************/
 

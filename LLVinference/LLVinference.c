@@ -176,8 +176,15 @@ int main(int argc, char *argv[])
 
 	/*********** Addendum *************/
 
-	/* Parse commandline to read parameters of injection */
-	injectedparams = parse_args_LLV(argc, argv);
+	/* Initialize structs for holding various options */
+  LLVRunParams runParams;
+  injectedparams = (LLVParams*) malloc(sizeof(LLVParams));
+  memset(injectedparams, 0, sizeof(LLVParams));
+  priorParams = (LLVPrior*) malloc(sizeof(LLVPrior));
+  memset(priorParams, 0, sizeof(LLVPrior));
+  
+  /* Parse commandline to read parameters of injection */
+  parse_args_LLV(argc, argv, injectedparams, priorParams, &runParams);
 
 	/* Load and initialize the detector noise */
 	LLVSimFD_Noise_Init_ParsePath();
@@ -202,13 +209,6 @@ int main(int argc, char *argv[])
 	  LLVSignal_Cleanup(injectedsignal);*/
 	/********** End of test ****************/
 
-	/* Initialize the prior */
-	priorParams = LLVInitializePrior(argc, argv);
-	LLVRunParams *runParams = LLVInitializeRunParams(argc, argv);
-
-  /* Initialize Bambi run settings */
-
-
 	int i;
 
 	// set the MultiNest sampling parameters
@@ -217,11 +217,11 @@ int main(int argc, char *argv[])
 
 	int ceff = 0;					// run in constant efficiency mode?
 
-	int nlive = runParams->nlive;				// number of live points
+	int nlive = runParams.nlive;				// number of live points
 
-	double efr = runParams->eff;				// set the required efficiency
+	double efr = runParams.eff;				// set the required efficiency
 
-	double tol = runParams->tol;				// tol, defines the stopping criteria
+	double tol = runParams.tol;				// tol, defines the stopping criteria
 
 	int ndims = 9;					// dimensionality (no. of free parameters)
 
@@ -240,14 +240,14 @@ int main(int argc, char *argv[])
 	for(i = 0; i < ndims; i++) pWrap[i] = 0;
   pWrap[4] = pWrap[6] = pWrap[8] = 1;
 
-	strcpy(root, runParams->outroot);			// root for output files
-	strcpy(networkinputs, runParams->netfile);			// file with input parameters for network training
+	strcpy(root, runParams.outroot);			// root for output files
+	strcpy(networkinputs, runParams.netfile);			// file with input parameters for network training
 
 	int seed = -1;					// random no. generator seed, if < 0 then take the seed from system clock
 
 	int fb = 1;					// need feedback on standard output?
 
-	resume = runParams->resume;					// resume from a previous job?
+	resume = runParams.resume;					// resume from a previous job?
 
 	int outfile = 1;				// write output files?
 
@@ -261,7 +261,7 @@ int main(int argc, char *argv[])
 
 	// void *context = 0;				// not required by MultiNest, any additional information user wants to pass
 
-	doBAMBI = runParams->bambi;					// BAMBI?
+	doBAMBI = runParams.bambi;					// BAMBI?
 
 	useNN = 0;
 
@@ -273,7 +273,6 @@ int main(int argc, char *argv[])
 
 
   free(priorParams);
-  free(runParams);
 
 #ifdef PARALLEL
  	MPI_Finalize();
