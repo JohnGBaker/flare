@@ -11,15 +11,7 @@
 #include <float.h>
 #include <stdbool.h>
 
-#include "constants.h"
-#include "struct.h"
-#include "EOBNRv2HMROMstruct.h"
-#include "EOBNRv2HMROM.h"
-#include "wip.h"
-#include "likelihood.h"
-#include "LLVFDresponse.h"
-#include "LLVnoise.h"
-#include "LLVInit.h"
+#include "LLVutils.h"
 #include "bambi.h"
 
 #ifdef __INTEL_COMPILER 			// if the MultiNest library was compiled with ifort
@@ -29,44 +21,6 @@
 #else
        #error Do not know how to link to Fortran libraries, check symbol table for your platform (nm libnest3.a | grep nestrun) & edit example_eggbox_C++/eggbox.cc
 #endif
-
-/***************** Structure definitions *****************/
-
-/* Parameters for the generation of a LLV waveform (in the form of a list of modes) */
-typedef struct tagLLVParams {
-  double tRef;               /* reference time (s) - GPS time at the frequency representing coalescence */
-  double phiRef;             /* reference phase (rad) - phase at the frequency representing coalescence (or at fRef if specified) */
-  double m1;                 /* mass of companion 1 (solar masses) */
-  double m2;                 /* mass of companion 2 (solar masses) */
-  double distance;           /* distance of source (Mpc) */
-  double ra;                 /* right ascension of the source (rad) */
-  double dec;                /* declination of the source (rad) */
-  double inclination;        /* inclination of L relative to line of sight (rad) */
-  double polarization;       /* polarization angle (rad) */
-  double fRef;               /* reference frequency (Hz) */
-  int nbmode;                /* number of modes to generate (starting with 22) - defaults to 5 (all modes) */
-} LLVParams;
-
-typedef struct tagLLVSignal
-{
-  struct tagListmodesCAmpPhaseFrequencySeries* LHOSignal;   /* Signal in LHO, in the form of a list of the contribution of each mode */
-  struct tagListmodesCAmpPhaseFrequencySeries* LLOSignal;   /* Signal in LLO, in the form of a list of the contribution of each mode */
-  struct tagListmodesCAmpPhaseFrequencySeries* VIRGOSignal; /* Signal in VIRGO, in the form of a list of the contribution of each mode */
-  double LHOhh;                                             /* Inner product (h|h) for LHO */
-  double LLOhh;                                             /* Inner product (h|h) for LLO */
-  double VIRGOhh;                                           /* Inner product (h|h) for VIRGO */
-} LLVSignal;
-
-/************ Functions for LLV parameters, injection, likelihood ************/
-
-/* Parsing parameters for the generation of a LLV waveform, from the command line */
-/* Masses are input in solar masses and distances in Mpc - converted in SI for the internals */
-LLVParams* parse_args_LLV(ssize_t argc, char **argv);
-
-/* Function generating a LLV signal from LLV parameters */
-int LLVGenerateSignal(
-  struct tagLLVParams* params,   /* Input: set of LLV parameters of the signal */
-  struct tagLLVSignal* signal);  /* Output: structure for the generated signal */
 
 /***************************************** BAMBI declarations **************************************************/
 
