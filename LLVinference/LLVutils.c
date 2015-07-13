@@ -46,15 +46,42 @@ Arguments are as follows:\n\
 --------------------------------------------------\n\
 ----- Injected Signal Parameters -----------------\n\
 --------------------------------------------------\n\
+ --tRef                Time at reference frequency (sec, default=0)\n\
+ --phiRef              Orbital phase at reference frequency (radians, default=0)\n\
+ --m1                  Component mass 1 in Solar masses (larger, default=20)\n\
+ --m2                  Component mass 2 in Solar masses (smaller, default=10)\n\
+ --distance            Distance to source in Mpc (default=100)\n\
+ --ra                  Right ascension of source sky location (radians, defualt=0)\n\
+ --dec                 Declination of source sky location (radians, default=0)\n\
+ --inclination         Inclination of source orbital plane to observer line of sight\n\
+                       (radians, default=PI/3)\n\
+ --polarization        Polarization of source (radians, default=0)\n\
+ --fRef                Reference frequency (Hz, default=merger[0])\n\
+ --nbmode              Number of modes of radiation to use (1-5, default=5)\n\
 \n\
 --------------------------------------------------\n\
 ----- Prior Boundary Settings --------------------\n\
 --------------------------------------------------\n\
+ --deltaT              Half-width of time prior (sec, default=0.2)\n\
+ --comp-min            Minimum component mass in Solar masses (default=4)\n\
+ --comp-max            Maximum component mass in Solar masses (default=50)\n\
+ --mtot-min            Minimum total mass in Solar masses (default=8)\n\
+ --mtot-max            Maximum total mass in Solar masses (default=100)\n\
+ --q-max               Maximum mass ratio, m1/m2 (default=11.98, minimum is 1)\n\
+ --dist-min            Minimum distance to source (Mpc, default=1)\n\
+ --dist-max            Maximum distance to source (Mpc, default=10000)\n\
 \n\
 --------------------------------------------------\n\
 ----- BAMBI Sampler Settings ---------------------\n\
 --------------------------------------------------\n\
-";
+ --eff                 Target efficiency of sampling (default=0.1)\n\
+ --tol                 Tolerance for evidence calculation convergence (default=0.5)\n\
+ --nlive               Number of live points for sampling (default=1000)\n\
+ --bambi               Use BAMBI's neural network logL learning (no option, default off)\n\
+ --resume              Resume from a previous run (no option, default off)\n\
+ --outroot             Root for output files (default='chains/LLVinference_')\n\
+ --netfile             Neural network settings file if using --bambi (default='LLVinference.inp')\n\
+\n";
 
     ssize_t i;
 
@@ -78,8 +105,8 @@ Arguments are as follows:\n\
     prior->mtot_min = 8.0;
     prior->mtot_max = 100.0;
     prior->qmax = 11.98;
-    prior->dist_min = 1.0e6;
-    prior->dist_max = 1.0e10;
+    prior->dist_min = 1.0;
+    prior->dist_max = 10000.0;
 
     /* set default values for the run settings */
     run->eff = 0.1;
@@ -127,7 +154,7 @@ Arguments are as follows:\n\
             prior->mtot_min = atof(argv[++i]);
         } else if (strcmp(argv[i], "--mtot-max") == 0) {
             prior->mtot_max = atof(argv[++i]);
-        } else if (strcmp(argv[i], "--qmax") == 0) {
+        } else if (strcmp(argv[i], "--q-max") == 0) {
             prior->qmax = atof(argv[++i]);
         } else if (strcmp(argv[i], "--dist-min") == 0) {
             prior->dist_min = atof(argv[++i]);

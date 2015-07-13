@@ -180,11 +180,17 @@ int main(int argc, char *argv[])
   LLVRunParams runParams;
   injectedparams = (LLVParams*) malloc(sizeof(LLVParams));
   memset(injectedparams, 0, sizeof(LLVParams));
+  templateparams = (LLVParams*) malloc(sizeof(LLVParams));
+  memset(templateparams, 0, sizeof(LLVParams));
   priorParams = (LLVPrior*) malloc(sizeof(LLVPrior));
   memset(priorParams, 0, sizeof(LLVPrior));
   
   /* Parse commandline to read parameters of injection */
   parse_args_LLV(argc, argv, injectedparams, priorParams, &runParams);
+
+  /* Use the same fRef and nbmode for recovery templates as injected signal */
+  templateparams->fRef = injectedparams->fRef;
+  templateparams->nbmode = injectedparams->nbmode;
 
 	/* Load and initialize the detector noise */
 	LLVSimFD_Noise_Init_ParsePath();
@@ -270,8 +276,8 @@ int main(int argc, char *argv[])
 	BAMBIrun(mmodal, ceff, nlive, tol, efr, ndims, nPar, nClsPar, maxModes, updInt, Ztol, root, seed, pWrap, fb, resume, outfile, initMPI,
 	logZero, maxiter, LogLikeFctn, dumper, BAMBIfctn, context);
 
-
-
+  free(injectedparams);
+  free(templateparams);
   free(priorParams);
 
 #ifdef PARALLEL
