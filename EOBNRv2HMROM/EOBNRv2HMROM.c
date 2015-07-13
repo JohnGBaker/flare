@@ -355,7 +355,7 @@ int EOBNRv2HMROMCore(
   }
   /* Check number of modes */
   if(nbmode<1 || nbmode>nbmodemax) {
-    printf("Error: incorrect number of modes");
+    printf("Error: incorrect number of modes: %d", nbmode);
     exit(1);
   }
 

@@ -283,3 +283,35 @@ double CubeToCosPrior(double r, double x1, double x2)
 {
     return asin((1.0-r)*sin(x1)+r*sin(x2));
 }
+
+/* Log-Likelihood function */
+
+double CalculateLogL(LLVParams *params, LLVSignal* injection)
+{
+  double logL = -DBL_MAX;
+  int ret;
+
+  /* Generating the signal in the three detectors for the input parameters */
+  LLVSignal* generatedsignal = NULL;
+  LLVSignal_Init(&generatedsignal);
+  ret = LLVGenerateSignal(params, generatedsignal);
+
+  /* If LLVGenerateSignal failed (e.g. parameters out of bound), silently return -Infinity logL */
+  if(ret==FAILURE) {
+    logL = -DBL_MAX;
+  }
+  else if(ret==SUCCESS) {
+    /* Computing the likelihood for each detector */
+    double loglikelihoodLHO = FDLogLikelihood(injection->LHOSignal, generatedsignal->LHOSignal, NoiseSnLHO, __LLVSimFD_LHONoise_fLow, __LLVSimFD_LHONoise_fHigh, injection->LHOhh, generatedsignal->LHOhh);
+    double loglikelihoodLLO = FDLogLikelihood(injection->LLOSignal, generatedsignal->LLOSignal, NoiseSnLLO, __LLVSimFD_LLONoise_fLow, __LLVSimFD_LLONoise_fHigh, injection->LLOhh, generatedsignal->LLOhh);
+    double loglikelihoodVIRGO = FDLogLikelihood(injection->VIRGOSignal, generatedsignal->VIRGOSignal, NoiseSnVIRGO, __LLVSimFD_VIRGONoise_fLow, __LLVSimFD_VIRGONoise_fHigh, injection->VIRGOhh, generatedsignal->VIRGOhh);
+
+    /* Output: value of the loglikelihood for the combined signals, assuming noise independence */
+    logL = loglikelihoodLHO + loglikelihoodLLO + loglikelihoodVIRGO;
+  }
+
+  /* Clean up */
+  LLVSignal_Cleanup(generatedsignal);
+
+  return logL;
+}

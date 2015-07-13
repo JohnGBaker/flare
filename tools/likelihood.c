@@ -83,12 +83,12 @@ double FDListmodesOverlap(
   double overlap = 0;
 
   /* Main loop over the modes - goes through all the modes present */
-  printf("FDListmodesOverlap:\n");
+  //printf("FDListmodesOverlap:\n");
   ListmodesCAmpPhaseFrequencySeries* listelementh1 = listh1;
   while(listelementh1) {
     ListmodesCAmpPhaseFrequencySeries* listelementh2 = listh2;
     while(listelementh2) {
-      printf("(%d%d,%d%d): %g\n", listelementh1->l, listelementh1->m, listelementh2->l, listelementh2->m, FDSinglemodeOverlap(listelementh1->freqseries, listelementh2->freqseries, Snoise, fLow, fHigh));
+      //printf("(%d%d,%d%d): %g\n", listelementh1->l, listelementh1->m, listelementh2->l, listelementh2->m, FDSinglemodeOverlap(listelementh1->freqseries, listelementh2->freqseries, Snoise, fLow, fHigh));
       overlap += FDSinglemodeOverlap(listelementh1->freqseries, listelementh2->freqseries, Snoise, fLow, fHigh);
       listelementh2 = listelementh2->next;
     }

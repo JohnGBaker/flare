@@ -94,10 +94,14 @@ double CubeToGaussianPrior(double r, double mean, double sigma);
 double CubeToSinPrior(double r, double x1, double x2);
 double CubeToCosPrior(double r, double x1, double x2);
 
+/* log-Likelihood function */
+double CalculateLogL(LLVParams *params, LLVSignal* injection);
+
 /************ Global Parameters ************/
 
 extern LLVParams* injectedparams;
 extern LLVParams* templateparams;
 extern LLVPrior* priorParams;
+double logZdata;
 
 #endif

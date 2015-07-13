@@ -71,41 +71,20 @@ void getallparams(double *Cube, int *ndim)
 // lnew 						= loglikelihood
 
 /* Note: context must point to the LLVSignal structure representing the injected signals */
-//void getLogLike(double *Cube, int *ndim, int *npars, double *lnew, void *context)
-void getLogLike(LLVParams *params, double *lnew, void *context)
+void getLogLike(double *Cube, int *ndim, int *npars, double *lnew, void *context)
+//void getLogLike(LLVParams *params, double *lnew, void *context)
 {
-  int ret;
-  /*  */
-  /*getallparams(Cube,ndim);
+  /* Convert Cube to physical parameters and check prior boundary */
+  getallparams(Cube,ndim);
   if (PriorBoundaryCheck(priorParams, Cube)) {
     *lnew = -DBL_MAX;
     return;
-  } */
+  }
 
   /* Note: context points to a LLVContext structure containing a LLVSignal* */
   LLVSignal* injection = ((LLVSignal*) context);
 
-  /* Generating the signal in the three detectors for the input parameters */
-  LLVSignal* generatedsignal = NULL;
-  LLVSignal_Init(&generatedsignal);
-  ret = LLVGenerateSignal(params, generatedsignal);
-
-  /* If LLVGenerateSignal failed (e.g. parameters out of bound), silently return -Infinity logL */
-  if(ret==FAILURE) {
-    *lnew = -DBL_MAX;
-  }
-  else if(ret==SUCCESS) {
-    /* Computing the likelihood for each detector */
-    double loglikelihoodLHO = FDLogLikelihood(injection->LHOSignal, generatedsignal->LHOSignal, NoiseSnLHO, __LLVSimFD_LHONoise_fLow, __LLVSimFD_LHONoise_fHigh, injection->LHOhh, generatedsignal->LHOhh);
-    double loglikelihoodLLO = FDLogLikelihood(injection->LLOSignal, generatedsignal->LLOSignal, NoiseSnLLO, __LLVSimFD_LLONoise_fLow, __LLVSimFD_LLONoise_fHigh, injection->LLOhh, generatedsignal->LLOhh);
-    double loglikelihoodVIRGO = FDLogLikelihood(injection->VIRGOSignal, generatedsignal->VIRGOSignal, NoiseSnVIRGO, __LLVSimFD_VIRGONoise_fLow, __LLVSimFD_VIRGONoise_fHigh, injection->VIRGOhh, generatedsignal->VIRGOhh);
-
-    /* Output: value of the loglikelihood for the combined signals, assuming noise independence */
-    *lnew = loglikelihoodLHO + loglikelihoodLLO + loglikelihoodVIRGO;
-  }
-
-  /* Clean up */
-  LLVSignal_Cleanup(generatedsignal);
+  *lnew = CalculateLogL(templateparams, injection) - logZdata;
 }
 
 
@@ -201,6 +180,12 @@ int main(int argc, char *argv[])
 
 	/* Generate the injection */
 	LLVGenerateSignal(injectedparams, injectedsignal);
+
+  /* Calculate logL of data */
+  /*injectedparams->distance = 1.0e9;
+  logZdata = CalculateLogL(injectedparams, injectedsignal);
+  printf("logZdata = %lf\n", logZdata);*/
+  logZdata = 0.0;
 
 	/* Set the context pointer */
 	void *context = injectedsignal;
