@@ -5,47 +5,88 @@
 void getphysparams(double *Cube, int *ndim)
 {
 	int i = 0;
+  double m1=0., m2=0., tRef=0., dist=0., phase=0., inc=0., ra=0., dec=0., pol=0.;
 
   // component masses
-  double m1 = CubeToFlatPrior(Cube[i++], priorParams->comp_min, priorParams->comp_max);
-  double m2 = CubeToFlatPrior(Cube[i++], priorParams->comp_min, priorParams->comp_max);
-  if (m2 > m1) {
-    double tmp = m1;
-    m1 = m2;
-    m2 = tmp;
+  if (isnan(priorParams->fix_m1)) {
+    if (isnan(priorParams->fix_m2)) {
+      m1 = CubeToFlatPrior(Cube[i++], priorParams->comp_min, priorParams->comp_max);
+      m2 = CubeToFlatPrior(Cube[i++], priorParams->comp_min, priorParams->comp_max);
+      if (m2 > m1) {
+        double tmp = m1;
+        m1 = m2;
+        m2 = tmp;
+      }
+    } else {
+      m2 = priorParams->fix_m2;
+      m1 = CubeToFlatPrior(Cube[i++], fmax(priorParams->comp_min,m2), priorParams->comp_max);
+    }
+  } else {
+    m1 = priorParams->fix_m1;
+    if (isnan(priorParams->fix_m2)) {
+      m2 = CubeToFlatPrior(Cube[i++], priorParams->comp_min, fmin(m1,priorParams->comp_max));
+    } else {
+      m2 = priorParams->fix_m2;
+    }
   }
-  templateparams->m1 = m1;
-  templateparams->m2 = m2;
 
   // time
-  templateparams->tRef = CubeToFlatPrior(Cube[i++], injectedparams->tRef - priorParams->deltaT, injectedparams->tRef + priorParams->deltaT);
+  if (isnan(priorParams->fix_time)) {
+    tRef = CubeToFlatPrior(Cube[i++], injectedparams->tRef - priorParams->deltaT,
+           injectedparams->tRef + priorParams->deltaT);
+  } else {
+    tRef = priorParams->fix_time;
+  }
 
   // distance
-  templateparams->distance = CubeToPowerPrior(2.0, Cube[i++], priorParams->dist_min, priorParams->dist_max);
+  if (isnan(priorParams->fix_dist)) {
+    dist = CubeToPowerPrior(2.0, Cube[i++], priorParams->dist_min, priorParams->dist_max);
+  } else {
+    dist = priorParams->fix_dist;
+  }
 
   // orbital phase
-  templateparams->phiRef = CubeToFlatPrior(Cube[i++], 0.0, 2.0 * M_PI);
+  if (isnan(priorParams->fix_phase)) {
+    phase = CubeToFlatPrior(Cube[i++], 0.0, 2.0 * M_PI);
+  } else {
+    phase = priorParams->fix_phase;
+  }
 
   // inclination
-  templateparams->inclination = CubeToSinPrior(Cube[i++], 0.0, M_PI);
+  if (isnan(priorParams->fix_inc)) {
+    inc = CubeToSinPrior(Cube[i++], 0.0, M_PI);
+  } else {
+    inc = priorParams->fix_inc;
+  }
 
-  // sky location
-  templateparams->ra = CubeToFlatPrior(Cube[i++], 0.0, 2.0 * M_PI);
-  templateparams->dec = CubeToCosPrior(Cube[i++], -M_PI / 2.0, M_PI / 2.0);
+  // sky location (RA then dec)
+  if (isnan(priorParams->fix_ra)) {
+    ra = CubeToFlatPrior(Cube[i++], 0.0, 2.0 * M_PI);
+  } else {
+    ra = priorParams->fix_ra;
+  }
+  if (isnan(priorParams->fix_dec)) {
+    dec = CubeToCosPrior(Cube[i++], -M_PI / 2.0, M_PI / 2.0);
+  } else {
+    dec = priorParams->fix_dec;
+  }
 
   // polarization
-  templateparams->polarization = CubeToFlatPrior(Cube[i++], 0.0, M_PI);
+  if (isnan(priorParams->fix_pol)) {
+    pol = CubeToFlatPrior(Cube[i++], 0.0, M_PI);
+  } else {
+    pol = priorParams->fix_pol;
+  }
 
-  // put all values back in Cube as well
   Cube[0] = m1;
   Cube[1] = m2;
-  Cube[2] = templateparams->tRef;
-  Cube[3] = templateparams->distance;
-  Cube[4] = templateparams->phiRef;
-  Cube[5] = templateparams->inclination;
-  Cube[6] = templateparams->ra;
-  Cube[7] = templateparams->dec;
-  Cube[8] = templateparams->polarization;
+  Cube[2] = tRef;
+  Cube[3] = dist;
+  Cube[4] = phase;
+  Cube[5] = inc;
+  Cube[6] = ra;
+  Cube[7] = dec;
+  Cube[8] = pol;
 }
 
 /******************************************** getallparams routine ****************************************************/
@@ -81,10 +122,23 @@ void getLogLike(double *Cube, int *ndim, int *npars, double *lnew, void *context
     return;
   }
 
+  LLVParams templateparams;
+  templateparams.m1 = Cube[0];
+  templateparams.m2 = Cube[1];
+  templateparams.tRef = Cube[2];
+  templateparams.distance = Cube[3];
+  templateparams.phiRef = Cube[4];
+  templateparams.inclination = Cube[5];
+  templateparams.ra = Cube[6];
+  templateparams.dec = Cube[7];
+  templateparams.polarization = Cube[8];
+  templateparams.fRef = injectedparams->fRef;
+  templateparams.nbmode = injectedparams->nbmode;
+
   /* Note: context points to a LLVContext structure containing a LLVSignal* */
   LLVSignal* injection = ((LLVSignal*) context);
 
-  *lnew = CalculateLogL(templateparams, injection) - logZdata;
+  *lnew = CalculateLogL(&templateparams, injection) - logZdata;
 }
 
 
@@ -159,19 +213,13 @@ int main(int argc, char *argv[])
   LLVRunParams runParams;
   injectedparams = (LLVParams*) malloc(sizeof(LLVParams));
   memset(injectedparams, 0, sizeof(LLVParams));
-  templateparams = (LLVParams*) malloc(sizeof(LLVParams));
-  memset(templateparams, 0, sizeof(LLVParams));
   priorParams = (LLVPrior*) malloc(sizeof(LLVPrior));
   memset(priorParams, 0, sizeof(LLVPrior));
   
   /* Parse commandline to read parameters of injection */
   parse_args_LLV(argc, argv, injectedparams, priorParams, &runParams);
 
-  /* Use the same fRef and nbmode for recovery templates as injected signal */
-  templateparams->fRef = injectedparams->fRef;
-  templateparams->nbmode = injectedparams->nbmode;
-
-	/* Load and initialize the detector noise */
+  /* Load and initialize the detector noise */
 	LLVSimFD_Noise_Init_ParsePath();
 
 	/* Initialize the data structure for the injection */
@@ -182,13 +230,66 @@ int main(int argc, char *argv[])
 	LLVGenerateSignal(injectedparams, injectedsignal);
 
   /* Calculate logL of data */
-  /*injectedparams->distance = 1.0e9;
+  /*double dist_store = injectedparams->distance;
+  injectedparams->distance = 1.0e9;
   logZdata = CalculateLogL(injectedparams, injectedsignal);
-  printf("logZdata = %lf\n", logZdata);*/
+  printf("logZdata = %lf\n", logZdata);
+  injectedparams->distance = dist_store;*/
   logZdata = 0.0;
+  double logZtrue = CalculateLogL(injectedparams, injectedsignal);
+  printf("logZtrue = %lf\n", logZtrue-logZdata);
 
 	/* Set the context pointer */
 	void *context = injectedsignal;
+
+  int ndims = 9;
+
+  /* check for fixed parameters */
+  if (!isnan(priorParams->fix_m1))
+    ndims--;
+  if (!isnan(priorParams->fix_m2))
+    ndims--;
+  if (!isnan(priorParams->fix_dist))
+    ndims--;
+  if (!isnan(priorParams->fix_inc))
+    ndims--;
+  if (!isnan(priorParams->fix_phase))
+    ndims--;
+  if (!isnan(priorParams->fix_pol))
+    ndims--;
+  if (!isnan(priorParams->fix_ra))
+    ndims--;
+  if (!isnan(priorParams->fix_dec))
+    ndims--;
+  if (!isnan(priorParams->fix_time))
+    ndims--;
+
+  if (ndims == 0) {
+    LLVParams templateparams;
+    templateparams.m1 = priorParams->fix_m1;
+    templateparams.m2 = priorParams->fix_m2;
+    templateparams.tRef = priorParams->fix_time;
+    templateparams.distance = priorParams->fix_dist;
+    templateparams.phiRef = priorParams->fix_phase;
+    templateparams.inclination = priorParams->fix_inc;
+    templateparams.ra = priorParams->fix_ra;
+    templateparams.dec = priorParams->fix_dec;
+    templateparams.polarization = priorParams->fix_pol;
+    templateparams.fRef = injectedparams->fRef;
+    templateparams.nbmode = injectedparams->nbmode;
+
+    double logL = CalculateLogL(&templateparams, injectedsignal);
+    printf("logL = %lf\n", logL);
+
+    free(injectedparams);
+    free(priorParams);
+
+#ifdef PARALLEL
+    MPI_Finalize();
+#endif
+
+    exit(0);
+  }
 
 	/********** End of addendum ****************/
 
@@ -214,11 +315,11 @@ int main(int argc, char *argv[])
 
 	double tol = runParams.tol;				// tol, defines the stopping criteria
 
-	int ndims = 9;					// dimensionality (no. of free parameters)
+	//int ndims = 9;					// dimensionality (no. of free parameters)
 
 	int nPar = 9;					// total no. of parameters including free & derived parameters
 
-	int nClsPar = 2;				// no. of parameters to do mode separation on
+	int nClsPar = (int) (fmin(2.,ndims));				// no. of parameters to do mode separation on
 
 	int updInt = 50;				// after how many iterations feedback is required & the output files should be updated
 							// note: posterior files are updated & dumper routine is called after every updInt*10 iterations
@@ -262,7 +363,6 @@ int main(int argc, char *argv[])
 	logZero, maxiter, LogLikeFctn, dumper, BAMBIfctn, context);
 
   free(injectedparams);
-  free(templateparams);
   free(priorParams);
 
 #ifdef PARALLEL

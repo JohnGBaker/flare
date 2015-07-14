@@ -52,6 +52,15 @@ typedef struct tagLLVPrior {
 	double qmax;               /* maximum asymmetric mass ratio (>=1) (default 12) */
 	double dist_min;           /* minimum distance of source (pc) (default 1e6) */
 	double dist_max;           /* maximum distance of source (pc) (default 10*1e9) */
+  double fix_m1;
+  double fix_m2;
+  double fix_time;
+  double fix_ra;
+  double fix_dec;
+  double fix_phase;
+  double fix_pol;
+  double fix_dist;
+  double fix_inc;
 } LLVPrior;
 
 typedef struct tagLLVRunParams {
@@ -100,7 +109,6 @@ double CalculateLogL(LLVParams *params, LLVSignal* injection);
 /************ Global Parameters ************/
 
 extern LLVParams* injectedparams;
-extern LLVParams* templateparams;
 extern LLVPrior* priorParams;
 double logZdata;
 

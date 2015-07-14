@@ -72,6 +72,19 @@ Arguments are as follows:\n\
  --dist-max            Maximum distance to source (Mpc, default=10000)\n\
 \n\
 --------------------------------------------------\n\
+----- Fix Parameters In Sampling -----------------\n\
+--------------------------------------------------\n\
+ --fix-m1              Fix mass 1\n\
+ --fix-m2              Fix mass 2\n\
+ --fix-dist            Fix distance\n\
+ --fix-time            Fix reference time\n\
+ --fix-phase           Fix reference phase\n\
+ --fix-ra              Fix right ascension\n\
+ --fix-dec             Fix declination\n\
+ --fix-inc             Fix inclination\n\
+ --fix-pol             Fix polarization\n\
+\n\
+--------------------------------------------------\n\
 ----- BAMBI Sampler Settings ---------------------\n\
 --------------------------------------------------\n\
  --eff                 Target efficiency of sampling (default=0.1)\n\
@@ -107,6 +120,15 @@ Arguments are as follows:\n\
     prior->qmax = 11.98;
     prior->dist_min = 1.0;
     prior->dist_max = 10000.0;
+    prior->fix_m1 = NAN;
+    prior->fix_m2 = NAN;
+    prior->fix_dist = NAN;
+    prior->fix_time = NAN;
+    prior->fix_phase = NAN;
+    prior->fix_pol = NAN;
+    prior->fix_ra = NAN;
+    prior->fix_dec = NAN;
+    prior->fix_inc = NAN;
 
     /* set default values for the run settings */
     run->eff = 0.1;
@@ -160,6 +182,24 @@ Arguments are as follows:\n\
             prior->dist_min = atof(argv[++i]);
         } else if (strcmp(argv[i], "--dist-max") == 0) {
             prior->dist_max = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--fix-m1") == 0) {
+            prior->fix_m1 = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--fix-m2") == 0) {
+            prior->fix_m2 = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--fix-dist") == 0) {
+            prior->fix_dist = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--fix-ra") == 0) {
+            prior->fix_ra = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--fix-dec") == 0) {
+            prior->fix_dec = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--fix-time") == 0) {
+            prior->fix_time = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--fix-phase") == 0) {
+            prior->fix_phase = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--fix-inc") == 0) {
+            prior->fix_inc = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--fix-pol") == 0) {
+            prior->fix_pol = atof(argv[++i]);
         } else if (strcmp(argv[i], "--eff") == 0) {
             run->eff = atof(argv[++i]);
         } else if (strcmp(argv[i], "--tol") == 0) {
