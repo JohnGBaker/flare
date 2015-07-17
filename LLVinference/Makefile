@@ -1,10 +1,10 @@
 GSLROOT = /opt/local
 GSLINC = $(GSLROOT)/include
-BAMBIROOT = /usr/local
+BAMBIROOT = $(HOME)/build/bambi
 BAMBILIB = $(BAMBIROOT)/lib
 BAMBIINCLUDE = $(BAMBIROOT)/include
-CC = gcc-mp-4.8
-CPP = g++-mp-4.8
+CC = gcc
+CPP = g++
 CFLAGS := -g -O0 -std=c99 -I$(GSLINC) -I../tools -I../integration -I../EOBNRv2HMROM -I../LISAsim -I../LLVsim -I../LLVinference
 CPPFLAGS := -g -O0 -I$(GSLINC) -I../tools -I../integration -I../EOBNRv2HMROM -I../LISAsim -I../LLVsim -I../LLVinference
 
@@ -13,8 +13,8 @@ OBJ = LLVinference.o LLVutils.o bambi.o
 
 all: $(OBJ) LLVinference
 
-LLVInit.o: LLVInit.c LLVInit.h
-	$(CC) -c $(CFLAGS) LLVInit.c
+LLVutils.o: LLVutils.c LLVutils.h
+	$(CC) -c $(CFLAGS) LLVutils.c
 
 bambi.o: bambi.cc bambi.h
 	$(CPP) -c $(CPPFLAGS) -I$(BAMBIINCLUDE) bambi.cc
