@@ -50,10 +50,10 @@ int LISASimFDResponse21(
   const double psi)                                           /* Polarization angle */
 {
   /* Computing the complicated trigonometric coefficients */
-  clock_t begsetcoeffs = clock();
+  //clock_t begsetcoeffs = clock();
   SetCoeffsG(lambda, beta, psi);
-  clock_t endsetcoeffs = clock();
-  printf("Set Coeffs time: %g s\n", (double)(endsetcoeffs - begsetcoeffs) / CLOCKS_PER_SEC);
+  //clock_t endsetcoeffs = clock();
+  //printf("Set Coeffs time: %g s\n", (double)(endsetcoeffs - begsetcoeffs) / CLOCKS_PER_SEC);
 
   /* Main loop over the modes - goes through all the modes present */
   ListmodesCAmpPhaseFrequencySeries* listelement = *list;
@@ -122,22 +122,24 @@ int LISASimFDResponse21(
   }
 }
 
+//WARNING: tRef is ignored for now in the response - i.e. set to 0
 /* Core function processing a signal (in the form of a list of modes) through the Fourier-domain LISA response, for given values of the inclination, position in the sky and polarization angle */
-int LISASimFDResponseTDI(
+int LISASimFDResponseTDIAET(
   struct tagListmodesCAmpPhaseFrequencySeries **list,  /* Input: list of modes in Frequency-domain amplitude and phase form as produced by the ROM */
   struct tagListmodesCAmpPhaseFrequencySeries **listA,  /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the second-generation TDI observable A */
   struct tagListmodesCAmpPhaseFrequencySeries **listE,  /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the second-generation TDI observable E */
   struct tagListmodesCAmpPhaseFrequencySeries **listT,  /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the second-generation TDI observable T */
-  const double inclination,                                   /* Inclination of the source */
+  const double tRef,                                          /* Time at coalescence */
   const double lambda,                                        /* First angle for the position in the sky */
   const double beta,                                          /* Second angle for the position in the sky */
-  const double psi)                                          /* Polarization angle */
+  const double inclination,                                   /* Inclination of the source */
+  const double psi)                                           /* Polarization angle */
 {
   /* Computing the complicated trigonometric coefficients */
-  clock_t begsetcoeffs = clock();
+  //clock_t begsetcoeffs = clock();
   SetCoeffsG(lambda, beta, psi);
-  clock_t endsetcoeffs = clock();
-  printf("Set Coeffs time: %g s\n", (double)(endsetcoeffs - begsetcoeffs) / CLOCKS_PER_SEC);
+  //clock_t endsetcoeffs = clock();
+  //printf("Set Coeffs time: %g s\n", (double)(endsetcoeffs - begsetcoeffs) / CLOCKS_PER_SEC);
 
   /* Main loop over the modes - goes through all the modes present, stopping when encountering NULL */
   ListmodesCAmpPhaseFrequencySeries* listelement = *list;
@@ -169,11 +171,11 @@ int LISASimFDResponseTDI(
     double complex Yfactorplus;
     double complex Yfactorcross;
     if (!l%2) {
-      Yfactorplus = 1/2 * (SpinWeightedSphericalHarmonic(inclination, 0., -2, l, m) + conj(SpinWeightedSphericalHarmonic(inclination, 0., -2, l, -m)));
+      Yfactorplus = 1./2 * (SpinWeightedSphericalHarmonic(inclination, 0., -2, l, m) + conj(SpinWeightedSphericalHarmonic(inclination, 0., -2, l, -m)));
       Yfactorcross = I/2 * (SpinWeightedSphericalHarmonic(inclination, 0., -2, l, m) - conj(SpinWeightedSphericalHarmonic(inclination, 0., -2, l, -m)));
     }
     else {
-      Yfactorplus = 1/2 * (SpinWeightedSphericalHarmonic(inclination, 0., -2, l, m) - conj(SpinWeightedSphericalHarmonic(inclination, 0., -2, l, -m)));
+      Yfactorplus = 1./2 * (SpinWeightedSphericalHarmonic(inclination, 0., -2, l, m) - conj(SpinWeightedSphericalHarmonic(inclination, 0., -2, l, -m)));
       Yfactorcross = I/2 * (SpinWeightedSphericalHarmonic(inclination, 0., -2, l, m) + conj(SpinWeightedSphericalHarmonic(inclination, 0., -2, l, -m)));
     }
 
@@ -231,8 +233,8 @@ int LISASimFDResponseTDI(
       g23mode = G23mode(f, tf, Yfactorplus, Yfactorcross);
       g13mode = G13mode(f, tf, Yfactorplus, Yfactorcross);
       g31mode = G31mode(f, tf, Yfactorplus, Yfactorcross);
-      printf("g21mode: %g+i*%g\n", creal(g21mode), cimag(g21mode));
-      printf("g12mode: %g+i*%g\n", creal(g12mode), cimag(g12mode));
+      //printf("g21mode: %g+i*%g\n", creal(g21mode), cimag(g21mode));
+      //printf("g12mode: %g+i*%g\n", creal(g12mode), cimag(g12mode));
       /**/
       double sin3pifL = sin(3*PI*f*L_SI/C_SI);
       double complex exp3ipifL = cexp(3*I*PI*f*L_SI/C_SI);

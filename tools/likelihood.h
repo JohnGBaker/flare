@@ -76,6 +76,31 @@ double FDLogLikelihood(
   double ss,                                           /* Inner product (s|s), constant to be computed elsewhere and passed as an argument */
   double hh);                                          /* Inner product (h|h), constant to be computed elsewhere and passed as an argument */
 
+/* Function computing the overlap (h1|h2) between two waveforms given as list of modes, for a given noise function - no cross-products between modes are taken into account - adds an additional parameter for the starting 22-mode frequency (then properly scaled for the other modes) for a limited duration of the observations */
+double LISAFDListmodesOverlap(
+  struct tagListmodesCAmpPhaseFrequencySeries *listh1, /* First mode h1, list of modes in amplitude/phase form */
+  struct tagListmodesCAmpPhaseFrequencySeries *listh2, /* Second mode h2, list of modes in amplitude/phase form */
+  double (*Snoise)(double),                            /* Noise function */
+  double fLow,                                         /* Lower bound of the frequency window for the detector */
+  double fHigh,                                        /* Upper bound of the frequency window for the detector */
+  double fstartobs);                                   /* Starting frequency for the 22 modes - as determined from a limited duration of the observation */
+
+/* Function computing the log likelihood (h|s) - 1/2 (h|h) - 1/2 (s|s), with s the signal, h the template, and where we keep the constant term (s|s) - passed to the function as a parameter - all the cross-products between modes are taken into account - adds an additional parameter for the starting 22-mode frequency (then properly scaled for the other modes) for a limited duration of the observations */
+double LISAFDLogLikelihood(
+  struct tagListmodesCAmpPhaseFrequencySeries *lists,  /* Input: list of modes for the signal s, in Frequency-domain amplitude and phase form */
+  struct tagListmodesCAmpPhaseFrequencySeries *listh,  /* Input: list of modes for the template, in Frequency-domain amplitude and phase form */
+  double (*Snoise)(double),                            /* Noise function */
+  double fLow,                                         /* Lower bound of the frequency window for the detector */
+  double fHigh,                                        /* Upper bound of the frequency window for the detector */
+  double ss,                                           /* Inner product (s|s), constant to be computed elsewhere and passed as an argument */
+  double hh,                                           /* Inner product (h|h), constant to be computed elsewhere and passed as an argument */
+  double fstartobs);                                   /* Starting frequency for the 22 modes - as determined from a limited duration of the observation */
+
+/* Newtonian estimate of the relation Mf(deltat/M) (for the 22 mode) - gives the starting geometric frequency for a given mass ratio and a given geometric duration of the observations */
+double NewtonianfoftGeom(
+  const double q,                      /* Mass ratio m1/m2 */
+  const double t);                     /* Duration of the observations in geometric units (t/M) */
+
 #if 0
 { /* so that editors will match succeeding brace */
 #elif defined(__cplusplus)

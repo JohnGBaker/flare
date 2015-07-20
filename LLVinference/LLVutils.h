@@ -50,8 +50,8 @@ typedef struct tagLLVPrior {
 	double mtot_min;           /* minimum total mass (solar masses) (default 8) */
 	double mtot_max;           /* maximum total mass (solar masses) (default 100) */
 	double qmax;               /* maximum asymmetric mass ratio (>=1) (default 12) */
-	double dist_min;           /* minimum distance of source (pc) (default 1e6) */
-	double dist_max;           /* maximum distance of source (pc) (default 10*1e9) */
+	double dist_min;           /* minimum distance of source (Mpc) (default 1) */
+	double dist_max;           /* maximum distance of source (Mpc) (default 1e4) */
   double fix_m1;
   double fix_m2;
   double fix_time;

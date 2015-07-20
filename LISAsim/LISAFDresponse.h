@@ -50,16 +50,18 @@ int LISASimFDResponse21(
   const double beta,                                          /* Second angle for the position in the sky */
   const double psi);                                          /* Polarization angle */
 
+//WARNING: tRef is ignored for now in the response - i.e. set to 0
 /* Core function processing a signal (in the form of a list of modes) through the Fourier-domain LISA response, for given values of the inclination, position in the sky and polarization angle */
-int LISASimFDResponseTDI(
+int LISASimFDResponseTDIAET(
   struct tagListmodesCAmpPhaseFrequencySeries **list,  /* Input: list of modes in Frequency-domain amplitude and phase form as produced by the ROM */
   struct tagListmodesCAmpPhaseFrequencySeries **listA,  /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the second-generation TDI observable A */
   struct tagListmodesCAmpPhaseFrequencySeries **listE,  /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the second-generation TDI observable E */
   struct tagListmodesCAmpPhaseFrequencySeries **listT,  /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the second-generation TDI observable T */
-  const double inclination,                                   /* Inclination of the source */
+  const double tRef,                                          /* Time at coalescence */
   const double lambda,                                        /* First angle for the position in the sky */
   const double beta,                                          /* Second angle for the position in the sky */
-  const double psi); 
+  const double inclination,                                   /* Inclination of the source */
+  const double psi);                                          /* Polarization angle */ 
 
 #if 0
 { /* so that editors will match succeeding brace */

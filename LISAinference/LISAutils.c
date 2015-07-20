@@ -1,43 +1,43 @@
-#include "LLVutils.h"
+#include "LISAutils.h"
 
 /************ Global Parameters ************/
 
-LLVParams* injectedparams = NULL;
-LLVParams* templateparams = NULL;
-LLVPrior* priorParams = NULL;
+LISAParams* injectedparams = NULL;
+LISAParams* templateparams = NULL;
+LISAPrior* priorParams = NULL;
 
 /************ Functions to initalize and clean up structure for the signals ************/
 
-void LLVSignal_Cleanup(LLVSignal* signal) {
-  if(signal->LHOSignal) ListmodesCAmpPhaseFrequencySeries_Destroy(signal->LHOSignal);
-  if(signal->LLOSignal) ListmodesCAmpPhaseFrequencySeries_Destroy(signal->LLOSignal);
-  if(signal->VIRGOSignal) ListmodesCAmpPhaseFrequencySeries_Destroy(signal->VIRGOSignal);
+void LISASignal_Cleanup(LISASignal* signal) {
+  if(signal->TDIASignal) ListmodesCAmpPhaseFrequencySeries_Destroy(signal->TDIASignal);
+  if(signal->TDIESignal) ListmodesCAmpPhaseFrequencySeries_Destroy(signal->TDIESignal);
+  if(signal->TDITSignal) ListmodesCAmpPhaseFrequencySeries_Destroy(signal->TDITSignal);
   free(signal);
 }
 
-void LLVSignal_Init(LLVSignal** signal) {
+void LISASignal_Init(LISASignal** signal) {
   if(!signal) exit(1);
   /* Create storage for structures */
-  if(!*signal) *signal = malloc(sizeof(LLVSignal));
+  if(!*signal) *signal = malloc(sizeof(LISASignal));
   else
   {
-    LLVSignal_Cleanup(*signal);
+    LISASignal_Cleanup(*signal);
   }
-  (*signal)->LHOSignal = NULL;
-  (*signal)->LLOSignal = NULL;
-  (*signal)->VIRGOSignal = NULL;
+  (*signal)->TDIASignal = NULL;
+  (*signal)->TDIESignal = NULL;
+  (*signal)->TDITSignal = NULL;
 }
 
-/************ Functions for LLV parameters, injection, likelihood, prior ************/
+/************ Functions for LISA parameters, injection, likelihood, prior ************/
 
-/* Parse command line to initialize LLVParams, LLVPrior, and LLVRunParams objects */
-void parse_args_LLV(ssize_t argc, char **argv, 
-    LLVParams* params, 
-    LLVPrior *prior, 
-    LLVRunParams *run) 
+/* Parse command line to initialize LISAParams, LISAPrior, and LISARunParams objects */
+void parse_args_LISA(ssize_t argc, char **argv, 
+    LISAParams* params, 
+    LISAPrior *prior, 
+    LISARunParams *run) 
 {
     char help[] = "\
-LLVInference by Sylvain Marsat, John Baker, and Philip Graff\n\
+LISAInference by Sylvain Marsat, John Baker, and Philip Graff\n\
 Copyright July 2015\n\
 \n\
 This program performs rapid parameter estimation for LIGO and LISA CBC sources in the no-noise case.\n\
@@ -46,30 +46,30 @@ Arguments are as follows:\n\
 --------------------------------------------------\n\
 ----- Injected Signal Parameters -----------------\n\
 --------------------------------------------------\n\
- --tRef                Time at reference frequency (sec, default J2000.0 GPS epoch)\n\
+ --tRef                Time at reference frequency (sec, default=0)\n\
  --phiRef              Orbital phase at reference frequency (radians, default=0)\n\
- --m1                  Component mass 1 in Solar masses (larger, default=20)\n\
- --m2                  Component mass 2 in Solar masses (smaller, default=10)\n\
- --distance            Distance to source in Mpc (default=100)\n\
- --ra                  Right ascension of source sky location (radians, default=0)\n\
- --dec                 Declination of source sky location (radians, default=0)\n\
+ --m1                  Component mass 1 in Solar masses (larger, default=2e6)\n\
+ --m2                  Component mass 2 in Solar masses (smaller, default=1e6)\n\
+ --distance            Distance to source in Mpc (default=1e9)\n\
+ --lambda              First angle for the position in the sky (radians, default=0)\n\
+ --beta                Second angle for the position in the sky (radians, default=0)\n\
  --inclination         Inclination of source orbital plane to observer line of sight\n\
                        (radians, default=PI/3)\n\
  --polarization        Polarization of source (radians, default=0)\n\
- --fRef                Reference frequency (Hz, default=0 which is interpreted as Mf=0.14)\n\
+ --fRef                Reference frequency (Hz, default=0, interpreted as Mf=0.14)\n\
  --nbmode              Number of modes of radiation to use (1-5, default=5)\n\
 \n\
 --------------------------------------------------\n\
 ----- Prior Boundary Settings --------------------\n\
 --------------------------------------------------\n\
- --deltaT              Half-width of time prior (sec, default=0.2)\n\
- --comp-min            Minimum component mass in Solar masses (default=4)\n\
- --comp-max            Maximum component mass in Solar masses (default=50)\n\
- --mtot-min            Minimum total mass in Solar masses (default=8)\n\
- --mtot-max            Maximum total mass in Solar masses (default=100)\n\
+ --deltaT              Half-width of time prior (sec, default=1e5)\n\
+ --comp-min            Minimum component mass in Solar masses (default=1e4)\n\
+ --comp-max            Maximum component mass in Solar masses (default=1e8)\n\
+ --mtot-min            Minimum total mass in Solar masses (default=5e4)\n\
+ --mtot-max            Maximum total mass in Solar masses (default=1e8)\n\
  --q-max               Maximum mass ratio, m1/m2 (default=11.98, minimum is 1)\n\
- --dist-min            Minimum distance to source (Mpc, default=1)\n\
- --dist-max            Maximum distance to source (Mpc, default=10000)\n\
+ --dist-min            Minimum distance to source (Mpc, default=100)\n\
+ --dist-max            Maximum distance to source (Mpc, default=40*1e3)\n\
 \n\
 --------------------------------------------------\n\
 ----- Fix Parameters In Sampling -----------------\n\
@@ -79,8 +79,8 @@ Arguments are as follows:\n\
  --fix-dist            Fix distance\n\
  --fix-time            Fix reference time\n\
  --fix-phase           Fix reference phase\n\
- --fix-ra              Fix right ascension\n\
- --fix-dec             Fix declination\n\
+ --fix-lambda          Fix lambda\n\
+ --fix-beta            Fix beta\n\
  --fix-inc             Fix inclination\n\
  --fix-pol             Fix polarization\n\
 \n\
@@ -92,52 +92,53 @@ Arguments are as follows:\n\
  --nlive               Number of live points for sampling (default=1000)\n\
  --bambi               Use BAMBI's neural network logL learning (no option, default off)\n\
  --resume              Resume from a previous run (no option, default off)\n\
- --outroot             Root for output files (default='chains/LLVinference_')\n\
- --netfile             Neural network settings file if using --bambi (default='LLVinference.inp')\n\
+ --outroot             Root for output files (default='chains/LISAinference_')\n\
+ --netfile             Neural network settings file if using --bambi (default='LISAinference.inp')\n\
 \n";
 
     ssize_t i;
 
     /* set default values for the injection params */
-    params->tRef = EPOCH_J2000_0_GPS;
+    params->tRef = 0.;
     params->phiRef = 0.;
-    params->m1 = 20.;
-    params->m2 = 10.;
-    params->distance = 100.;
-    params->ra = 0.;
-    params->dec = 0.;
+    params->m1 = 2*1e6;
+    params->m2 = 1*1e6;
+    params->distance = 1e3;
+    params->lambda = 0.;
+    params->beta = 0.;
     params->inclination = PI/3.;
     params->polarization = 0.;
     params->fRef = 0.;
+    params->deltatobs = 2*YRSID_SI;
     params->nbmode = 5;
 
     /* set default values for the prior limits */
-    prior->deltaT = 0.1;
-    prior->comp_min = 4.0;
-    prior->comp_max = 50.0;
-    prior->mtot_min = 8.0;
-    prior->mtot_max = 100.0;
+    prior->deltaT = 1.e5;
+    prior->comp_min = 1e4;
+    prior->comp_max = 1e8;
+    prior->mtot_min = 5e4;
+    prior->mtot_max = 1e8;
     prior->qmax = 11.98;
-    prior->dist_min = 1.0;
-    prior->dist_max = 10000.0;
+    prior->dist_min = 100.0;
+    prior->dist_max = 40*1e3;
     prior->fix_m1 = NAN;
     prior->fix_m2 = NAN;
     prior->fix_dist = NAN;
     prior->fix_time = NAN;
     prior->fix_phase = NAN;
     prior->fix_pol = NAN;
-    prior->fix_ra = NAN;
-    prior->fix_dec = NAN;
+    prior->fix_lambda = NAN;
+    prior->fix_beta = NAN;
     prior->fix_inc = NAN;
 
     /* set default values for the run settings */
     run->eff = 0.1;
     run->tol = 0.5;
     run->nlive = 1000;
-    strcpy(run->outroot, "chains/LLVinference_");
+    strcpy(run->outroot, "chains/LISAinference_");
     run->bambi = 0;
     run->resume = 0;
-    strcpy(run->netfile, "LLVinference.inp");
+    strcpy(run->netfile, "LISAinference.inp");
 
     /* Consume command line */
     for (i = 1; i < argc; ++i) {
@@ -154,16 +155,18 @@ Arguments are as follows:\n\
             params->m2 = atof(argv[++i]);
         } else if (strcmp(argv[i], "--distance") == 0) {
             params->distance = atof(argv[++i]);
-        } else if (strcmp(argv[i], "--ra") == 0) {
-            params->ra = atof(argv[++i]);
-        } else if (strcmp(argv[i], "--dec") == 0) {
-            params->dec = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--lambda") == 0) {
+            params->lambda = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--beta") == 0) {
+            params->beta = atof(argv[++i]);
         } else if (strcmp(argv[i], "--inclination") == 0) {
             params->inclination = atof(argv[++i]);
         } else if (strcmp(argv[i], "--polarization") == 0) {
             params->polarization = atof(argv[++i]);
         } else if (strcmp(argv[i], "--fRef") == 0) {
             params->fRef = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--deltatobs") == 0) {
+            params->deltatobs = atof(argv[++i]);
         } else if (strcmp(argv[i], "--nbmode") == 0) {
             params->nbmode = atof(argv[++i]);
         } else if (strcmp(argv[i], "--deltaT") == 0) {
@@ -188,10 +191,10 @@ Arguments are as follows:\n\
             prior->fix_m2 = atof(argv[++i]);
         } else if (strcmp(argv[i], "--fix-dist") == 0) {
             prior->fix_dist = atof(argv[++i]);
-        } else if (strcmp(argv[i], "--fix-ra") == 0) {
-            prior->fix_ra = atof(argv[++i]);
-        } else if (strcmp(argv[i], "--fix-dec") == 0) {
-            prior->fix_dec = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--fix-lambda") == 0) {
+            prior->fix_lambda = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--fix-beta") == 0) {
+            prior->fix_beta = atof(argv[++i]);
         } else if (strcmp(argv[i], "--fix-time") == 0) {
             prior->fix_time = atof(argv[++i]);
         } else if (strcmp(argv[i], "--fix-phase") == 0) {
@@ -226,54 +229,55 @@ Arguments are as follows:\n\
     exit(1);
 }
 
-/* Function generating a LLV signal from LLV parameters */
-int LLVGenerateSignal(
-  struct tagLLVParams* params,   /* Input: set of LLV parameters of the signal */
-  struct tagLLVSignal* signal)   /* Output: structure for the generated signal */
+/* Function generating a LISA signal from LISA parameters */
+int LISAGenerateSignal(
+  struct tagLISAParams* params,   /* Input: set of LISA parameters of the signal */
+  struct tagLISASignal* signal)   /* Output: structure for the generated signal */
 {
   int ret;
   ListmodesCAmpPhaseFrequencySeries* listROM = NULL;
-  ListmodesCAmpPhaseFrequencySeries* listLHO = NULL;
-  ListmodesCAmpPhaseFrequencySeries* listLLO = NULL;
-  ListmodesCAmpPhaseFrequencySeries* listVIRGO = NULL;
+  ListmodesCAmpPhaseFrequencySeries* listTDIA = NULL;
+  ListmodesCAmpPhaseFrequencySeries* listTDIE = NULL;
+  ListmodesCAmpPhaseFrequencySeries* listTDIT = NULL;
 
   /* Checking that the global injectedparams has been set up */
   if (!injectedparams) {
-    printf("Error: when calling LLVGenerateSignal, injectedparams points to NULL.\n");
+    printf("Error: when calling LISAGenerateSignal, injectedparams points to NULL.\n");
     exit(1);
   }
   /* Should add more error checking ? */
   /* Generate the waveform with the ROM */
-  /* Note: SimEOBNRv2HMROM accepts masses and distances in SI units, whereas LLV params is in solar masses and Mpc */
+  /* Note: SimEOBNRv2HMROM accepts masses and distances in SI units, whereas LISA params is in solar masses and Mpc */
   ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, params->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
 
   /* If the ROM waveform generation failed (e.g. parameters were out of bounds) return FAILURE */
   if(ret==FAILURE) return FAILURE;
 
-  /* Process the waveform through the LLV response */
-  LLVSimFDResponse(&listROM, &listLHO, params->tRef, params->ra, params->dec, params->inclination, params->polarization, LHO);
-  LLVSimFDResponse(&listROM, &listLLO, params->tRef, params->ra, params->dec, params->inclination, params->polarization, LLO);
-  LLVSimFDResponse(&listROM, &listVIRGO, params->tRef, params->ra, params->dec, params->inclination, params->polarization, VIRGO);
+  /* Process the waveform through the LISA response */
+  //WARNING: tRef is ignored for now, i.e. set to 0
+  LISASimFDResponseTDIAET(&listROM, &listTDIA, &listTDIE, &listTDIT, params->tRef, params->lambda, params->beta, params->inclination, params->polarization);
 
-  /* Precompute the inner products (h|h) */
-  double LHOhh = FDListmodesOverlap(listLHO, listLHO, NoiseSnLHO, __LLVSimFD_LHONoise_fLow, __LLVSimFD_LHONoise_fHigh);
-  double LLOhh = FDListmodesOverlap(listLLO, listLLO, NoiseSnLLO, __LLVSimFD_LLONoise_fLow, __LLVSimFD_LLONoise_fHigh);
-  double VIRGOhh = FDListmodesOverlap(listVIRGO, listVIRGO, NoiseSnVIRGO, __LLVSimFD_VIRGONoise_fLow, __LLVSimFD_VIRGONoise_fHigh);
+  /* Precompute the inner products (h|h) - takes into account the length of the observation with deltatobs */
+  double Mfstartobs = NewtonianfoftGeom(params->m1 / params->m2, params->deltatobs / ((params->m1 + params->m2) * MTSUN_SI));
+  double fstartobs = Mfstartobs / ((params->m1 + params->m2) * MTSUN_SI);
+  double TDIAhh = LISAFDListmodesOverlap(listTDIA, listTDIA, NoiseSnA, __LISASimFD_Noise_fLow, __LISASimFD_Noise_fHigh, fstartobs);
+  double TDIEhh = LISAFDListmodesOverlap(listTDIE, listTDIE, NoiseSnE, __LISASimFD_Noise_fLow, __LISASimFD_Noise_fHigh, fstartobs);
+  double TDIThh = LISAFDListmodesOverlap(listTDIT, listTDIT, NoiseSnT, __LISASimFD_Noise_fLow, __LISASimFD_Noise_fHigh, fstartobs);
 
   /* Output and clean up */
-  signal->LHOSignal = listLHO;
-  signal->LLOSignal = listLLO;
-  signal->VIRGOSignal = listVIRGO;
-  signal->LHOhh = LHOhh;
-  signal->LLOhh = LLOhh;
-  signal->VIRGOhh = VIRGOhh;
+  signal->TDIASignal = listTDIA;
+  signal->TDIESignal = listTDIE;
+  signal->TDITSignal = listTDIT;
+  signal->TDIAhh = TDIAhh;
+  signal->TDIEhh = TDIEhh;
+  signal->TDIThh = TDIThh;
 
   ListmodesCAmpPhaseFrequencySeries_Destroy(listROM);
   return SUCCESS;
 }
 
 /* Function to check that returned parameter values fit in prior boundaries */
-int PriorBoundaryCheck(LLVPrior *prior, double *Cube)
+int PriorBoundaryCheck(LISAPrior *prior, double *Cube)
 {
 	if (Cube[0] < prior->comp_min || Cube[0] > prior->comp_max ||
 	 	Cube[1] < prior->comp_min || Cube[1] > prior->comp_max)
@@ -326,32 +330,34 @@ double CubeToCosPrior(double r, double x1, double x2)
 
 /* Log-Likelihood function */
 
-double CalculateLogL(LLVParams *params, LLVSignal* injection)
+double CalculateLogL(LISAParams *params, LISASignal* injection)
 {
   double logL = -DBL_MAX;
   int ret;
 
   /* Generating the signal in the three detectors for the input parameters */
-  LLVSignal* generatedsignal = NULL;
-  LLVSignal_Init(&generatedsignal);
-  ret = LLVGenerateSignal(params, generatedsignal);
+  LISASignal* generatedsignal = NULL;
+  LISASignal_Init(&generatedsignal);
+  ret = LISAGenerateSignal(params, generatedsignal);
 
-  /* If LLVGenerateSignal failed (e.g. parameters out of bound), silently return -Infinity logL */
+  /* If LISAGenerateSignal failed (e.g. parameters out of bound), silently return -Infinity logL */
   if(ret==FAILURE) {
     logL = -DBL_MAX;
   }
   else if(ret==SUCCESS) {
-    /* Computing the likelihood for each detector */
-    double loglikelihoodLHO = FDLogLikelihood(injection->LHOSignal, generatedsignal->LHOSignal, NoiseSnLHO, __LLVSimFD_LHONoise_fLow, __LLVSimFD_LHONoise_fHigh, injection->LHOhh, generatedsignal->LHOhh);
-    double loglikelihoodLLO = FDLogLikelihood(injection->LLOSignal, generatedsignal->LLOSignal, NoiseSnLLO, __LLVSimFD_LLONoise_fLow, __LLVSimFD_LLONoise_fHigh, injection->LLOhh, generatedsignal->LLOhh);
-    double loglikelihoodVIRGO = FDLogLikelihood(injection->VIRGOSignal, generatedsignal->VIRGOSignal, NoiseSnVIRGO, __LLVSimFD_VIRGONoise_fLow, __LLVSimFD_VIRGONoise_fHigh, injection->VIRGOhh, generatedsignal->VIRGOhh);
+    /* Computing the likelihood for each TDI channel - NOTE: we use the injection deltatobs */
+    double Mfstartobs = NewtonianfoftGeom(params->m1 / params->m2, injectedparams->deltatobs / ((injectedparams->m1 + injectedparams->m2) * MTSUN_SI));
+    double fstartobs = Mfstartobs / ((injectedparams->m1 + injectedparams->m2) * MTSUN_SI);
+    double loglikelihoodTDIA = LISAFDLogLikelihood(injection->TDIASignal, generatedsignal->TDIASignal, NoiseSnA, __LISASimFD_Noise_fLow, __LISASimFD_Noise_fHigh, injection->TDIAhh, generatedsignal->TDIAhh, fstartobs);
+    double loglikelihoodTDIE = LISAFDLogLikelihood(injection->TDIESignal, generatedsignal->TDIESignal, NoiseSnE, __LISASimFD_Noise_fLow, __LISASimFD_Noise_fHigh, injection->TDIEhh, generatedsignal->TDIEhh, fstartobs);
+    double loglikelihoodTDIT = LISAFDLogLikelihood(injection->TDITSignal, generatedsignal->TDITSignal, NoiseSnT, __LISASimFD_Noise_fLow, __LISASimFD_Noise_fHigh, injection->TDIThh, generatedsignal->TDIThh, fstartobs);
 
     /* Output: value of the loglikelihood for the combined signals, assuming noise independence */
-    logL = loglikelihoodLHO + loglikelihoodLLO + loglikelihoodVIRGO;
+    logL = loglikelihoodTDIA + loglikelihoodTDIE + loglikelihoodTDIT;
   }
 
   /* Clean up */
-  LLVSignal_Cleanup(generatedsignal);
+  LISASignal_Cleanup(generatedsignal);
 
   return logL;
 }

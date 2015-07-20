@@ -1,4 +1,4 @@
-CFLAGS= -O3 -g -O0 
+CFLAGS= -O2 
 
 _splinecspagh.so: spline.c spline.h spline.i
 	swig -python spline.i

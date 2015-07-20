@@ -1,11 +1,11 @@
-#include "LLVinference.h"
+#include "LISAinference.h"
 
 /******************************************** getphysparams routine ****************************************************/
 
 void getphysparams(double *Cube, int *ndim)
 {
 	int i = 0;
-  double m1=0., m2=0., tRef=0., dist=0., phase=0., inc=0., ra=0., dec=0., pol=0.;
+  double m1=0., m2=0., tRef=0., dist=0., phase=0., inc=0., lambda=0., beta=0., pol=0.;
 
   // component masses
   if (isnan(priorParams->fix_m1)) {
@@ -59,16 +59,16 @@ void getphysparams(double *Cube, int *ndim)
     inc = priorParams->fix_inc;
   }
 
-  // sky location (RA then dec)
-  if (isnan(priorParams->fix_ra)) {
-    ra = CubeToFlatPrior(Cube[i++], 0.0, 2.0 * M_PI);
+  // sky location (lambda then beta)
+  if (isnan(priorParams->fix_lambda)) {
+    lambda = CubeToFlatPrior(Cube[i++], 0.0, 2.0 * M_PI);
   } else {
-    ra = priorParams->fix_ra;
+    lambda = priorParams->fix_lambda;
   }
-  if (isnan(priorParams->fix_dec)) {
-    dec = CubeToCosPrior(Cube[i++], -M_PI / 2.0, M_PI / 2.0);
+  if (isnan(priorParams->fix_beta)) {
+    beta = CubeToCosPrior(Cube[i++], -M_PI / 2.0, M_PI / 2.0);
   } else {
-    dec = priorParams->fix_dec;
+    beta = priorParams->fix_beta;
   }
 
   // polarization
@@ -84,8 +84,8 @@ void getphysparams(double *Cube, int *ndim)
   Cube[3] = dist;
   Cube[4] = phase;
   Cube[5] = inc;
-  Cube[6] = ra;
-  Cube[7] = dec;
+  Cube[6] = lambda;
+  Cube[7] = beta;
   Cube[8] = pol;
 }
 
@@ -111,9 +111,9 @@ void getallparams(double *Cube, int *ndim)
 // Output arguments
 // lnew 						= loglikelihood
 
-/* Note: context must point to the LLVSignal structure representing the injected signals */
+/* Note: context must point to the LISASignal structure representing the injected signals */
 void getLogLike(double *Cube, int *ndim, int *npars, double *lnew, void *context)
-//void getLogLike(LLVParams *params, double *lnew, void *context)
+//void getLogLike(LISAParams *params, double *lnew, void *context)
 {
   /* Convert Cube to physical parameters and check prior boundary */
   getallparams(Cube,ndim);
@@ -122,21 +122,22 @@ void getLogLike(double *Cube, int *ndim, int *npars, double *lnew, void *context
     return;
   }
 
-  LLVParams templateparams;
+  LISAParams templateparams;
   templateparams.m1 = Cube[0];
   templateparams.m2 = Cube[1];
   templateparams.tRef = Cube[2];
   templateparams.distance = Cube[3];
   templateparams.phiRef = Cube[4];
   templateparams.inclination = Cube[5];
-  templateparams.ra = Cube[6];
-  templateparams.dec = Cube[7];
+  templateparams.lambda = Cube[6];
+  templateparams.beta = Cube[7];
   templateparams.polarization = Cube[8];
   templateparams.fRef = injectedparams->fRef;
+  templateparams.deltatobs = injectedparams->deltatobs;
   templateparams.nbmode = injectedparams->nbmode;
 
-  /* Note: context points to a LLVContext structure containing a LLVSignal* */
-  LLVSignal* injection = ((LLVSignal*) context);
+  /* Note: context points to a LISAContext structure containing a LISASignal* */
+  LISASignal* injection = ((LISASignal*) context);
 
   *lnew = CalculateLogL(&templateparams, injection) - logZdata;
 }
@@ -207,31 +208,28 @@ int main(int argc, char *argv[])
 	MPI_Comm_rank(MPI_COMM_WORLD,&myid);
 #endif
 
-	/*********** Addendum *************/
+  /*********** Addendum *************/
 
-	/* Initialize structs for holding various options */
-  LLVRunParams runParams;
-  injectedparams = (LLVParams*) malloc(sizeof(LLVParams));
-  memset(injectedparams, 0, sizeof(LLVParams));
-  priorParams = (LLVPrior*) malloc(sizeof(LLVPrior));
-  memset(priorParams, 0, sizeof(LLVPrior));
+  /* Initialize structs for holding various options */
+  LISARunParams runParams;
+  injectedparams = (LISAParams*) malloc(sizeof(LISAParams));
+  memset(injectedparams, 0, sizeof(LISAParams));
+  priorParams = (LISAPrior*) malloc(sizeof(LISAPrior));
+  memset(priorParams, 0, sizeof(LISAPrior));
   
   /* Parse commandline to read parameters of injection */
-  parse_args_LLV(argc, argv, injectedparams, priorParams, &runParams);
-
-  /* Load and initialize the detector noise */
-  LLVSimFD_Noise_Init_ParsePath();
+  parse_args_LISA(argc, argv, injectedparams, priorParams, &runParams);
 
   /* Initialize the data structure for the injection */
-  LLVSignal* injectedsignal = NULL;
-  LLVSignal_Init(&injectedsignal);
+  LISASignal* injectedsignal = NULL;
+  LISASignal_Init(&injectedsignal);
 
   /* Generate the injection */
-  LLVGenerateSignal(injectedparams, injectedsignal);
+  LISAGenerateSignal(injectedparams, injectedsignal);
   //TESTING
-  //printf("SNRsquare LHO: %g\n", injectedsignal->LHOhh);
-  //printf("SNRsquare LLO: %g\n", injectedsignal->LLOhh);
-  //printf("SNRsquare VIRGO: %g\n", injectedsignal->VIRGOhh);
+  //printf("SNRsquare TDIA: %g\n", injectedsignal->TDIAhh);
+  //printf("SNRsquare TDIE: %g\n", injectedsignal->TDIEhh);
+  //printf("SNRsquare TDIT: %g\n", injectedsignal->TDIThh);
 
   /* Calculate logL of data */
   /*double dist_store = injectedparams->distance;
@@ -261,25 +259,26 @@ int main(int argc, char *argv[])
     ndims--;
   if (!isnan(priorParams->fix_pol))
     ndims--;
-  if (!isnan(priorParams->fix_ra))
+  if (!isnan(priorParams->fix_lambda))
     ndims--;
-  if (!isnan(priorParams->fix_dec))
+  if (!isnan(priorParams->fix_beta))
     ndims--;
   if (!isnan(priorParams->fix_time))
     ndims--;
 
   if (ndims == 0) {
-    LLVParams templateparams;
+    LISAParams templateparams;
     templateparams.m1 = priorParams->fix_m1;
     templateparams.m2 = priorParams->fix_m2;
     templateparams.tRef = priorParams->fix_time;
     templateparams.distance = priorParams->fix_dist;
     templateparams.phiRef = priorParams->fix_phase;
     templateparams.inclination = priorParams->fix_inc;
-    templateparams.ra = priorParams->fix_ra;
-    templateparams.dec = priorParams->fix_dec;
+    templateparams.lambda = priorParams->fix_lambda;
+    templateparams.beta = priorParams->fix_beta;
     templateparams.polarization = priorParams->fix_pol;
     templateparams.fRef = injectedparams->fRef;
+    templateparams.deltatobs = injectedparams->deltatobs;
     templateparams.nbmode = injectedparams->nbmode;
 
     double logL = CalculateLogL(&templateparams, injectedsignal);
@@ -302,7 +301,7 @@ int main(int argc, char *argv[])
 	  getLogLike(injectedparams, &l, context);
 	  printf("LogLikelihood: %g\n", l);
 	  free(injectedparams);
-	  LLVSignal_Cleanup(injectedsignal);*/
+	  LISASignal_Cleanup(injectedsignal);*/
 	/********** End of test ****************/
 
 	int i;

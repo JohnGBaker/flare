@@ -90,14 +90,14 @@ void SetCoeffsG(const double lambda, const double beta, const double psi) {
   double sinbeta = sin(beta);
   double cospsi = cos(psi);
   double sinpsi = sin(psi);
-  printf("cos(lambda), sin(lambda), cos(beta), sin(beta), cos(psi), sin(psi): %g, %g, %g, %g, %g, %g\n", coslambda, sinlambda, cosbeta, sinbeta, cospsi, sinpsi);
+  //printf("cos(lambda), sin(lambda), cos(beta), sin(beta), cos(psi), sin(psi): %g, %g, %g, %g, %g, %g\n", coslambda, sinlambda, cosbeta, sinbeta, cospsi, sinpsi);
 
   /* Projection coefficients for hplus in n3.H.n3 */
   coeffn3Hn3plusconst = 1./128 * (-4*cospsi*cospsi + 4*sinpsi*sinpsi -27*coslambda*coslambda*sinpsi*sinpsi -27*cospsi*cospsi*sinlambda*sinlambda -4*cosbeta*cosbeta*cospsi*cospsi -4*sinbeta*sinbeta*sinpsi*sinpsi + 4*cosbeta*cosbeta*sinpsi*sinpsi + 4*cospsi*cospsi*sinbeta*sinbeta + 27*coslambda*coslambda*cospsi*cospsi + 27*sinlambda*sinlambda*sinpsi*sinpsi -9*cosbeta*cosbeta*coslambda*coslambda*cospsi*cospsi -9*cosbeta*cosbeta*sinlambda*sinlambda*sinpsi*sinpsi -9*coslambda*coslambda*sinbeta*sinbeta*sinpsi*sinpsi -9*cospsi*cospsi*sinbeta*sinbeta*sinlambda*sinlambda + 9*cosbeta*cosbeta*coslambda*coslambda*sinpsi*sinpsi + 9*cosbeta*cosbeta*cospsi*cospsi*sinlambda*sinlambda + 9*coslambda*coslambda*cospsi*cospsi*sinbeta*sinbeta + 9*sinbeta*sinbeta*sinlambda*sinlambda*sinpsi*sinpsi -54*sqrt3*coslambda*sinlambda*sinpsi*sinpsi + 54*sqrt3*coslambda*cospsi*cospsi*sinlambda -72*sqrt3*coslambda*coslambda*cospsi*sinbeta*sinpsi -18*sqrt3*coslambda*sinbeta*sinbeta*sinlambda*sinpsi*sinpsi -18*sqrt3*cosbeta*cosbeta*coslambda*cospsi*cospsi*sinlambda + 18*sqrt3*coslambda*cospsi*cospsi*sinbeta*sinbeta*sinlambda + 18*sqrt3*cosbeta*cosbeta*coslambda*sinlambda*sinpsi*sinpsi + 72*sqrt3*cospsi*sinbeta*sinlambda*sinlambda*sinpsi + 144*coslambda*cospsi*sinbeta*sinlambda*sinpsi);
-  printf("coeffn3Hn3plusconst: %g\n", coeffn3Hn3plusconst);
+  //printf("coeffn3Hn3plusconst: %g\n", coeffn3Hn3plusconst);
   /**/
   coeffn3Hn3pluscos[1] = 1./16*cosbeta * (-9*cospsi*cospsi*sinbeta*sinlambda + 9*sinbeta*sinlambda*sinpsi*sinpsi + 18*coslambda*cospsi*sinpsi + sqrt3*coslambda*cospsi*cospsi*sinbeta -sqrt3*coslambda*sinbeta*sinpsi*sinpsi + 2*sqrt3*cospsi*sinlambda*sinpsi);
-  printf("coeffn3Hn3plusconst: %g\n", coeffn3Hn3plusconst);
+  //printf("coeffn3Hn3plusconst: %g\n", coeffn3Hn3plusconst);
   /**/
   coeffn3Hn3pluscos[2] = -3./64 * (-3*cospsi*cospsi + 3*sinpsi*sinpsi -6*coslambda*coslambda*cospsi*cospsi -6*sinlambda*sinlambda*sinpsi*sinpsi -3*cosbeta*cosbeta*cospsi*cospsi -3*sinbeta*sinbeta*sinpsi*sinpsi + 3*cosbeta*cosbeta*sinpsi*sinpsi + 3*cospsi*cospsi*sinbeta*sinbeta + 6*coslambda*coslambda*sinpsi*sinpsi + 6*cospsi*cospsi*sinlambda*sinlambda -2*cosbeta*cosbeta*coslambda*coslambda*sinpsi*sinpsi -2*cosbeta*cosbeta*cospsi*cospsi*sinlambda*sinlambda -2*coslambda*coslambda*cospsi*cospsi*sinbeta*sinbeta -2*sinbeta*sinbeta*sinlambda*sinlambda*sinpsi*sinpsi + 2*cosbeta*cosbeta*coslambda*coslambda*cospsi*cospsi + 2*cosbeta*cosbeta*sinlambda*sinlambda*sinpsi*sinpsi + 2*coslambda*coslambda*sinbeta*sinbeta*sinpsi*sinpsi + 2*cospsi*cospsi*sinbeta*sinbeta*sinlambda*sinlambda -32*coslambda*cospsi*sinbeta*sinlambda*sinpsi);
   /**/
@@ -123,26 +123,26 @@ void SetCoeffsG(const double lambda, const double beta, const double psi) {
   coeffn3Hn3crosscos[3] = 1./16*cosbeta * (-3*coslambda*sinpsi*sinpsi + 3*coslambda*cospsi*cospsi + sqrt3*cospsi*cospsi*sinlambda -sqrt3*sinlambda*sinpsi*sinpsi + 6*cospsi*sinbeta*sinlambda*sinpsi -2*sqrt3*coslambda*cospsi*sinbeta*sinpsi);
   /**/
   coeffn3Hn3crosscos[4] = 1./64 * (-3*coslambda*coslambda*cospsi*sinpsi + 3*cospsi*sinlambda*sinlambda*sinpsi + cospsi*sinbeta*sinbeta*sinlambda*sinlambda*sinpsi + cosbeta*cosbeta*coslambda*coslambda*cospsi*sinpsi -4*coslambda*sinbeta*sinlambda*sinpsi*sinpsi -2*sqrt3*coslambda*coslambda*sinbeta*sinpsi*sinpsi -2*sqrt3*cospsi*cospsi*sinbeta*sinlambda*sinlambda -cosbeta*cosbeta*cospsi*sinlambda*sinlambda*sinpsi -coslambda*coslambda*cospsi*sinbeta*sinbeta*sinpsi + 2*sqrt3*coslambda*coslambda*cospsi*cospsi*sinbeta + 2*sqrt3*sinbeta*sinlambda*sinlambda*sinpsi*sinpsi + 4*coslambda*cospsi*cospsi*sinbeta*sinlambda + 6*sqrt3*coslambda*cospsi*sinlambda*sinpsi -2*sqrt3*cosbeta*cosbeta*coslambda*cospsi*sinlambda*sinpsi + 2*sqrt3*coslambda*cospsi*sinbeta*sinbeta*sinlambda*sinpsi);
-  printf("coeffn3Hn3plusconst: %g\n", coeffn3Hn3plusconst);
+  //printf("coeffn3Hn3plusconst: %g\n", coeffn3Hn3plusconst);
   /**/
   coeffn3Hn3crosssin[1] = -1./16*cosbeta * (-9*sinlambda*sinpsi*sinpsi + 9*cospsi*cospsi*sinlambda -7*sqrt3*coslambda*sinpsi*sinpsi + 7*sqrt3*coslambda*cospsi*cospsi -18*coslambda*cospsi*sinbeta*sinpsi + 14*sqrt3*cospsi*sinbeta*sinlambda*sinpsi);
   /**/
-   printf("coeffn3Hn3plusconst: %g\n", coeffn3Hn3plusconst);
+  //printf("coeffn3Hn3plusconst: %g\n", coeffn3Hn3plusconst);
   coeffn3Hn3crosssin[2] = -3./32 * (-4*coslambda*coslambda*sinbeta*sinpsi*sinpsi -4*cospsi*cospsi*sinbeta*sinlambda*sinlambda + 3*sqrt3*cospsi*sinpsi + 4*coslambda*coslambda*cospsi*cospsi*sinbeta + 4*sinbeta*sinlambda*sinlambda*sinpsi*sinpsi -3*sqrt3*cospsi*sinbeta*sinbeta*sinpsi + 3*sqrt3*cosbeta*cosbeta*cospsi*sinpsi + 12*coslambda*cospsi*sinlambda*sinpsi -4*cosbeta*cosbeta*coslambda*cospsi*sinlambda*sinpsi + 4*coslambda*cospsi*sinbeta*sinbeta*sinlambda*sinpsi);
   /**/
-   printf("coeffn3Hn3plusconst: %g\n", coeffn3Hn3plusconst);
+  //printf("coeffn3Hn3plusconst: %g\n", coeffn3Hn3plusconst);
   coeffn3Hn3crosssin[3] = -1./16*cosbeta * (-3*cospsi*cospsi*sinlambda + 3*sinlambda*sinpsi*sinpsi + sqrt3*coslambda*cospsi*cospsi -sqrt3*coslambda*sinpsi*sinpsi + 6*coslambda*cospsi*sinbeta*sinpsi + 2*sqrt3*cospsi*sinbeta*sinlambda*sinpsi);
   /**/
-   printf("coeffn3Hn3plusconst: %g\n", coeffn3Hn3plusconst);
-   printf("coeffn3Hn3plusconst: %g\n", coeffn3Hn3plusconst);
-   printf("coeffn3Hn3crosssin[4]: %g\n", coeffn3Hn3crosssin[4]);
+  //printf("coeffn3Hn3plusconst: %g\n", coeffn3Hn3plusconst);
+  //printf("coeffn3Hn3plusconst: %g\n", coeffn3Hn3plusconst);
+  //printf("coeffn3Hn3crosssin[4]: %g\n", coeffn3Hn3crosssin[4]);
   coeffn3Hn3crosssin[4] = 1./64 * (-2*coslambda*coslambda*cospsi*cospsi*sinbeta -2*sinbeta*sinlambda*sinlambda*sinpsi*sinpsi + 2*coslambda*coslambda*sinbeta*sinpsi*sinpsi + 2*cospsi*cospsi*sinbeta*sinlambda*sinlambda -6*coslambda*cospsi*sinlambda*sinpsi -3*sqrt3*coslambda*coslambda*cospsi*sinpsi + 3*sqrt3*cospsi*sinlambda*sinlambda*sinpsi + sqrt3*cospsi*sinbeta*sinbeta*sinlambda*sinlambda*sinpsi + sqrt3*cosbeta*cosbeta*coslambda*coslambda*cospsi*sinpsi -4*sqrt3*coslambda*sinbeta*sinlambda*sinpsi*sinpsi -2*coslambda*cospsi*sinbeta*sinbeta*sinlambda*sinpsi -sqrt3*cosbeta*cosbeta*cospsi*sinlambda*sinlambda*sinpsi -sqrt3*coslambda*coslambda*cospsi*sinbeta*sinbeta*sinpsi + 2*cosbeta*cosbeta*coslambda*cospsi*sinlambda*sinpsi + 4*sqrt3*coslambda*cospsi*cospsi*sinbeta*sinlambda);
 
   /* Projection coefficients for hplus in n2.H.n2 */
   
-  printf("coeffn3Hn3plusconst: %g\n", coeffn3Hn3plusconst);
-  printf("coeffn2Hn2plusconst: %g\n", coeffn2Hn2plusconst);
-  printf("coeffn3Hn3plusconst: %g\n", coeffn3Hn3plusconst);
+  //printf("coeffn3Hn3plusconst: %g\n", coeffn3Hn3plusconst);
+  //printf("coeffn2Hn2plusconst: %g\n", coeffn2Hn2plusconst);
+  //printf("coeffn3Hn3plusconst: %g\n", coeffn3Hn3plusconst);
   coeffn2Hn2plusconst = 1./128 * (-4*cospsi*cospsi + 4*sinpsi*sinpsi -27*coslambda*coslambda*sinpsi*sinpsi -27*cospsi*cospsi*sinlambda*sinlambda -4*cosbeta*cosbeta*cospsi*cospsi -4*sinbeta*sinbeta*sinpsi*sinpsi + 4*cosbeta*cosbeta*sinpsi*sinpsi + 4*cospsi*cospsi*sinbeta*sinbeta + 27*coslambda*coslambda*cospsi*cospsi + 27*sinlambda*sinlambda*sinpsi*sinpsi -9*cosbeta*cosbeta*coslambda*coslambda*cospsi*cospsi -9*cosbeta*cosbeta*sinlambda*sinlambda*sinpsi*sinpsi -9*coslambda*coslambda*sinbeta*sinbeta*sinpsi*sinpsi -9*cospsi*cospsi*sinbeta*sinbeta*sinlambda*sinlambda + 9*cosbeta*cosbeta*coslambda*coslambda*sinpsi*sinpsi + 9*cosbeta*cosbeta*cospsi*cospsi*sinlambda*sinlambda + 9*coslambda*coslambda*cospsi*cospsi*sinbeta*sinbeta + 9*sinbeta*sinbeta*sinlambda*sinlambda*sinpsi*sinpsi -54*sqrt3*coslambda*cospsi*cospsi*sinlambda + 54*sqrt3*coslambda*sinlambda*sinpsi*sinpsi -72*sqrt3*cospsi*sinbeta*sinlambda*sinlambda*sinpsi -18*sqrt3*coslambda*cospsi*cospsi*sinbeta*sinbeta*sinlambda -18*sqrt3*cosbeta*cosbeta*coslambda*sinlambda*sinpsi*sinpsi + 18*sqrt3*coslambda*sinbeta*sinbeta*sinlambda*sinpsi*sinpsi + 18*sqrt3*cosbeta*cosbeta*coslambda*cospsi*cospsi*sinlambda + 72*sqrt3*coslambda*coslambda*cospsi*sinbeta*sinpsi + 144*coslambda*cospsi*sinbeta*sinlambda*sinpsi);
   /**/
   coeffn2Hn2pluscos[1] = 1./16*cosbeta * (-18*coslambda*cospsi*sinpsi -9*sinbeta*sinlambda*sinpsi*sinpsi + 9*cospsi*cospsi*sinbeta*sinlambda + sqrt3*coslambda*cospsi*cospsi*sinbeta -sqrt3*coslambda*sinbeta*sinpsi*sinpsi + 2*sqrt3*cospsi*sinlambda*sinpsi);
@@ -152,8 +152,8 @@ void SetCoeffsG(const double lambda, const double beta, const double psi) {
   coeffn2Hn2pluscos[3] = 1./16*cosbeta * (-6*coslambda*cospsi*sinpsi -3*sinbeta*sinlambda*sinpsi*sinpsi + 3*cospsi*cospsi*sinbeta*sinlambda + sqrt3*coslambda*cospsi*cospsi*sinbeta -sqrt3*coslambda*sinbeta*sinpsi*sinpsi + 2*sqrt3*cospsi*sinlambda*sinpsi);
   /**/
   coeffn2Hn2pluscos[4] = 1./128 * (-3*coslambda*coslambda*sinpsi*sinpsi -3*cospsi*cospsi*sinlambda*sinlambda + 3*coslambda*coslambda*cospsi*cospsi + 3*sinlambda*sinlambda*sinpsi*sinpsi + cosbeta*cosbeta*coslambda*coslambda*sinpsi*sinpsi + cosbeta*cosbeta*cospsi*cospsi*sinlambda*sinlambda + coslambda*coslambda*cospsi*cospsi*sinbeta*sinbeta + sinbeta*sinbeta*sinlambda*sinlambda*sinpsi*sinpsi -cosbeta*cosbeta*coslambda*coslambda*cospsi*cospsi -cosbeta*cosbeta*sinlambda*sinlambda*sinpsi*sinpsi -coslambda*coslambda*sinbeta*sinbeta*sinpsi*sinpsi -cospsi*cospsi*sinbeta*sinbeta*sinlambda*sinlambda -6*sqrt3*coslambda*sinlambda*sinpsi*sinpsi + 6*sqrt3*coslambda*cospsi*cospsi*sinlambda -8*sqrt3*coslambda*coslambda*cospsi*sinbeta*sinpsi -2*sqrt3*coslambda*sinbeta*sinbeta*sinlambda*sinpsi*sinpsi -2*sqrt3*cosbeta*cosbeta*coslambda*cospsi*cospsi*sinlambda + 2*sqrt3*coslambda*cospsi*cospsi*sinbeta*sinbeta*sinlambda + 2*sqrt3*cosbeta*cosbeta*coslambda*sinlambda*sinpsi*sinpsi + 8*sqrt3*cospsi*sinbeta*sinlambda*sinlambda*sinpsi + 16*coslambda*cospsi*sinbeta*sinlambda*sinpsi);
-  printf("coeffn3Hn3plusconst: %g\n", coeffn3Hn3plusconst);
-  printf("coeffn2Hn2plusconst: %g\n", coeffn2Hn2plusconst);
+  //printf("coeffn3Hn3plusconst: %g\n", coeffn3Hn3plusconst);
+  //printf("coeffn2Hn2plusconst: %g\n", coeffn2Hn2plusconst);
   /**/
   coeffn2Hn2plussin[1] = 1./16*cosbeta * (-9*coslambda*sinbeta*sinpsi*sinpsi + 9*coslambda*cospsi*cospsi*sinbeta + 18*cospsi*sinlambda*sinpsi -14*sqrt3*coslambda*cospsi*sinpsi -7*sqrt3*sinbeta*sinlambda*sinpsi*sinpsi + 7*sqrt3*cospsi*cospsi*sinbeta*sinlambda);
   /**/
@@ -286,8 +286,8 @@ void SetCoeffsG(const double lambda, const double beta, const double psi) {
   /**/
   coeffkp3plusp1sin[2] = 1./24*cosbeta * (-3*sinlambda + sqrt3*coslambda);
 
-  printf("coeffn3Hn3plusconst: %g\n", coeffn3Hn3plusconst);
-  printf("coeffn2Hn2plusconst: %g\n", coeffn2Hn2plusconst);
+  //printf("coeffn3Hn3plusconst: %g\n", coeffn3Hn3plusconst);
+  //printf("coeffn2Hn2plusconst: %g\n", coeffn2Hn2plusconst);
 }
 
 /* Function evaluating G21, combining the two polarization with the spherical harmonics factors */
@@ -299,25 +299,25 @@ double complex G21mode(const double f, const double t, const double complex Yfac
   }
   double n3Pn3plus = coeffn3Hn3plusconst;
   double n3Pn3cross = coeffn3Hn3crossconst;
-  printf("n3Pn3cross: %g\n", n3Pn3cross);
+  //printf("n3Pn3cross: %g\n", n3Pn3cross);
   for(int j=0; j<4; j++) {
     n3Pn3plus += cosarray[j] * coeffn3Hn3pluscos[j] + sinarray[j] * coeffn3Hn3plussin[j];
     n3Pn3cross += cosarray[j] * coeffn3Hn3crosscos[j] + sinarray[j] * coeffn3Hn3crosssin[j];
   }
-  printf("n3Pn3cross: %g\n", n3Pn3cross);
+  //printf("n3Pn3cross: %g\n", n3Pn3cross);
   double kn3 = coeffkn3const;
   double kp1plusp2 = coeffkp1plusp2const;
   for(int j=0; j<2; j++) {
     kn3 += cosarray[j] * coeffkn3cos[j] + sinarray[j] * coeffkn3sin[j];
     kp1plusp2 += cosarray[j] * coeffkp1plusp2cos[j] + sinarray[j] * coeffkp1plusp2sin[j];
   }
-  printf("Yfactorplus: %g+i*%g\n", creal(Yfactorplus), cimag(Yfactorplus));
-  printf("Yfactorcross: %g+i*%g\n", creal(Yfactorcross), cimag(Yfactorcross));
-  printf("%g+i*%g\n", creal((n3Pn3plus*Yfactorplus + n3Pn3cross*Yfactorcross)), cimag((n3Pn3plus*Yfactorplus + n3Pn3cross*Yfactorcross)));
-  printf("%g+i*%g\n", creal( sinc( PI*f*L_SI/C_SI * (1.+kn3))), cimag( sinc( PI*f*L_SI/C_SI * (1.+kn3))));
-  printf("%g+i*%g\n", creal(cexp( I*PI*f*L_SI/C_SI * (1.-kp1plusp2) )), cimag(cexp( I*PI*f*L_SI/C_SI * (1.-kp1plusp2) )));
-  printf("%g+i*%g\n", creal(I*PI*f*L_SI/C_SI), cimag(I*PI*f*L_SI/C_SI));
-  printf("result G21: %g+i*%g\n", creal(I*PI*f*L_SI/C_SI * (n3Pn3plus*Yfactorplus + n3Pn3cross*Yfactorcross) * sinc( PI*f*L_SI/C_SI * (1.+kn3)) * cexp( I*PI*f*L_SI/C_SI * (1.-kp1plusp2) )), cimag(I*PI*f*L_SI/C_SI * (n3Pn3plus*Yfactorplus + n3Pn3cross*Yfactorcross) * sinc( PI*f*L_SI/C_SI * (1.+kn3)) * cexp( I*PI*f*L_SI/C_SI * (1.-kp1plusp2) )));
+  //printf("Yfactorplus: %g+i*%g\n", creal(Yfactorplus), cimag(Yfactorplus));
+  //printf("Yfactorcross: %g+i*%g\n", creal(Yfactorcross), cimag(Yfactorcross));
+  //printf("%g+i*%g\n", creal((n3Pn3plus*Yfactorplus + n3Pn3cross*Yfactorcross)), cimag((n3Pn3plus*Yfactorplus + n3Pn3cross*Yfactorcross)));
+  //printf("%g+i*%g\n", creal( sinc( PI*f*L_SI/C_SI * (1.+kn3))), cimag( sinc( PI*f*L_SI/C_SI * (1.+kn3))));
+  //printf("%g+i*%g\n", creal(cexp( I*PI*f*L_SI/C_SI * (1.-kp1plusp2) )), cimag(cexp( I*PI*f*L_SI/C_SI * (1.-kp1plusp2) )));
+  //printf("%g+i*%g\n", creal(I*PI*f*L_SI/C_SI), cimag(I*PI*f*L_SI/C_SI));
+  //printf("result G21: %g+i*%g\n", creal(I*PI*f*L_SI/C_SI * (n3Pn3plus*Yfactorplus + n3Pn3cross*Yfactorcross) * sinc( PI*f*L_SI/C_SI * (1.+kn3)) * cexp( I*PI*f*L_SI/C_SI * (1.-kp1plusp2) )), cimag(I*PI*f*L_SI/C_SI * (n3Pn3plus*Yfactorplus + n3Pn3cross*Yfactorcross) * sinc( PI*f*L_SI/C_SI * (1.+kn3)) * cexp( I*PI*f*L_SI/C_SI * (1.-kp1plusp2) )));
   return I*PI*f*L_SI/C_SI * (n3Pn3plus*Yfactorplus + n3Pn3cross*Yfactorcross) * sinc( PI*f*L_SI/C_SI * (1.+kn3)) * cexp( I*PI*f*L_SI/C_SI * (1.-kp1plusp2) ); 
 }
 /* Function evaluating G12, combining the two polarization with the spherical harmonics factors */
