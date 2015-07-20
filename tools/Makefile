@@ -1,6 +1,4 @@
-GSLROOT = /opt/local
 GSLINC = $(GSLROOT)/include
-CC = gcc
 CFLAGS := -O2 -std=c99 -I$(GSLINC) -I../tools -I../integration -I../EOBNRv2HMROM -I../LISAsim -I../LLVsim -I../LLVinference
 
 OBJ = struct.o likelihood.o timeconversion.o
