@@ -1,10 +1,16 @@
 GSLROOT = /opt/local
+BAMBIROOT = /usr/local
+CC = mpicc-mpich-gcc48 -DPARALLEL
+CPP = mpicxx-mpich-gcc48 -DPARALLEL
+MPILIBS = -lmpifort
+
 GSLINC = $(GSLROOT)/include
-CC = gcc
 CFLAGS += -O2 -std=c99 -I$(GSLINC) -I./tools -I./EOBNRv2HMROM -I./integration -I./LISAsim -I./LLVsim -I./LLVinference
 
 SUBDIRS = tools EOBNRv2HMROM LISAsim LLVsim integration LISAinference LLVinference
 SUBCLEAN = $(addsuffix .clean,$(SUBDIRS))
+
+export CC CPP GSLROOT BAMBIROOT MPILIBS
 
 .PHONY: all clean subdirs $(SUBDIRS)
 

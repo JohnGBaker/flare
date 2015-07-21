@@ -1,10 +1,8 @@
-GSLROOT = /opt/local
 GSLINC = $(GSLROOT)/include
-BAMBIROOT = $(HOME)/build/bambi
+
 BAMBILIB = $(BAMBIROOT)/lib
 BAMBIINCLUDE = $(BAMBIROOT)/include
-CC = gcc
-CPP = g++
+
 CFLAGS := -O2 -std=c99 -I$(GSLINC) -I../tools -I../integration -I../EOBNRv2HMROM -I../LISAsim -I../LLVsim -I../LLVinference
 CPPFLAGS := -O2 -I$(GSLINC) -I../tools -I../integration -I../EOBNRv2HMROM -I../LISAsim -I../LLVsim -I../LLVinference
 
@@ -17,13 +15,13 @@ LLVutils.o: LLVutils.c LLVutils.h
 	$(CC) -c $(CFLAGS) LLVutils.c
 
 bambi.o: bambi.cc bambi.h
-	mpic++ -c $(CPPFLAGS) -I$(BAMBIINCLUDE) -DPARALLEL bambi.cc
+	$(CPP) -c $(CPPFLAGS) -I$(BAMBIINCLUDE) bambi.cc
 
 LLVinference.o: LLVinference.c LLVinference.h ../LLVsim/LLVFDresponse.h ../LLVsim/LLVnoise.h ../LLVsim/LLVgeometry.h ../tools/constants.h ../tools/struct.h ../tools/likelihood.h ../EOBNRv2HMROM/EOBNRv2HMROM.h ../EOBNRv2HMROM/EOBNRv2HMROMstruct.h ../integration/wip.h
-	mpicc -c $(CFLAGS) -I$(BAMBIINCLUDE) -DPARALLEL LLVinference.c
+	$(CC) -c $(CFLAGS) -I$(BAMBIINCLUDE) LLVinference.c
 
 LLVinference: LLVinference.o LLVutils.o bambi.o ../LLVsim/LLVFDresponse.o ../LLVsim/LLVnoise.o ../tools/struct.o ../tools/timeconversion.o ../tools/likelihood.o ../EOBNRv2HMROM/EOBNRv2HMROM.o ../EOBNRv2HMROM/EOBNRv2HMROMstruct.o ../integration/wip.o ../integration/spline.o ../integration/Faddeeva.o
-	mpic++ $(CPPFLAGS) -o LLVinference LLVinference.o LLVutils.o bambi.o ../LLVsim/LLVFDresponse.o ../LLVsim/LLVnoise.o ../tools/struct.o ../tools/timeconversion.o ../tools/likelihood.o ../EOBNRv2HMROM/EOBNRv2HMROM.o ../EOBNRv2HMROM/EOBNRv2HMROMstruct.o ../integration/wip.o ../integration/spline.o ../integration/Faddeeva.o -L$(GSLROOT)/lib -L$(BAMBILIB) -lmpi_mpifh -lgsl -lgslcblas -lm -lbambi-1.2
+	$(CPP) $(CPPFLAGS) -o LLVinference LLVinference.o LLVutils.o bambi.o ../LLVsim/LLVFDresponse.o ../LLVsim/LLVnoise.o ../tools/struct.o ../tools/timeconversion.o ../tools/likelihood.o ../EOBNRv2HMROM/EOBNRv2HMROM.o ../EOBNRv2HMROM/EOBNRv2HMROMstruct.o ../integration/wip.o ../integration/spline.o ../integration/Faddeeva.o -L$(GSLROOT)/lib -L$(BAMBILIB) -lgsl -lgslcblas -lm -lbambi-1.2 $(MPILIBS)
 
 clean:
 	-rm *.o
