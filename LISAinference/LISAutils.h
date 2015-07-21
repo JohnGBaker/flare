@@ -30,7 +30,7 @@ typedef struct tagLISAParams {
   double inclination;        /* inclination of L relative to line of sight (rad, default PI/3) */
   double polarization;       /* polarization angle (rad, default 0) */
   double fRef;               /* reference frequency (Hz, default 0 which is interpreted as Mf=0.14) */
-  double deltatobs;          /* max duration of observation (s, default 2 years) - the start of the signals might be cut in time instead of cut in frequency */
+  double deltatobs;          /* max duration of observation (years, default 2) - the start of the signals might be cut in time instead of cut in frequency */
   int nbmode;                /* number of modes to generate (starting with 22) - defaults to 5 (all modes) */
 } LISAParams;
 
@@ -91,12 +91,12 @@ int LISAGenerateSignal(
   struct tagLISAParams* params,   /* Input: set of LISA parameters of the signal */
   struct tagLISASignal* signal);  /* Output: structure for the generated signal */
 
-// checks prior boundaires
+/* checks prior boundaires */
 int PriorBoundaryCheck(LISAPrior *prior, double *Cube);
 
-// Prior functions from Cube to physical parameters
-// x1 is min, x2 is max when specified
-// r is Cube value
+/* Prior functions from Cube to physical parameters
+   x1 is min, x2 is max when specified
+   r is Cube value */
 double CubeToFlatPrior(double r, double x1, double x2);
 double CubeToLogFlatPrior(double r, double x1, double x2);
 double CubeToPowerPrior(double p, double r, double x1, double x2);

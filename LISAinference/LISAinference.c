@@ -226,10 +226,7 @@ int main(int argc, char *argv[])
 
   /* Generate the injection */
   LISAGenerateSignal(injectedparams, injectedsignal);
-  //TESTING
-  //printf("SNRsquare TDIA: %g\n", injectedsignal->TDIAhh);
-  //printf("SNRsquare TDIE: %g\n", injectedsignal->TDIEhh);
-  //printf("SNRsquare TDIT: %g\n", injectedsignal->TDIThh);
+  printf("SNR (All, A, E, T): (%g, %g, %g, %g)\n", sqrt(injectedsignal->TDIAhh + injectedsignal->TDIEhh + injectedsignal->TDIThh), sqrt(injectedsignal->TDIAhh), sqrt(injectedsignal->TDIEhh), sqrt(injectedsignal->TDIThh));
 
   /* Calculate logL of data */
   /*double dist_store = injectedparams->distance;
@@ -298,10 +295,11 @@ int main(int argc, char *argv[])
 
 	/********** Test ****************/
 	/*double l;
-	  getLogLike(injectedparams, &l, context);
-	  printf("LogLikelihood: %g\n", l);
-	  free(injectedparams);
-	  LISASignal_Cleanup(injectedsignal);*/
+	getLogLike(injectedparams, &l, context);
+	printf("LogLikelihood: %g\n", l);
+	free(injectedparams);
+	LISASignal_Cleanup(injectedsignal);
+	exit(0);*/
 	/********** End of test ****************/
 
 	int i;

@@ -40,6 +40,9 @@
 #include <time.h> /* for testing */
 
 
+/* Function computing the max between two int */
+static inline int max ( int a, int b ) { return a > b ? a : b; }
+
 /***********************************************************/
 /********* Core functions to compute overlaps **************/
 
@@ -149,7 +152,11 @@ double LISAFDListmodesOverlap(
     ListmodesCAmpPhaseFrequencySeries* listelementh2 = listh2;
     while(listelementh2) {
       //printf("(%d%d,%d%d): %g\n", listelementh1->l, listelementh1->m, listelementh2->l, listelementh2->m, FDSinglemodeOverlap(listelementh1->freqseries, listelementh2->freqseries, Snoise, fLow, fHigh));
-      double fcutLow = fmax(fLow, fmax(((double) listelementh1->m)/2. * fstartobs, ((double) listelementh2->m)/2. * fstartobs) );
+      /* Scaling fstartobs with the appropriate factor of m (for the 21 mode we use m=2) - setting fmin in the overlap accordingly */
+      int mmax = max(2, max(listelementh1->m, listelementh2->m));
+      double fcutLow = fmax(fLow, ((double) mmax)/2. * fstartobs);
+      //TESTING
+      //printf("Overlap | fLow: %.8e | fcutLow: %.8e\n", fLow, fcutLow);
       overlap += FDSinglemodeOverlap(listelementh1->freqseries, listelementh2->freqseries, Snoise, fcutLow, fHigh);
       listelementh2 = listelementh2->next;
     }

@@ -119,6 +119,13 @@ int LISASimFDResponse21(
     } 
 
     listelement = listelement->next;
+
+    /* Clean up */
+    gsl_spline_free(spline_phi);
+    gsl_interp_accel_free(accel_phi);
+    gsl_vector_free(besselphi);
+    gsl_spline_free(spline_besselphi);
+    gsl_interp_accel_free(accel_besselphi);
   }
 }
 
@@ -269,5 +276,12 @@ int LISASimFDResponseTDIAET(
 
     /* Going to the next mode in the list */
     listelement = listelement->next;
+
+    /* Clean up */
+    gsl_spline_free(spline_phi);
+    gsl_interp_accel_free(accel_phi);
+    gsl_vector_free(besselphi);
+    gsl_spline_free(spline_besselphi);
+    gsl_interp_accel_free(accel_besselphi);
   }
 }

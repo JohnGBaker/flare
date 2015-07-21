@@ -85,6 +85,8 @@ void interpolate_ip_integrand(double *f1, double *s1Ar, double *s1Ai, double  *s
     else{
       //SM: Here we keep the warning, as it indicates that we are really leaving out a physical part of the waveform (presumably because we called the ROM with too low of a total mass)
       printf("wip:interpolate_ip_integrand: Specified lower range bound min_f is beyond data range.\n");
+      //TESTING
+      printf("f1[0]: %.8e | f2[0]: %.8e | min_f: %.8e \n", f1[0], f2[0], min_f);
     }
   }      
   double f=f_min;

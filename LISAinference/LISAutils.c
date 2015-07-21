@@ -57,6 +57,7 @@ Arguments are as follows:\n\
                        (radians, default=PI/3)\n\
  --polarization        Polarization of source (radians, default=0)\n\
  --fRef                Reference frequency (Hz, default=0, interpreted as Mf=0.14)\n\
+ --deltatobs           Observation time (years, default=2)\n\
  --nbmode              Number of modes of radiation to use (1-5, default=5)\n\
 \n\
 --------------------------------------------------\n\
@@ -109,7 +110,7 @@ Arguments are as follows:\n\
     params->inclination = PI/3.;
     params->polarization = 0.;
     params->fRef = 0.;
-    params->deltatobs = 2*YRSID_SI;
+    params->deltatobs = 2.;
     params->nbmode = 5;
 
     /* set default values for the prior limits */
@@ -258,7 +259,7 @@ int LISAGenerateSignal(
   LISASimFDResponseTDIAET(&listROM, &listTDIA, &listTDIE, &listTDIT, params->tRef, params->lambda, params->beta, params->inclination, params->polarization);
 
   /* Precompute the inner products (h|h) - takes into account the length of the observation with deltatobs */
-  double Mfstartobs = NewtonianfoftGeom(params->m1 / params->m2, params->deltatobs / ((params->m1 + params->m2) * MTSUN_SI));
+  double Mfstartobs = NewtonianfoftGeom(params->m1 / params->m2, (params->deltatobs * YRSID_SI) / ((params->m1 + params->m2) * MTSUN_SI));
   double fstartobs = Mfstartobs / ((params->m1 + params->m2) * MTSUN_SI);
   double TDIAhh = LISAFDListmodesOverlap(listTDIA, listTDIA, NoiseSnA, __LISASimFD_Noise_fLow, __LISASimFD_Noise_fHigh, fstartobs);
   double TDIEhh = LISAFDListmodesOverlap(listTDIE, listTDIE, NoiseSnE, __LISASimFD_Noise_fLow, __LISASimFD_Noise_fHigh, fstartobs);
@@ -332,6 +333,8 @@ double CubeToCosPrior(double r, double x1, double x2)
 
 double CalculateLogL(LISAParams *params, LISASignal* injection)
 {
+  //TESTING
+  //printf("Calling CalculateLogL\n");
   double logL = -DBL_MAX;
   int ret;
 
@@ -345,15 +348,20 @@ double CalculateLogL(LISAParams *params, LISASignal* injection)
     logL = -DBL_MAX;
   }
   else if(ret==SUCCESS) {
-    /* Computing the likelihood for each TDI channel - NOTE: we use the injection deltatobs */
-    double Mfstartobs = NewtonianfoftGeom(params->m1 / params->m2, injectedparams->deltatobs / ((injectedparams->m1 + injectedparams->m2) * MTSUN_SI));
-    double fstartobs = Mfstartobs / ((injectedparams->m1 + injectedparams->m2) * MTSUN_SI);
+    /* Computing the likelihood for each TDI channel - fstartobs is the max between the fstartobs of the injected and generated signals */
+    double Mfstartobsinjected = NewtonianfoftGeom(injectedparams->m1 / injectedparams->m2, (injectedparams->deltatobs * YRSID_SI) / ((injectedparams->m1 + injectedparams->m2) * MTSUN_SI));
+    double Mfstartobsgenerated = NewtonianfoftGeom(params->m1 / params->m2, (params->deltatobs * YRSID_SI) / ((params->m1 + params->m2) * MTSUN_SI));
+    double fstartobsinjected = Mfstartobsinjected / ((injectedparams->m1 + injectedparams->m2) * MTSUN_SI);
+    double fstartobsgenerated = Mfstartobsgenerated / ((params->m1 + params->m2) * MTSUN_SI);
+    double fstartobs = fmax(fstartobsinjected, fstartobsgenerated);
+    //TESTING
+    //printf("M: %.8e | fmin_ROM: %.8e | fstartobsinjected: %.8e | fstartobsgenerated: %.8e\n", (params->m1 + params->m2), 0.0003940393857519091/((params->m1 + params->m2) * MTSUN_SI), fstartobsinjected, fstartobsgenerated);
     double loglikelihoodTDIA = LISAFDLogLikelihood(injection->TDIASignal, generatedsignal->TDIASignal, NoiseSnA, __LISASimFD_Noise_fLow, __LISASimFD_Noise_fHigh, injection->TDIAhh, generatedsignal->TDIAhh, fstartobs);
     double loglikelihoodTDIE = LISAFDLogLikelihood(injection->TDIESignal, generatedsignal->TDIESignal, NoiseSnE, __LISASimFD_Noise_fLow, __LISASimFD_Noise_fHigh, injection->TDIEhh, generatedsignal->TDIEhh, fstartobs);
     double loglikelihoodTDIT = LISAFDLogLikelihood(injection->TDITSignal, generatedsignal->TDITSignal, NoiseSnT, __LISASimFD_Noise_fLow, __LISASimFD_Noise_fHigh, injection->TDIThh, generatedsignal->TDIThh, fstartobs);
 
     /* Output: value of the loglikelihood for the combined signals, assuming noise independence */
-    logL = loglikelihoodTDIA + loglikelihoodTDIE + loglikelihoodTDIT;
+    logL = loglikelihoodTDIA /*+ loglikelihoodTDIE + loglikelihoodTDIT*/;
   }
 
   /* Clean up */
