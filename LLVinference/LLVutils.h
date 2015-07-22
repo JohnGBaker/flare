@@ -61,6 +61,15 @@ typedef struct tagLLVPrior {
   double fix_pol;
   double fix_dist;
   double fix_inc;
+  int pin_m1;
+  int pin_m2;
+  int pin_time;
+  int pin_ra;
+  int pin_dec;
+  int pin_phase;
+  int pin_pol;
+  int pin_dist;
+  int pin_inc;
 } LLVPrior;
 
 typedef struct tagLLVRunParams {

@@ -229,9 +229,10 @@ int main(int argc, char *argv[])
   /* Generate the injection */
   LLVGenerateSignal(injectedparams, injectedsignal);
   //TESTING
-  //printf("SNRsquare LHO: %g\n", injectedsignal->LHOhh);
-  //printf("SNRsquare LLO: %g\n", injectedsignal->LLOhh);
-  //printf("SNRsquare VIRGO: %g\n", injectedsignal->VIRGOhh);
+  printf("SNR LHO:     %g\n", sqrt(injectedsignal->LHOhh));
+  printf("SNR LLO:     %g\n", sqrt(injectedsignal->LLOhh));
+  printf("SNR VIRGO:   %g\n", sqrt(injectedsignal->VIRGOhh));
+  printf("SNR Network: %g\n", sqrt(injectedsignal->LHOhh + injectedsignal->LLOhh + injectedsignal->VIRGOhh));
 
   /* Calculate logL of data */
   /*double dist_store = injectedparams->distance;
@@ -247,6 +248,26 @@ int main(int argc, char *argv[])
   void *context = injectedsignal;
 
   int ndims = 9;
+
+  /* check for parameters pinned to injected values */
+  if (priorParams->pin_m1)
+    priorParams->fix_m1 = injectedparams->m1;
+  if (priorParams->pin_m2)
+    priorParams->fix_m2 = injectedparams->m2;
+  if (priorParams->pin_dist)
+    priorParams->fix_dist = injectedparams->distance;
+  if (priorParams->pin_inc)
+    priorParams->fix_inc = injectedparams->inclination;
+  if (priorParams->pin_phase)
+    priorParams->fix_phase = injectedparams->phiRef;
+  if (priorParams->pin_pol)
+    priorParams->fix_pol = injectedparams->polarization;
+  if (priorParams->pin_ra)
+    priorParams->fix_ra = injectedparams->ra;
+  if (priorParams->pin_dec)
+    priorParams->fix_dec = injectedparams->dec;
+  if (priorParams->pin_time)
+    priorParams->fix_time = injectedparams->tRef;
 
   /* check for fixed parameters */
   if (!isnan(priorParams->fix_m1))
