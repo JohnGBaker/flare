@@ -140,6 +140,21 @@ void getLogLike(double *Cube, int *ndim, int *npars, double *lnew, void *context
   LISASignal* injection = ((LISASignal*) context);
 
   *lnew = CalculateLogL(&templateparams, injection) - logZdata;
+
+  //TESTING
+  if(*lnew > 0) {
+    printf("Positive lnL: %.12e\n", *lnew);
+    printf("m1: %.12e\n", templateparams.m1);
+    printf("m2: %.12e\n", templateparams.m2);
+    printf("tRef: %.12e\n", templateparams.tRef);
+    printf("distance: %.12e\n", templateparams.distance);
+    printf("phiRef: %.12e\n", templateparams.phiRef);
+    printf("inclination: %.12e\n", templateparams.inclination);
+    printf("ra: %.12e\n", templateparams.ra);
+    printf("dec: %.12e\n", templateparams.dec);
+    printf("polarization: %.12e\n", templateparams.polarization);
+    exit(1);
+  }
 }
 
 

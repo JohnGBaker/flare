@@ -1,8 +1,8 @@
 GSLROOT = /opt/local
-BAMBIROOT = /usr/local
-CC = mpicc-mpich-gcc48 -DPARALLEL
-CPP = mpicxx-mpich-gcc48 -DPARALLEL
-MPILIBS = -lmpifort
+BAMBIROOT = $(HOME)/build/bambi
+CC = gcc -DPARALLEL
+CPP = g++ -DPARALLEL
+MPILIBS = -lmpi -lmpi_cxx -lmpi_mpifh
 
 GSLINC = $(GSLROOT)/include
 CFLAGS += -O2 -std=c99 -I$(GSLINC) -I./tools -I./EOBNRv2HMROM -I./integration -I./LISAsim -I./LLVsim -I./LLVinference
