@@ -7,6 +7,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#ifndef M_PI
+#define M_PI 3.1415926535897932384626433832795029
+#endif
+
 //# This function realizes integration of S-weighted inner product
 //# of the difference between two complex functions represented by
 //# slowly evolving phase and amplitude.
