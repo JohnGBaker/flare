@@ -242,9 +242,20 @@ int main(int argc, char *argv[])
   Write_Text_Vector("/Users/marsat/src/flare/test/testevent100/", "LHOsignal_event_100_ampre_22.dat", freqseries->amp_real);
   Write_Text_Vector("/Users/marsat/src/flare/test/testevent100/", "LHOsignal_event_100_ampimag_22.dat", freqseries->amp_imag);
   Write_Text_Vector("/Users/marsat/src/flare/test/testevent100/", "LHOsignal_event_100_phase_22.dat", freqseries->phase);
+  listelement = ListmodesCAmpPhaseFrequencySeries_GetMode(injectedsignal->LLOSignal, 2, 2);
+  freqseries = listelement->freqseries;
+  Write_Text_Vector("/Users/marsat/src/flare/test/testevent100/", "LLOsignal_event_100_freq_22.dat", freqseries->freq);
+  Write_Text_Vector("/Users/marsat/src/flare/test/testevent100/", "LLOsignal_event_100_ampre_22.dat", freqseries->amp_real);
+  Write_Text_Vector("/Users/marsat/src/flare/test/testevent100/", "LLOsignal_event_100_ampimag_22.dat", freqseries->amp_imag);
+  Write_Text_Vector("/Users/marsat/src/flare/test/testevent100/", "LLOsignal_event_100_phase_22.dat", freqseries->phase);
+  listelement = ListmodesCAmpPhaseFrequencySeries_GetMode(injectedsignal->VIRGOSignal, 2, 2);
+  freqseries = listelement->freqseries;
+  Write_Text_Vector("/Users/marsat/src/flare/test/testevent100/", "VIRGOsignal_event_100_freq_22.dat", freqseries->freq);
+  Write_Text_Vector("/Users/marsat/src/flare/test/testevent100/", "VIRGOsignal_event_100_ampre_22.dat", freqseries->amp_real);
+  Write_Text_Vector("/Users/marsat/src/flare/test/testevent100/", "VIRGOsignal_event_100_ampimag_22.dat", freqseries->amp_imag);
+  Write_Text_Vector("/Users/marsat/src/flare/test/testevent100/", "VIRGOsignal_event_100_phase_22.dat", freqseries->phase);
   ListmodesCAmpPhaseFrequencySeries_Destroy(listelement);
-  free(freqseries);
-  //exit(0);
+  exit(0);
 
   /* Calculate logL of data */
   /*double dist_store = injectedparams->distance;
