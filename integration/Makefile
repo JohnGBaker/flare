@@ -3,7 +3,11 @@ CFLAGS= -O2
 _splinecspagh.so: spline.c spline.h spline.i
 	swig -python spline.i
 	$(CC) -c `python-config --cflags` spline.c spline_wrap.c
+#On non-Darwin architecture ?
+#$(CC) -c -fpic `python-config --cflags` spline.c spline_wrap.c
 	mv spline.o splinepy.o
+#On non-Darwin architecture ?
+#$(CC) -shared `python-config --ldflags` splinepy.o spline_wrap.o -o _splinecspagh.so
 	$(CC) -bundle `python-config --ldflags` splinepy.o spline_wrap.o -o _splinecspagh.so
 
 

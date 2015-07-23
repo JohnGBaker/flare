@@ -2,10 +2,10 @@ GSLROOT = /opt/local
 BAMBIROOT = $(HOME)/build/bambi
 CC = gcc
 CPP = g++
-### Uncomment this for MPI and specify your needed MPI libraries
-#CC += -DPARALLEL
-#CPP += -DPARALLEL
-#MPILIBS = -lmpi -lmpi_cxx -lmpi_mpifh
+#Uncomment this for MPI and specify your needed MPI libraries
+CC += -DPARALLEL
+CPP += -DPARALLEL
+MPILIBS = -lmpi -lmpi_cxx -lmpi_mpifh
 
 GSLINC = $(GSLROOT)/include
 CFLAGS += -O2 -std=c99 -I$(GSLINC) -I./tools -I./EOBNRv2HMROM -I./integration -I./LISAsim -I./LLVsim -I./LLVinference
