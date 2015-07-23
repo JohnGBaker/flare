@@ -37,8 +37,10 @@ void parse_args_LLV(ssize_t argc, char **argv,
     LLVRunParams *run) 
 {
     char help[] = "\
+**********************************************************************\n\
 LLVInference by Sylvain Marsat, John Baker, and Philip Graff\n\
 Copyright July 2015\n\
+**********************************************************************\n\
 \n\
 This program performs rapid parameter estimation for LIGO and LISA CBC sources in the no-noise case.\n\
 Arguments are as follows:\n\
@@ -58,6 +60,8 @@ Arguments are as follows:\n\
  --polarization        Polarization of source (radians, default=0)\n\
  --fRef                Reference frequency (Hz, default=0 which is interpreted as Mf=0.14)\n\
  --nbmode              Number of modes of radiation to use (1-5, default=5)\n\
+ --snr                 Use a target network SNR for the injection by rescaling distance\n\
+                       (default=None)\n\
 \n\
 --------------------------------------------------\n\
 ----- Prior Boundary Settings --------------------\n\
@@ -142,6 +146,7 @@ Arguments are as follows:\n\
     prior->pin_ra = 0;
     prior->pin_dec = 0;
     prior->pin_inc = 0;
+    prior->snr_target = NAN;
 
     /* set default values for the run settings */
     run->eff = 0.1;
@@ -231,6 +236,8 @@ Arguments are as follows:\n\
             prior->pin_inc = 1;
         } else if (strcmp(argv[i], "--pin-pol") == 0) {
             prior->pin_pol = 1;
+        } else if (strcmp(argv[i], "--snr") == 0) {
+            prior->snr_target = atof(argv[++i]);
         } else if (strcmp(argv[i], "--eff") == 0) {
             run->eff = atof(argv[++i]);
         } else if (strcmp(argv[i], "--tol") == 0) {

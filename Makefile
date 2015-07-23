@@ -1,11 +1,11 @@
-GSLROOT = /usr
-BAMBIROOT = ${HOME}
-CC = mpicc
-CPP = mpicxx
+GSLROOT = /opt/local
+BAMBIROOT = /usr/local
+CC = mpicc-mpich-gcc48
+CPP = mpicxx-mpich-gcc48
 #Uncomment this for MPI and specify your needed MPI libraries
 CC += -DPARALLEL
 CPP += -DPARALLEL
-MPILIBS = -lmpi -lmpi_f77
+MPILIBS = -lmpi
 
 GSLINC = $(GSLROOT)/include
 CFLAGS += -O2 -std=c99 -I$(GSLINC) -I./tools -I./EOBNRv2HMROM -I./integration -I./LISAsim -I./LLVsim -I./LLVinference

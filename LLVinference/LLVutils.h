@@ -70,6 +70,7 @@ typedef struct tagLLVPrior {
   int pin_pol;
   int pin_dist;
   int pin_inc;
+  double snr_target;
 } LLVPrior;
 
 typedef struct tagLLVRunParams {
