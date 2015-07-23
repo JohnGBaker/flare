@@ -60,7 +60,8 @@ double __LLVSimFD_VIRGONoise_fHigh = 0;
 int __LLVSimFD_Noise_setup = FAILURE;
 
 /* The number of points in the noise data files - required as the Read_Vector function needs a gsl vector already initialized to the right length */
-#define noisedata_pts 3000
+//#define noisedata_pts 3000
+#define noisedata_pts 16365
 
 /**************************************************************/
 /****** Functions loading and evaluating the noise PSD  *******/
@@ -108,8 +109,10 @@ int LLVSimFD_Noise_Init(const char dir[]) {
   gsl_matrix* noise_VIRGO = gsl_matrix_alloc(noisedata_pts, 2);
   char* file_LIGO = malloc(strlen(dir)+64);
   char* file_VIRGO = malloc(strlen(dir)+64);
-  sprintf(file_LIGO, "%s", "LIGO-P1200087-v18-aLIGO_DESIGN.txt");
-  sprintf(file_VIRGO, "%s", "LIGO-P1200087-v18-AdV_DESIGN.txt");
+  //sprintf(file_LIGO, "%s", "LIGO-P1200087-v18-aLIGO_DESIGN.txt");
+  //sprintf(file_VIRGO, "%s", "LIGO-P1200087-v18-AdV_DESIGN.txt");
+  sprintf(file_LIGO, "%s", "aLIGO_sensitivity.dat");
+  sprintf(file_VIRGO, "%s", "aVirgo_sensitivity.dat");
   ret |= Read_Text_Matrix(dir, file_LIGO, noise_LHO);
   ret |= Read_Text_Matrix(dir, file_LIGO, noise_LLO);
   ret |= Read_Text_Matrix(dir, file_VIRGO, noise_VIRGO);
