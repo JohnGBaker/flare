@@ -4,7 +4,7 @@ CFLAGS := -O2 -std=c99 -I$(GSLINC) -I../tools -I../integration -I../EOBNRv2HMROM
 OBJ = LLVFDresponse.o LLVnoise.o
 
 
-all: $(OBJ) LLVexampleSNR
+all: $(OBJ)
 
 LLVFDresponse.o: LLVFDresponse.c  LLVFDresponse.h LLVgeometry.h ../tools/constants.h ../tools/struct.h ../tools/timeconversion.h
 	$(CC) -c $(CFLAGS) LLVFDresponse.c
