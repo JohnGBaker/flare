@@ -71,7 +71,7 @@ double FDSinglemodeOverlap(
   double *h2p = h2->phase->data;
 
   /* fLow or fHigh <= 0 means use intersection of signal domains  */
-  //NOTE: factor 4 was apparently missing
+  //NOTE: factor 4 was previously missing
   double overlap = 4.*wip_phase(f1, n1, f2, n2, h1Ar, h1Ai, h1p, h2Ar, h2Ai, h2p, Snoise, 1.0, fLow, fHigh);
   return overlap;
 }

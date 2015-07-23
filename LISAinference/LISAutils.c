@@ -333,8 +333,6 @@ double CubeToCosPrior(double r, double x1, double x2)
 
 double CalculateLogL(LISAParams *params, LISASignal* injection)
 {
-  //TESTING
-  //printf("Calling CalculateLogL\n");
   double logL = -DBL_MAX;
   int ret;
 
@@ -354,14 +352,12 @@ double CalculateLogL(LISAParams *params, LISASignal* injection)
     double fstartobsinjected = Mfstartobsinjected / ((injectedparams->m1 + injectedparams->m2) * MTSUN_SI);
     double fstartobsgenerated = Mfstartobsgenerated / ((params->m1 + params->m2) * MTSUN_SI);
     double fstartobs = fmax(fstartobsinjected, fstartobsgenerated);
-    //TESTING
-    //printf("M: %.8e | fmin_ROM: %.8e | fstartobsinjected: %.8e | fstartobsgenerated: %.8e\n", (params->m1 + params->m2), 0.0003940393857519091/((params->m1 + params->m2) * MTSUN_SI), fstartobsinjected, fstartobsgenerated);
     double loglikelihoodTDIA = LISAFDLogLikelihood(injection->TDIASignal, generatedsignal->TDIASignal, NoiseSnA, __LISASimFD_Noise_fLow, __LISASimFD_Noise_fHigh, injection->TDIAhh, generatedsignal->TDIAhh, fstartobs);
     double loglikelihoodTDIE = LISAFDLogLikelihood(injection->TDIESignal, generatedsignal->TDIESignal, NoiseSnE, __LISASimFD_Noise_fLow, __LISASimFD_Noise_fHigh, injection->TDIEhh, generatedsignal->TDIEhh, fstartobs);
     double loglikelihoodTDIT = LISAFDLogLikelihood(injection->TDITSignal, generatedsignal->TDITSignal, NoiseSnT, __LISASimFD_Noise_fLow, __LISASimFD_Noise_fHigh, injection->TDIThh, generatedsignal->TDIThh, fstartobs);
 
     /* Output: value of the loglikelihood for the combined signals, assuming noise independence */
-    logL = loglikelihoodTDIA /*+ loglikelihoodTDIE + loglikelihoodTDIT*/;
+    logL = loglikelihoodTDIA + loglikelihoodTDIE + loglikelihoodTDIT;
   }
 
   /* Clean up */
