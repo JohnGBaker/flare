@@ -202,6 +202,7 @@ void dumper(int *nSamples, int *nlive, int *nPar, double **physLive, double **po
 
 int main(int argc, char *argv[])
 {
+  int myid = 0;
 #ifdef PARALLEL
  	MPI_Init(&argc,&argv);
 	MPI_Comm_rank(MPI_COMM_WORLD,&myid);
@@ -231,17 +232,19 @@ int main(int argc, char *argv[])
 
   /* rescale distance to match SNR */
   if (!isnan(priorParams->snr_target)) {
-    printf("Rescaling the distance to obtain a network SNR of %g\n", priorParams->snr_target);
+    if (myid == 0) printf("Rescaling the distance to obtain a network SNR of %g\n", priorParams->snr_target);
     injectedparams->distance *= sqrt(injectedsignal->LHOhh + injectedsignal->LLOhh + injectedsignal->VIRGOhh) / priorParams->snr_target;
-    printf("New distance = %g Mpc\n", injectedparams->distance);
+    if (myid == 0) printf("New distance = %g Mpc\n", injectedparams->distance);
     LLVGenerateSignal(injectedparams, injectedsignal);
   }
 
   /* print SNRs */
-  printf("SNR LHO:     %g\n", sqrt(injectedsignal->LHOhh));
-  printf("SNR LLO:     %g\n", sqrt(injectedsignal->LLOhh));
-  printf("SNR VIRGO:   %g\n", sqrt(injectedsignal->VIRGOhh));
-  printf("SNR Network: %g\n", sqrt(injectedsignal->LHOhh + injectedsignal->LLOhh + injectedsignal->VIRGOhh));
+  if (myid == 0) {
+    printf("SNR LHO:     %g\n", sqrt(injectedsignal->LHOhh));
+    printf("SNR LLO:     %g\n", sqrt(injectedsignal->LLOhh));
+    printf("SNR VIRGO:   %g\n", sqrt(injectedsignal->VIRGOhh));
+    printf("SNR Network: %g\n", sqrt(injectedsignal->LHOhh + injectedsignal->LLOhh + injectedsignal->VIRGOhh));
+  }
 
   /* Calculate logL of data */
   /*double dist_store = injectedparams->distance;
@@ -251,7 +254,7 @@ int main(int argc, char *argv[])
     injectedparams->distance = dist_store;*/
   logZdata = 0.0;
   double logZtrue = CalculateLogL(injectedparams, injectedsignal);
-  printf("logZtrue = %lf\n", logZtrue-logZdata);
+  if (myid == 0) printf("logZtrue = %lf\n", logZtrue-logZdata);
 
   /* Set the context pointer */
   void *context = injectedsignal;
@@ -313,7 +316,7 @@ int main(int argc, char *argv[])
     templateparams.nbmode = injectedparams->nbmode;
 
     double logL = CalculateLogL(&templateparams, injectedsignal);
-    printf("logL = %lf\n", logL);
+    if (myid == 0) printf("logL = %lf\n", logL);
 
     free(injectedparams);
     free(priorParams);
