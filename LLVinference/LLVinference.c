@@ -228,21 +228,20 @@ int main(int argc, char *argv[])
 
   /* Generate the injection */
   LLVGenerateSignal(injectedparams, injectedsignal);
-  printf("SNR LHO:     %g\n", sqrt(injectedsignal->LHOhh));
-  printf("SNR LLO:     %g\n", sqrt(injectedsignal->LLOhh));
-  printf("SNR VIRGO:   %g\n", sqrt(injectedsignal->VIRGOhh));
-  printf("SNR Network: %g\n", sqrt(injectedsignal->LHOhh + injectedsignal->LLOhh + injectedsignal->VIRGOhh));
 
   /* rescale distance to match SNR */
   if (!isnan(priorParams->snr_target)) {
     printf("Rescaling the distance to obtain a network SNR of %g\n", priorParams->snr_target);
     injectedparams->distance *= sqrt(injectedsignal->LHOhh + injectedsignal->LLOhh + injectedsignal->VIRGOhh) / priorParams->snr_target;
+    printf("New distance = %g Mpc\n", injectedparams->distance);
     LLVGenerateSignal(injectedparams, injectedsignal);
-    printf("SNR LHO:     %g\n", sqrt(injectedsignal->LHOhh));
-    printf("SNR LLO:     %g\n", sqrt(injectedsignal->LLOhh));
-    printf("SNR VIRGO:   %g\n", sqrt(injectedsignal->VIRGOhh));
-    printf("SNR Network: %g\n", sqrt(injectedsignal->LHOhh + injectedsignal->LLOhh + injectedsignal->VIRGOhh));
   }
+
+  /* print SNRs */
+  printf("SNR LHO:     %g\n", sqrt(injectedsignal->LHOhh));
+  printf("SNR LLO:     %g\n", sqrt(injectedsignal->LLOhh));
+  printf("SNR VIRGO:   %g\n", sqrt(injectedsignal->VIRGOhh));
+  printf("SNR Network: %g\n", sqrt(injectedsignal->LHOhh + injectedsignal->LLOhh + injectedsignal->VIRGOhh));
 
   /* Calculate logL of data */
   /*double dist_store = injectedparams->distance;
