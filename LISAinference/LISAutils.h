@@ -70,6 +70,7 @@ typedef struct tagLISAPrior {
   double fix_pol;
   double fix_dist;
   double fix_inc;
+  double snr_target;
 } LISAPrior;
 
 typedef struct tagLISARunParams {

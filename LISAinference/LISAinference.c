@@ -229,6 +229,14 @@ int main(int argc, char *argv[])
   /* Generate the injection */
   LISAGenerateSignal(injectedparams, injectedsignal);
 
+  /* Rescale distance to match SNR */
+  if (!isnan(priorParams->snr_target)) {
+    if (myid == 0) printf("Rescaling the distance to obtain a network SNR of %g\n", priorParams->snr_target);
+    injectedparams->distance *= sqrt(injectedsignal->TDIAhh + injectedsignal->TDIEhh + injectedsignal->TDIThh) / priorParams->snr_target;
+    if (myid == 0) printf("New distance = %g Mpc\n", injectedparams->distance);
+    LISAGenerateSignal(injectedparams, injectedsignal);
+  }
+
   /* Print SNR */
   if (myid == 0) {
     printf("SNR A:     %g\n", sqrt(injectedsignal->TDIAhh));

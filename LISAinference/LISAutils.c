@@ -59,6 +59,7 @@ Arguments are as follows:\n\
                        (radians, default=PI/3)\n\
  --polarization        Polarization of source (radians, default=0)\n\
  --nbmode              Number of modes of radiation to generate (1-5, default=5)\n\
+ --snr                 Use a target network SNR for the injection by rescaling distance\n\
 \n\
 -----------------------------------------------------------------\n\
 ----- Global Waveform/Inner products Parameters -----------------\n\
@@ -147,6 +148,7 @@ Arguments are as follows:\n\
     prior->fix_lambda = NAN;
     prior->fix_beta = NAN;
     prior->fix_inc = NAN;
+    prior->snr_target = NAN;
 
     /* set default values for the run settings */
     run->eff = 0.1;
@@ -226,6 +228,8 @@ Arguments are as follows:\n\
             prior->fix_inc = atof(argv[++i]);
         } else if (strcmp(argv[i], "--fix-pol") == 0) {
             prior->fix_pol = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--snr") == 0) {
+            prior->snr_target = atof(argv[++i]);
         } else if (strcmp(argv[i], "--eff") == 0) {
             run->eff = atof(argv[++i]);
         } else if (strcmp(argv[i], "--tol") == 0) {
