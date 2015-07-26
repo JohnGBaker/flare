@@ -201,6 +201,7 @@ void dumper(int *nSamples, int *nlive, int *nPar, double **physLive, double **po
 
 int main(int argc, char *argv[])
 {
+  int myid = 0;
 #ifdef PARALLEL
  	MPI_Init(&argc,&argv);
 	MPI_Comm_rank(MPI_COMM_WORLD,&myid);
@@ -217,7 +218,7 @@ int main(int argc, char *argv[])
   priorParams = (LISAPrior*) malloc(sizeof(LISAPrior));
   memset(priorParams, 0, sizeof(LISAPrior));
   
-  /* Parse commandline to read parameters of injection - copy the number of modes for the injection */
+  /* Parse commandline to read parameters of injection - copy the number of modes demanded for the injection */
   parse_args_LISA(argc, argv, injectedparams, globalparams, priorParams, &runParams);
   injectedparams->nbmode = globalparams->nbmodeinj;
 
@@ -227,7 +228,14 @@ int main(int argc, char *argv[])
 
   /* Generate the injection */
   LISAGenerateSignal(injectedparams, injectedsignal);
-  printf("SNR (Total, A, E, T): (%g, %g, %g, %g)\n", sqrt(injectedsignal->TDIAhh + injectedsignal->TDIEhh + injectedsignal->TDIThh), sqrt(injectedsignal->TDIAhh), sqrt(injectedsignal->TDIEhh), sqrt(injectedsignal->TDIThh));
+
+  /* Print SNR */
+  if (myid == 0) {
+    printf("SNR A:     %g\n", sqrt(injectedsignal->TDIAhh));
+    printf("SNR E:     %g\n", sqrt(injectedsignal->TDIEhh));
+    printf("SNR T:     %g\n", sqrt(injectedsignal->TDIThh));
+    printf("SNR Total: %g\n", sqrt(injectedsignal->TDIAhh + injectedsignal->TDIEhh + injectedsignal->TDIThh));
+  }
 
   /* Calculate logL of data */
   /*double dist_store = injectedparams->distance;
@@ -237,7 +245,7 @@ int main(int argc, char *argv[])
     injectedparams->distance = dist_store;*/
   logZdata = 0.0;
   double logZtrue = CalculateLogL(injectedparams, injectedsignal);
-  printf("logZtrue = %lf\n", logZtrue-logZdata);
+  if (myid == 0) printf("logZtrue = %lf\n", logZtrue-logZdata);
 
   /* Set the context pointer */
   void *context = injectedsignal;
