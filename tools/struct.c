@@ -176,6 +176,27 @@ void CAmpPhaseFrequencySeries_Cleanup(CAmpPhaseFrequencySeries *freqseries) {
   free(freqseries);
 }
 
+/******** Functions to initialize and clean up ReImFrequencySeries structure ********/
+void ReImFrequencySeries_Init(ReImFrequencySeries **freqseries, const int n) {
+  if(!freqseries) exit(1);
+  /* Create storage for structures */
+  if(!*freqseries) *freqseries=malloc(sizeof(ReImFrequencySeries));
+  else
+  {
+    ReImFrequencySeries_Cleanup(*freqseries);
+  }
+  gsl_set_error_handler(&Err_Handler);
+  (*freqseries)->freq = gsl_vector_alloc(n);
+  (*freqseries)->h_real = gsl_vector_alloc(n);
+  (*freqseries)->h_imag = gsl_vector_alloc(n);
+}
+void ReImFrequencySeries_Cleanup(ReImFrequencySeries *freqseries) {
+  if(freqseries->freq) gsl_vector_free(freqseries->freq);
+  if(freqseries->h_real) gsl_vector_free(freqseries->h_real);
+  if(freqseries->h_imag) gsl_vector_free(freqseries->h_imag);
+  free(freqseries);
+}
+
 /***************** Functions for the ListmodesCAmpPhaseFrequencySeries structure ****************/
 ListmodesCAmpPhaseFrequencySeries* ListmodesCAmpPhaseFrequencySeries_AddModeNoCopy(
 	   ListmodesCAmpPhaseFrequencySeries* appended,  /* List structure to prepend to */
@@ -241,6 +262,89 @@ void ListmodesCAmpPhaseFrequencySeries_Destroy(
     /* Notice that the mode indices l and m are not freed, like in SphHarmTimeSeries struct indices l and m */
     list = pop->next;
     free( pop );
+  }
+}
+
+/***************** Functions to manipulate ReImFrequencySeries structure ****************/
+
+/* Function evaluating a CAmpPhaseFrequencySeries on a given set of frequencies, and adding it to a ReImFrequencySeries */
+void ReImFrequencySeries_AddCAmpPhaseFrequencySeries(
+  struct tagReImFrequencySeries* freqseriesReIm,              /* Output Re/Im frequency series */
+  struct tagCAmpPhaseFrequencySeries* freqseriesCAmpPhase,    /* Input CAmp/Phase frequency series, to be interpolated and added to the output */
+  double fstartobsmode)                                       /* Starting frequency in case of limited duration of observations- assumed to have been scaled with the proper factor m/2 for this mode - set to 0 to ignore */
+{
+  /* Frequency vectors, and sizes */
+  gsl_vector* freqin = freqseriesCAmpPhase->freq;
+  gsl_vector* freqout = freqseriesReIm->freq;
+  int sizein = (int) freqin->size;
+  int sizeout = (int) freqout->size;
+  /* Input, Output vectors */
+  gsl_vector* vecampreal = freqseriesCAmpPhase->amp_real;
+  gsl_vector* vecampimag = freqseriesCAmpPhase->amp_imag;
+  gsl_vector* vecphase = freqseriesCAmpPhase->phase;
+  gsl_vector* vechreal = freqseriesReIm->h_real;
+  gsl_vector* vechimag = freqseriesReIm->h_imag;
+
+  /* Initializing the splines */
+  /* Note: since this must also apply to mode contribution after processing, real and imaginary parts of the amplitude are present - but since they should differ for LLV detectors by a constant factor, they can be interpolated */
+  gsl_interp_accel* accel_ampreal = gsl_interp_accel_alloc();
+  gsl_interp_accel* accel_ampimag = gsl_interp_accel_alloc();
+  gsl_interp_accel* accel_phase = gsl_interp_accel_alloc();
+  gsl_spline* ampreal = gsl_spline_alloc(gsl_interp_cspline, sizein);
+  gsl_spline* ampimag = gsl_spline_alloc(gsl_interp_cspline, sizein);
+  gsl_spline* phase = gsl_spline_alloc(gsl_interp_cspline, sizein);
+  gsl_spline_init(ampreal, gsl_vector_const_ptr(freqin,0), gsl_vector_const_ptr(vecampreal,0), sizein);
+  gsl_spline_init(ampimag, gsl_vector_const_ptr(freqin,0), gsl_vector_const_ptr(vecampimag,0), sizein);
+  gsl_spline_init(phase, gsl_vector_const_ptr(freqin,0), gsl_vector_const_ptr(vecphase,0), sizein);
+
+  /* First and last index of the output frequency vector that are covered by the CAmpPhase data */
+  int jStart = 0;
+  int jStop = sizeout - 1;
+  double minfmode = fmax(gsl_vector_get(freqin, 0), fstartobsmode); /* Takes into account fstartobsmode here */
+  double maxfmode = gsl_vector_get(freqin, sizein - 1);
+  while(gsl_vector_get(freqout, jStart) < minfmode) jStart++;
+  while(gsl_vector_get(freqout, jStop) > maxfmode) jStop--;
+
+  /* Main loop - evaluating the interpolating splines and adding to the output data */
+  double f, phi;
+  double complex A;
+  double complex h;
+  double* freqoutdata = freqout->data;
+  double* hrealdata = vechreal->data;
+  double* himagdata = vechimag->data;
+  for(int j=jStart; j<=jStop; j++) { /* Note: loop to jStop included */
+    f = freqoutdata[j];
+    A = gsl_spline_eval(ampreal, f, accel_ampreal) + I*gsl_spline_eval(ampimag, f, accel_ampimag);
+    phi = gsl_spline_eval(phase, f, accel_phase);
+    h = A * cexp(I*phi);
+    hrealdata[j] += creal(h);
+    himagdata[j] += cimag(h);
+  }
+}
+
+/* Function evaluating a ReImFrequencySeries by interpolating wach mode of a ListmodesCAmpPhaseFrequencySeries and summing them, given a set of frequencies */
+void ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(
+  struct tagReImFrequencySeries* freqseriesReIm,                    /* Output Re/Im frequency series - already initialized */
+  struct tagListmodesCAmpPhaseFrequencySeries* listmodesCAmpPhase,  /* Input CAmp/Phase frequency series, to be interpolated */
+  gsl_vector* freq,                                                 /* Input set of frequencies on which evaluating */
+  double fstartobs)                                                 /* Starting frequency in case of limited duration of observations - set to 0 to ignore */
+{
+  /* Check the sizes */
+  if(freq->size != freqseriesReIm->freq->size) {
+    printf("Error: incompatible sizes in ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries.\n");
+    exit(1);
+  }
+
+  /* Initialize and copy frequencies */
+  gsl_vector_memcpy(freqseriesReIm->freq, freq);
+
+  /* Main loop: go through the list of modes, interpolate and add them to the output */
+  ListmodesCAmpPhaseFrequencySeries* listelement = listmodesCAmpPhase;
+  double fstartobsmode;
+  while(listelement) {
+    double fstartobsmode = fmax(fstartobs, ((double) listelement->m)/2. * fstartobs);
+    ReImFrequencySeries_AddCAmpPhaseFrequencySeries(freqseriesReIm, listelement->freqseries, fstartobsmode);
+    listelement = listelement->next;
   }
 }
 

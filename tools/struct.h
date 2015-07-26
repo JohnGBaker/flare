@@ -39,7 +39,7 @@
 /***************************************************/
 /*************** Type definitions ******************/
 
-/* Structure for the output: amplitude and phase representation (for one mode) */
+/* Complex frequency series in amplitude and phase representation (for one mode) */
 typedef struct tagCAmpPhaseFrequencySeries
 {
   gsl_vector* freq;
@@ -48,7 +48,15 @@ typedef struct tagCAmpPhaseFrequencySeries
   gsl_vector* phase;
 } CAmpPhaseFrequencySeries;
 
-/* Structure replacing the LAL COMPLEX16FrequencySeries for the output: amplitude and phase representation (for one mode) */
+/* Complex frequency series in real/imaginary part representation (for one mode, or their sum) */
+typedef struct tagReImFrequencySeries
+{
+  gsl_vector* freq;
+  gsl_vector* h_real;
+  gsl_vector* h_imag;
+} ReImFrequencySeries;
+
+/* List structure, for a list of modes, each in amplitude and phase form */
 typedef struct tagListmodesCAmpPhaseFrequencySeries
 {
   CAmpPhaseFrequencySeries*                      freqseries; /* The frequencies series with amplitude and phase */
@@ -56,6 +64,10 @@ typedef struct tagListmodesCAmpPhaseFrequencySeries
   int                                            m; /* Node submode m  */
   struct tagListmodesCAmpPhaseFrequencySeries*    next; /* Next pointer */
 } ListmodesCAmpPhaseFrequencySeries;
+
+/**************************************************************/
+/* Function computing the max between two int */
+inline int max ( int a, int b ) { return a > b ? a : b; }
 
 /**************************************************************/
 /************** GSL error handling and I/O ********************/
@@ -95,7 +107,25 @@ void CAmpPhaseFrequencySeries_Init(
 	 CAmpPhaseFrequencySeries **freqseries, /* double pointer for initialization */
 	 const int n );                         /* length of the frequency series */
 void CAmpPhaseFrequencySeries_Cleanup(CAmpPhaseFrequencySeries *freqseries);
+void ReImFrequencySeries_Init(
+	 ReImFrequencySeries **freqseries,      /* double pointer for initialization */
+	 const int n );                         /* length of the frequency series */
+void ReImFrequencySeries_Cleanup(ReImFrequencySeries *freqseries);
 
+/***************** Functions to manipulate ReImFrequencySeries structure ****************/
+
+void ReImFrequencySeries_AddCAmpPhaseFrequencySeries(
+  struct tagReImFrequencySeries* freqseriesReIm,              /* Output Re/Im frequency series */
+  struct tagCAmpPhaseFrequencySeries* freqseriesCAmpPhase,    /* Input CAmp/Phase frequency series, to be interpolated and added to the output */
+  double fstartobsmode);                                      /* Starting frequency in case of limited duration of observations- assumed to have been scaled with the proper factor m/2 for this mode - set to 0 to ignore */
+/* Function evaluating a ReImFrequencySeries by interpolating wach mode of a ListmodesCAmpPhaseFrequencySeries and summing them, given a set of frequencies */
+void ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(
+  struct tagReImFrequencySeries* freqseriesReIm,                    /* Output Re/Im frequency series - already initialized */
+  struct tagListmodesCAmpPhaseFrequencySeries* listmodesCAmpPhase,  /* Input CAmp/Phase frequency series, to be interpolated */
+  gsl_vector* freq,                                                 /* Input set of frequencies on which evaluating */
+  double fstartobs);                                                /* Starting frequency in case of limited duration of observations - set to 0 to ignore */
+
+/***************** Other structure functions ****************/
 /* Additional function reproducing XLALSpinWeightedSphericalHarmonic */
 double complex SpinWeightedSphericalHarmonic(double theta, double phi, int s, int l, int m); /* Currently only supports s=-2, l=2,3,4,5 modes */
 

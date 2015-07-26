@@ -89,8 +89,8 @@ typedef struct tagLLVRunParams {
 /* Masses are input in solar masses and distances in Mpc - converted in SI for the internals */
 void parse_args_LLV(ssize_t argc, char **argv, 
     LLVParams* params, 
-    LLVPrior *prior, 
-    LLVRunParams *run);
+    LLVPrior* prior, 
+    LLVRunParams* run);
 
 void LLVSignal_Cleanup(LLVSignal* signal);
 void LLVSignal_Init(LLVSignal** signal);

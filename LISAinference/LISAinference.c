@@ -132,9 +132,7 @@ void getLogLike(double *Cube, int *ndim, int *npars, double *lnew, void *context
   templateparams.lambda = Cube[6];
   templateparams.beta = Cube[7];
   templateparams.polarization = Cube[8];
-  templateparams.fRef = injectedparams->fRef;
-  templateparams.deltatobs = injectedparams->deltatobs;
-  templateparams.nbmode = injectedparams->nbmode;
+  templateparams.nbmode = globalparams->nbmodetemp; /* Using the global parameter for the number of modes in templates */
 
   /* Note: context points to a LISAContext structure containing a LISASignal* */
   LISASignal* injection = ((LISASignal*) context);
@@ -214,11 +212,14 @@ int main(int argc, char *argv[])
   LISARunParams runParams;
   injectedparams = (LISAParams*) malloc(sizeof(LISAParams));
   memset(injectedparams, 0, sizeof(LISAParams));
+  globalparams = (LISAGlobalParams*) malloc(sizeof(LISAGlobalParams));
+  memset(globalparams, 0, sizeof(LISAGlobalParams));
   priorParams = (LISAPrior*) malloc(sizeof(LISAPrior));
   memset(priorParams, 0, sizeof(LISAPrior));
   
-  /* Parse commandline to read parameters of injection */
-  parse_args_LISA(argc, argv, injectedparams, priorParams, &runParams);
+  /* Parse commandline to read parameters of injection - copy the number of modes for the injection */
+  parse_args_LISA(argc, argv, injectedparams, globalparams, priorParams, &runParams);
+  injectedparams->nbmode = globalparams->nbmodeinj;
 
   /* Initialize the data structure for the injection */
   LISASignal* injectedsignal = NULL;
@@ -226,7 +227,7 @@ int main(int argc, char *argv[])
 
   /* Generate the injection */
   LISAGenerateSignal(injectedparams, injectedsignal);
-  printf("SNR (All, A, E, T): (%g, %g, %g, %g)\n", sqrt(injectedsignal->TDIAhh + injectedsignal->TDIEhh + injectedsignal->TDIThh), sqrt(injectedsignal->TDIAhh), sqrt(injectedsignal->TDIEhh), sqrt(injectedsignal->TDIThh));
+  printf("SNR (Total, A, E, T): (%g, %g, %g, %g)\n", sqrt(injectedsignal->TDIAhh + injectedsignal->TDIEhh + injectedsignal->TDIThh), sqrt(injectedsignal->TDIAhh), sqrt(injectedsignal->TDIEhh), sqrt(injectedsignal->TDIThh));
 
   /* Calculate logL of data */
   /*double dist_store = injectedparams->distance;
@@ -274,9 +275,7 @@ int main(int argc, char *argv[])
     templateparams.lambda = priorParams->fix_lambda;
     templateparams.beta = priorParams->fix_beta;
     templateparams.polarization = priorParams->fix_pol;
-    templateparams.fRef = injectedparams->fRef;
-    templateparams.deltatobs = injectedparams->deltatobs;
-    templateparams.nbmode = injectedparams->nbmode;
+    templateparams.nbmode = globalparams->nbmodetemp; /* Using the global parameter for the number of modes in templates */
 
     double logL = CalculateLogL(&templateparams, injectedsignal);
     printf("logL = %lf\n", logL);

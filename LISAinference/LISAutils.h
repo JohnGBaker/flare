@@ -29,10 +29,18 @@ typedef struct tagLISAParams {
   double beta;               /* second angle for the position in the sky (rad, default 0) */
   double inclination;        /* inclination of L relative to line of sight (rad, default PI/3) */
   double polarization;       /* polarization angle (rad, default 0) */
-  double fRef;               /* reference frequency (Hz, default 0 which is interpreted as Mf=0.14) */
-  double deltatobs;          /* max duration of observation (years, default 2) - the start of the signals might be cut in time instead of cut in frequency */
   int nbmode;                /* number of modes to generate (starting with 22) - defaults to 5 (all modes) */
 } LISAParams;
+
+/* Global parameters for the waveform generation and overlap computation */
+typedef struct tagLISAGlobalParams {
+  double fRef;               /* reference frequency (Hz, default 0 which is interpreted as Mf=0.14) */
+  double deltatobs;          /* max duration of observation (years, default 2) - the start of the signals might be cut in time instead of cut in frequency */
+  double fmin;               /* Minimal frequency (Hz) - when set to 0 (default), use the first frequency covered by the noise data of the detector */
+  int nbmodeinj;             /* number of modes to include in the injection (starting with 22) - defaults to 5 (all modes) */
+  int nbmodetemp;            /* number of modes to include in the templates (starting with 22) - defaults to 5 (all modes) */
+  int tagint;                /* Tag choosing the integrator: 0 for wip (default), 1 for linear integration */
+} LISAGlobalParams;
 
 typedef struct tagLISASignal
 {
@@ -76,12 +84,13 @@ typedef struct tagLISARunParams {
 
 /************ Functions for LISA parameters, injection, likelihood, prior ************/
 
-/* Parsing parameters for the generation of a LISA waveform, from the command line */
+/* Parse command line to initialize LISAParams, LISAGlobalParams, LISAPrior, and LISARunParams objects */
 /* Masses are input in solar masses and distances in Mpc - converted in SI for the internals */
 void parse_args_LISA(ssize_t argc, char **argv, 
-    LISAParams* params, 
-    LISAPrior *prior, 
-    LISARunParams *run);
+  LISAParams* params,
+  LISAGlobalParams* globalparams, 
+  LISAPrior* prior, 
+  LISARunParams* run);
 
 void LISASignal_Cleanup(LISASignal* signal);
 void LISASignal_Init(LISASignal** signal);
@@ -110,6 +119,7 @@ double CalculateLogL(LISAParams *params, LISASignal* injection);
 /************ Global Parameters ************/
 
 extern LISAParams* injectedparams;
+extern LISAGlobalParams* globalparams;
 extern LISAPrior* priorParams;
 double logZdata;
 
