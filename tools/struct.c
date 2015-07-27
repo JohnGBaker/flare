@@ -320,6 +320,14 @@ void ReImFrequencySeries_AddCAmpPhaseFrequencySeries(
     hrealdata[j] += creal(h);
     himagdata[j] += cimag(h);
   }
+
+  /* Clean up */
+  gsl_interp_accel_free(accel_ampreal);
+  gsl_interp_accel_free(accel_ampimag);
+  gsl_interp_accel_free(accel_phase);
+  gsl_spline_free(ampreal);
+  gsl_spline_free(ampimag);
+  gsl_spline_free(phase);
 }
 
 /* Function evaluating a ReImFrequencySeries by interpolating wach mode of a ListmodesCAmpPhaseFrequencySeries and summing them, given a set of frequencies */
