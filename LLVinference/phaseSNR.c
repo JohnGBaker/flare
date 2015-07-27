@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
 
   /* Generate the injections and print SNRs */
   printf("# phiRef LHO LLO Virgo Network\n");
-  for (double phase = 0.0; phase <= 2.0*M_PI; phase += 2.0*M_PI/100.0)
+  for (double phase = 0.0; phase <= 2.0*M_PI; phase += 0.05)
   {
   	injectedparams->phiRef = phase;
   	LLVGenerateSignal(injectedparams, injectedsignal);
