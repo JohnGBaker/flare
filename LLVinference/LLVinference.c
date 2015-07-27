@@ -230,7 +230,7 @@ int main(int argc, char *argv[])
   /* Generate the injection */
   LLVGenerateSignal(injectedparams, injectedsignal);
 
-  /* rescale distance to match SNR */
+  /* Rescale distance to match SNR */
   if (!isnan(priorParams->snr_target)) {
     if (myid == 0) printf("Rescaling the distance to obtain a network SNR of %g\n", priorParams->snr_target);
     injectedparams->distance *= sqrt(injectedsignal->LHOhh + injectedsignal->LLOhh + injectedsignal->VIRGOhh) / priorParams->snr_target;

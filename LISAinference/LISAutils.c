@@ -3,6 +3,7 @@
 /************ Global Parameters ************/
 
 LISAParams* injectedparams = NULL;
+LISAGlobalParams* globalparams = NULL;
 LISAParams* templateparams = NULL;
 LISAPrior* priorParams = NULL;
 
@@ -32,9 +33,10 @@ void LISASignal_Init(LISASignal** signal) {
 
 /* Parse command line to initialize LISAParams, LISAPrior, and LISARunParams objects */
 void parse_args_LISA(ssize_t argc, char **argv, 
-    LISAParams* params, 
-    LISAPrior *prior, 
-    LISARunParams *run) 
+  LISAParams* params,
+  LISAGlobalParams* globalparams, 
+  LISAPrior* prior, 
+  LISARunParams* run) 
 {
     char help[] = "\
 LISAInference by Sylvain Marsat, John Baker, and Philip Graff\n\
@@ -56,9 +58,18 @@ Arguments are as follows:\n\
  --inclination         Inclination of source orbital plane to observer line of sight\n\
                        (radians, default=PI/3)\n\
  --polarization        Polarization of source (radians, default=0)\n\
+ --nbmode              Number of modes of radiation to generate (1-5, default=5)\n\
+ --snr                 Use a target network SNR for the injection by rescaling distance\n\
+\n\
+-----------------------------------------------------------------\n\
+----- Global Waveform/Inner products Parameters -----------------\n\
+-----------------------------------------------------------------\n\
  --fRef                Reference frequency (Hz, default=0, interpreted as Mf=0.14)\n\
  --deltatobs           Observation time (years, default=2)\n\
- --nbmode              Number of modes of radiation to use (1-5, default=5)\n\
+ --fmin                Minimal frequency (Hz, default=0) - when set to 0, use the first frequency covered by the noise data of the detector\n\
+ --nbmodeinj           Number of modes of radiation to use for the injection (1-5, default=5)\n\
+ --nbmodetemp          Number of modes of radiation to use for the templates (1-5, default=5)\n\
+ --tagint              Tag choosing the integrator: 0 for wip (default), 1 for linear integration\n\
 \n\
 --------------------------------------------------\n\
 ----- Prior Boundary Settings --------------------\n\
@@ -109,9 +120,15 @@ Arguments are as follows:\n\
     params->beta = 0.;
     params->inclination = PI/3.;
     params->polarization = 0.;
-    params->fRef = 0.;
-    params->deltatobs = 2.;
     params->nbmode = 5;
+
+    /* set default values for the global params */
+    globalparams->fRef = 0.;
+    globalparams->deltatobs = 2.;
+    globalparams->fmin = 0.;
+    globalparams->nbmodeinj = 5;
+    globalparams->nbmodetemp = 5;
+    globalparams->tagint = 0;
 
     /* set default values for the prior limits */
     prior->deltaT = 1.e5;
@@ -131,6 +148,7 @@ Arguments are as follows:\n\
     prior->fix_lambda = NAN;
     prior->fix_beta = NAN;
     prior->fix_inc = NAN;
+    prior->snr_target = NAN;
 
     /* set default values for the run settings */
     run->eff = 0.1;
@@ -165,11 +183,17 @@ Arguments are as follows:\n\
         } else if (strcmp(argv[i], "--polarization") == 0) {
             params->polarization = atof(argv[++i]);
         } else if (strcmp(argv[i], "--fRef") == 0) {
-            params->fRef = atof(argv[++i]);
+            globalparams->fRef = atof(argv[++i]);
         } else if (strcmp(argv[i], "--deltatobs") == 0) {
-            params->deltatobs = atof(argv[++i]);
-        } else if (strcmp(argv[i], "--nbmode") == 0) {
-            params->nbmode = atof(argv[++i]);
+            globalparams->deltatobs = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--fmin") == 0) {
+            globalparams->fmin = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--nbmodeinj") == 0) {
+            globalparams->nbmodeinj = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--nbmodetemp") == 0) {
+            globalparams->nbmodetemp = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--tagint") == 0) {
+            globalparams->tagint = atof(argv[++i]);
         } else if (strcmp(argv[i], "--deltaT") == 0) {
             prior->deltaT = atof(argv[++i]);
         } else if (strcmp(argv[i], "--comp-min") == 0) {
@@ -204,6 +228,8 @@ Arguments are as follows:\n\
             prior->fix_inc = atof(argv[++i]);
         } else if (strcmp(argv[i], "--fix-pol") == 0) {
             prior->fix_pol = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--snr") == 0) {
+            prior->snr_target = atof(argv[++i]);
         } else if (strcmp(argv[i], "--eff") == 0) {
             run->eff = atof(argv[++i]);
         } else if (strcmp(argv[i], "--tol") == 0) {
@@ -249,7 +275,7 @@ int LISAGenerateSignal(
   /* Should add more error checking ? */
   /* Generate the waveform with the ROM */
   /* Note: SimEOBNRv2HMROM accepts masses and distances in SI units, whereas LISA params is in solar masses and Mpc */
-  ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, params->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+  ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
 
   /* If the ROM waveform generation failed (e.g. parameters were out of bounds) return FAILURE */
   if(ret==FAILURE) return FAILURE;
@@ -259,11 +285,13 @@ int LISAGenerateSignal(
   LISASimFDResponseTDIAET(&listROM, &listTDIA, &listTDIE, &listTDIT, params->tRef, params->lambda, params->beta, params->inclination, params->polarization);
 
   /* Precompute the inner products (h|h) - takes into account the length of the observation with deltatobs */
-  double Mfstartobs = NewtonianfoftGeom(params->m1 / params->m2, (params->deltatobs * YRSID_SI) / ((params->m1 + params->m2) * MTSUN_SI));
+  double Mfstartobs = NewtonianfoftGeom(params->m1 / params->m2, (globalparams->deltatobs * YRSID_SI) / ((params->m1 + params->m2) * MTSUN_SI));
   double fstartobs = Mfstartobs / ((params->m1 + params->m2) * MTSUN_SI);
-  double TDIAhh = LISAFDListmodesOverlap(listTDIA, listTDIA, NoiseSnA, __LISASimFD_Noise_fLow, __LISASimFD_Noise_fHigh, fstartobs);
-  double TDIEhh = LISAFDListmodesOverlap(listTDIE, listTDIE, NoiseSnE, __LISASimFD_Noise_fLow, __LISASimFD_Noise_fHigh, fstartobs);
-  double TDIThh = LISAFDListmodesOverlap(listTDIT, listTDIT, NoiseSnT, __LISASimFD_Noise_fLow, __LISASimFD_Noise_fHigh, fstartobs);
+  double fLow = fmax(__LISASimFD_Noise_fLow, globalparams->fmin);
+  double fHigh = __LISASimFD_Noise_fHigh;
+  double TDIAhh = FDListmodesOverlap(listTDIA, listTDIA, NoiseSnA, fLow, fHigh, fstartobs, fstartobs, globalparams->tagint);
+  double TDIEhh = FDListmodesOverlap(listTDIE, listTDIE, NoiseSnE, fLow, fHigh, fstartobs, fstartobs, globalparams->tagint);
+  double TDIThh = FDListmodesOverlap(listTDIT, listTDIT, NoiseSnT, fLow, fHigh, fstartobs, fstartobs, globalparams->tagint);
 
   /* Output and clean up */
   signal->TDIASignal = listTDIA;
@@ -347,14 +375,15 @@ double CalculateLogL(LISAParams *params, LISASignal* injection)
   }
   else if(ret==SUCCESS) {
     /* Computing the likelihood for each TDI channel - fstartobs is the max between the fstartobs of the injected and generated signals */
-    double Mfstartobsinjected = NewtonianfoftGeom(injectedparams->m1 / injectedparams->m2, (injectedparams->deltatobs * YRSID_SI) / ((injectedparams->m1 + injectedparams->m2) * MTSUN_SI));
-    double Mfstartobsgenerated = NewtonianfoftGeom(params->m1 / params->m2, (params->deltatobs * YRSID_SI) / ((params->m1 + params->m2) * MTSUN_SI));
+    double Mfstartobsinjected = NewtonianfoftGeom(injectedparams->m1 / injectedparams->m2, (globalparams->deltatobs * YRSID_SI) / ((injectedparams->m1 + injectedparams->m2) * MTSUN_SI));
+    double Mfstartobsgenerated = NewtonianfoftGeom(params->m1 / params->m2, (globalparams->deltatobs * YRSID_SI) / ((params->m1 + params->m2) * MTSUN_SI));
     double fstartobsinjected = Mfstartobsinjected / ((injectedparams->m1 + injectedparams->m2) * MTSUN_SI);
     double fstartobsgenerated = Mfstartobsgenerated / ((params->m1 + params->m2) * MTSUN_SI);
-    double fstartobs = fmax(fstartobsinjected, fstartobsgenerated);
-    double loglikelihoodTDIA = LISAFDLogLikelihood(injection->TDIASignal, generatedsignal->TDIASignal, NoiseSnA, __LISASimFD_Noise_fLow, __LISASimFD_Noise_fHigh, injection->TDIAhh, generatedsignal->TDIAhh, fstartobs);
-    double loglikelihoodTDIE = LISAFDLogLikelihood(injection->TDIESignal, generatedsignal->TDIESignal, NoiseSnE, __LISASimFD_Noise_fLow, __LISASimFD_Noise_fHigh, injection->TDIEhh, generatedsignal->TDIEhh, fstartobs);
-    double loglikelihoodTDIT = LISAFDLogLikelihood(injection->TDITSignal, generatedsignal->TDITSignal, NoiseSnT, __LISASimFD_Noise_fLow, __LISASimFD_Noise_fHigh, injection->TDIThh, generatedsignal->TDIThh, fstartobs);
+    double fLow = fmax(__LISASimFD_Noise_fLow, globalparams->fmin);
+    double fHigh = __LISASimFD_Noise_fHigh;
+    double loglikelihoodTDIA = FDLogLikelihood(injection->TDIASignal, generatedsignal->TDIASignal, NoiseSnA, fLow, fHigh, injection->TDIAhh, generatedsignal->TDIAhh, fstartobsinjected, fstartobsgenerated, globalparams->tagint);
+    double loglikelihoodTDIE = FDLogLikelihood(injection->TDIESignal, generatedsignal->TDIESignal, NoiseSnE, fLow, fHigh, injection->TDIEhh, generatedsignal->TDIEhh, fstartobsinjected, fstartobsgenerated, globalparams->tagint);
+    double loglikelihoodTDIT = FDLogLikelihood(injection->TDITSignal, generatedsignal->TDITSignal, NoiseSnT, fLow, fHigh, injection->TDIThh, generatedsignal->TDIThh, fstartobsinjected, fstartobsgenerated, globalparams->tagint);
 
     /* Output: value of the loglikelihood for the combined signals, assuming noise independence */
     logL = loglikelihoodTDIA + loglikelihoodTDIE + loglikelihoodTDIT;
