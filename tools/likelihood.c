@@ -41,7 +41,7 @@
 
 
 /* Number of points to be used in linear integration - hardcoded for now */
-#define nbptsint 32768
+#define nbptsintdefault 32768
 
 
 /********************************* Utilities ****************************************/
@@ -55,8 +55,35 @@ double NewtonianfoftGeom(
   return 1./PI * pow(256*nu/5. * t, -3./8);
 }
 
+/* Function to evaluate a Noise function  */
+void EvaluateNoise(
+  gsl_vector* noisevalues,                         /* Output: vector of the noise values */
+  gsl_vector* freq,                                /* Input: vector of frequencies on which to evaluate */
+  double (*Snoise)(double),                        /* Noise function */
+  double fLow,                                     /* Lower bound of the frequency window for the detector */
+  double fHigh)                                    /* Upper bound of the frequency window for the detector */
+{
+  int nbpts = (int) freq->size;
+
+  /* Checking the length */
+  if( freq->size != noisevalues->size) {
+    printf("Error: incompatible sizes in EvaluateNoise.\n");
+    exit(1);
+  }
+  
+  /* Checking the boundary frequencies */
+  if( gsl_vector_get(freq, 0) < fLow || gsl_vector_get(freq, nbpts-1) > fHigh ) {
+    printf("Error: incompatible frequency range in EvaluateNoise.\n");
+    exit(1);
+  }
+
+  for(int i=0; i<nbpts; i++) {
+    gsl_vector_set(noisevalues, i, Snoise(gsl_vector_get(freq, i)));
+  }
+}
+
 /* Function building a frequency vector with logarithmic sampling */
-static void SetLogFrequencies(
+void SetLogFrequencies(
   gsl_vector* freqvector,    /* Output pointer to gsl_vector, already allocated */
   const double fmin,         /* Lower bound of the frequency interval */
   const double fmax,         /* Upper bound of the frequency interval */
@@ -68,6 +95,42 @@ static void SetLogFrequencies(
   for(int i=0; i<nbpts; i++) {
     gsl_vector_set(freqvector, i, exp(lnfmin + (double) i/(nbpts-1.) * lnratio));
   }
+}
+
+/* Function determining logarithmically spaced frequencies from a waveform given as a list of modes, a minimal frequency and a number of points */
+void ListmodesSetLogFrequencies(
+  struct tagListmodesCAmpPhaseFrequencySeries *list,     /* Waveform, list of modes in amplitude/phase form */
+  double fLow,                                           /* Additional lower frequency limit */
+  double fHigh,                                          /* Additional upper frequency limit */
+  int nbpts,                                             /* Number of frequency samples */
+  gsl_vector* freqvector)                                /* Output: vector of frequencies, already allocated with nbpts */
+{
+  /* Checking the length */
+  if((int) freqvector->size != nbpts) {
+    printf("Error: incompatible sizes in ListmodesSetLogFrequencies.\n");
+    exit(1);
+  }
+  
+  /* Determining the frequency interval - from the lowest frequency of the 22 mode to the highest frequency covered by at least one mode */
+  double minf, maxf;
+  ListmodesCAmpPhaseFrequencySeries* listelementmode22 = ListmodesCAmpPhaseFrequencySeries_GetMode(list, 2, 2);
+  minf = gsl_vector_get(listelementmode22->freqseries->freq, 0);
+  maxf = gsl_vector_get(list->freqseries->freq, (int) list->freqseries->freq->size - 1);
+  ListmodesCAmpPhaseFrequencySeries* listelement = list;
+  while(listelement) {
+    maxf = fmax(maxf, gsl_vector_get(listelement->freqseries->freq, (int) listelement->freqseries->freq->size - 1));
+    listelement = listelement->next;
+  }
+
+  /* Checking that the waveform covers the fLow */
+  if(fLow < minf) printf("Warning: in ListmodesSetLogFrequencies, fLow not covered by the wave data.\n");
+
+  /* Actual boundaries of the frequency vector - cuts what is below fLow and above fHigh */
+  minf = fmax(minf, fLow);
+  maxf = fmin(maxf, fHigh);
+
+  /* Setting values of the vector of frequencies */
+  SetLogFrequencies(freqvector, minf, maxf, nbpts);
 }
 
 /* Function computing a simple trapeze integration for real data */
@@ -98,7 +161,7 @@ double FDSinglemodeLogLinearOverlap(
   double res;
   int size1 = (int) freqseries1->freq->size;
   int size2 = (int) freqseries2->freq->size;
-  int nbpts = nbptsint;
+  int nbpts = nbptsintdefault;
 
   /* Minimal, maximal frequencies */
   double fmin1 = gsl_vector_get(freqseries1->freq, 0);
@@ -177,8 +240,8 @@ double FDSinglemodeLogLinearOverlap(
 
 /* Function computing the overlap (h1|h2) between two waveforms given as lists of mode contributions (factos sYlm already included), for a given noise function - uses simple trapeze integration on logarithmically sampled frequencies - generates the frequency series in Re/Im form by summing the mode contributions first, then computes the overlap */
 double FDListmodesLogLinearOverlap(
-  struct tagListmodesCAmpPhaseFrequencySeries *list1,    /* First mode h1, in amplitude/phase form */
-  struct tagListmodesCAmpPhaseFrequencySeries *list2,    /* Second mode h2, in amplitude/phase form */
+  struct tagListmodesCAmpPhaseFrequencySeries *list1,    /* First waveform, list of modes in amplitude/phase form */
+  struct tagListmodesCAmpPhaseFrequencySeries *list2,    /* Second waveform, list of modes in amplitude/phase form */
   double (*Snoise)(double),                              /* Noise function */
   double fLow,                                           /* Lower bound of the frequency window for the detector */
   double fHigh,                                          /* Upper bound of the frequency window for the detector */
@@ -186,7 +249,7 @@ double FDListmodesLogLinearOverlap(
   double fstartobs2)                                     /* Starting frequency for the 22 mode of wf 2 - as determined from a limited duration of the observation - set to 0 to ignore */
 {
   /* Number of points to use in the trapeze integration */
-  int nbpts = nbptsint;
+  int nbpts = nbptsintdefault;
 
   /* Determining the frequency interval - from the lowest frequency of the 22 mode to the highest frequency covered by at least one mode */
   double minf1, maxf1, minf2, maxf2, minf, maxf;
@@ -245,6 +308,85 @@ double FDListmodesLogLinearOverlap(
   return overlap;
 }
 
+/* Function computing the overlap (h1|h2) between h1 given in Re/Im form and h2 given as a list of mode contributions (factos sYlm already included), for a given vector of noise values - uses simple trapeze integration - generates the frequency series of h2 in Re/Im form by summing the mode contributions first, then computes the overlap */
+double FDOverlapReImvsListmodesCAmpPhase(
+  struct tagReImFrequencySeries *freqseries1,       /* First waveform, in Re/Im form */
+  struct tagListmodesCAmpPhaseFrequencySeries *list2,    /* Second waveform, list of modes in amplitude/phase form */
+  gsl_vector* noisevalues,                               /* Vector for the noise values on the freq of h1 */
+  double fstartobs2)                                     /* Starting frequency for the 22 mode of wf 2 - as determined from a limited duration of the observation - set to 0 to ignore */
+{
+  /* Check the lengths */
+  if(freqseries1->freq->size != noisevalues->size) {
+    printf("Error: inconsistent lengths in FDOverlapReImvsListmodesCAmpPhase.\n");
+    exit(1);
+  }
+  
+  /* Frequencies used for the overlap */
+  int nbpts = (int) freqseries1->freq->size;
+  gsl_vector* freqoverlap = freqseries1->freq;
+  
+  /* Evaluating frequency series 2 by interpolating and summing the mode contributions */
+  ReImFrequencySeries* freqseries2 = NULL;
+  ReImFrequencySeries_Init(&freqseries2, nbpts);
+  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(freqseries2, list2, freqoverlap, fstartobs2);
+
+  /* Compute the integrand */
+  gsl_vector* valuesoverlap = gsl_vector_alloc(nbpts);
+  double* hreal1data = freqseries1->h_real->data;
+  double* himag1data = freqseries1->h_imag->data;
+  double* hreal2data = freqseries2->h_real->data;
+  double* himag2data = freqseries2->h_imag->data;
+  double* noisedata = noisevalues->data;
+  for(int i=0; i<nbpts; i++) {
+    gsl_vector_set(valuesoverlap, i, 4.*creal( (hreal1data[i] + I*himag1data[i]) * (hreal2data[i] - I*himag2data[i]) / noisedata[i]));
+  }
+  
+  /* Final trapeze integration */
+  double overlap = TrapezeIntegrate(freqoverlap, valuesoverlap);
+
+  /* Clean up */
+  ReImFrequencySeries_Cleanup(freqseries2);
+  gsl_vector_free(valuesoverlap);
+
+  return overlap;
+}
+
+/* Function computing the overlap (h1|h2) between two waveforms given as Re/Im frequency series (common freq values assumed), for a given vector of noise values - uses simple trapeze integration */
+double FDOverlapReImvsReIm(
+  struct tagReImFrequencySeries *freqseries1,  /* First waveform, frequency series in Re/Im form */
+  struct tagReImFrequencySeries *freqseries2,  /* Second waveform, frequency series in Re/Im form */
+  gsl_vector* noisevalues)                     /* Vector for the noise values on common freq of the freqseries */
+{
+  /* Check the lengths */
+  if(freqseries1->freq->size != noisevalues->size || freqseries2->freq->size != noisevalues->size) {
+    printf("Error: inconsistent lengths in FDOverlapReImvsReIm.\n");
+    exit(1);
+  }
+
+  /* Frequency vector - assuming they match beyond their mere lengths */
+  gsl_vector* freqoverlap = freqseries1->freq;
+  int nbpts = (int) freqoverlap->size;
+
+  /* Compute the integrand */
+  gsl_vector* valuesoverlap = gsl_vector_alloc((int) freqoverlap->size);
+  double* hreal1data = freqseries1->h_real->data;
+  double* himag1data = freqseries1->h_imag->data;
+  double* hreal2data = freqseries2->h_real->data;
+  double* himag2data = freqseries2->h_imag->data;
+  double* noisedata = noisevalues->data;
+  for(int i=0; i<nbpts; i++) {
+    gsl_vector_set(valuesoverlap, i, 4.*creal( (hreal1data[i] + I*himag1data[i]) * (hreal2data[i] - I*himag2data[i]) / noisedata[i]));
+  }
+  
+  /* Final trapeze integration */
+  double overlap = TrapezeIntegrate(freqoverlap, valuesoverlap);
+
+  /* Clean up */
+  gsl_vector_free(valuesoverlap);
+
+  return overlap;
+}
+
 /***************************** Functions for overlaps using amplitude/phase (wip) ******************************/
 
 /* Function computing the overlap (h1|h2) between two given modes in amplitude/phase form, for a given noise function - uses the amplitude/phase representation (wip) */
@@ -279,8 +421,8 @@ double FDSinglemodeWIPOverlap(
 
 /* Function computing the overlap (h1|h2) between two waveforms given as list of modes, for a given noise function - no cross-products between modes are taken into account - two additional parameters for the starting 22-mode frequencies (then properly scaled for the other modes) for a limited duration of the observations */
 double FDListmodesWIPOverlap(
-  struct tagListmodesCAmpPhaseFrequencySeries *listh1, /* First mode h1, list of modes in amplitude/phase form */
-  struct tagListmodesCAmpPhaseFrequencySeries *listh2, /* Second mode h2, list of modes in amplitude/phase form */
+  struct tagListmodesCAmpPhaseFrequencySeries *listh1, /* First waveform, list of modes in amplitude/phase form */
+  struct tagListmodesCAmpPhaseFrequencySeries *listh2, /* Second waveform, list of modes in amplitude/phase form */
   double (*Snoise)(double),                            /* Noise function */
   double fLow,                                         /* Lower bound of the frequency window for the detector */
   double fHigh,                                        /* Upper bound of the frequency window for the detector */
@@ -307,6 +449,8 @@ double FDListmodesWIPOverlap(
   return overlap;
 }
 
+/************** Functions for overlap/likelihood allowing to switch between wip and loglinear integration *****************/
+
 /* Wrapping of FDListmodesWIPOverlap or FDListmodesLogLinearOverlap according to tagint */
 double FDListmodesOverlap(
   struct tagListmodesCAmpPhaseFrequencySeries *listh1, /* First mode h1, list of modes in amplitude/phase form */
@@ -328,8 +472,6 @@ double FDListmodesOverlap(
   return overlap;
 }
 
-/***************************** Likelihood function ******************************/
-
 /* Function computing the log likelihood (h|s) - 1/2 (h|h) - 1/2 (s|s), with s the signal, h the template, and where we keep the constant term (s|s) - passed to the function as a parameter - all the cross-products between modes are taken into account - two additionals parameters for the starting 22-mode frequencies (then properly scaled for the other modes) for a limited duration of the observations */
 double FDLogLikelihood(
   struct tagListmodesCAmpPhaseFrequencySeries *lists,  /* Input: list of modes for the signal s, in Frequency-domain amplitude and phase form */
@@ -350,5 +492,39 @@ double FDLogLikelihood(
   else if(tagint==1) {
     lnL = FDListmodesLogLinearOverlap(lists, listh, Snoise, fLow, fHigh, fstartobss, fstartobsh) - 1./2 * hh - 1./2 * ss;
   }
+  return lnL;
+}
+
+/************** Functions for overlap/likelihood specific to loglinear integration *****************/
+
+/* Function computing the log likelihood -1/2(h-s|h-s), with s the signal, h the template (both given as frequency series in Re/Im form) - h, s assumed to be given on the same set of frequencies - same for the vector of noise values - fstartobs for s, h has already been taken into account */
+double FDLogLikelihoodReIm(
+  struct tagReImFrequencySeries *s,    /* First waveform (injection), frequency series in Re/Im form */
+  struct tagReImFrequencySeries *h,    /* Second waveform (template), frequency series in Re/Im form */
+  gsl_vector* noisevalues)             /* Vector for the noise values on common freq of the freqseries */
+{
+  /* Check the lengths */
+  if(s->freq->size != noisevalues->size || h->freq->size != noisevalues->size) {
+    printf("Error: inconsistent lengths in FDLogLikelihoodReIm.\n");
+    exit(1);
+  }
+
+  /* Taking the difference between the frequency series: diff = h-s */
+  int nbpts = (int) s->freq->size;
+  ReImFrequencySeries* diff = NULL;
+  ReImFrequencySeries_Init(&diff, nbpts);
+  gsl_vector_memcpy(diff->freq, s->freq);
+  gsl_vector_memcpy(diff->h_real, h->h_real);
+  gsl_vector_memcpy(diff->h_imag, h->h_imag);
+  gsl_vector_sub(diff->h_real, s->h_real);
+  gsl_vector_sub(diff->h_imag, s->h_imag);
+
+  /* Likelihood lnL = -1/2(h-s|h-s) */
+  double lnL;
+  lnL = -1./2 * FDOverlapReImvsReIm(diff, diff, noisevalues);
+
+  /* Clean up */
+  ReImFrequencySeries_Cleanup(diff);
+
   return lnL;
 }

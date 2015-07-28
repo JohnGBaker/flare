@@ -40,9 +40,10 @@ typedef struct tagLISAGlobalParams {
   int nbmodeinj;             /* number of modes to include in the injection (starting with 22) - defaults to 5 (all modes) */
   int nbmodetemp;            /* number of modes to include in the templates (starting with 22) - defaults to 5 (all modes) */
   int tagint;                /* Tag choosing the integrator: 0 for wip (default), 1 for linear integration */
+  int nbptsoverlap;          /* Number of points to use in loglinear overlaps (default 32768) */
 } LISAGlobalParams;
 
-typedef struct tagLISASignal
+typedef struct tagLISASignalCAmpPhase
 {
   struct tagListmodesCAmpPhaseFrequencySeries* TDIASignal;   /* Signal in the 2nd generation TDI A, in the form of a list of the contribution of each mode */
   struct tagListmodesCAmpPhaseFrequencySeries* TDIESignal;   /* Signal in the 2nd generation TDI E, in the form of a list of the contribution of each mode */
@@ -50,7 +51,25 @@ typedef struct tagLISASignal
   double TDIAhh;                                             /* Inner product (h|h) for TDI A */
   double TDIEhh;                                             /* Inner product (h|h) for TDI E */
   double TDIThh;                                             /* Inner product (h|h) for TDI T */
-} LISASignal;
+} LISASignalCAmpPhase;
+
+typedef struct tagLISASignalReIm /* We don't store the SNRs here, as we will use -1/2(h-s|h-s) for the likelihood */
+{
+  struct tagReImFrequencySeries* TDIASignal;   /* Signal in the 2nd generation TDI A, in the form of a Re/Im frequency series where the modes have been summed */
+  struct tagReImFrequencySeries* TDIESignal;   /* Signal in the 2nd generation TDI E, in the form of a Re/Im frequency series where the modes have been summed */
+  struct tagReImFrequencySeries* TDITSignal;   /* Signal in the 2nd generation TDI T, in the form of a Re/Im frequency series where the modes have been summed */
+} LISASignalReIm;
+
+typedef struct tagLISAInjectionReIm /* Storing the vectors of frequencies and noise values - We don't store the SNRs here, as we will use -1/2(h-s|h-s) for the likelihood */
+{
+  struct tagReImFrequencySeries* TDIASignal;   /* Signal in the 2nd generation TDI A, in the form of a Re/Im frequency series where the modes have been summed */
+  struct tagReImFrequencySeries* TDIESignal;   /* Signal in the 2nd generation TDI E, in the form of a Re/Im frequency series where the modes have been summed */
+  struct tagReImFrequencySeries* TDITSignal;   /* Signal in the 2nd generation TDI T, in the form of a Re/Im frequency series where the modes have been summed */
+  gsl_vector* freq;                            /* Vector of frequencies of the injection (assumed to be the same for A,E,T) */
+  gsl_vector* noisevaluesA;                    /* Vector of noise values on freq for A */
+  gsl_vector* noisevaluesE;                    /* Vector of noise values on freq for E */
+  gsl_vector* noisevaluesT;                    /* Vector of noise values on freq for T */
+} LISAInjectionReIm;
 
 typedef struct tagLISAPrior {
 	double deltaT;             /* width of time prior centered on injected value (s) (default 1e5) */
@@ -93,13 +112,29 @@ void parse_args_LISA(ssize_t argc, char **argv,
   LISAPrior* prior, 
   LISARunParams* run);
 
-void LISASignal_Cleanup(LISASignal* signal);
-void LISASignal_Init(LISASignal** signal);
+/* Initialization and clean-up for LISASignal structures */
+void LISASignalCAmpPhase_Cleanup(LISASignalCAmpPhase* signal);
+void LISASignalCAmpPhase_Init(LISASignalCAmpPhase** signal);
+void LISASignalReIm_Cleanup(LISASignalReIm* signal);
+void LISASignalReIm_Init(LISASignalReIm** signal);
+void LISAInjectionReIm_Cleanup(LISAInjectionReIm* signal);
+void LISAInjectionReIm_Init(LISAInjectionReIm** signal);
 
-/* Function generating a LISA signal from LISA parameters */
-int LISAGenerateSignal(
-  struct tagLISAParams* params,   /* Input: set of LISA parameters of the signal */
-  struct tagLISASignal* signal);  /* Output: structure for the generated signal */
+/* Function generating a LISA signal as a list of modes in CAmp/Phase form, from LISA parameters */
+int LISAGenerateSignalCAmpPhase(
+  struct tagLISAParams* params,            /* Input: set of LISA parameters of the signal */
+  struct tagLISASignalCAmpPhase* signal);  /* Output: structure for the generated signal */
+/* Function generating a LISA signal as a frequency series in Re/Im form where the modes have been summed, from LISA parameters - takes as argument the frequencies on which to evaluate */
+int LISAGenerateSignalReIm(
+  struct tagLISAParams* params,       /* Input: set of LISA parameters of the template */
+  gsl_vector* freq,                   /* Input: frequencies on which evaluating the waveform (from the injection) */
+  struct tagLISASignalReIm* signal);  /* Output: structure for the generated signal */
+/* Function generating a LISA injection as a frequency series in Re/Im form where the modes have been summed, from LISA parameters - frequencies on which to evaluate are to be determined internally */
+int LISAGenerateInjectionReIm(
+  struct tagLISAParams* injectedparams,       /* Input: set of LISA parameters of the injection */
+  double fLow,                                /* Input: starting frequency */
+  int nbpts,                                  /* Input: number of frequency samples */
+  struct tagLISAInjectionReIm* signal);          /* Output: structure for the generated signal */
 
 /* checks prior boundaires */
 int PriorBoundaryCheck(LISAPrior *prior, double *Cube);
@@ -114,8 +149,9 @@ double CubeToGaussianPrior(double r, double mean, double sigma);
 double CubeToSinPrior(double r, double x1, double x2);
 double CubeToCosPrior(double r, double x1, double x2);
 
-/* log-Likelihood function */
-double CalculateLogL(LISAParams *params, LISASignal* injection);
+/* log-Likelihood functions */
+double CalculateLogLCAmpPhase(LISAParams *params, LISASignalCAmpPhase* injection);
+double CalculateLogLReIm(LISAParams *params, LISAInjectionReIm* injection);
 
 /************ Global Parameters ************/
 
@@ -123,5 +159,8 @@ extern LISAParams* injectedparams;
 extern LISAGlobalParams* globalparams;
 extern LISAPrior* priorParams;
 double logZdata;
+extern gsl_vector* noisevaluesA;
+extern gsl_vector* noisevaluesE;
+extern gsl_vector* noisevaluesT;
 
 #endif

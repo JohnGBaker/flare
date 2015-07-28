@@ -135,9 +135,28 @@ void getLogLike(double *Cube, int *ndim, int *npars, double *lnew, void *context
   templateparams.nbmode = globalparams->nbmodetemp; /* Using the global parameter for the number of modes in templates */
 
   /* Note: context points to a LISAContext structure containing a LISASignal* */
-  LISASignal* injection = ((LISASignal*) context);
+  if(globalparams->tagint==0) {
+    LISASignalCAmpPhase* injection = ((LISASignalCAmpPhase*) context);
 
-  *lnew = CalculateLogL(&templateparams, injection) - logZdata;
+    //TESTING
+    //clock_t tbeg, tend;
+    //tbeg = clock();
+    *lnew = CalculateLogLCAmpPhase(&templateparams, injection) - logZdata;
+    //tend = clock();
+    //printf("time Likelihood: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
+    //
+  }
+  else if(globalparams->tagint==1) {
+    LISASignalReIm* injection = ((LISASignalReIm*) context);
+
+    //TESTING
+    //clock_t tbeg, tend;
+    //tbeg = clock();
+    *lnew = CalculateLogLReIm(&templateparams, injection) - logZdata;
+    //tend = clock();
+    //printf("time Likelihood: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
+    //
+  }
 }
 
 
@@ -223,26 +242,63 @@ int main(int argc, char *argv[])
   injectedparams->nbmode = globalparams->nbmodeinj;
 
   /* Initialize the data structure for the injection */
-  LISASignal* injectedsignal = NULL;
-  LISASignal_Init(&injectedsignal);
+  LISASignalCAmpPhase* injectedsignalCAmpPhase = NULL;
+  LISAInjectionReIm* injectedsignalReIm = NULL;
+  if(globalparams->tagint==0) {
+    LISASignalCAmpPhase_Init(&injectedsignalCAmpPhase);
+  }
+  else if(globalparams->tagint==1) {
+    LISAInjectionReIm_Init(&injectedsignalReIm);
+  }
 
   /* Generate the injection */
-  LISAGenerateSignal(injectedparams, injectedsignal);
+  if(globalparams->tagint==0) {
+    LISAGenerateSignalCAmpPhase(injectedparams, injectedsignalCAmpPhase);
+  }
+  else if(globalparams->tagint==1) {
+    LISAGenerateInjectionReIm(injectedparams, globalparams->fmin, globalparams->nbptsoverlap, injectedsignalReIm);
+  }
+
+  /* Define SNRs */
+  double SNRA, SNRE, SNRT;
+  if(globalparams->tagint==0) {
+    SNRA = injectedsignalCAmpPhase->TDIAhh;
+    SNRE = injectedsignalCAmpPhase->TDIEhh;
+    SNRT = injectedsignalCAmpPhase->TDIThh;
+  }
+  else if(globalparams->tagint==1) {
+    SNRA = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDIASignal, injectedsignalReIm->TDIASignal, injectedsignalReIm->noisevaluesA));
+    SNRE = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDIESignal, injectedsignalReIm->TDIESignal, injectedsignalReIm->noisevaluesE));
+    SNRT = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDITSignal, injectedsignalReIm->TDITSignal, injectedsignalReIm->noisevaluesT));
+  }
+  double SNR = sqrt(SNRA*SNRA + SNRE*SNRE + SNRT*SNRT);
 
   /* Rescale distance to match SNR */
   if (!isnan(priorParams->snr_target)) {
     if (myid == 0) printf("Rescaling the distance to obtain a network SNR of %g\n", priorParams->snr_target);
-    injectedparams->distance *= sqrt(injectedsignal->TDIAhh + injectedsignal->TDIEhh + injectedsignal->TDIThh) / priorParams->snr_target;
+    injectedparams->distance *= SNR / priorParams->snr_target;
     if (myid == 0) printf("New distance = %g Mpc\n", injectedparams->distance);
-    LISAGenerateSignal(injectedparams, injectedsignal);
+    if(globalparams->tagint==0) {
+      LISAGenerateSignalCAmpPhase(injectedparams, injectedsignalCAmpPhase);
+      SNRA = injectedsignalCAmpPhase->TDIAhh;
+      SNRE = injectedsignalCAmpPhase->TDIEhh;
+      SNRT = injectedsignalCAmpPhase->TDIThh;
+    }
+    else if(globalparams->tagint==1) {
+      LISAGenerateInjectionReIm(injectedparams, globalparams->fmin, globalparams->nbptsoverlap, injectedsignalReIm);
+      SNRA = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDIASignal, injectedsignalReIm->TDIASignal, injectedsignalReIm->noisevaluesA));
+      SNRE = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDIESignal, injectedsignalReIm->TDIESignal, injectedsignalReIm->noisevaluesE));
+      SNRT = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDITSignal, injectedsignalReIm->TDITSignal, injectedsignalReIm->noisevaluesT));
+    }
+    SNR = sqrt(SNRA*SNRA + SNRE*SNRE + SNRT*SNRT);
   }
 
   /* Print SNR */
   if (myid == 0) {
-    printf("SNR A:     %g\n", sqrt(injectedsignal->TDIAhh));
-    printf("SNR E:     %g\n", sqrt(injectedsignal->TDIEhh));
-    printf("SNR T:     %g\n", sqrt(injectedsignal->TDIThh));
-    printf("SNR Total: %g\n", sqrt(injectedsignal->TDIAhh + injectedsignal->TDIEhh + injectedsignal->TDIThh));
+    printf("SNR A:     %g\n", SNRA);
+    printf("SNR E:     %g\n", SNRE);
+    printf("SNR T:     %g\n", SNRT);
+    printf("SNR Total: %g\n", SNR);
   }
 
   /* Calculate logL of data */
@@ -252,11 +308,26 @@ int main(int argc, char *argv[])
     printf("logZdata = %lf\n", logZdata);
     injectedparams->distance = dist_store;*/
   logZdata = 0.0;
-  double logZtrue = CalculateLogL(injectedparams, injectedsignal);
+  double logZtrue = 0.;
+  if(globalparams->tagint==0) {
+    logZtrue = CalculateLogLCAmpPhase(injectedparams, injectedsignalCAmpPhase);
+  }
+  else if(globalparams->tagint==1) {
+    logZtrue = CalculateLogLReIm(injectedparams, injectedsignalReIm);
+  }
   if (myid == 0) printf("logZtrue = %lf\n", logZtrue-logZdata);
 
   /* Set the context pointer */
-  void *context = injectedsignal;
+  void *context = NULL;
+  if(globalparams->tagint==0) {
+    context = injectedsignalCAmpPhase;
+  }
+  else if(globalparams->tagint==1) {
+    context = injectedsignalReIm;
+  }
+
+  //TESTING
+  //exit(0);
 
   int ndims = 9;
 
@@ -293,7 +364,13 @@ int main(int argc, char *argv[])
     templateparams.polarization = priorParams->fix_pol;
     templateparams.nbmode = globalparams->nbmodetemp; /* Using the global parameter for the number of modes in templates */
 
-    double logL = CalculateLogL(&templateparams, injectedsignal);
+    double logL = 0.;
+    if(globalparams->tagint==0) {
+      logL = CalculateLogLCAmpPhase(&templateparams, injectedsignalCAmpPhase);
+    }
+    else if(globalparams->tagint==1) {
+      logL = CalculateLogLReIm(&templateparams, injectedsignalReIm);
+    }
     printf("logL = %lf\n", logL);
 
     free(injectedparams);
@@ -309,12 +386,12 @@ int main(int argc, char *argv[])
 	/********** End of addendum ****************/
 
 	/********** Test ****************/
-	/*double l;
-	getLogLike(injectedparams, &l, context);
-	printf("LogLikelihood: %g\n", l);
-	free(injectedparams);
-	LISASignal_Cleanup(injectedsignal);
-	exit(0);*/
+	/* double l; */
+	/* l = CalculateLogLReIm(injectedparams, injectedsignalReIm); */
+	/* printf("LogLikelihood: %g\n", l); */
+	/* free(injectedparams); */
+	/* LISAInjectionReIm_Cleanup(injectedsignalReIm); */
+	/* exit(0); */
 	/********** End of test ****************/
 
 	int i;

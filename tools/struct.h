@@ -67,7 +67,7 @@ typedef struct tagListmodesCAmpPhaseFrequencySeries
 
 /**************************************************************/
 /* Function computing the max between two int */
-inline int max ( int a, int b ) { return a > b ? a : b; }
+int max (int a, int b);
 
 /**************************************************************/
 /************** GSL error handling and I/O ********************/

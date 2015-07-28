@@ -34,6 +34,10 @@
 #include "struct.h"
 
 
+/**************************************************************/
+/* Function computing the max between two int */
+int max (int a, int b) { return a > b ? a : b; }
+
 /************** GSL error handling and I/O ********************/
 
 /* GSL error handler */
@@ -302,8 +306,12 @@ void ReImFrequencySeries_AddCAmpPhaseFrequencySeries(
   int jStop = sizeout - 1;
   double minfmode = fmax(gsl_vector_get(freqin, 0), fstartobsmode); /* Takes into account fstartobsmode here */
   double maxfmode = gsl_vector_get(freqin, sizein - 1);
-  while(gsl_vector_get(freqout, jStart) < minfmode) jStart++;
-  while(gsl_vector_get(freqout, jStop) > maxfmode) jStop--;
+  while(gsl_vector_get(freqout, jStart) < minfmode && jStart < sizeout-1) jStart++;
+  while(gsl_vector_get(freqout, jStop) > maxfmode && jStop > 0) jStop--;
+  if(jStop <= jStart) {
+    printf("Error: empty range of frequencies in ReImFrequencySeries_AddCAmpPhaseFrequencySeries.\n");
+    exit(1);
+  }
 
   /* Main loop - evaluating the interpolating splines and adding to the output data */
   double f, phi;

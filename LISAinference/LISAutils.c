@@ -9,27 +9,76 @@ LISAPrior* priorParams = NULL;
 
 /************ Functions to initalize and clean up structure for the signals ************/
 
-void LISASignal_Cleanup(LISASignal* signal) {
+void LISASignalCAmpPhase_Cleanup(LISASignalCAmpPhase* signal) {
   if(signal->TDIASignal) ListmodesCAmpPhaseFrequencySeries_Destroy(signal->TDIASignal);
   if(signal->TDIESignal) ListmodesCAmpPhaseFrequencySeries_Destroy(signal->TDIESignal);
   if(signal->TDITSignal) ListmodesCAmpPhaseFrequencySeries_Destroy(signal->TDITSignal);
   free(signal);
 }
 
-void LISASignal_Init(LISASignal** signal) {
+void LISASignalCAmpPhase_Init(LISASignalCAmpPhase** signal) {
   if(!signal) exit(1);
   /* Create storage for structures */
-  if(!*signal) *signal = malloc(sizeof(LISASignal));
+  if(!*signal) *signal = malloc(sizeof(LISASignalCAmpPhase));
   else
   {
-    LISASignal_Cleanup(*signal);
+    LISASignalCAmpPhase_Cleanup(*signal);
   }
   (*signal)->TDIASignal = NULL;
   (*signal)->TDIESignal = NULL;
   (*signal)->TDITSignal = NULL;
 }
 
-/************ Functions for LISA parameters, injection, likelihood, prior ************/
+void LISASignalReIm_Cleanup(LISASignalReIm* signal) {
+  if(signal->TDIASignal) ReImFrequencySeries_Cleanup(signal->TDIASignal);
+  if(signal->TDIESignal) ReImFrequencySeries_Cleanup(signal->TDIESignal);
+  if(signal->TDITSignal) ReImFrequencySeries_Cleanup(signal->TDITSignal);
+  free(signal);
+}
+
+void LISASignalReIm_Init(LISASignalReIm** signal) {
+  if(!signal) exit(1);
+  /* Create storage for structures */
+  if(!*signal) *signal = malloc(sizeof(LISASignalReIm));
+  else
+  {
+    LISASignalReIm_Cleanup(*signal);
+  }
+  (*signal)->TDIASignal = NULL;
+  (*signal)->TDIESignal = NULL;
+  (*signal)->TDITSignal = NULL;
+}
+
+void LISAInjectionReIm_Cleanup(LISAInjectionReIm* signal) {
+  if(signal->TDIASignal) ReImFrequencySeries_Cleanup(signal->TDIASignal);
+  if(signal->TDIESignal) ReImFrequencySeries_Cleanup(signal->TDIESignal);
+  if(signal->TDITSignal) ReImFrequencySeries_Cleanup(signal->TDITSignal);
+  if(signal->freq) gsl_vector_free(signal->freq);
+  if(signal->noisevaluesA) gsl_vector_free(signal->noisevaluesA);
+  if(signal->noisevaluesE) gsl_vector_free(signal->noisevaluesE);
+  if(signal->noisevaluesT) gsl_vector_free(signal->noisevaluesT);
+  free(signal);
+}
+
+void LISAInjectionReIm_Init(LISAInjectionReIm** signal) {
+  if(!signal) exit(1);
+  /* Create storage for structures */
+  if(!*signal) *signal = malloc(sizeof(LISAInjectionReIm));
+  else
+  {
+    LISAInjectionReIm_Cleanup(*signal);
+  }
+  (*signal)->TDIASignal = NULL;
+  (*signal)->TDIESignal = NULL;
+  (*signal)->TDITSignal = NULL;
+  (*signal)->freq = NULL;
+  (*signal)->noisevaluesA = NULL;
+  (*signal)->noisevaluesE = NULL;
+  (*signal)->noisevaluesT = NULL;
+}
+
+
+/************ Parsing arguments function ************/
 
 /* Parse command line to initialize LISAParams, LISAPrior, and LISARunParams objects */
 void parse_args_LISA(ssize_t argc, char **argv, 
@@ -70,6 +119,7 @@ Arguments are as follows:\n\
  --nbmodeinj           Number of modes of radiation to use for the injection (1-5, default=5)\n\
  --nbmodetemp          Number of modes of radiation to use for the templates (1-5, default=5)\n\
  --tagint              Tag choosing the integrator: 0 for wip (default), 1 for linear integration\n\
+ --nbptsoverlap        Number of points to use for linear integration (default 32768)\n\
 \n\
 --------------------------------------------------\n\
 ----- Prior Boundary Settings --------------------\n\
@@ -129,6 +179,7 @@ Arguments are as follows:\n\
     globalparams->nbmodeinj = 5;
     globalparams->nbmodetemp = 5;
     globalparams->tagint = 0;
+    globalparams->nbptsoverlap = 32768;
 
     /* set default values for the prior limits */
     prior->deltaT = 1.e5;
@@ -194,6 +245,8 @@ Arguments are as follows:\n\
             globalparams->nbmodetemp = atof(argv[++i]);
         } else if (strcmp(argv[i], "--tagint") == 0) {
             globalparams->tagint = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--nbptsoverlap") == 0) {
+            globalparams->nbptsoverlap = atof(argv[++i]);
         } else if (strcmp(argv[i], "--deltaT") == 0) {
             prior->deltaT = atof(argv[++i]);
         } else if (strcmp(argv[i], "--comp-min") == 0) {
@@ -256,10 +309,12 @@ Arguments are as follows:\n\
     exit(1);
 }
 
-/* Function generating a LISA signal from LISA parameters */
-int LISAGenerateSignal(
-  struct tagLISAParams* params,   /* Input: set of LISA parameters of the signal */
-  struct tagLISASignal* signal)   /* Output: structure for the generated signal */
+/***************************** Functions to generate signals and compute likelihoods ******************************/
+
+/* Function generating a LISA signal as a list of modes in CAmp/Phase form, from LISA parameters */
+int LISAGenerateSignalCAmpPhase(
+  struct tagLISAParams* params,            /* Input: set of LISA parameters of the signal */
+  struct tagLISASignalCAmpPhase* signal)   /* Output: structure for the generated signal */
 {
   int ret;
   ListmodesCAmpPhaseFrequencySeries* listROM = NULL;
@@ -282,16 +337,27 @@ int LISAGenerateSignal(
 
   /* Process the waveform through the LISA response */
   //WARNING: tRef is ignored for now, i.e. set to 0
+  //TESTING
+  //clock_t tbeg, tend;
+  //tbeg = clock();
   LISASimFDResponseTDIAET(&listROM, &listTDIA, &listTDIE, &listTDIT, params->tRef, params->lambda, params->beta, params->inclination, params->polarization);
+  //tend = clock();
+  //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
+  //
 
   /* Precompute the inner products (h|h) - takes into account the length of the observation with deltatobs */
   double Mfstartobs = NewtonianfoftGeom(params->m1 / params->m2, (globalparams->deltatobs * YRSID_SI) / ((params->m1 + params->m2) * MTSUN_SI));
   double fstartobs = Mfstartobs / ((params->m1 + params->m2) * MTSUN_SI);
   double fLow = fmax(__LISASimFD_Noise_fLow, globalparams->fmin);
   double fHigh = __LISASimFD_Noise_fHigh;
+  //TESTING
+  //tbeg = clock();
   double TDIAhh = FDListmodesOverlap(listTDIA, listTDIA, NoiseSnA, fLow, fHigh, fstartobs, fstartobs, globalparams->tagint);
   double TDIEhh = FDListmodesOverlap(listTDIE, listTDIE, NoiseSnE, fLow, fHigh, fstartobs, fstartobs, globalparams->tagint);
   double TDIThh = FDListmodesOverlap(listTDIT, listTDIT, NoiseSnT, fLow, fHigh, fstartobs, fstartobs, globalparams->tagint);
+  //tend = clock();
+  //printf("time SNRs: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
+  //
 
   /* Output and clean up */
   signal->TDIASignal = listTDIA;
@@ -304,6 +370,250 @@ int LISAGenerateSignal(
   ListmodesCAmpPhaseFrequencySeries_Destroy(listROM);
   return SUCCESS;
 }
+
+/* Function generating a LISA signal as a frequency series in Re/Im form where the modes have been summed, from LISA parameters - takes as argument the frequencies on which to evaluate */
+int LISAGenerateSignalReIm(
+  struct tagLISAParams* params,       /* Input: set of LISA parameters of the template */
+  gsl_vector* freq,                   /* Input: frequencies on which evaluating the waveform (from the injection) */
+  struct tagLISASignalReIm* signal)   /* Output: structure for the generated signal */
+{
+  int ret;
+  ListmodesCAmpPhaseFrequencySeries* listROM = NULL;
+  ListmodesCAmpPhaseFrequencySeries* listTDIA = NULL;
+  ListmodesCAmpPhaseFrequencySeries* listTDIE = NULL;
+  ListmodesCAmpPhaseFrequencySeries* listTDIT = NULL;
+
+  /* Checking that the global injectedparams has been set up */
+  if (!injectedparams) {
+    printf("Error: when calling LISAGenerateSignal, injectedparams points to NULL.\n");
+    exit(1);
+  }
+  /* Should add more error checking ? */
+  /* Generate the waveform with the ROM */
+  /* Note: SimEOBNRv2HMROM accepts masses and distances in SI units, whereas LISA params is in solar masses and Mpc */
+  ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+
+  /* If the ROM waveform generation failed (e.g. parameters were out of bounds) return FAILURE */
+  if(ret==FAILURE) return FAILURE;
+
+  /* Process the waveform through the LISA response */
+  //WARNING: tRef is ignored for now, i.e. set to 0
+  //TESTING
+  //clock_t tbeg, tend;
+  //tbeg = clock();
+  LISASimFDResponseTDIAET(&listROM, &listTDIA, &listTDIE, &listTDIT, params->tRef, params->lambda, params->beta, params->inclination, params->polarization);
+  //tend = clock();
+  //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
+  //
+
+  /* Initialize structures for the ReIm frequency series */
+  int nbpts = (int) freq->size;
+  ReImFrequencySeries* TDIA = NULL;
+  ReImFrequencySeries* TDIE = NULL;
+  ReImFrequencySeries* TDIT = NULL;
+  ReImFrequencySeries_Init(&TDIA, nbpts);
+  ReImFrequencySeries_Init(&TDIE, nbpts);
+  ReImFrequencySeries_Init(&TDIT, nbpts);
+
+  /* Compute the Re/Im frequency series - takes into account the length of the observation with deltatobs */
+  double Mfstartobs = NewtonianfoftGeom(params->m1 / params->m2, (globalparams->deltatobs * YRSID_SI) / ((params->m1 + params->m2) * MTSUN_SI));
+  double fstartobs = Mfstartobs / ((params->m1 + params->m2) * MTSUN_SI);
+  //TESTING
+  //tbeg = clock();
+  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(TDIA, listTDIA, freq, fstartobs);
+  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(TDIE, listTDIE, freq, fstartobs);
+  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(TDIT, listTDIT, freq, fstartobs);
+  //tend = clock();
+  //printf("time ReIm: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
+  //
+
+  /* Output and clean up */
+  signal->TDIASignal = TDIA;
+  signal->TDIESignal = TDIE;
+  signal->TDITSignal = TDIT;
+
+  ListmodesCAmpPhaseFrequencySeries_Destroy(listROM);
+  ListmodesCAmpPhaseFrequencySeries_Destroy(listTDIA);
+  ListmodesCAmpPhaseFrequencySeries_Destroy(listTDIE);
+  ListmodesCAmpPhaseFrequencySeries_Destroy(listTDIT);
+  return SUCCESS;
+}
+
+/* Function generating a LISA injection signal as a frequency series in Re/Im form where the modes have been summed, from LISA parameters - determines the frequencies */
+int LISAGenerateInjectionReIm(
+  struct tagLISAParams* injectedparams,      /* Input: set of LISA parameters of the template */
+  double fLow,                               /* Input: additional lower frequency limit (argument fmin) */
+  int nbpts,                                 /* Input: number of frequency samples */
+  struct tagLISAInjectionReIm* injection)    /* Output: structure for the generated signal */
+{
+  int ret;
+  ListmodesCAmpPhaseFrequencySeries* listROM = NULL;
+  ListmodesCAmpPhaseFrequencySeries* listTDIA = NULL;
+  ListmodesCAmpPhaseFrequencySeries* listTDIE = NULL;
+  ListmodesCAmpPhaseFrequencySeries* listTDIT = NULL;
+
+  /* Should add more error checking ? */
+  /* Generate the waveform with the ROM */
+  /* Note: SimEOBNRv2HMROM accepts masses and distances in SI units, whereas LISA params is in solar masses and Mpc */
+  ret = SimEOBNRv2HMROM(&listROM, injectedparams->nbmode, 0., injectedparams->phiRef, globalparams->fRef, (injectedparams->m1)*MSUN_SI, (injectedparams->m2)*MSUN_SI, (injectedparams->distance)*1e6*PC_SI);
+
+  /* If the ROM waveform generation failed (e.g. parameters were out of bounds) return FAILURE */
+  if(ret==FAILURE) return FAILURE;
+
+  /* Process the waveform through the LISA response */
+  //WARNING: tRef is ignored for now, i.e. set to 0
+  //TESTING
+  //clock_t tbeg, tend;
+  //tbeg = clock();
+  LISASimFDResponseTDIAET(&listROM, &listTDIA, &listTDIE, &listTDIT, injectedparams->tRef, injectedparams->lambda, injectedparams->beta, injectedparams->inclination, injectedparams->polarization);
+  //tend = clock();
+  //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
+  //
+
+  /* Determine the frequency vector - uses the fact that the detector limiting frequencies are the same in all channels - takes into account the length of the observation with deltatobs */
+  gsl_vector* freq = gsl_vector_alloc(nbpts);
+  double Mfstartobs = NewtonianfoftGeom(injectedparams->m1 / injectedparams->m2, (globalparams->deltatobs * YRSID_SI) / ((injectedparams->m1 + injectedparams->m2) * MTSUN_SI));
+  double fstartobs = Mfstartobs / ((injectedparams->m1 + injectedparams->m2) * MTSUN_SI);
+  double fLowCut = fmax(fmax(__LISASimFD_Noise_fLow, fLow), fstartobs);
+  double fHigh = __LISASimFD_Noise_fHigh;
+  ListmodesSetLogFrequencies(listROM, fLowCut, fHigh, nbpts, freq);
+
+  /* Initialize structures for the ReIm frequency series */
+  ReImFrequencySeries* TDIA = NULL;
+  ReImFrequencySeries* TDIE = NULL;
+  ReImFrequencySeries* TDIT = NULL;
+  ReImFrequencySeries_Init(&TDIA, nbpts);
+  ReImFrequencySeries_Init(&TDIE, nbpts);
+  ReImFrequencySeries_Init(&TDIT, nbpts);
+
+  /* Compute the Re/Im frequency series */
+  //TESTING
+  //tbeg = clock();
+  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(TDIA, listTDIA, freq, fstartobs);
+  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(TDIE, listTDIE, freq, fstartobs);
+  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(TDIT, listTDIT, freq, fstartobs);
+  //tend = clock();
+  //printf("time ReIm: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
+  //
+
+  /* Compute the noise values */
+  gsl_vector* noisevaluesA = gsl_vector_alloc(nbpts);
+  gsl_vector* noisevaluesE = gsl_vector_alloc(nbpts);
+  gsl_vector* noisevaluesT = gsl_vector_alloc(nbpts);
+  EvaluateNoise(noisevaluesA, freq, NoiseSnA, __LISASimFD_Noise_fLow, __LISASimFD_Noise_fHigh);
+  EvaluateNoise(noisevaluesE, freq, NoiseSnE, __LISASimFD_Noise_fLow, __LISASimFD_Noise_fHigh);
+  EvaluateNoise(noisevaluesT, freq, NoiseSnT, __LISASimFD_Noise_fLow, __LISASimFD_Noise_fHigh);
+
+  /* Output and clean up */
+  injection->TDIASignal = TDIA;
+  injection->TDIESignal = TDIE;
+  injection->TDITSignal = TDIT;
+  injection->freq = freq;
+  injection->noisevaluesA = noisevaluesA;
+  injection->noisevaluesE = noisevaluesE;
+  injection->noisevaluesT = noisevaluesT;
+
+  ListmodesCAmpPhaseFrequencySeries_Destroy(listROM);
+  ListmodesCAmpPhaseFrequencySeries_Destroy(listTDIA);
+  ListmodesCAmpPhaseFrequencySeries_Destroy(listTDIE);
+  ListmodesCAmpPhaseFrequencySeries_Destroy(listTDIT);
+  return SUCCESS;
+}
+
+/* Log-Likelihood function */
+
+double CalculateLogLCAmpPhase(LISAParams *params, LISASignalCAmpPhase* injection)
+{
+  double logL = -DBL_MAX;
+  int ret;
+
+  /* Generating the signal in the three detectors for the input parameters */
+  LISASignalCAmpPhase* generatedsignal = NULL;
+  LISASignalCAmpPhase_Init(&generatedsignal);
+  //TESTING
+  //clock_t tbeg, tend;
+  //tbeg = clock();
+  ret = LISAGenerateSignalCAmpPhase(params, generatedsignal);
+  //tend = clock();
+  //printf("time GenerateSignal: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
+  //
+
+  /* If LISAGenerateSignal failed (e.g. parameters out of bound), silently return -Infinity logL */
+  if(ret==FAILURE) {
+    logL = -DBL_MAX;
+  }
+  else if(ret==SUCCESS) {
+    /* Computing the likelihood for each TDI channel - fstartobs is the max between the fstartobs of the injected and generated signals */
+    double Mfstartobsinjected = NewtonianfoftGeom(injectedparams->m1 / injectedparams->m2, (globalparams->deltatobs * YRSID_SI) / ((injectedparams->m1 + injectedparams->m2) * MTSUN_SI));
+    double Mfstartobsgenerated = NewtonianfoftGeom(params->m1 / params->m2, (globalparams->deltatobs * YRSID_SI) / ((params->m1 + params->m2) * MTSUN_SI));
+    double fstartobsinjected = Mfstartobsinjected / ((injectedparams->m1 + injectedparams->m2) * MTSUN_SI);
+    double fstartobsgenerated = Mfstartobsgenerated / ((params->m1 + params->m2) * MTSUN_SI);
+    double fLow = fmax(__LISASimFD_Noise_fLow, globalparams->fmin);
+    double fHigh = __LISASimFD_Noise_fHigh;
+    //TESTING
+    //tbeg = clock();
+    double loglikelihoodTDIA = FDLogLikelihood(injection->TDIASignal, generatedsignal->TDIASignal, NoiseSnA, fLow, fHigh, injection->TDIAhh, generatedsignal->TDIAhh, fstartobsinjected, fstartobsgenerated, globalparams->tagint);
+    double loglikelihoodTDIE = FDLogLikelihood(injection->TDIESignal, generatedsignal->TDIESignal, NoiseSnE, fLow, fHigh, injection->TDIEhh, generatedsignal->TDIEhh, fstartobsinjected, fstartobsgenerated, globalparams->tagint);
+    double loglikelihoodTDIT = FDLogLikelihood(injection->TDITSignal, generatedsignal->TDITSignal, NoiseSnT, fLow, fHigh, injection->TDIThh, generatedsignal->TDIThh, fstartobsinjected, fstartobsgenerated, globalparams->tagint);
+    //tend = clock();
+    //printf("time Overlaps: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
+    //
+
+    /* Output: value of the loglikelihood for the combined signals, assuming noise independence */
+    logL = loglikelihoodTDIA + loglikelihoodTDIE + loglikelihoodTDIT;
+  }
+
+  /* Clean up */
+  LISASignalCAmpPhase_Cleanup(generatedsignal);
+
+  return logL;
+}
+
+double CalculateLogLReIm(LISAParams *params, LISAInjectionReIm* injection)
+{
+  double logL = -DBL_MAX;
+  int ret;
+
+  /* Frequency vector - assumes common to A,E,T, i.e. identical fLow, fHigh in all channels */
+  gsl_vector* freq = injection->freq;
+
+  /* Generating the signal in the three detectors for the input parameters */
+  LISASignalReIm* generatedsignal = NULL;
+  LISASignalReIm_Init(&generatedsignal);
+  //TESTING
+  //clock_t tbeg, tend;
+  //tbeg = clock();
+  ret = LISAGenerateSignalReIm(params, freq, generatedsignal);
+  //tend = clock();
+  //printf("time GenerateSignal: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
+  //
+
+  /* If LISAGenerateSignal failed (e.g. parameters out of bound), silently return -Infinity logL */
+  if(ret==FAILURE) {
+    logL = -DBL_MAX;
+  }
+  else if(ret==SUCCESS) {
+    /* Computing the likelihood for each TDI channel - fstartobs has already been taken into account */
+    //TESTING
+    //tbeg = clock();
+    double loglikelihoodTDIA = FDLogLikelihoodReIm(injection->TDIASignal, generatedsignal->TDIASignal, injection->noisevaluesA);
+    double loglikelihoodTDIE = FDLogLikelihoodReIm(injection->TDIESignal, generatedsignal->TDIESignal, injection->noisevaluesE);
+    double loglikelihoodTDIT = FDLogLikelihoodReIm(injection->TDITSignal, generatedsignal->TDITSignal, injection->noisevaluesT);
+    //tend = clock();
+    //printf("time Overlaps: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
+    //
+
+    /* Output: value of the loglikelihood for the combined signals, assuming noise independence */
+    logL = loglikelihoodTDIA + loglikelihoodTDIE + loglikelihoodTDIT;
+  }
+
+  /* Clean up */
+  LISASignalReIm_Cleanup(generatedsignal);
+
+  return logL;
+}
+
+/***************************** Functions handling the prior ******************************/
 
 /* Function to check that returned parameter values fit in prior boundaries */
 int PriorBoundaryCheck(LISAPrior *prior, double *Cube)
@@ -355,42 +665,4 @@ double CubeToSinPrior(double r, double x1, double x2)
 double CubeToCosPrior(double r, double x1, double x2)
 {
     return asin((1.0-r)*sin(x1)+r*sin(x2));
-}
-
-/* Log-Likelihood function */
-
-double CalculateLogL(LISAParams *params, LISASignal* injection)
-{
-  double logL = -DBL_MAX;
-  int ret;
-
-  /* Generating the signal in the three detectors for the input parameters */
-  LISASignal* generatedsignal = NULL;
-  LISASignal_Init(&generatedsignal);
-  ret = LISAGenerateSignal(params, generatedsignal);
-
-  /* If LISAGenerateSignal failed (e.g. parameters out of bound), silently return -Infinity logL */
-  if(ret==FAILURE) {
-    logL = -DBL_MAX;
-  }
-  else if(ret==SUCCESS) {
-    /* Computing the likelihood for each TDI channel - fstartobs is the max between the fstartobs of the injected and generated signals */
-    double Mfstartobsinjected = NewtonianfoftGeom(injectedparams->m1 / injectedparams->m2, (globalparams->deltatobs * YRSID_SI) / ((injectedparams->m1 + injectedparams->m2) * MTSUN_SI));
-    double Mfstartobsgenerated = NewtonianfoftGeom(params->m1 / params->m2, (globalparams->deltatobs * YRSID_SI) / ((params->m1 + params->m2) * MTSUN_SI));
-    double fstartobsinjected = Mfstartobsinjected / ((injectedparams->m1 + injectedparams->m2) * MTSUN_SI);
-    double fstartobsgenerated = Mfstartobsgenerated / ((params->m1 + params->m2) * MTSUN_SI);
-    double fLow = fmax(__LISASimFD_Noise_fLow, globalparams->fmin);
-    double fHigh = __LISASimFD_Noise_fHigh;
-    double loglikelihoodTDIA = FDLogLikelihood(injection->TDIASignal, generatedsignal->TDIASignal, NoiseSnA, fLow, fHigh, injection->TDIAhh, generatedsignal->TDIAhh, fstartobsinjected, fstartobsgenerated, globalparams->tagint);
-    double loglikelihoodTDIE = FDLogLikelihood(injection->TDIESignal, generatedsignal->TDIESignal, NoiseSnE, fLow, fHigh, injection->TDIEhh, generatedsignal->TDIEhh, fstartobsinjected, fstartobsgenerated, globalparams->tagint);
-    double loglikelihoodTDIT = FDLogLikelihood(injection->TDITSignal, generatedsignal->TDITSignal, NoiseSnT, fLow, fHigh, injection->TDIThh, generatedsignal->TDIThh, fstartobsinjected, fstartobsgenerated, globalparams->tagint);
-
-    /* Output: value of the loglikelihood for the combined signals, assuming noise independence */
-    logL = loglikelihoodTDIA + loglikelihoodTDIE + loglikelihoodTDIT;
-  }
-
-  /* Clean up */
-  LISASignal_Cleanup(generatedsignal);
-
-  return logL;
 }
