@@ -29,5 +29,11 @@ phaseSNR.o: phaseSNR.c LLVinference.h ../LLVsim/LLVFDresponse.h ../LLVsim/LLVnoi
 phaseSNR: phaseSNR.o LLVutils.o ../LLVsim/LLVFDresponse.o ../LLVsim/LLVnoise.o ../tools/struct.o ../tools/timeconversion.o ../tools/likelihood.o ../EOBNRv2HMROM/EOBNRv2HMROM.o ../EOBNRv2HMROM/EOBNRv2HMROMstruct.o ../integration/wip.o ../integration/spline.o ../integration/Faddeeva.o
 	$(CC) $(CPPFLAGS) -o phaseSNR phaseSNR.o LLVutils.o ../LLVsim/LLVFDresponse.o ../LLVsim/LLVnoise.o ../tools/struct.o ../tools/timeconversion.o ../tools/likelihood.o ../EOBNRv2HMROM/EOBNRv2HMROM.o ../EOBNRv2HMROM/EOBNRv2HMROMstruct.o ../integration/wip.o ../integration/spline.o ../integration/Faddeeva.o -L$(GSLROOT)/lib -lgsl -lgslcblas -lm $(MPILIBS)	
 
+findDist.o: findDist.c LLVinference.h ../LLVsim/LLVFDresponse.h ../LLVsim/LLVnoise.h ../LLVsim/LLVgeometry.h ../tools/constants.h ../tools/struct.h ../tools/likelihood.h ../EOBNRv2HMROM/EOBNRv2HMROM.h ../EOBNRv2HMROM/EOBNRv2HMROMstruct.h ../integration/wip.h
+	$(CC) -c $(CFLAGS) findDist.c
+
+findDist: findDist.o LLVutils.o ../LLVsim/LLVFDresponse.o ../LLVsim/LLVnoise.o ../tools/struct.o ../tools/timeconversion.o ../tools/likelihood.o ../EOBNRv2HMROM/EOBNRv2HMROM.o ../EOBNRv2HMROM/EOBNRv2HMROMstruct.o ../integration/wip.o ../integration/spline.o ../integration/Faddeeva.o
+	$(CC) $(CPPFLAGS) -o findDist findDist.o LLVutils.o ../LLVsim/LLVFDresponse.o ../LLVsim/LLVnoise.o ../tools/struct.o ../tools/timeconversion.o ../tools/likelihood.o ../EOBNRv2HMROM/EOBNRv2HMROM.o ../EOBNRv2HMROM/EOBNRv2HMROMstruct.o ../integration/wip.o ../integration/spline.o ../integration/Faddeeva.o -L$(GSLROOT)/lib -lgsl -lgslcblas -lm $(MPILIBS)	
+
 clean:
 	-rm *.o
