@@ -590,6 +590,7 @@ double CalculateLogLReIm(LISAParams *params, LISAInjectionReIm* injection)
 
   /* If LISAGenerateSignal failed (e.g. parameters out of bound), silently return -Infinity logL */
   if(ret==FAILURE) {
+    //
     printf("Wave generation failed.\n");
     logL = -DBL_MAX;
   }

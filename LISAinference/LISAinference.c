@@ -157,6 +157,9 @@ void getLogLike(double *Cube, int *ndim, int *npars, double *lnew, void *context
     //printf("time Likelihood: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
     //
   }
+
+  //
+  printf("%12e\n", *lnew);
 }
 
 
