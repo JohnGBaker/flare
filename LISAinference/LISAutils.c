@@ -612,7 +612,7 @@ double CalculateLogLReIm(LISAParams *params, LISAInjectionReIm* injection)
     logL = loglikelihoodTDIA + loglikelihoodTDIE + loglikelihoodTDIT;
 
     //
-    printf("logL in CalculateLogLReIm: %f\n", logL)
+    printf("logL in CalculateLogLReIm: %f\n", logL);
   }
 
   /* Clean up */
