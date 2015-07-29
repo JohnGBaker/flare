@@ -608,6 +608,9 @@ double CalculateLogLReIm(LISAParams *params, LISAInjectionReIm* injection)
     //printf("time Overlaps: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
     //
 
+    //
+    printReImFrequencySeries(generatedsignal->TDIASignal, 1000, 1020);
+
     /* Output: value of the loglikelihood for the combined signals, assuming noise independence */
     logL = loglikelihoodTDIA + loglikelihoodTDIE + loglikelihoodTDIT;
 
