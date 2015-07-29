@@ -3,7 +3,7 @@
 //
 int nblikelihoods = 0;
 
-static void printReImFrequencySeries(struct tagReImFrequencySeries* h, n1, n2)
+static void printReImFrequencySeries(struct tagReImFrequencySeries* h, int n1, int n2)
 {
   for(int i=n1; i<=n2, i++) {
     printf("------------------------------------------");
