@@ -145,7 +145,7 @@ static double TrapezeIntegrate(const gsl_vector* x, const gsl_vector* y)
   }
 
   //
-  if(tagprint) printf("Inside TrapezeIntegrate\n");
+  //if(tagprint) printf("Inside TrapezeIntegrate\n");
 
   int N = ((int) x->size) - 1;
   double result = 0.;
@@ -154,7 +154,7 @@ static double TrapezeIntegrate(const gsl_vector* x, const gsl_vector* y)
     result += (gsl_vector_get(x, i+1) - gsl_vector_get(x, i)) * (gsl_vector_get(y, i) + gsl_vector_get(y, i+1))/2.;
     //
     //if(tagprint) {if(!(i%100)) printf("%d: %16e\n", i, result);};
-    if(tagprint) {if(11400 <=i && i<= 11500) printf("%d: %16e | %16e | %16e\n", i, gsl_vector_get(x, i), gsl_vector_get(y, i), result);};
+    //if(tagprint) {if(11400 <=i && i<= 11500) printf("%d: %16e | %16e | %16e\n", i, gsl_vector_get(x, i), gsl_vector_get(y, i), result);};
   }
   return result;
 }

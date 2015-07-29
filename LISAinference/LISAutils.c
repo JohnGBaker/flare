@@ -610,12 +610,14 @@ double CalculateLogLReIm(LISAParams *params, LISAInjectionReIm* injection)
     //
 
     //
-    //printReImFrequencySeries(generatedsignal->TDIASignal, 1000, 1020);
-    //printReImFrequencySeries(generatedsignal->TDIESignal, 1000, 1020);
-    //printReImFrequencySeries(generatedsignal->TDITSignal, 1000, 1020);
-    //printgslvector(injection->noisevaluesA, 1000, 1020);
-    //printgslvector(injection->noisevaluesE, 1000, 1020);
-    //printgslvector(injection->noisevaluesT, 1000, 1020);
+    if (tagprint){
+    printReImFrequencySeries(generatedsignal->TDIASignal, 11425, 11435);
+    printReImFrequencySeries(generatedsignal->TDIESignal, 11425, 11435);
+    printReImFrequencySeries(generatedsignal->TDITSignal, 11425, 11435);
+    printgslvector(injection->noisevaluesA, 11425, 11435);
+    printgslvector(injection->noisevaluesE, 11425, 11435);
+    printgslvector(injection->noisevaluesT, 11425, 11435);
+    }
 
     /* Output: value of the loglikelihood for the combined signals, assuming noise independence */
     logL = loglikelihoodTDIA + loglikelihoodTDIE + loglikelihoodTDIT;
