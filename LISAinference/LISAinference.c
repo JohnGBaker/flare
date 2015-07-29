@@ -1,5 +1,17 @@
 #include "LISAinference.h"
 
+//
+int nblikelihoods = 0;
+
+static void printReImFrequencySeries(struct tagReImFrequencySeries* h, n1, n2)
+{
+  for(int i=n1; i<=n2, i++) {
+    printf("------------------------------------------");
+    printf("%12e | %12e | %12e\n", gsl_vector_get(h->freq, i), gsl_vector_get(h->h_real, i), gsl_vector_get(h->h_imag, i));
+    printf("------------------------------------------");
+  }
+}
+
 /******************************************** getphysparams routine ****************************************************/
 
 void getphysparams(double *Cube, int *ndim)
@@ -159,7 +171,8 @@ void getLogLike(double *Cube, int *ndim, int *npars, double *lnew, void *context
   }
 
   //
-  printf("%12e\n", *lnew);
+  nblikelihoods++;
+  printf("%d: %12e\n", nblikelihoods, *lnew);
 }
 
 
@@ -328,6 +341,10 @@ int main(int argc, char *argv[])
   else if(globalparams->tagint==1) {
     context = injectedsignalReIm;
   }
+
+  //
+  printReImFrequencySeries(injectedsignalReIm->TDIASignal, 0, 50);
+  exit(0);
 
   //TESTING
   //exit(0);

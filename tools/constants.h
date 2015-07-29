@@ -33,6 +33,9 @@
 #include <gsl/gsl_min.h>
 #include <gsl/gsl_spline.h>
 
+//
+extern int nblikelihoods;
+
 /***************************************************/
 /****** Boolean conventions for loading files ******/
 
