@@ -5,7 +5,7 @@ int nblikelihoods = 0;
 
 static void printReImFrequencySeries(struct tagReImFrequencySeries* h, int n1, int n2)
 {
-  for(int i=n1; i<=n2, i++) {
+  for(int i=n1; i<=n2; i++) {
     printf("------------------------------------------");
     printf("%12e | %12e | %12e\n", gsl_vector_get(h->freq, i), gsl_vector_get(h->h_real, i), gsl_vector_get(h->h_imag, i));
     printf("------------------------------------------");
