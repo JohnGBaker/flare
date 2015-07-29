@@ -325,7 +325,7 @@ void ReImFrequencySeries_AddCAmpPhaseFrequencySeries(
   double maxfmode = gsl_vector_get(freqin, sizein - 1);
   while(gsl_vector_get(freqout, jStart) < minfmode && jStart < sizeout-1) jStart++;
   while(gsl_vector_get(freqout, jStop) > maxfmode && jStop > 0) jStop--;
-  if(jStop <= jStart) {
+  if(jStop < jStart) {
     printf("Error: empty range of frequencies in ReImFrequencySeries_AddCAmpPhaseFrequencySeries.\n");
     exit(1);
   }
@@ -369,6 +369,8 @@ void ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(
   }
 
   /* Initialize and copy frequencies */
+  gsl_vector_set_zero(freqseriesReIm->h_real);
+  gsl_vector_set_zero(freqseriesReIm->h_imag);
   gsl_vector_memcpy(freqseriesReIm->freq, freq);
 
   /* Main loop: go through the list of modes, interpolate and add them to the output */
