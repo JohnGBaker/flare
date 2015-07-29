@@ -1,9 +1,5 @@
 #include "LISAinference.h"
 
-//
-int nblikelihoods = 0;
-int tagprint = 0;
-
 /******************************************** getphysparams routine ****************************************************/
 
 void getphysparams(double *Cube, int *ndim)
@@ -238,6 +234,10 @@ int main(int argc, char *argv[])
 #endif
 
   /*********** Addendum *************/
+
+	//
+	int nblikelihoods = 0;
+	int tagprint = 0;
 
   /* Initialize structs for holding various options */
   LISARunParams runParams;
