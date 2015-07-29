@@ -2,6 +2,7 @@
 
 //
 int nblikelihoods = 0;
+int tagprint = 0;
 
 /******************************************** getphysparams routine ****************************************************/
 
@@ -339,7 +340,7 @@ int main(int argc, char *argv[])
   //
   //printReImFrequencySeries(injectedsignalReIm->TDIASignal, 0, 50);
   //exit(0);
-
+  tagprint = 1;
   //TESTING
   //exit(0);
 

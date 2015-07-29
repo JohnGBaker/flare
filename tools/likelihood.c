@@ -142,7 +142,7 @@ static double TrapezeIntegrate(const gsl_vector* x, const gsl_vector* y)
   }
 
   //
-  printf("Inside TrapezeIntegrate\n");
+  if(tagprint) printf("Inside TrapezeIntegrate\n");
 
   int N = ((int) x->size) - 1;
   double result = 0.;
@@ -150,7 +150,7 @@ static double TrapezeIntegrate(const gsl_vector* x, const gsl_vector* y)
     //if(1000<=i && i<=1020) printf("%g\n", (gsl_vector_get(x, i+1) - gsl_vector_get(x, i)) * (gsl_vector_get(y, i) + gsl_vector_get(y, i+1))/2.);
     result += (gsl_vector_get(x, i+1) - gsl_vector_get(x, i)) * (gsl_vector_get(y, i) + gsl_vector_get(y, i+1))/2.;
     //
-    if(!(i%100)) printf("%d: %16e\n", i, result);
+    if(tagprint) {if(!(i%100)) printf("%d: %16e\n", i, result)};
   }
   return result;
 }
@@ -386,13 +386,13 @@ double FDOverlapReImvsReIm(
   }
 
   //
-  printgslvector(valuesoverlap, 1000, 1020);
+  //printgslvector(valuesoverlap, 1000, 1020);
   
   /* Final trapeze integration */
   double overlap = TrapezeIntegrate(freqoverlap, valuesoverlap);
 
   //
-  printf("Overlap: %g", overlap);
+  printf("Overlap: %g\n", overlap);
 
   /* Clean up */
   gsl_vector_free(valuesoverlap);

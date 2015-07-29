@@ -35,6 +35,7 @@
 
 //
 extern int nblikelihoods;
+extern int tagprint;
 
 /***************************************************/
 /****** Boolean conventions for loading files ******/
