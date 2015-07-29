@@ -519,9 +519,16 @@ double FDLogLikelihoodReIm(
   gsl_vector_sub(diff->h_real, s->h_real);
   gsl_vector_sub(diff->h_imag, s->h_imag);
 
+  //
+  printgslvector(diff->h_real, 1000, 1020);
+  printgslvector(diff->h_imag, 1000, 1020);
+
   /* Likelihood lnL = -1/2(h-s|h-s) */
   double lnL;
   lnL = -1./2 * FDOverlapReImvsReIm(diff, diff, noisevalues);
+
+  //
+  printf("FDLogLikelihoodReIm lnL: %g\n", lnL);
 
   /* Clean up */
   ReImFrequencySeries_Cleanup(diff);

@@ -7,24 +7,6 @@ LISAGlobalParams* globalparams = NULL;
 LISAParams* templateparams = NULL;
 LISAPrior* priorParams = NULL;
 
-//
-void printReImFrequencySeries(struct tagReImFrequencySeries* h, int n1, int n2)
-{
-  printf("------------------------------------------\n");
-  for(int i=n1; i<=n2; i++) {
-    printf("%12e | %12e | %12e\n", gsl_vector_get(h->freq, i), gsl_vector_get(h->h_real, i), gsl_vector_get(h->h_imag, i));
-  }
-  printf("------------------------------------------\n");
-}
-void printgslvector(gsl_vector* v, int n1, int n2)
-{
-  printf("------------------------------------------\n");
-  for(int i=n1; i<=n2; i++) {
-    printf("%12e \n", gsl_vector_get(v, i));
-  }
-  printf("------------------------------------------\n");
-}
-
 
 /************ Functions to initalize and clean up structure for the signals ************/
 
@@ -628,12 +610,12 @@ double CalculateLogLReIm(LISAParams *params, LISAInjectionReIm* injection)
     //
 
     //
-    printReImFrequencySeries(generatedsignal->TDIASignal, 1000, 1020);
-    printReImFrequencySeries(generatedsignal->TDIESignal, 1000, 1020);
-    printReImFrequencySeries(generatedsignal->TDITSignal, 1000, 1020);
-    printgslvector(injection->noisevaluesA, 1000, 1020);
-    printgslvector(injection->noisevaluesE, 1000, 1020);
-    printgslvector(injection->noisevaluesT, 1000, 1020);
+    //printReImFrequencySeries(generatedsignal->TDIASignal, 1000, 1020);
+    //printReImFrequencySeries(generatedsignal->TDIESignal, 1000, 1020);
+    //printReImFrequencySeries(generatedsignal->TDITSignal, 1000, 1020);
+    //printgslvector(injection->noisevaluesA, 1000, 1020);
+    //printgslvector(injection->noisevaluesE, 1000, 1020);
+    //printgslvector(injection->noisevaluesT, 1000, 1020);
 
     /* Output: value of the loglikelihood for the combined signals, assuming noise independence */
     logL = loglikelihoodTDIA + loglikelihoodTDIE + loglikelihoodTDIT;

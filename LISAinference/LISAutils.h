@@ -153,9 +153,6 @@ double CubeToCosPrior(double r, double x1, double x2);
 double CalculateLogLCAmpPhase(LISAParams *params, LISASignalCAmpPhase* injection);
 double CalculateLogLReIm(LISAParams *params, LISAInjectionReIm* injection);
 
-//
-void printReImFrequencySeries(struct tagReImFrequencySeries* h, int n1, int n2);
-void printgslvector(gsl_vector* v, int n1, int n2);
 
 /************ Global Parameters ************/
 

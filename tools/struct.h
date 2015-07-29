@@ -129,6 +129,10 @@ void ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(
 /* Additional function reproducing XLALSpinWeightedSphericalHarmonic */
 double complex SpinWeightedSphericalHarmonic(double theta, double phi, int s, int l, int m); /* Currently only supports s=-2, l=2,3,4,5 modes */
 
+//
+void printReImFrequencySeries(struct tagReImFrequencySeries* h, int n1, int n2);
+void printgslvector(gsl_vector* v, int n1, int n2);
+
 #if 0
 { /* so that editors will match succeeding brace */
 #elif defined(__cplusplus)
