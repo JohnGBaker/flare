@@ -5,11 +5,11 @@ int nblikelihoods = 0;
 
 static void printReImFrequencySeries(struct tagReImFrequencySeries* h, int n1, int n2)
 {
+  printf("------------------------------------------\n");
   for(int i=n1; i<=n2; i++) {
-    printf("------------------------------------------");
     printf("%12e | %12e | %12e\n", gsl_vector_get(h->freq, i), gsl_vector_get(h->h_real, i), gsl_vector_get(h->h_imag, i));
-    printf("------------------------------------------");
   }
+  printf("------------------------------------------\n");
 }
 
 /******************************************** getphysparams routine ****************************************************/
@@ -173,6 +173,7 @@ void getLogLike(double *Cube, int *ndim, int *npars, double *lnew, void *context
   //
   nblikelihoods++;
   printf("%d: %12e\n", nblikelihoods, *lnew);
+  if(nblikelihoods==2000) exit(0);
 }
 
 
@@ -343,8 +344,8 @@ int main(int argc, char *argv[])
   }
 
   //
-  printReImFrequencySeries(injectedsignalReIm->TDIASignal, 0, 50);
-  exit(0);
+  //printReImFrequencySeries(injectedsignalReIm->TDIASignal, 0, 50);
+  //exit(0);
 
   //TESTING
   //exit(0);
