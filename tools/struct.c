@@ -352,6 +352,8 @@ void ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(
   }
 
   /* Initialize and copy frequencies */
+  gsl_vector_set_zero(freqseriesReIm->h_real);
+  gsl_vector_set_zero(freqseriesReIm->h_imag);
   gsl_vector_memcpy(freqseriesReIm->freq, freq);
 
   /* Main loop: go through the list of modes, interpolate and add them to the output */
