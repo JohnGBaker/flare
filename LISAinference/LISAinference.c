@@ -130,6 +130,8 @@ void getLogLike(double *Cube, int *ndim, int *npars, double *lnew, void *context
   /* Convert Cube to physical parameters and check prior boundary */
   getallparams(Cube,ndim);
   if (PriorBoundaryCheck(priorParams, Cube)) {
+    //
+    printf("getLogLike outside of prior boundary.\n");
     *lnew = -DBL_MAX;
     return;
   }
