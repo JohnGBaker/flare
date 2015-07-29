@@ -140,9 +140,14 @@ static double TrapezeIntegrate(const gsl_vector* x, const gsl_vector* y)
     printf("Error: trying to apply TrapezeIntegrate on vectors of different lengths.\n");
     exit(1);
   }
+
+  //
+  printf("Inside TrapezeIntegrate\n");
+
   int N = ((int) x->size) - 1;
   double result = 0.;
-  for(int i=0; i<N; i++){
+  for(int i=0; i<N; i++) {
+    if(1000<=i && i<=1020) printf("%g\n", (gsl_vector_get(x, i+1) - gsl_vector_get(x, i)) * (gsl_vector_get(y, i) + gsl_vector_get(y, i+1))/2.);
     result += (gsl_vector_get(x, i+1) - gsl_vector_get(x, i)) * (gsl_vector_get(y, i) + gsl_vector_get(y, i+1))/2.;
   }
   return result;
@@ -383,6 +388,9 @@ double FDOverlapReImvsReIm(
   
   /* Final trapeze integration */
   double overlap = TrapezeIntegrate(freqoverlap, valuesoverlap);
+
+  //
+  printf("Overlap: %g", overlap);
 
   /* Clean up */
   gsl_vector_free(valuesoverlap);
