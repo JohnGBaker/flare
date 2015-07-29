@@ -587,6 +587,9 @@ double CalculateLogLReIm(LISAParams *params, LISAInjectionReIm* injection)
   //tend = clock();
   //printf("time GenerateSignal: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
+  
+  //
+  printf("LISAGenerateSignalReIm return code: %d\n", ret);
 
   /* If LISAGenerateSignal failed (e.g. parameters out of bound), silently return -Infinity logL */
   if(ret==FAILURE) {
