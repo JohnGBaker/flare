@@ -377,6 +377,9 @@ double FDOverlapReImvsReIm(
   for(int i=0; i<nbpts; i++) {
     gsl_vector_set(valuesoverlap, i, 4.*creal( (hreal1data[i] + I*himag1data[i]) * (hreal2data[i] - I*himag2data[i]) / noisedata[i]));
   }
+
+  //
+  printgslvector(valuesoverlap, 1000, 1020);
   
   /* Final trapeze integration */
   double overlap = TrapezeIntegrate(freqoverlap, valuesoverlap);
@@ -520,8 +523,8 @@ double FDLogLikelihoodReIm(
   gsl_vector_sub(diff->h_imag, s->h_imag);
 
   //
-  printgslvector(diff->h_real, 1000, 1020);
-  printgslvector(diff->h_imag, 1000, 1020);
+  //printgslvector(diff->h_real, 1000, 1020);
+  //printgslvector(diff->h_imag, 1000, 1020);
 
   /* Likelihood lnL = -1/2(h-s|h-s) */
   double lnL;
