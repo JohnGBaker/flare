@@ -43,6 +43,9 @@
 /* Number of points to be used in linear integration - hardcoded for now */
 #define nbptsintdefault 32768
 
+//
+int nblikelihoods = 0;
+int tagprint = 0;
 
 /********************************* Utilities ****************************************/
 

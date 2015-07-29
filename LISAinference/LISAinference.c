@@ -235,10 +235,6 @@ int main(int argc, char *argv[])
 
   /*********** Addendum *************/
 
-	//
-	int nblikelihoods = 0;
-	int tagprint = 0;
-
   /* Initialize structs for holding various options */
   LISARunParams runParams;
   injectedparams = (LISAParams*) malloc(sizeof(LISAParams));
