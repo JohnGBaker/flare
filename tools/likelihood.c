@@ -147,8 +147,10 @@ static double TrapezeIntegrate(const gsl_vector* x, const gsl_vector* y)
   int N = ((int) x->size) - 1;
   double result = 0.;
   for(int i=0; i<N; i++) {
-    if(1000<=i && i<=1020) printf("%g\n", (gsl_vector_get(x, i+1) - gsl_vector_get(x, i)) * (gsl_vector_get(y, i) + gsl_vector_get(y, i+1))/2.);
+    //if(1000<=i && i<=1020) printf("%g\n", (gsl_vector_get(x, i+1) - gsl_vector_get(x, i)) * (gsl_vector_get(y, i) + gsl_vector_get(y, i+1))/2.);
     result += (gsl_vector_get(x, i+1) - gsl_vector_get(x, i)) * (gsl_vector_get(y, i) + gsl_vector_get(y, i+1))/2.;
+    //
+    if(i%100) printf("%d: %16e", i, result);
   }
   return result;
 }
