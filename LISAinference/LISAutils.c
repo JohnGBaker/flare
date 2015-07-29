@@ -607,6 +607,9 @@ double CalculateLogLReIm(LISAParams *params, LISAInjectionReIm* injection)
 
     /* Output: value of the loglikelihood for the combined signals, assuming noise independence */
     logL = loglikelihoodTDIA + loglikelihoodTDIE + loglikelihoodTDIT;
+
+    //
+    printf("logL in CalculateLogLReIm: %f\n", logL)
   }
 
   /* Clean up */
