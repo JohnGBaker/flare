@@ -159,7 +159,7 @@ void getLogLike(double *Cube, int *ndim, int *npars, double *lnew, void *context
     //
   }
   else if(globalparams->tagint==1) {
-    LISASignalReIm* injection = ((LISASignalReIm*) context);
+    LISAInjectionReIm* injection = ((LISAInjectionReIm*) context);
 
     //TESTING
     //clock_t tbeg, tend;
