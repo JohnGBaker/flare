@@ -166,7 +166,7 @@ void getLogLike(double *Cube, int *ndim, int *npars, double *lnew, void *context
   //
   nblikelihoods++;
   printf("%d: %12e\n", nblikelihoods, *lnew);
-  if(nblikelihoods==2) exit(0);
+  if(nblikelihoods==1) exit(0);
 }
 
 
