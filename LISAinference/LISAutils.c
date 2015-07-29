@@ -7,6 +7,17 @@ LISAGlobalParams* globalparams = NULL;
 LISAParams* templateparams = NULL;
 LISAPrior* priorParams = NULL;
 
+//
+void printReImFrequencySeries(struct tagReImFrequencySeries* h, int n1, int n2)
+{
+  printf("------------------------------------------\n");
+  for(int i=n1; i<=n2; i++) {
+    printf("%12e | %12e | %12e\n", gsl_vector_get(h->freq, i), gsl_vector_get(h->h_real, i), gsl_vector_get(h->h_imag, i));
+  }
+  printf("------------------------------------------\n");
+}
+
+
 /************ Functions to initalize and clean up structure for the signals ************/
 
 void LISASignalCAmpPhase_Cleanup(LISASignalCAmpPhase* signal) {
