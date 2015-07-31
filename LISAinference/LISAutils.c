@@ -132,6 +132,8 @@ Arguments are as follows:\n\
  --q-max               Maximum mass ratio, m1/m2 (default=11.98, minimum is 1)\n\
  --dist-min            Minimum distance to source (Mpc, default=100)\n\
  --dist-max            Maximum distance to source (Mpc, default=40*1e3)\n\
+Parameters lambda, beta, phase, pol, inc can also ge given min and max values (for testing)\n\
+Syntax: --PARAM-min\n\
 \n\
 --------------------------------------------------\n\
 ----- Fix Parameters In Sampling -----------------\n\
@@ -169,7 +171,7 @@ Arguments are as follows:\n\
     params->phiRef = 0.;
     params->m1 = 2*1e6;
     params->m2 = 1*1e6;
-    params->distance = 1e3;
+    params->distance = 40*1e3;
     params->lambda = 0.;
     params->beta = 0.;
     params->inclination = PI/3.;
@@ -186,14 +188,24 @@ Arguments are as follows:\n\
     globalparams->nbptsoverlap = 32768;
 
     /* set default values for the prior limits */
-    prior->deltaT = 1.e5;
+    prior->deltaT = 3600.;
     prior->comp_min = 1e4;
     prior->comp_max = 1e8;
     prior->mtot_min = 5e4;
     prior->mtot_max = 1e8;
     prior->qmax = 11.98;
-    prior->dist_min = 100.0;
-    prior->dist_max = 40*1e3;
+    prior->dist_min = 1e3;
+    prior->dist_max = 400*1e3;
+    prior->lambda_min = 0.;
+    prior->lambda_max = 2*PI;
+    prior->beta_min = -PI/2.;
+    prior->beta_max = PI/2.;
+    prior->phase_min = 0.;
+    prior->phase_max = 2*PI;
+    prior->pol_min = 0.;
+    prior->pol_max = 2*PI;
+    prior->inc_min = 0.;
+    prior->inc_max = PI;
     prior->fix_m1 = NAN;
     prior->fix_m2 = NAN;
     prior->fix_dist = NAN;
@@ -276,6 +288,26 @@ Arguments are as follows:\n\
             prior->dist_min = atof(argv[++i]);
         } else if (strcmp(argv[i], "--dist-max") == 0) {
             prior->dist_max = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--lambda-min") == 0) {
+            prior->lambda_min = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--lambda-max") == 0) {
+            prior->lambda_max = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--beta-min") == 0) {
+            prior->beta_min = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--beta-max") == 0) {
+            prior->beta_max = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--phase-min") == 0) {
+            prior->phase_min = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--phase-max") == 0) {
+            prior->phase_max = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--pol-min") == 0) {
+            prior->pol_min = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--pol-max") == 0) {
+            prior->pol_max = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--inc-min") == 0) {
+            prior->inc_min = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--inc-max") == 0) {
+            prior->inc_max = atof(argv[++i]);
         } else if (strcmp(argv[i], "--fix-m1") == 0) {
             prior->fix_m1 = atof(argv[++i]);
         } else if (strcmp(argv[i], "--fix-m2") == 0) {

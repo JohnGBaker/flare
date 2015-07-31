@@ -72,14 +72,24 @@ typedef struct tagLISAInjectionReIm /* Storing the vectors of frequencies and no
 } LISAInjectionReIm;
 
 typedef struct tagLISAPrior {
-	double deltaT;             /* width of time prior centered on injected value (s) (default 1e5) */
-	double comp_min;           /* minimum component mass (solar masses) (default 1e4) */
-	double comp_max;           /* maximum component mass (solar masses) (default 1e8) */
-	double mtot_min;           /* minimum total mass (solar masses) (default 5*1e4) */
-	double mtot_max;           /* maximum total mass (solar masses) (default 1e8) */
-	double qmax;               /* maximum asymmetric mass ratio (>=1) (default 11.98) */
-	double dist_min;           /* minimum distance of source (Mpc) (default 100) */
-	double dist_max;           /* maximum distance of source (Mpc) (default 40*1e3) */
+  double deltaT;             /* width of time prior centered on injected value (s) (default 1e5) */
+  double comp_min;           /* minimum component mass (solar masses) (default 1e4) */
+  double comp_max;           /* maximum component mass (solar masses) (default 1e8) */
+  double mtot_min;           /* minimum total mass (solar masses) (default 5*1e4) */
+  double mtot_max;           /* maximum total mass (solar masses) (default 1e8) */
+  double qmax;               /* maximum asymmetric mass ratio (>=1) (default 11.98) */
+  double dist_min;           /* minimum distance of source (Mpc) (default 100) */
+  double dist_max;           /* maximum distance of source (Mpc) (default 40*1e3) */
+  double lambda_min;         /* minimum lambda (rad, default 0) - for testing */
+  double lambda_max;         /* maximum lambda (rad, default 2pi) - for testing */
+  double beta_min;           /* minimum lambda (rad, default 0) - for testing */
+  double beta_max;           /* maximum lambda (rad, default pi) - for testing */
+  double phase_min;          /* minimum phase (rad, default 0) - for testing */
+  double phase_max;          /* maximum phase (rad, default 2pi) - for testing */
+  double pol_min;            /* minimum polarization (rad, default 0) - for testing */
+  double pol_max;            /* maximum polarization (rad, default 2pi) - for testing */
+  double inc_min;            /* minimum inclination (rad, default 0) - for testing */
+  double inc_max;            /* maximum inclination (rad, default pi) - for testing */
   double fix_m1;
   double fix_m2;
   double fix_time;

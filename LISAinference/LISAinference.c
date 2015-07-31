@@ -47,33 +47,33 @@ void getphysparams(double *Cube, int *ndim)
 
   // orbital phase
   if (isnan(priorParams->fix_phase)) {
-    phase = CubeToFlatPrior(Cube[i++], 0.0, 2.0 * M_PI);
+    phase = CubeToFlatPrior(Cube[i++], priorParams->phase_min, priorParams->phase_max);
   } else {
     phase = priorParams->fix_phase;
   }
 
   // inclination
   if (isnan(priorParams->fix_inc)) {
-    inc = CubeToSinPrior(Cube[i++], 0.0, M_PI);
+    inc = CubeToSinPrior(Cube[i++], priorParams->inc_min, priorParams->inc_max);
   } else {
     inc = priorParams->fix_inc;
   }
 
   // sky location (lambda then beta)
   if (isnan(priorParams->fix_lambda)) {
-    lambda = CubeToFlatPrior(Cube[i++], 0.0, 2.0 * M_PI);
+    lambda = CubeToFlatPrior(Cube[i++], priorParams->lambda_min, priorParams->lambda_max);
   } else {
     lambda = priorParams->fix_lambda;
   }
   if (isnan(priorParams->fix_beta)) {
-    beta = CubeToCosPrior(Cube[i++], -M_PI / 2.0, M_PI / 2.0);
+    beta = CubeToCosPrior(Cube[i++], priorParams->beta_min, priorParams->beta_max);
   } else {
     beta = priorParams->fix_beta;
   }
 
   // polarization
   if (isnan(priorParams->fix_pol)) {
-    pol = CubeToFlatPrior(Cube[i++], 0.0, M_PI);
+    pol = CubeToFlatPrior(Cube[i++], priorParams->pol_min, priorParams->pol_max);
   } else {
     pol = priorParams->fix_pol;
   }
@@ -443,10 +443,14 @@ int main(int argc, char *argv[])
 
 	int pWrap[ndims];				// which parameters to have periodic boundary conditions?
 	for(i = 0; i < ndims; i++) pWrap[i] = 0;
-  pWrap[4] = pWrap[6] = pWrap[8] = 1;
+        pWrap[4] = pWrap[6] = pWrap[8] = 1;
+	/* If non-default limiting values have been set for lambda, phase, pol, do not treat them as periodic */
+	if(!(priorParams->phase_min == 0.) || !(priorParams->phase_max == 2.*PI)) pWrap[4] = 0;
+	if(!(priorParams->lambda_min == 0.) || !(priorParams->lambda_max == 2.*PI)) pWrap[6] = 0;
+	if(!(priorParams->pol_min == 0.) || !(priorParams->pol_max == 2.*PI)) pWrap[8] = 0;
 
 	strcpy(root, runParams.outroot);			// root for output files
-	strcpy(networkinputs, runParams.netfile);			// file with input parameters for network training
+	strcpy(networkinputs, runParams.netfile);		// file with input parameters for network training
 
 	int seed = -1;					// random no. generator seed, if < 0 then take the seed from system clock
 
@@ -472,8 +476,7 @@ int main(int argc, char *argv[])
 
 	// calling MultiNest
 
-	BAMBIrun(mmodal, ceff, nlive, tol, efr, ndims, nPar, nClsPar, maxModes, updInt, Ztol, root, seed, pWrap, fb, resume, outfile, initMPI,
-	logZero, maxiter, LogLikeFctn, dumper, BAMBIfctn, context);
+	BAMBIrun(mmodal, ceff, nlive, tol, efr, ndims, nPar, nClsPar, maxModes, updInt, Ztol, root, seed, pWrap, fb, resume, outfile, initMPI, logZero, maxiter, LogLikeFctn, dumper, BAMBIfctn, context);
 
   free(injectedparams);
   free(priorParams);
