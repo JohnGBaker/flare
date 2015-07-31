@@ -136,15 +136,19 @@ Arguments are as follows:\n\
 --------------------------------------------------\n\
 ----- Fix Parameters In Sampling -----------------\n\
 --------------------------------------------------\n\
- --fix-m1              Fix mass 1\n\
- --fix-m2              Fix mass 2\n\
- --fix-dist            Fix distance\n\
- --fix-time            Fix reference time\n\
- --fix-phase           Fix reference phase\n\
- --fix-lambda          Fix lambda\n\
- --fix-beta            Fix beta\n\
- --fix-inc             Fix inclination\n\
- --fix-pol             Fix polarization\n\
+ --pin-PARAM           Pin indicated parameter to injected value\n\
+ --fix-PARAM           Fix indicated parameter to specified value\n\
+ Available parameter names are:\n\
+   m1          Mass 1 (MSol)\n\
+   m2          Mass 2 (MSol)\n\
+   dist        Distance (luminosity, Mpc)\n\
+   time        Reference time (GPS sec)\n\
+   phase       Reference orbital phase (rad)\n\
+   lambda      First angle for the position in the sky (rad)\n\
+   beta        Second angle for the position in the sky (rad)\n\
+   inc         Inclination of orbital plane to observer (rad)\n\
+   pol         Polarization (rad)\n\
+ Note: --pin-PARAM overrides --fix-PARAM\n\
 \n\
 --------------------------------------------------\n\
 ----- BAMBI Sampler Settings ---------------------\n\
@@ -199,6 +203,15 @@ Arguments are as follows:\n\
     prior->fix_lambda = NAN;
     prior->fix_beta = NAN;
     prior->fix_inc = NAN;
+    prior->pin_m1 = 0;
+    prior->pin_m2 = 0;
+    prior->pin_dist = 0;
+    prior->pin_time = 0;
+    prior->pin_phase = 0;
+    prior->pin_pol = 0;
+    prior->pin_lambda = 0;
+    prior->pin_beta = 0;
+    prior->pin_inc = 0;
     prior->snr_target = NAN;
 
     /* set default values for the run settings */
@@ -281,6 +294,24 @@ Arguments are as follows:\n\
             prior->fix_inc = atof(argv[++i]);
         } else if (strcmp(argv[i], "--fix-pol") == 0) {
             prior->fix_pol = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--pin-m1") == 0) {
+            prior->pin_m1 = 1;
+        } else if (strcmp(argv[i], "--pin-m2") == 0) {
+            prior->pin_m2 = 1;
+        } else if (strcmp(argv[i], "--pin-dist") == 0) {
+            prior->pin_dist = 1;
+        } else if (strcmp(argv[i], "--pin-lambda") == 0) {
+            prior->pin_lambda = 1;
+        } else if (strcmp(argv[i], "--pin-beta") == 0) {
+            prior->pin_beta = 1;
+        } else if (strcmp(argv[i], "--pin-time") == 0) {
+            prior->pin_time = 1;
+        } else if (strcmp(argv[i], "--pin-phase") == 0) {
+            prior->pin_phase = 1;
+        } else if (strcmp(argv[i], "--pin-inc") == 0) {
+            prior->pin_inc = 1;
+        } else if (strcmp(argv[i], "--pin-pol") == 0) {
+            prior->pin_pol = 1;
         } else if (strcmp(argv[i], "--snr") == 0) {
             prior->snr_target = atof(argv[++i]);
         } else if (strcmp(argv[i], "--eff") == 0) {

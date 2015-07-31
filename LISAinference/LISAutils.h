@@ -89,6 +89,15 @@ typedef struct tagLISAPrior {
   double fix_pol;
   double fix_dist;
   double fix_inc;
+  int pin_m1;
+  int pin_m2;
+  int pin_time;
+  int pin_lambda;
+  int pin_beta;
+  int pin_phase;
+  int pin_pol;
+  int pin_dist;
+  int pin_inc;
   double snr_target;
 } LISAPrior;
 
