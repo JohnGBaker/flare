@@ -4,7 +4,6 @@
 
 LISAParams* injectedparams = NULL;
 LISAGlobalParams* globalparams = NULL;
-LISAParams* templateparams = NULL;
 LISAPrior* priorParams = NULL;
 
 /************ Functions to initalize and clean up structure for the signals ************/

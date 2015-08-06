@@ -132,8 +132,7 @@ void getLogLike(double *Cube, int *ndim, int *npars, double *lnew, void *context
   templateparams.ra = Cube[6];
   templateparams.dec = Cube[7];
   templateparams.polarization = Cube[8];
-  templateparams.fRef = injectedparams->fRef;
-  templateparams.nbmode = injectedparams->nbmode;
+  templateparams.nbmode = globalparams->nbmodetemp;
 
   /* Note: context points to a LLVContext structure containing a LLVSignal* */
   LLVSignal* injection = ((LLVSignal*) context);
@@ -217,8 +216,9 @@ int main(int argc, char *argv[])
   priorParams = (LLVPrior*) malloc(sizeof(LLVPrior));
   memset(priorParams, 0, sizeof(LLVPrior));
   
-  /* Parse commandline to read parameters of injection */
+  /* Parse commandline to read parameters of injection - copy the number of modes demanded for the injection  */
   parse_args_LLV(argc, argv, injectedparams, priorParams, &runParams);
+  injectedparams->nbmode = globalparams->nbmodeinj;
 
   /* Load and initialize the detector noise */
   LLVSimFD_Noise_Init_ParsePath();
@@ -312,8 +312,7 @@ int main(int argc, char *argv[])
     templateparams.ra = priorParams->fix_ra;
     templateparams.dec = priorParams->fix_dec;
     templateparams.polarization = priorParams->fix_pol;
-    templateparams.fRef = injectedparams->fRef;
-    templateparams.nbmode = injectedparams->nbmode;
+    templateparams.nbmode = globalparams->nbmodetemp;
 
     double logL = CalculateLogL(&templateparams, injectedsignal);
     if (myid == 0) printf("logL = %lf\n", logL);

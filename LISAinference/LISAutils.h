@@ -178,8 +178,5 @@ extern LISAParams* injectedparams;
 extern LISAGlobalParams* globalparams;
 extern LISAPrior* priorParams;
 double logZdata;
-extern gsl_vector* noisevaluesA;
-extern gsl_vector* noisevaluesE;
-extern gsl_vector* noisevaluesT;
 
 #endif
