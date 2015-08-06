@@ -94,6 +94,11 @@ void getphysparams(double *Cube, int *ndim)
 void getallparams(double *Cube, int *ndim)
 {
 	getphysparams(Cube,ndim);
+
+  Cube[9] = Cube[0] + Cube[1];
+  Cube[10] = Cube[0] / Cube[1];
+  Cube[11] = Cube[10] / pow(1.0 + Cube[10], 2.0);
+  Cube[12] = Cube[9] * pow(Cube[11], 0.6);
 }
 
 /******************************************** loglikelihood routine ****************************************************/
@@ -353,7 +358,7 @@ int main(int argc, char *argv[])
 
 	//int ndims = 9;					// dimensionality (no. of free parameters)
 
-	int nPar = 9;					// total no. of parameters including free & derived parameters
+	int nPar = 13;					// total no. of parameters including free & derived parameters
 
 	int nClsPar = (int) (fmin(2.,ndims));				// no. of parameters to do mode separation on
 

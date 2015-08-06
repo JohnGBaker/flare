@@ -26,11 +26,11 @@ int main(int argc, char *argv[])
   LLVSignal* injectedsignal = NULL;
   LLVSignal_Init(&injectedsignal);
 
-  double Mlist[7] = {10., 20., 30., 50., 100., 150., 200.};
+  double Mlist[7] = {10., 20., 30., 50., 100., 200., 400.};
   double Qlist[4] = {1., 2., 4., 8.};
 
   double m1, m2;
-  int i, j;
+  int i, j, k=-1;
 
   injectedparams->distance = 100.;
 
@@ -38,12 +38,13 @@ int main(int argc, char *argv[])
   {
     for (j=0; j<4; j++)
     {
+      k++;
       m2 = Mlist[i] / (1. + Qlist[j]);
       m1 = Mlist[i] - m2;
       injectedparams->m1 = m1;
       injectedparams->m2 = m2;
       LLVGenerateSignal(injectedparams, injectedsignal);
-      printf("%f %f %f %f %f\n", Mlist[i], Qlist[j], m1, m2, 
+      printf("%d %f %f %f %f %f\n", k, Mlist[i], Qlist[j], m1, m2, 
         100.*sqrt(injectedsignal->LHOhh + injectedsignal->LLOhh + injectedsignal->VIRGOhh)/12.);
     }
   }
