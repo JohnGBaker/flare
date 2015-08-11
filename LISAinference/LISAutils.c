@@ -161,6 +161,11 @@ Syntax: --PARAM-min\n\
  --resume              Resume from a previous run (no option, default off)\n\
  --outroot             Root for output files (default='chains/LISAinference_')\n\
  --netfile             Neural network settings file if using --bambi (default='LISAinference.inp')\n\
+ --mmodal              Use multimodal decomposition (no option, default off)\n\
+ --maxcls              Max number of modes in multimodal decomposition (default 1)\n\
+ --nclspar             Number of parameters to use for multimodal decomposition - in the order of the cube (default 1)\n\
+ --ztol                In multimodal decomposition, modes with lnZ lower than ztol are ignored (default -1e90)\n\
+ --seed                Seed the inference by setting one of the live points to the injection (no option, default off)\n\
 \n";
 
     ssize_t i;
@@ -233,6 +238,11 @@ Syntax: --PARAM-min\n\
     run->bambi = 0;
     run->resume = 0;
     strcpy(run->netfile, "LISAinference.inp");
+    run->mmodal = 0;
+    run->maxcls = 1;
+    run->nclspar = 1;
+    run->ztol = -1e90;
+    run->seed = 0;
 
     /* Consume command line */
     for (i = 1; i < argc; ++i) {
@@ -264,13 +274,13 @@ Syntax: --PARAM-min\n\
         } else if (strcmp(argv[i], "--fmin") == 0) {
             globalparams->fmin = atof(argv[++i]);
         } else if (strcmp(argv[i], "--nbmodeinj") == 0) {
-            globalparams->nbmodeinj = atof(argv[++i]);
+            globalparams->nbmodeinj = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--nbmodetemp") == 0) {
-            globalparams->nbmodetemp = atof(argv[++i]);
+            globalparams->nbmodetemp = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--tagint") == 0) {
-            globalparams->tagint = atof(argv[++i]);
+            globalparams->tagint = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--nbptsoverlap") == 0) {
-            globalparams->nbptsoverlap = atof(argv[++i]);
+            globalparams->nbptsoverlap = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--deltaT") == 0) {
             prior->deltaT = atof(argv[++i]);
         } else if (strcmp(argv[i], "--comp-min") == 0) {
@@ -359,6 +369,16 @@ Syntax: --PARAM-min\n\
             strcpy(run->outroot, argv[++i]);
         } else if (strcmp(argv[i], "--netfile") == 0) {
             strcpy(run->netfile, argv[++i]);
+        } else if (strcmp(argv[i], "--mmodal") == 0) {
+            run->mmodal = 1;
+        } else if (strcmp(argv[i], "--maxcls") == 0) {
+            run->maxcls = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "--nclspar") == 0) {
+            run->nclspar = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "--ztol") == 0) {
+            run->ztol = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--seed") == 0) {
+            run->seed = 1;
         } else {
             printf("Error: invalid option: %s\n", argv[i]);
             goto fail;
@@ -680,6 +700,9 @@ double CalculateLogLReIm(LISAParams *params, LISAInjectionReIm* injection)
 /* Function to check that returned parameter values fit in prior boundaries */
 int PriorBoundaryCheck(LISAPrior *prior, double *Cube)
 {
+	if (Cube[0] < Cube[1])
+	 	return 1;
+
 	if (Cube[0] < prior->comp_min || Cube[0] > prior->comp_max ||
 	 	Cube[1] < prior->comp_min || Cube[1] > prior->comp_max)
 	 	return 1;
@@ -693,38 +716,56 @@ int PriorBoundaryCheck(LISAPrior *prior, double *Cube)
 	return 0;
 }
 
-/* Utility prior functions to convert from Cube to common distributions */
+/* Utility prior functions to convert from Cube to common distributions, and back */
 
 double CubeToFlatPrior(double r, double x1, double x2)
 {
-    return x1 + r * ( x2 - x1 );
+  return x1 + r * (x2 - x1);
+}
+double FlatPriorToCube(double y, double x1, double x2)
+{
+  return (y - x1) / (x2 - x1);
 }
 
 double CubeToLogFlatPrior(double r, double x1, double x2)
 {
-    double lx1, lx2;
-    lx1 = log( x1 );
-    lx2 = log( x2 );
-    return exp( lx1 + r * ( lx2 - lx1 ) );
+  return exp(log(x1) + r * (log(x2) - log(x1)));
+}
+double LogFlatPriorToCube(double y, double x1, double x2)
+{
+  return (log(y) - log(x1)) / (log(x2) - log(x1));
 }
 
 double CubeToPowerPrior(double p, double r, double x1, double x2)
 {
-    double pp = p + 1.0;
-    return pow(r * pow(x2, pp) + (1.0 - r) * pow(x1, pp), 1.0 / pp);
+  double pp = p + 1.0;
+  return pow(r * pow(x2, pp) + (1.0 - r) * pow(x1, pp), 1.0 / pp);
 }
-
-double CubeToGaussianPrior(double r, double mean, double sigma)
+double PowerPriorToCube(double p, double y, double x1, double x2)
 {
-    return gsl_cdf_gaussian_Pinv(r,sigma) + mean;
+  double pp = p + 1.0;
+  return (pow(y, pp) - pow(x1, pp)) / (pow(x2, pp) - pow(x1, pp));
 }
 
 double CubeToSinPrior(double r, double x1, double x2)
 {
-    return acos((1.0-r)*cos(x1)+r*cos(x2));
+  return acos((1.0-r)*cos(x1)+r*cos(x2));
+}
+double SinPriorToCube(double y, double x1, double x2) /* Note: on [0,pi] cos(x1)>cos(y)>cos(x2), not important */
+{
+  return (cos(x1) - cos(y))/(cos(x1) - cos(x2));
 }
 
 double CubeToCosPrior(double r, double x1, double x2)
 {
-    return asin((1.0-r)*sin(x1)+r*sin(x2));
+  return asin((1.0-r)*sin(x1)+r*sin(x2));
+}
+double CosPriorToCube(double y, double x1, double x2) /* Note: on [-pi/2,pi/2] normally sin(x1)<sin(y)<sin(x2), not important */
+{
+  return (sin(y) - sin(x1))/(sin(x2) - sin(x1));
+}
+
+double CubeToGaussianPrior(double r, double mean, double sigma)
+{
+  return gsl_cdf_gaussian_Pinv(r,sigma) + mean;
 }

@@ -119,6 +119,11 @@ typedef struct tagLISARunParams {
 	int    bambi;              /* run BAMBI? (default 0) */
 	int    resume;             /* resume form previous run? (default 0) */
 	char   netfile[200];       /* NN settings file (default "LISAinference.inp") */
+        int    mmodal;             /* use multimodal decomposition ? */
+        int    maxcls;             /* max number of modes in multimodal decomposition */
+        int    nclspar;            /* number of parameters to use for multimodal decomposition - in the order of the cube */
+        double ztol;               /* in multimodal decomposition, modes with lnZ lower than Ztol are ignored */
+        int    seed;               /* seed the inference by setting one of the live points to the injection ? */
 } LISARunParams;
 
 /************ Functions for LISA parameters, injection, likelihood, prior ************/
@@ -167,6 +172,14 @@ double CubeToPowerPrior(double p, double r, double x1, double x2);
 double CubeToGaussianPrior(double r, double mean, double sigma);
 double CubeToSinPrior(double r, double x1, double x2);
 double CubeToCosPrior(double r, double x1, double x2);
+/* Prior functions from physical parameters to Cube
+   x1 is min, x2 is max when specified
+   y is physical value */
+double FlatPriorToCube(double y, double x1, double x2);
+double LogFlatPriorToCube(double y, double x1, double x2);
+double PowerPriorToCube(double p, double y, double x1, double x2);
+double SinPriorToCube(double y, double x1, double x2);
+double CosPriorToCube(double y, double x1, double x2);
 
 /* log-Likelihood functions */
 double CalculateLogLCAmpPhase(LISAParams *params, LISASignalCAmpPhase* injection);

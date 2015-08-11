@@ -203,9 +203,9 @@ Arguments are as follows:\n\
         } else if (strcmp(argv[i], "--fmax") == 0) {
             globalparams->fmax = atof(argv[++i]);
         } else if (strcmp(argv[i], "--nbmodeinj") == 0) {
-            globalparams->nbmodeinj = atof(argv[++i]);
+            globalparams->nbmodeinj = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--nbmodetemp") == 0) {
-            globalparams->nbmodetemp = atof(argv[++i]);
+            globalparams->nbmodetemp = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--deltaT") == 0) {
             prior->deltaT = atof(argv[++i]);
         } else if (strcmp(argv[i], "--comp-min") == 0) {
@@ -349,6 +349,9 @@ int LLVGenerateSignal(
 /* Function to check that returned parameter values fit in prior boundaries */
 int PriorBoundaryCheck(LLVPrior *prior, double *Cube)
 {
+	if (Cube[0] < Cube[1])
+	 	return 1;
+
 	if (Cube[0] < prior->comp_min || Cube[0] > prior->comp_max ||
 	 	Cube[1] < prior->comp_min || Cube[1] > prior->comp_max)
 	 	return 1;
