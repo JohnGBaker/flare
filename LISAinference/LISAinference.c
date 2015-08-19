@@ -493,7 +493,7 @@ int main(int argc, char *argv[])
       double* cubevalues = malloc(ndim*sizeof(double));
       getcubeparams(cubevalues, ndim, injectedparams, freeparamsmap);
       for(int i=0; i<ndim; i++) fprintf(flivepoints, "    %.18E", cubevalues[i]);
-      fprintf(flivepoints, "   %.18E", logZtrue); 
+      fprintf(flivepoints, "   %.18E\n", logZtrue); 
       free(cubevalues);
 
       /* Also set the resume option to true */
