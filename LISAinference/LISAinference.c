@@ -505,6 +505,9 @@ int main(int argc, char *argv[])
       fclose(fphyslivepoints);
     }
 
+    //TESTING
+    printf("Seed status: %d\n", tagseed);
+
     free(pathresume);
     free(pathev);
     free(pathlivepoints);
@@ -582,6 +585,11 @@ int main(int argc, char *argv[])
 	useNN = 0;
 
 	// calling MultiNest
+
+	//TESTING
+	printf("Resume status: %d\n", resume);
+	printf("Arguments calling BAMBIrun:\n mmodal: %d\n ceff: %d\n nlive: %d\n tol: %g\n efr: %g\n  ndim: %d\n  nPar: %d\n  nClsPar: %d\n  maxModes: %d\n  updInt: %d\n  Ztol: %g\n  root: %s\n  seed: %d\n fb: %d\n  resume: %d\n  outfile: %d\n  initMPI: %d\n  logZero: %g\n  maxiter: %d\n", mmodal, ceff, nlive, tol, efr, ndim, nPar, nClsPar, maxModes, updInt, Ztol, root, seed, fb, resume, outfile, initMPI, logZero, maxiter);
+	exit(0);
 
 	BAMBIrun(mmodal, ceff, nlive, tol, efr, ndim, nPar, nClsPar, maxModes, updInt, Ztol, root, seed, pWrap, fb, resume, outfile, initMPI, logZero, maxiter, LogLikeFctn, dumper, BAMBIfctn, context);
 
