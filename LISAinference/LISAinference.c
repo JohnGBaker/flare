@@ -8,7 +8,59 @@ void getphysparams(double *Cube, int *ndim) //Note: ndim not used here
   int i = 0;
   double m1=0., m2=0., tRef=0., dist=0., phase=0., inc=0., lambda=0., beta=0., pol=0.;
 
-  // component masses
+  /* Note: we use here the order for the cube parameters */
+  /* Order of the 9 original parameters (fixed): m1, m2, tRef, dist, phase, inc, lambda, beta, pol */
+  /* Order of the 9 cube parameters (modified for clustering): lambda, beta, tRef, phase, pol, inc, dist, m1, m2 */
+
+  /* Sky location (lambda then beta) */
+  if (isnan(priorParams->fix_lambda)) {
+    lambda = CubeToFlatPrior(Cube[i++], priorParams->lambda_min, priorParams->lambda_max);
+  } else {
+    lambda = priorParams->fix_lambda;
+  }
+  if (isnan(priorParams->fix_beta)) {
+    beta = CubeToCosPrior(Cube[i++], priorParams->beta_min, priorParams->beta_max);
+  } else {
+    beta = priorParams->fix_beta;
+  }
+
+  /* Time */
+  if (isnan(priorParams->fix_time)) {
+    tRef = CubeToFlatPrior(Cube[i++], injectedparams->tRef - priorParams->deltaT,
+           injectedparams->tRef + priorParams->deltaT);
+  } else {
+    tRef = priorParams->fix_time;
+  }
+
+  /* Orbital phase */
+  if (isnan(priorParams->fix_phase)) {
+    phase = CubeToFlatPrior(Cube[i++], priorParams->phase_min, priorParams->phase_max);
+  } else {
+    phase = priorParams->fix_phase;
+  }
+
+  /* Polarization */
+  if (isnan(priorParams->fix_pol)) {
+    pol = CubeToFlatPrior(Cube[i++], priorParams->pol_min, priorParams->pol_max);
+  } else {
+    pol = priorParams->fix_pol;
+  }
+
+  /* Inclination */
+  if (isnan(priorParams->fix_inc)) {
+    inc = CubeToSinPrior(Cube[i++], priorParams->inc_min, priorParams->inc_max);
+  } else {
+    inc = priorParams->fix_inc;
+  }
+
+  /* Distance */
+  if (isnan(priorParams->fix_dist)) {
+    dist = CubeToPowerPrior(2.0, Cube[i++], priorParams->dist_min, priorParams->dist_max);
+  } else {
+    dist = priorParams->fix_dist;
+  }
+
+  /* Component masses */
   if (isnan(priorParams->fix_m1)) {
     if (isnan(priorParams->fix_m2)) {
       m1 = CubeToFlatPrior(Cube[i++], priorParams->comp_min, priorParams->comp_max);
@@ -31,54 +83,7 @@ void getphysparams(double *Cube, int *ndim) //Note: ndim not used here
     }
   }
 
-  // time
-  if (isnan(priorParams->fix_time)) {
-    tRef = CubeToFlatPrior(Cube[i++], injectedparams->tRef - priorParams->deltaT,
-           injectedparams->tRef + priorParams->deltaT);
-  } else {
-    tRef = priorParams->fix_time;
-  }
-
-  // distance
-  if (isnan(priorParams->fix_dist)) {
-    dist = CubeToPowerPrior(2.0, Cube[i++], priorParams->dist_min, priorParams->dist_max);
-  } else {
-    dist = priorParams->fix_dist;
-  }
-
-  // orbital phase
-  if (isnan(priorParams->fix_phase)) {
-    phase = CubeToFlatPrior(Cube[i++], priorParams->phase_min, priorParams->phase_max);
-  } else {
-    phase = priorParams->fix_phase;
-  }
-
-  // inclination
-  if (isnan(priorParams->fix_inc)) {
-    inc = CubeToSinPrior(Cube[i++], priorParams->inc_min, priorParams->inc_max);
-  } else {
-    inc = priorParams->fix_inc;
-  }
-
-  // sky location (lambda then beta)
-  if (isnan(priorParams->fix_lambda)) {
-    lambda = CubeToFlatPrior(Cube[i++], priorParams->lambda_min, priorParams->lambda_max);
-  } else {
-    lambda = priorParams->fix_lambda;
-  }
-  if (isnan(priorParams->fix_beta)) {
-    beta = CubeToCosPrior(Cube[i++], priorParams->beta_min, priorParams->beta_max);
-  } else {
-    beta = priorParams->fix_beta;
-  }
-
-  // polarization
-  if (isnan(priorParams->fix_pol)) {
-    pol = CubeToFlatPrior(Cube[i++], priorParams->pol_min, priorParams->pol_max);
-  } else {
-    pol = priorParams->fix_pol;
-  }
-
+  /* Note: here we output physical values in the cube (overwriting), and we keep the original order for physical parameters */ 
   Cube[0] = m1;
   Cube[1] = m2;
   Cube[2] = tRef;
@@ -103,6 +108,7 @@ void getcubeparams(double* Cube, int ndim, LISAParams* params, int* freeparamsma
   double beta = params->beta;
   double pol = params->polarization;
 
+  /* Note: freeparamsmap has indices in the order of the (free) cube parameters, and values in the indices of physical parameters */
   for(int i=0; i<ndim; i++) {
     if(freeparamsmap[i]==0) Cube[i] = FlatPriorToCube(m1, priorParams->comp_min, priorParams->comp_max);
     if(freeparamsmap[i]==1) Cube[i] = FlatPriorToCube(m2, priorParams->comp_min, priorParams->comp_max);
@@ -149,6 +155,7 @@ void getLogLike(double *Cube, int *ndim, int *npars, double *lnew, void *context
     return;
   }
 
+  /* Cube values here have the order of the 9 physical parameters (fixed): m1, m2, tRef, dist, phase, inc, lambda, beta, pol */
   LISAParams templateparams;
   templateparams.m1 = Cube[0];
   templateparams.m2 = Cube[1];
@@ -353,9 +360,6 @@ int main(int argc, char *argv[])
     context = injectedsignalReIm;
   }
 
-  //TESTING
-  //exit(0);
-
   int nPar = 9;	  /* Total no. of parameters including free & derived parameters */
   int ndim = 9;  /* No. of free parameters - to be changed later if some parameters are fixed */
 
@@ -379,23 +383,25 @@ int main(int argc, char *argv[])
   if (priorParams->pin_time)
     priorParams->fix_time = injectedparams->tRef;
 
-  /* Check for fixed parameters, and build the map from the free parameters to the orignal 9 parameters */
+  /* Check for fixed parameters, and build the map from the free cube parameters to the orignal 9 parameters */
   /* Order of the 9 original parameters (fixed): m1, m2, tRef, dist, phase, inc, lambda, beta, pol */
-  int freeparams[9] = {1, 1, 1, 1, 1, 1, 1, 1, 1};
-  if (!isnan(priorParams->fix_m1))     { ndim--; freeparams[0] = 0; }
-  if (!isnan(priorParams->fix_m2))     { ndim--; freeparams[1] = 0; }
-  if (!isnan(priorParams->fix_time))   { ndim--; freeparams[2] = 0; }
-  if (!isnan(priorParams->fix_dist))   { ndim--; freeparams[3] = 0; }
-  if (!isnan(priorParams->fix_phase))  { ndim--; freeparams[4] = 0; }
-  if (!isnan(priorParams->fix_inc))    { ndim--; freeparams[5] = 0; }
-  if (!isnan(priorParams->fix_lambda)) { ndim--; freeparams[6] = 0; }
-  if (!isnan(priorParams->fix_beta))   { ndim--; freeparams[7] = 0; }
-  if (!isnan(priorParams->fix_pol))    { ndim--; freeparams[8] = 0; }
+  /* Order of the 9 cube parameters (modified for clustering): lambda, beta, tRef, phase, pol, inc, dist, m1, m2 */
+  int mapcubetophys[9] = {6, 7, 2, 4, 8, 5, 3, 0, 1};
+  int freecubeparams[9] = {1, 1, 1, 1, 1, 1, 1, 1, 1};
+  if (!isnan(priorParams->fix_lambda)) { ndim--; freecubeparams[0] = 0; }
+  if (!isnan(priorParams->fix_beta))   { ndim--; freecubeparams[1] = 0; }
+  if (!isnan(priorParams->fix_time))   { ndim--; freecubeparams[2] = 0; }
+  if (!isnan(priorParams->fix_phase))  { ndim--; freecubeparams[3] = 0; }
+  if (!isnan(priorParams->fix_pol))    { ndim--; freecubeparams[4] = 0; }
+  if (!isnan(priorParams->fix_inc))    { ndim--; freecubeparams[5] = 0; }
+  if (!isnan(priorParams->fix_dist))   { ndim--; freecubeparams[6] = 0; }
+  if (!isnan(priorParams->fix_m1))     { ndim--; freecubeparams[7] = 0; }
+  if (!isnan(priorParams->fix_m2))     { ndim--; freecubeparams[8] = 0; }
   int* freeparamsmap = malloc(ndim*sizeof(int));
   int counter = 0;
   for(int i=0; i<ndim; i++) {
-    while(freeparams[counter]==0) counter++;
-    freeparamsmap[i] = counter;
+    while(freecubeparams[counter]==0) counter++;
+    freeparamsmap[i] = mapcubetophys[counter];
     counter++;
   }
 
