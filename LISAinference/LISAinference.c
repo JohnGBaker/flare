@@ -488,7 +488,7 @@ int main(int argc, char *argv[])
       fprintf(fphyslivepoints, "    %.18E", injectedparams->beta);
       fprintf(fphyslivepoints, "    %.18E", injectedparams->polarization);
       fprintf(fphyslivepoints, "   %.18E", logZtrue);
-      fprintf(fphyslivepoints, "   %d", 1); /* We impose that the injection belongs to mode no. 1 */
+      fprintf(fphyslivepoints, "   %d\n", 1); /* We impose that the injection belongs to mode no. 1 */
       /* Live points - convert to values in the cube */
       double* cubevalues = malloc(ndim*sizeof(double));
       getcubeparams(cubevalues, ndim, injectedparams, freeparamsmap);
