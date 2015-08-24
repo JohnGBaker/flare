@@ -27,7 +27,7 @@
 extern float *omicron,tol,thL[3],logLRange;
 extern double *maxsigma,logZero;
 extern int nNN,nNNerr,totpar,loglcalls,ncheck,myid,nproc;
-extern char root[100],networkinputs[100];
+extern char root[1000],networkinputs[1000];
 extern bool likenetinit,converged,lastconverged,netres,firstrun,discardpts;
 extern int ignoredbambicalls,counter;
 extern size_t nlayers,nnodes[10];
@@ -48,9 +48,9 @@ void BAMBIrun(int mmodal, int ceff, int nlive, double tol, double efr, int ndims
 	void (*bambi)(int *, int *, double **, double *), void *context)
 {
 	int i;
-	char rootformn[100];
+	char rootformn[1000];
 	strcpy(rootformn, root);
-	for (i = strlen(rootformn); i < 100; i++) rootformn[i] = ' ';
+	for (i = strlen(rootformn); i < 1000; i++) rootformn[i] = ' ';
 
         NESTRUN(&mmodal, &ceff, &nlive, &tol, &efr, &ndims, &nPar, &nClsPar, &maxModes, &updInt, &Ztol,
         rootformn, &seed, pWrap, &fb, &resume, &outfile, &initMPI, &logZero, &maxiter, LogLike, dumper, bambi, context);
