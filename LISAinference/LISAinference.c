@@ -2,21 +2,74 @@
 
 /******************************************** getphysparams routine ****************************************************/
 
-void getphysparams(double *Cube, int *ndim)
+/* Order of the parameters (fixed): m1, m2, tRef, dist, phase, inc, lambda, beta, pol */
+void getphysparams(double *Cube, int *ndim) //Note: ndim not used here
 {
-	int i = 0;
+  int i = 0;
   double m1=0., m2=0., tRef=0., dist=0., phase=0., inc=0., lambda=0., beta=0., pol=0.;
 
-  // component masses
+  /* Note: we use here the order for the cube parameters */
+  /* Order of the 9 original parameters (fixed): m1, m2, tRef, dist, phase, inc, lambda, beta, pol */
+  /* Order of the 9 cube parameters (modified for clustering): lambda, beta, tRef, phase, pol, inc, dist, m1, m2 */
+
+  /* Sky location (lambda then beta) */
+  if (isnan(priorParams->fix_lambda)) {
+    lambda = CubeToFlatPrior(Cube[i++], priorParams->lambda_min, priorParams->lambda_max);
+  } else {
+    lambda = priorParams->fix_lambda;
+  }
+  if (isnan(priorParams->fix_beta)) {
+    beta = CubeToCosPrior(Cube[i++], priorParams->beta_min, priorParams->beta_max);
+  } else {
+    beta = priorParams->fix_beta;
+  }
+
+  /* Time */
+  if (isnan(priorParams->fix_time)) {
+    tRef = CubeToFlatPrior(Cube[i++], injectedparams->tRef - priorParams->deltaT,
+           injectedparams->tRef + priorParams->deltaT);
+  } else {
+    tRef = priorParams->fix_time;
+  }
+
+  /* Orbital phase */
+  if (isnan(priorParams->fix_phase)) {
+    phase = CubeToFlatPrior(Cube[i++], priorParams->phase_min, priorParams->phase_max);
+  } else {
+    phase = priorParams->fix_phase;
+  }
+
+  /* Polarization */
+  if (isnan(priorParams->fix_pol)) {
+    pol = CubeToFlatPrior(Cube[i++], priorParams->pol_min, priorParams->pol_max);
+  } else {
+    pol = priorParams->fix_pol;
+  }
+
+  /* Inclination */
+  if (isnan(priorParams->fix_inc)) {
+    inc = CubeToSinPrior(Cube[i++], priorParams->inc_min, priorParams->inc_max);
+  } else {
+    inc = priorParams->fix_inc;
+  }
+
+  /* Distance */
+  if (isnan(priorParams->fix_dist)) {
+    dist = CubeToPowerPrior(2.0, Cube[i++], priorParams->dist_min, priorParams->dist_max);
+  } else {
+    dist = priorParams->fix_dist;
+  }
+
+  /* Component masses */
   if (isnan(priorParams->fix_m1)) {
     if (isnan(priorParams->fix_m2)) {
       m1 = CubeToFlatPrior(Cube[i++], priorParams->comp_min, priorParams->comp_max);
       m2 = CubeToFlatPrior(Cube[i++], priorParams->comp_min, priorParams->comp_max);
-      if (m2 > m1) {
+      /*if (m2 > m1) {
         double tmp = m1;
         m1 = m2;
         m2 = tmp;
-      }
+      }*/
     } else {
       m2 = priorParams->fix_m2;
       m1 = CubeToFlatPrior(Cube[i++], fmax(priorParams->comp_min,m2), priorParams->comp_max);
@@ -30,54 +83,7 @@ void getphysparams(double *Cube, int *ndim)
     }
   }
 
-  // time
-  if (isnan(priorParams->fix_time)) {
-    tRef = CubeToFlatPrior(Cube[i++], injectedparams->tRef - priorParams->deltaT,
-           injectedparams->tRef + priorParams->deltaT);
-  } else {
-    tRef = priorParams->fix_time;
-  }
-
-  // distance
-  if (isnan(priorParams->fix_dist)) {
-    dist = CubeToPowerPrior(2.0, Cube[i++], priorParams->dist_min, priorParams->dist_max);
-  } else {
-    dist = priorParams->fix_dist;
-  }
-
-  // orbital phase
-  if (isnan(priorParams->fix_phase)) {
-    phase = CubeToFlatPrior(Cube[i++], 0.0, 2.0 * M_PI);
-  } else {
-    phase = priorParams->fix_phase;
-  }
-
-  // inclination
-  if (isnan(priorParams->fix_inc)) {
-    inc = CubeToSinPrior(Cube[i++], 0.0, M_PI);
-  } else {
-    inc = priorParams->fix_inc;
-  }
-
-  // sky location (lambda then beta)
-  if (isnan(priorParams->fix_lambda)) {
-    lambda = CubeToFlatPrior(Cube[i++], 0.0, 2.0 * M_PI);
-  } else {
-    lambda = priorParams->fix_lambda;
-  }
-  if (isnan(priorParams->fix_beta)) {
-    beta = CubeToCosPrior(Cube[i++], -M_PI / 2.0, M_PI / 2.0);
-  } else {
-    beta = priorParams->fix_beta;
-  }
-
-  // polarization
-  if (isnan(priorParams->fix_pol)) {
-    pol = CubeToFlatPrior(Cube[i++], 0.0, M_PI);
-  } else {
-    pol = priorParams->fix_pol;
-  }
-
+  /* Note: here we output physical values in the cube (overwriting), and we keep the original order for physical parameters */ 
   Cube[0] = m1;
   Cube[1] = m2;
   Cube[2] = tRef;
@@ -87,6 +93,33 @@ void getphysparams(double *Cube, int *ndim)
   Cube[6] = lambda;
   Cube[7] = beta;
   Cube[8] = pol;
+}
+
+void getcubeparams(double* Cube, int ndim, LISAParams* params, int* freeparamsmap)
+{
+  int i = 0;
+  double m1 = params->m1;
+  double m2 = params->m2;
+  double tRef = params->tRef;
+  double dist = params->distance;
+  double phase = params->phiRef;
+  double inc = params->inclination;
+  double lambda = params->lambda;
+  double beta = params->beta;
+  double pol = params->polarization;
+
+  /* Note: freeparamsmap has indices in the order of the (free) cube parameters, and values in the indices of physical parameters */
+  for(int i=0; i<ndim; i++) {
+    if(freeparamsmap[i]==0) Cube[i] = FlatPriorToCube(m1, priorParams->comp_min, priorParams->comp_max);
+    if(freeparamsmap[i]==1) Cube[i] = FlatPriorToCube(m2, priorParams->comp_min, priorParams->comp_max);
+    if(freeparamsmap[i]==2) Cube[i] = FlatPriorToCube(tRef, injectedparams->tRef - priorParams->deltaT, injectedparams->tRef + priorParams->deltaT);
+    if(freeparamsmap[i]==3) Cube[i] = PowerPriorToCube(2., dist, priorParams->dist_min, priorParams->dist_max);
+    if(freeparamsmap[i]==4) Cube[i] = FlatPriorToCube(phase, priorParams->phase_min, priorParams->phase_max);
+    if(freeparamsmap[i]==5) Cube[i] = SinPriorToCube(inc, priorParams->inc_min, priorParams->inc_max);
+    if(freeparamsmap[i]==6) Cube[i] = FlatPriorToCube(lambda, priorParams->lambda_min, priorParams->lambda_max);
+    if(freeparamsmap[i]==7) Cube[i] = CosPriorToCube(beta, priorParams->beta_min, priorParams->beta_max);
+    if(freeparamsmap[i]==8) Cube[i] = FlatPriorToCube(pol, priorParams->pol_min, priorParams->pol_max);
+  }
 }
 
 /******************************************** getallparams routine ****************************************************/
@@ -122,6 +155,7 @@ void getLogLike(double *Cube, int *ndim, int *npars, double *lnew, void *context
     return;
   }
 
+  /* Cube values here have the order of the 9 physical parameters (fixed): m1, m2, tRef, dist, phase, inc, lambda, beta, pol */
   LISAParams templateparams;
   templateparams.m1 = Cube[0];
   templateparams.m2 = Cube[1];
@@ -132,14 +166,31 @@ void getLogLike(double *Cube, int *ndim, int *npars, double *lnew, void *context
   templateparams.lambda = Cube[6];
   templateparams.beta = Cube[7];
   templateparams.polarization = Cube[8];
-  templateparams.fRef = injectedparams->fRef;
-  templateparams.deltatobs = injectedparams->deltatobs;
-  templateparams.nbmode = injectedparams->nbmode;
+  templateparams.nbmode = globalparams->nbmodetemp; /* Using the global parameter for the number of modes in templates */
 
   /* Note: context points to a LISAContext structure containing a LISASignal* */
-  LISASignal* injection = ((LISASignal*) context);
+  if(globalparams->tagint==0) {
+    LISASignalCAmpPhase* injection = ((LISASignalCAmpPhase*) context);
 
-  *lnew = CalculateLogL(&templateparams, injection) - logZdata;
+    //TESTING
+    //clock_t tbeg, tend;
+    //tbeg = clock();
+    *lnew = CalculateLogLCAmpPhase(&templateparams, injection) - logZdata;
+    //tend = clock();
+    //printf("time Likelihood: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
+    //
+  }
+  else if(globalparams->tagint==1) {
+    LISAInjectionReIm* injection = ((LISAInjectionReIm*) context);
+
+    //TESTING
+    //clock_t tbeg, tend;
+    //tbeg = clock();
+    *lnew = CalculateLogLReIm(&templateparams, injection) - logZdata;
+    //tend = clock();
+    //printf("time Likelihood: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
+    //
+  }
 }
 
 
@@ -203,6 +254,7 @@ void dumper(int *nSamples, int *nlive, int *nPar, double **physLive, double **po
 
 int main(int argc, char *argv[])
 {
+  int myid = 0;
 #ifdef PARALLEL
  	MPI_Init(&argc,&argv);
 	MPI_Comm_rank(MPI_COMM_WORLD,&myid);
@@ -214,19 +266,74 @@ int main(int argc, char *argv[])
   LISARunParams runParams;
   injectedparams = (LISAParams*) malloc(sizeof(LISAParams));
   memset(injectedparams, 0, sizeof(LISAParams));
+  globalparams = (LISAGlobalParams*) malloc(sizeof(LISAGlobalParams));
+  memset(globalparams, 0, sizeof(LISAGlobalParams));
   priorParams = (LISAPrior*) malloc(sizeof(LISAPrior));
   memset(priorParams, 0, sizeof(LISAPrior));
   
-  /* Parse commandline to read parameters of injection */
-  parse_args_LISA(argc, argv, injectedparams, priorParams, &runParams);
+  /* Parse commandline to read parameters of injection - copy the number of modes demanded for the injection */
+  parse_args_LISA(argc, argv, injectedparams, globalparams, priorParams, &runParams);
+  injectedparams->nbmode = globalparams->nbmodeinj;
 
   /* Initialize the data structure for the injection */
-  LISASignal* injectedsignal = NULL;
-  LISASignal_Init(&injectedsignal);
+  LISASignalCAmpPhase* injectedsignalCAmpPhase = NULL;
+  LISAInjectionReIm* injectedsignalReIm = NULL;
+  if(globalparams->tagint==0) {
+    LISASignalCAmpPhase_Init(&injectedsignalCAmpPhase);
+  }
+  else if(globalparams->tagint==1) {
+    LISAInjectionReIm_Init(&injectedsignalReIm);
+  }
 
   /* Generate the injection */
-  LISAGenerateSignal(injectedparams, injectedsignal);
-  printf("SNR (All, A, E, T): (%g, %g, %g, %g)\n", sqrt(injectedsignal->TDIAhh + injectedsignal->TDIEhh + injectedsignal->TDIThh), sqrt(injectedsignal->TDIAhh), sqrt(injectedsignal->TDIEhh), sqrt(injectedsignal->TDIThh));
+  if(globalparams->tagint==0) {
+    LISAGenerateSignalCAmpPhase(injectedparams, injectedsignalCAmpPhase);
+  }
+  else if(globalparams->tagint==1) {
+    LISAGenerateInjectionReIm(injectedparams, globalparams->fmin, globalparams->nbptsoverlap, injectedsignalReIm);
+  }
+
+  /* Define SNRs */
+  double SNRA, SNRE, SNRT;
+  if(globalparams->tagint==0) {
+    SNRA = injectedsignalCAmpPhase->TDIAhh;
+    SNRE = injectedsignalCAmpPhase->TDIEhh;
+    SNRT = injectedsignalCAmpPhase->TDIThh;
+  }
+  else if(globalparams->tagint==1) {
+    SNRA = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDIASignal, injectedsignalReIm->TDIASignal, injectedsignalReIm->noisevaluesA));
+    SNRE = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDIESignal, injectedsignalReIm->TDIESignal, injectedsignalReIm->noisevaluesE));
+    SNRT = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDITSignal, injectedsignalReIm->TDITSignal, injectedsignalReIm->noisevaluesT));
+  }
+  double SNR = sqrt(SNRA*SNRA + SNRE*SNRE + SNRT*SNRT);
+
+  /* Rescale distance to match SNR */
+  if (!isnan(priorParams->snr_target)) {
+    if (myid == 0) printf("Rescaling the distance to obtain a network SNR of %g\n", priorParams->snr_target);
+    injectedparams->distance *= SNR / priorParams->snr_target;
+    if (myid == 0) printf("New distance = %g Mpc\n", injectedparams->distance);
+    if(globalparams->tagint==0) {
+      LISAGenerateSignalCAmpPhase(injectedparams, injectedsignalCAmpPhase);
+      SNRA = injectedsignalCAmpPhase->TDIAhh;
+      SNRE = injectedsignalCAmpPhase->TDIEhh;
+      SNRT = injectedsignalCAmpPhase->TDIThh;
+    }
+    else if(globalparams->tagint==1) {
+      LISAGenerateInjectionReIm(injectedparams, globalparams->fmin, globalparams->nbptsoverlap, injectedsignalReIm);
+      SNRA = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDIASignal, injectedsignalReIm->TDIASignal, injectedsignalReIm->noisevaluesA));
+      SNRE = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDIESignal, injectedsignalReIm->TDIESignal, injectedsignalReIm->noisevaluesE));
+      SNRT = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDITSignal, injectedsignalReIm->TDITSignal, injectedsignalReIm->noisevaluesT));
+    }
+    SNR = sqrt(SNRA*SNRA + SNRE*SNRE + SNRT*SNRT);
+  }
+
+  /* Print SNR */
+  if (myid == 0) {
+    printf("SNR A:     %g\n", SNRA);
+    printf("SNR E:     %g\n", SNRE);
+    printf("SNR T:     %g\n", SNRT);
+    printf("SNR Total: %g\n", SNR);
+  }
 
   /* Calculate logL of data */
   /*double dist_store = injectedparams->distance;
@@ -235,35 +342,70 @@ int main(int argc, char *argv[])
     printf("logZdata = %lf\n", logZdata);
     injectedparams->distance = dist_store;*/
   logZdata = 0.0;
-  double logZtrue = CalculateLogL(injectedparams, injectedsignal);
-  printf("logZtrue = %lf\n", logZtrue-logZdata);
+  double logZtrue = 0.;
+  if(globalparams->tagint==0) {
+    logZtrue = CalculateLogLCAmpPhase(injectedparams, injectedsignalCAmpPhase);
+  }
+  else if(globalparams->tagint==1) {
+    logZtrue = CalculateLogLReIm(injectedparams, injectedsignalReIm);
+  }
+  if (myid == 0) printf("logZtrue = %lf\n", logZtrue-logZdata);
 
   /* Set the context pointer */
-  void *context = injectedsignal;
+  void *context = NULL;
+  if(globalparams->tagint==0) {
+    context = injectedsignalCAmpPhase;
+  }
+  else if(globalparams->tagint==1) {
+    context = injectedsignalReIm;
+  }
 
-  int ndims = 9;
+  int nPar = 9;	  /* Total no. of parameters including free & derived parameters */
+  int ndim = 9;  /* No. of free parameters - to be changed later if some parameters are fixed */
 
-  /* check for fixed parameters */
-  if (!isnan(priorParams->fix_m1))
-    ndims--;
-  if (!isnan(priorParams->fix_m2))
-    ndims--;
-  if (!isnan(priorParams->fix_dist))
-    ndims--;
-  if (!isnan(priorParams->fix_inc))
-    ndims--;
-  if (!isnan(priorParams->fix_phase))
-    ndims--;
-  if (!isnan(priorParams->fix_pol))
-    ndims--;
-  if (!isnan(priorParams->fix_lambda))
-    ndims--;
-  if (!isnan(priorParams->fix_beta))
-    ndims--;
-  if (!isnan(priorParams->fix_time))
-    ndims--;
+  /* check for parameters pinned to injected values */
+  if (priorParams->pin_m1)
+    priorParams->fix_m1 = injectedparams->m1;
+  if (priorParams->pin_m2)
+    priorParams->fix_m2 = injectedparams->m2;
+  if (priorParams->pin_dist)
+    priorParams->fix_dist = injectedparams->distance;
+  if (priorParams->pin_inc)
+    priorParams->fix_inc = injectedparams->inclination;
+  if (priorParams->pin_phase)
+    priorParams->fix_phase = injectedparams->phiRef;
+  if (priorParams->pin_pol)
+    priorParams->fix_pol = injectedparams->polarization;
+  if (priorParams->pin_lambda)
+    priorParams->fix_lambda = injectedparams->lambda;
+  if (priorParams->pin_beta)
+    priorParams->fix_beta = injectedparams->beta;
+  if (priorParams->pin_time)
+    priorParams->fix_time = injectedparams->tRef;
 
-  if (ndims == 0) {
+  /* Check for fixed parameters, and build the map from the free cube parameters to the orignal 9 parameters */
+  /* Order of the 9 original parameters (fixed): m1, m2, tRef, dist, phase, inc, lambda, beta, pol */
+  /* Order of the 9 cube parameters (modified for clustering): lambda, beta, tRef, phase, pol, inc, dist, m1, m2 */
+  int mapcubetophys[9] = {6, 7, 2, 4, 8, 5, 3, 0, 1};
+  int freecubeparams[9] = {1, 1, 1, 1, 1, 1, 1, 1, 1};
+  if (!isnan(priorParams->fix_lambda)) { ndim--; freecubeparams[0] = 0; }
+  if (!isnan(priorParams->fix_beta))   { ndim--; freecubeparams[1] = 0; }
+  if (!isnan(priorParams->fix_time))   { ndim--; freecubeparams[2] = 0; }
+  if (!isnan(priorParams->fix_phase))  { ndim--; freecubeparams[3] = 0; }
+  if (!isnan(priorParams->fix_pol))    { ndim--; freecubeparams[4] = 0; }
+  if (!isnan(priorParams->fix_inc))    { ndim--; freecubeparams[5] = 0; }
+  if (!isnan(priorParams->fix_dist))   { ndim--; freecubeparams[6] = 0; }
+  if (!isnan(priorParams->fix_m1))     { ndim--; freecubeparams[7] = 0; }
+  if (!isnan(priorParams->fix_m2))     { ndim--; freecubeparams[8] = 0; }
+  int* freeparamsmap = malloc(ndim*sizeof(int));
+  int counter = 0;
+  for(int i=0; i<ndim; i++) {
+    while(freecubeparams[counter]==0) counter++;
+    freeparamsmap[i] = mapcubetophys[counter];
+    counter++;
+  }
+
+  if (ndim == 0) {
     LISAParams templateparams;
     templateparams.m1 = priorParams->fix_m1;
     templateparams.m2 = priorParams->fix_m2;
@@ -274,11 +416,15 @@ int main(int argc, char *argv[])
     templateparams.lambda = priorParams->fix_lambda;
     templateparams.beta = priorParams->fix_beta;
     templateparams.polarization = priorParams->fix_pol;
-    templateparams.fRef = injectedparams->fRef;
-    templateparams.deltatobs = injectedparams->deltatobs;
-    templateparams.nbmode = injectedparams->nbmode;
+    templateparams.nbmode = globalparams->nbmodetemp; /* Using the global parameter for the number of modes in templates */
 
-    double logL = CalculateLogL(&templateparams, injectedsignal);
+    double logL = 0.;
+    if(globalparams->tagint==0) {
+      logL = CalculateLogLCAmpPhase(&templateparams, injectedsignalCAmpPhase);
+    }
+    else if(globalparams->tagint==1) {
+      logL = CalculateLogLReIm(&templateparams, injectedsignalReIm);
+    }
     printf("logL = %lf\n", logL);
 
     free(injectedparams);
@@ -291,50 +437,133 @@ int main(int argc, char *argv[])
     exit(0);
   }
 
+  /* If the seed option is activated, seed the initial population of live points with the injection */
+  if(myid==0 && runParams.seed) {
+    char* pathresume = malloc(strlen(runParams.outroot)+64);
+    char* pathev = malloc(strlen(runParams.outroot)+64);
+    char* pathlivepoints = malloc(strlen(runParams.outroot)+64);
+    char* pathphyslivepoints = malloc(strlen(runParams.outroot)+64);
+    sprintf(pathresume, "%s%s", runParams.outroot, "resume.dat");
+    sprintf(pathev, "%s%s", runParams.outroot, "ev.dat");
+    sprintf(pathlivepoints, "%s%s", runParams.outroot, "live.points");
+    sprintf(pathphyslivepoints, "%s%s", runParams.outroot, "phys_live.points");
+    int tagseed = 0; /* Tag deciding whether or not to create the seed files */
+    FILE* fresume = NULL;
+    FILE* fev = NULL;
+    FILE* flivepoints = NULL;
+    FILE* fphyslivepoints = NULL;
+    if(runParams.resume) { /* Check whether files already exist */
+      fresume = fopen(pathresume, "r");
+      fev = fopen(pathev, "r");
+      flivepoints = fopen(pathlivepoints, "r");
+      fphyslivepoints = fopen(pathphyslivepoints, "r");
+      if(!fresume && !fev && !flivepoints && !fphyslivepoints) { /* If none of the files already exist - create seed */
+	tagseed = 1;
+      }
+      else if (fresume && fev && flivepoints && fphyslivepoints) { /* If all files already exist, ignore --seed and do nothing - allows to resume run */
+	tagseed = 0;
+	fclose(fresume);
+	fclose(fev);
+	fclose(flivepoints);
+	fclose(fphyslivepoints);
+      }
+      else {
+	printf("Error: when seeding, some files already exist but not all of them.");
+	exit(1);
+      }
+    }
+    else tagseed = 1; /* If the resume option is false, create the seed anyway (possibly overwriting) */
+
+    if(tagseed) { /* Create the seeding files */
+      printf("Seeding the inference with one point at the injection.\n");
+      fresume = fopen(pathresume, "w");
+      fev = fopen(pathev, "w");
+      flivepoints = fopen(pathlivepoints, "w");
+      fphyslivepoints = fopen(pathphyslivepoints, "w");
+      /* Resume and ev files */
+      fprintf(fresume, " T\n");
+      fprintf(fev, "");
+      /* Phys live points */
+      fprintf(fphyslivepoints, "    %.18E", injectedparams->m1);
+      fprintf(fphyslivepoints, "    %.18E", injectedparams->m2);
+      fprintf(fphyslivepoints, "    %.18E", 0.); /* For templates, tRef is defined relatively to the injected value */
+      fprintf(fphyslivepoints, "    %.18E", injectedparams->distance);
+      fprintf(fphyslivepoints, "    %.18E", injectedparams->phiRef);
+      fprintf(fphyslivepoints, "    %.18E", injectedparams->inclination);
+      fprintf(fphyslivepoints, "    %.18E", injectedparams->lambda);
+      fprintf(fphyslivepoints, "    %.18E", injectedparams->beta);
+      fprintf(fphyslivepoints, "    %.18E", injectedparams->polarization);
+      fprintf(fphyslivepoints, "   %.18E", logZtrue);
+      fprintf(fphyslivepoints, "   %d\n", 1); /* We impose that the injection belongs to mode no. 1 */
+      /* Live points - convert to values in the cube */
+      double* cubevalues = malloc(ndim*sizeof(double));
+      getcubeparams(cubevalues, ndim, injectedparams, freeparamsmap);
+      for(int i=0; i<ndim; i++) fprintf(flivepoints, "    %.18E", cubevalues[i]);
+      fprintf(flivepoints, "   %.18E\n", logZtrue); 
+      free(cubevalues);
+
+      /* Also set the resume option to true */
+      runParams.resume = 1;
+
+      fclose(fresume);
+      fclose(fev);
+      fclose(flivepoints);
+      fclose(fphyslivepoints);
+    }
+
+    free(pathresume);
+    free(pathev);
+    free(pathlivepoints);
+    free(pathphyslivepoints);
+  }
+
 	/********** End of addendum ****************/
 
 	/********** Test ****************/
-	/*double l;
-	getLogLike(injectedparams, &l, context);
-	printf("LogLikelihood: %g\n", l);
-	free(injectedparams);
-	LISASignal_Cleanup(injectedsignal);
-	exit(0);*/
+	/* double l; */
+	/* l = CalculateLogLReIm(injectedparams, injectedsignalReIm); */
+	/* printf("LogLikelihood: %g\n", l); */
+	/* free(injectedparams); */
+	/* LISAInjectionReIm_Cleanup(injectedsignalReIm); */
+	/* exit(0); */
 	/********** End of test ****************/
 
 	int i;
 
 	// set the MultiNest sampling parameters
 
-	int mmodal = 0;					// do mode separation?
+	int mmodal = runParams.mmodal;			// do mode separation?
 
 	int ceff = 0;					// run in constant efficiency mode?
 
-	int nlive = runParams.nlive;				// number of live points
+	int nlive = runParams.nlive;			// number of live points
 
-	double efr = runParams.eff;				// set the required efficiency
+	double efr = runParams.eff;			// set the required efficiency
 
-	double tol = runParams.tol;				// tol, defines the stopping criteria
+	double tol = runParams.tol;			// tol, defines the stopping criteria
 
-	//int ndims = 9;					// dimensionality (no. of free parameters)
+	//int ndim = 9;				// dimensionality (no. of free parameters)
+	//int nPar = 9;					// total no. of parameters including free & derived parameters
 
-	int nPar = 9;					// total no. of parameters including free & derived parameters
-
-	int nClsPar = (int) (fmin(2.,ndims));				// no. of parameters to do mode separation on
+	int nClsPar = runParams.nclspar;            	// no. of parameters to do mode separation on
 
 	int updInt = 50;				// after how many iterations feedback is required & the output files should be updated
 							// note: posterior files are updated & dumper routine is called after every updInt*10 iterations
 
-	double Ztol = -1E90;				// all the modes with logZ < Ztol are ignored
+	double Ztol = runParams.ztol;	       		// all the modes with logZ < Ztol are ignored
 
-	int maxModes = 1;				// expected max no. of modes (used only for memory allocation)
+	int maxModes = runParams.maxcls;		// expected max no. of modes (used only for memory allocation)
 
-	int pWrap[ndims];				// which parameters to have periodic boundary conditions?
-	for(i = 0; i < ndims; i++) pWrap[i] = 0;
-  pWrap[4] = pWrap[6] = pWrap[8] = 1;
+	int pWrap[ndim];				// which parameters to have periodic boundary conditions?
+	for(i = 0; i < ndim; i++) { /* If non-default limiting values have been set for lambda, phase, pol, do not treat them as periodic */
+	  if(freeparamsmap[i]==4 && priorParams->phase_min == 0. && priorParams->phase_max == 2.*PI) pWrap[i] = 1;
+	  else if(freeparamsmap[i]==6 && priorParams->lambda_min == 0. && priorParams->lambda_max == 2.*PI) pWrap[i] = 1;
+	  else if(freeparamsmap[i]==8 && priorParams->pol_min == 0. && priorParams->pol_max == 2.*PI) pWrap[i] = 1;
+	  else pWrap[i] = 0;
+	}
 
-	strcpy(root, runParams.outroot);			// root for output files
-	strcpy(networkinputs, runParams.netfile);			// file with input parameters for network training
+	strcpy(root, runParams.outroot);		// root for output files
+	strcpy(networkinputs, runParams.netfile);	// file with input parameters for network training
 
 	int seed = -1;					// random no. generator seed, if < 0 then take the seed from system clock
 
@@ -360,8 +589,7 @@ int main(int argc, char *argv[])
 
 	// calling MultiNest
 
-	BAMBIrun(mmodal, ceff, nlive, tol, efr, ndims, nPar, nClsPar, maxModes, updInt, Ztol, root, seed, pWrap, fb, resume, outfile, initMPI,
-	logZero, maxiter, LogLikeFctn, dumper, BAMBIfctn, context);
+	BAMBIrun(mmodal, ceff, nlive, tol, efr, ndim, nPar, nClsPar, maxModes, updInt, Ztol, root, seed, pWrap, fb, resume, outfile, initMPI, logZero, maxiter, LogLikeFctn, dumper, BAMBIfctn, context);
 
   free(injectedparams);
   free(priorParams);

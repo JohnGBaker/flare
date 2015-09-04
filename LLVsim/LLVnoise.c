@@ -117,8 +117,13 @@ int LLVSimFD_Noise_Init(const char dir[]) {
   ret |= Read_Text_Matrix(dir, file_LIGO, noise_LLO);
   ret |= Read_Text_Matrix(dir, file_VIRGO, noise_VIRGO);
 
+  if(ret==FAILURE) {
+    printf("Error: problem reading LLV noise data.");
+    exit(1);
+  }
+
   /* Linear interpolation of the data, after setting the gsl_spline structures */
-  if(ret==SUCCESS) {
+  else if(ret==SUCCESS) {
     /* Extracting te vectors for the frequencies and data */
     gsl_vector* noise_LHO_freq = gsl_vector_alloc(noisedata_pts);
     gsl_vector* noise_LLO_freq = gsl_vector_alloc(noisedata_pts);

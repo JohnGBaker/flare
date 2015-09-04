@@ -36,6 +36,10 @@
 #include "struct.h"
 #include "LISAnoise.h"
 
+
+/* static double tflight_SI = L_SI/C_SI; */
+/* static double twopitflight_SI = 2.*PI*L_SI/C_SI; */
+
 /* Proof mass and optic noises - f in Hz */
 static double Spm(const double f) {
   return 2.54e-48 /f/f;
@@ -46,7 +50,7 @@ static double Sop(const double f) {
 
 /* The noise functions themselves */
 double NoiseSnA(const double f) {
-  double twopifL = twopitflight_SI*f;
+  double twopifL = 2.*PI*L_SI/C_SI*f;
   double sinhalf = sin(1./2*twopifL);
   double sin3half = sin(3./2*twopifL);
   double cos1 = cos(twopifL);
@@ -54,7 +58,7 @@ double NoiseSnA(const double f) {
   return 32*sinhalf*sinhalf*sin3half*sin3half*( (6 + 4*cos1 + 2*cos2)*Spm(f) + (2 + cos1)*Sop(f) );
 }
 double NoiseSnE(const double f) {
-  double twopifL = twopitflight_SI*f;
+  double twopifL = 2.*PI*L_SI/C_SI*f;
   double sinhalf = sin(1./2*twopifL);
   double sin3half = sin(3./2*twopifL);
   double cos1 = cos(twopifL);
@@ -62,7 +66,7 @@ double NoiseSnE(const double f) {
   return 32*sinhalf*sinhalf*sin3half*sin3half*( (6 + 4*cos1 + 2*cos2)*Spm(f) + (2 + cos1)*Sop(f) );
 }
 double NoiseSnT(const double f) {
-  double twopifL = twopitflight_SI*f;
+  double twopifL = 2.*PI*L_SI/C_SI*f;
   double sinhalf = sin(1./2*twopifL);
   double sin3half = sin(3./2*twopifL);
   double cos1 = cos(twopifL);

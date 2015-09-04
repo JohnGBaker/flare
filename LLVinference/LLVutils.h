@@ -29,9 +29,17 @@ typedef struct tagLLVParams {
   double dec;                /* declination of the source (rad) */
   double inclination;        /* inclination of L relative to line of sight (rad) */
   double polarization;       /* polarization angle (rad) */
-  double fRef;               /* reference frequency (Hz) */
   int nbmode;                /* number of modes to generate (starting with 22) - defaults to 5 (all modes) */
 } LLVParams;
+
+/* Global parameters for the waveform generation and overlap computation */
+typedef struct tagLLVGlobalParams {
+  double fRef;               /* reference frequency (Hz, default 0 which is interpreted as Mf=0.14) */
+  double fmin;               /* Minimal frequency (Hz) - when set to 0 (default), use the first frequency covered by the noise data of the detector */
+  double fmax;               /* Maximal frequency (Hz) - when set to 0 (default), use the last frequency covered by the noise data of the detector */
+  int nbmodeinj;             /* number of modes to include in the injection (starting with 22) - defaults to 5 (all modes) */
+  int nbmodetemp;            /* number of modes to include in the templates (starting with 22) - defaults to 5 (all modes) */
+} LLVGlobalParams;
 
 typedef struct tagLLVSignal
 {
@@ -88,9 +96,10 @@ typedef struct tagLLVRunParams {
 /* Parsing parameters for the generation of a LLV waveform, from the command line */
 /* Masses are input in solar masses and distances in Mpc - converted in SI for the internals */
 void parse_args_LLV(ssize_t argc, char **argv, 
-    LLVParams* params, 
-    LLVPrior *prior, 
-    LLVRunParams *run);
+    LLVParams* params,
+    LLVGlobalParams* globalparams, 
+    LLVPrior* prior, 
+    LLVRunParams* run);
 
 void LLVSignal_Cleanup(LLVSignal* signal);
 void LLVSignal_Init(LLVSignal** signal);
@@ -119,6 +128,7 @@ double CalculateLogL(LLVParams *params, LLVSignal* injection);
 /************ Global Parameters ************/
 
 extern LLVParams* injectedparams;
+extern LLVGlobalParams* globalparams;
 extern LLVPrior* priorParams;
 double logZdata;
 

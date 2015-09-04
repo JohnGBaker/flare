@@ -2,6 +2,7 @@
 
 /******************************************** getphysparams routine ****************************************************/
 
+/* Order of the parameters (fixed): m1, m2, tRef, dist, phase, inc, ra, dec, pol */
 void getphysparams(double *Cube, int *ndim)
 {
 	int i = 0;
@@ -12,11 +13,11 @@ void getphysparams(double *Cube, int *ndim)
     if (isnan(priorParams->fix_m2)) {
       m1 = CubeToFlatPrior(Cube[i++], priorParams->comp_min, priorParams->comp_max);
       m2 = CubeToFlatPrior(Cube[i++], priorParams->comp_min, priorParams->comp_max);
-      if (m2 > m1) {
+      /*if (m2 > m1) {
         double tmp = m1;
         m1 = m2;
         m2 = tmp;
-      }
+	}*/
     } else {
       m2 = priorParams->fix_m2;
       m1 = CubeToFlatPrior(Cube[i++], fmax(priorParams->comp_min,m2), priorParams->comp_max);
@@ -94,6 +95,11 @@ void getphysparams(double *Cube, int *ndim)
 void getallparams(double *Cube, int *ndim)
 {
 	getphysparams(Cube,ndim);
+
+  Cube[9] = Cube[0] + Cube[1];
+  Cube[10] = Cube[0] / Cube[1];
+  Cube[11] = Cube[10] / pow(1.0 + Cube[10], 2.0);
+  Cube[12] = Cube[9] * pow(Cube[11], 0.6);
 }
 
 /******************************************** loglikelihood routine ****************************************************/
@@ -132,8 +138,7 @@ void getLogLike(double *Cube, int *ndim, int *npars, double *lnew, void *context
   templateparams.ra = Cube[6];
   templateparams.dec = Cube[7];
   templateparams.polarization = Cube[8];
-  templateparams.fRef = injectedparams->fRef;
-  templateparams.nbmode = injectedparams->nbmode;
+  templateparams.nbmode = globalparams->nbmodetemp;
 
   /* Note: context points to a LLVContext structure containing a LLVSignal* */
   LLVSignal* injection = ((LLVSignal*) context);
@@ -202,6 +207,7 @@ void dumper(int *nSamples, int *nlive, int *nPar, double **physLive, double **po
 
 int main(int argc, char *argv[])
 {
+  int myid = 0;
 #ifdef PARALLEL
  	MPI_Init(&argc,&argv);
 	MPI_Comm_rank(MPI_COMM_WORLD,&myid);
@@ -213,11 +219,14 @@ int main(int argc, char *argv[])
   LLVRunParams runParams;
   injectedparams = (LLVParams*) malloc(sizeof(LLVParams));
   memset(injectedparams, 0, sizeof(LLVParams));
+  globalparams = (LLVGlobalParams*) malloc(sizeof(LLVGlobalParams));
+  memset(globalparams, 0, sizeof(LLVGlobalParams));
   priorParams = (LLVPrior*) malloc(sizeof(LLVPrior));
   memset(priorParams, 0, sizeof(LLVPrior));
   
-  /* Parse commandline to read parameters of injection */
-  parse_args_LLV(argc, argv, injectedparams, priorParams, &runParams);
+  /* Parse commandline to read parameters of injection - copy the number of modes demanded for the injection  */
+  parse_args_LLV(argc, argv, injectedparams, globalparams, priorParams, &runParams);
+  injectedparams->nbmode = globalparams->nbmodeinj;
 
   /* Load and initialize the detector noise */
   LLVSimFD_Noise_Init_ParsePath();
@@ -228,16 +237,17 @@ int main(int argc, char *argv[])
 
   /* Generate the injection */
   LLVGenerateSignal(injectedparams, injectedsignal);
-  printf("SNR LHO:     %g\n", sqrt(injectedsignal->LHOhh));
-  printf("SNR LLO:     %g\n", sqrt(injectedsignal->LLOhh));
-  printf("SNR VIRGO:   %g\n", sqrt(injectedsignal->VIRGOhh));
-  printf("SNR Network: %g\n", sqrt(injectedsignal->LHOhh + injectedsignal->LLOhh + injectedsignal->VIRGOhh));
 
-  /* rescale distance to match SNR */
+  /* Rescale distance to match SNR */
   if (!isnan(priorParams->snr_target)) {
-    printf("Rescaling the distance to obtain a network SNR of %g\n", priorParams->snr_target);
+    if (myid == 0) printf("Rescaling the distance to obtain a network SNR of %g\n", priorParams->snr_target);
     injectedparams->distance *= sqrt(injectedsignal->LHOhh + injectedsignal->LLOhh + injectedsignal->VIRGOhh) / priorParams->snr_target;
+    if (myid == 0) printf("New distance = %g Mpc\n", injectedparams->distance);
     LLVGenerateSignal(injectedparams, injectedsignal);
+  }
+
+  /* print SNRs */
+  if (myid == 0) {
     printf("SNR LHO:     %g\n", sqrt(injectedsignal->LHOhh));
     printf("SNR LLO:     %g\n", sqrt(injectedsignal->LLOhh));
     printf("SNR VIRGO:   %g\n", sqrt(injectedsignal->VIRGOhh));
@@ -252,12 +262,12 @@ int main(int argc, char *argv[])
     injectedparams->distance = dist_store;*/
   logZdata = 0.0;
   double logZtrue = CalculateLogL(injectedparams, injectedsignal);
-  printf("logZtrue = %lf\n", logZtrue-logZdata);
+  if (myid == 0) printf("logZtrue = %lf\n", logZtrue-logZdata);
 
   /* Set the context pointer */
   void *context = injectedsignal;
 
-  int ndims = 9;
+  int ndim = 9;
 
   /* check for parameters pinned to injected values */
   if (priorParams->pin_m1)
@@ -279,27 +289,27 @@ int main(int argc, char *argv[])
   if (priorParams->pin_time)
     priorParams->fix_time = injectedparams->tRef;
 
-  /* check for fixed parameters */
-  if (!isnan(priorParams->fix_m1))
-    ndims--;
-  if (!isnan(priorParams->fix_m2))
-    ndims--;
-  if (!isnan(priorParams->fix_dist))
-    ndims--;
-  if (!isnan(priorParams->fix_inc))
-    ndims--;
-  if (!isnan(priorParams->fix_phase))
-    ndims--;
-  if (!isnan(priorParams->fix_pol))
-    ndims--;
-  if (!isnan(priorParams->fix_ra))
-    ndims--;
-  if (!isnan(priorParams->fix_dec))
-    ndims--;
-  if (!isnan(priorParams->fix_time))
-    ndims--;
+  /* Check for fixed parameters, and build the map from the free parameters to the orignal 9 parameters */
+  /* Order of the 9 original parameters (fixed): m1, m2, tRef, dist, phase, inc, ra, dec, pol */
+  int freeparams[9] = {1, 1, 1, 1, 1, 1, 1, 1, 1};
+  if (!isnan(priorParams->fix_m1))    { ndim--; freeparams[0] = 0; }
+  if (!isnan(priorParams->fix_m2))    { ndim--; freeparams[1] = 0; }
+  if (!isnan(priorParams->fix_time))  { ndim--; freeparams[2] = 0; }
+  if (!isnan(priorParams->fix_dist))  { ndim--; freeparams[3] = 0; }
+  if (!isnan(priorParams->fix_phase)) { ndim--; freeparams[4] = 0; }
+  if (!isnan(priorParams->fix_inc))   { ndim--; freeparams[5] = 0; }
+  if (!isnan(priorParams->fix_ra))    { ndim--; freeparams[6] = 0; }
+  if (!isnan(priorParams->fix_dec))   { ndim--; freeparams[7] = 0; }
+  if (!isnan(priorParams->fix_pol))   { ndim--; freeparams[8] = 0; }
+  int* freeparamsmap = malloc(ndim*sizeof(int));
+  int counter = 0;
+  for(int i=0; i<ndim; i++) {
+    while(freeparams[counter]==0) counter++;
+    freeparamsmap[i] = counter;
+    counter++;
+  }
 
-  if (ndims == 0) {
+  if (ndim == 0) {
     LLVParams templateparams;
     templateparams.m1 = priorParams->fix_m1;
     templateparams.m2 = priorParams->fix_m2;
@@ -310,11 +320,10 @@ int main(int argc, char *argv[])
     templateparams.ra = priorParams->fix_ra;
     templateparams.dec = priorParams->fix_dec;
     templateparams.polarization = priorParams->fix_pol;
-    templateparams.fRef = injectedparams->fRef;
-    templateparams.nbmode = injectedparams->nbmode;
+    templateparams.nbmode = globalparams->nbmodetemp;
 
     double logL = CalculateLogL(&templateparams, injectedsignal);
-    printf("logL = %lf\n", logL);
+    if (myid == 0) printf("logL = %lf\n", logL);
 
     free(injectedparams);
     free(priorParams);
@@ -350,11 +359,11 @@ int main(int argc, char *argv[])
 
 	double tol = runParams.tol;				// tol, defines the stopping criteria
 
-	//int ndims = 9;					// dimensionality (no. of free parameters)
+	//int ndim = 9;					// dimensionality (no. of free parameters)
 
-	int nPar = 9;					// total no. of parameters including free & derived parameters
+	int nPar = 13;					// total no. of parameters including free & derived parameters
 
-	int nClsPar = (int) (fmin(2.,ndims));				// no. of parameters to do mode separation on
+	int nClsPar = (int) (fmin(2.,ndim));				// no. of parameters to do mode separation on
 
 	int updInt = 50;				// after how many iterations feedback is required & the output files should be updated
 							// note: posterior files are updated & dumper routine is called after every updInt*10 iterations
@@ -363,18 +372,20 @@ int main(int argc, char *argv[])
 
 	int maxModes = 1;				// expected max no. of modes (used only for memory allocation)
 
-	int pWrap[ndims];				// which parameters to have periodic boundary conditions?
-	for(i = 0; i < ndims; i++) pWrap[i] = 0;
-  pWrap[4] = pWrap[6] = pWrap[8] = 1;
+	int pWrap[ndim];				// which parameters to have periodic boundary conditions?
+	for(i = 0; i < ndim; i++) {
+	  if(freeparamsmap[i]==4 || freeparamsmap[i]==6 || freeparamsmap[i]==8) pWrap[i] = 1;
+	  else pWrap[i] = 0;
+	}
 
-	strcpy(root, runParams.outroot);			// root for output files
-	strcpy(networkinputs, runParams.netfile);			// file with input parameters for network training
+	strcpy(root, runParams.outroot);		// root for output files
+	strcpy(networkinputs, runParams.netfile);	// file with input parameters for network training
 
 	int seed = -1;					// random no. generator seed, if < 0 then take the seed from system clock
 
 	int fb = 1;					// need feedback on standard output?
 
-	resume = runParams.resume;					// resume from a previous job?
+	resume = runParams.resume;			// resume from a previous job?
 
 	int outfile = 1;				// write output files?
 
@@ -394,7 +405,7 @@ int main(int argc, char *argv[])
 
 	// calling MultiNest
 
-	BAMBIrun(mmodal, ceff, nlive, tol, efr, ndims, nPar, nClsPar, maxModes, updInt, Ztol, root, seed, pWrap, fb, resume, outfile, initMPI,
+	BAMBIrun(mmodal, ceff, nlive, tol, efr, ndim, nPar, nClsPar, maxModes, updInt, Ztol, root, seed, pWrap, fb, resume, outfile, initMPI,
 	logZero, maxiter, LogLikeFctn, dumper, BAMBIfctn, context);
 
   free(injectedparams);

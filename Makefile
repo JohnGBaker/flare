@@ -35,6 +35,9 @@ LLVinference: tools integration EOBNRv2HMROM LLVsim
 phaseSNR: tools integration EOBNRv2HMROM LLVsim
 	$(MAKE) -C LLVinference phaseSNR
 
+findDist: tools integration EOBNRv2HMROM LLVsim
+	$(MAKE) -C LLVinference findDist
+
 all: subdirs
 
 clean: $(SUBCLEAN)

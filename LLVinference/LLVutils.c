@@ -3,7 +3,7 @@
 /************ Global Parameters ************/
 
 LLVParams* injectedparams = NULL;
-LLVParams* templateparams = NULL;
+LLVGlobalParams* globalparams = NULL;
 LLVPrior* priorParams = NULL;
 
 /************ Functions to initalize and clean up structure for the signals ************/
@@ -32,7 +32,8 @@ void LLVSignal_Init(LLVSignal** signal) {
 
 /* Parse command line to initialize LLVParams, LLVPrior, and LLVRunParams objects */
 void parse_args_LLV(ssize_t argc, char **argv, 
-    LLVParams* params, 
+    LLVParams* params,
+    LLVGlobalParams* globalparams, 
     LLVPrior *prior, 
     LLVRunParams *run) 
 {
@@ -62,6 +63,15 @@ Arguments are as follows:\n\
  --nbmode              Number of modes of radiation to use (1-5, default=5)\n\
  --snr                 Use a target network SNR for the injection by rescaling distance\n\
                        (default=None)\n\
+\n\
+-----------------------------------------------------------------\n\
+----- Global Waveform/Inner products Parameters -----------------\n\
+-----------------------------------------------------------------\n\
+ --fRef                Reference frequency (Hz, default=0, interpreted as Mf=0.14)\n\
+ --fmin                Minimal frequency (Hz, default=0) - when set to 0, use the first frequency covered by the noise data of the detector\n\
+ --fmax                Maximal frequency (Hz, default=0) - when set to 0, use the last frequency covered by the noise data of the detector\n\
+ --nbmodeinj           Number of modes of radiation to use for the injection (1-5, default=5)\n\
+ --nbmodetemp          Number of modes of radiation to use for the templates (1-5, default=5)\n\
 \n\
 --------------------------------------------------\n\
 ----- Prior Boundary Settings --------------------\n\
@@ -116,8 +126,14 @@ Arguments are as follows:\n\
     params->dec = 0.;
     params->inclination = PI/3.;
     params->polarization = 0.;
-    params->fRef = 0.;
     params->nbmode = 5;
+
+    /* set default values for the global params */
+    globalparams->fRef = 0.;
+    globalparams->fmin = 0.;
+    globalparams->fmax = 0.;
+    globalparams->nbmodeinj = 5;
+    globalparams->nbmodetemp = 5;
 
     /* set default values for the prior limits */
     prior->deltaT = 0.1;
@@ -181,9 +197,15 @@ Arguments are as follows:\n\
         } else if (strcmp(argv[i], "--polarization") == 0) {
             params->polarization = atof(argv[++i]);
         } else if (strcmp(argv[i], "--fRef") == 0) {
-            params->fRef = atof(argv[++i]);
-        } else if (strcmp(argv[i], "--nbmode") == 0) {
-            params->nbmode = atof(argv[++i]);
+            globalparams->fRef = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--fmin") == 0) {
+            globalparams->fmin = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--fmax") == 0) {
+            globalparams->fmax = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--nbmodeinj") == 0) {
+            globalparams->nbmodeinj = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "--nbmodetemp") == 0) {
+            globalparams->nbmodetemp = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--deltaT") == 0) {
             prior->deltaT = atof(argv[++i]);
         } else if (strcmp(argv[i], "--comp-min") == 0) {
@@ -283,7 +305,7 @@ int LLVGenerateSignal(
   /* Should add more error checking ? */
   /* Generate the waveform with the ROM */
   /* Note: SimEOBNRv2HMROM accepts masses and distances in SI units, whereas LLV params is in solar masses and Mpc */
-  ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, params->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+  ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
 
   /* If the ROM waveform generation failed (e.g. parameters were out of bounds) return FAILURE */
   if(ret==FAILURE) return FAILURE;
@@ -293,10 +315,24 @@ int LLVGenerateSignal(
   LLVSimFDResponse(&listROM, &listLLO, params->tRef, params->ra, params->dec, params->inclination, params->polarization, LLO);
   LLVSimFDResponse(&listROM, &listVIRGO, params->tRef, params->ra, params->dec, params->inclination, params->polarization, VIRGO);
 
-  /* Precompute the inner products (h|h) */
-  double LHOhh = FDListmodesOverlap(listLHO, listLHO, NoiseSnLHO, __LLVSimFD_LHONoise_fLow, __LLVSimFD_LHONoise_fHigh);
-  double LLOhh = FDListmodesOverlap(listLLO, listLLO, NoiseSnLLO, __LLVSimFD_LLONoise_fLow, __LLVSimFD_LLONoise_fHigh);
-  double VIRGOhh = FDListmodesOverlap(listVIRGO, listVIRGO, NoiseSnVIRGO, __LLVSimFD_VIRGONoise_fLow, __LLVSimFD_VIRGONoise_fHigh);
+  /* Precompute the inner products (h|h) - 3 last args: ignore fstartobs, and use wip for overlap */
+  double fLowLHO, fHighLHO, fLowLLO, fHighLLO, fLowVIRGO, fHighVIRGO;
+  fLowLHO = fmax(globalparams->fmin, __LLVSimFD_LHONoise_fLow);
+  fLowLLO = fmax(globalparams->fmin, __LLVSimFD_LLONoise_fLow);
+  fLowVIRGO = fmax(globalparams->fmin, __LLVSimFD_VIRGONoise_fLow);
+  if(globalparams->fmax==0) {
+    fHighLHO = __LLVSimFD_LHONoise_fHigh;
+    fHighLLO = __LLVSimFD_LLONoise_fHigh;
+    fHighVIRGO = __LLVSimFD_VIRGONoise_fHigh;
+  }
+  else {
+    fHighLHO = fmin(globalparams->fmax, __LLVSimFD_LHONoise_fHigh);
+    fHighLLO = fmin(globalparams->fmax, __LLVSimFD_LLONoise_fHigh);
+    fHighVIRGO = fmin(globalparams->fmax, __LLVSimFD_VIRGONoise_fHigh);
+  }
+  double LHOhh = FDListmodesOverlap(listLHO, listLHO, NoiseSnLHO, fLowLHO, fHighLHO, 0., 0., 0);
+  double LLOhh = FDListmodesOverlap(listLLO, listLLO, NoiseSnLLO, fLowLLO, fHighLLO, 0., 0., 0);
+  double VIRGOhh = FDListmodesOverlap(listVIRGO, listVIRGO, NoiseSnVIRGO, fLowVIRGO, fHighVIRGO, 0., 0., 0);
 
   /* Output and clean up */
   signal->LHOSignal = listLHO;
@@ -313,6 +349,9 @@ int LLVGenerateSignal(
 /* Function to check that returned parameter values fit in prior boundaries */
 int PriorBoundaryCheck(LLVPrior *prior, double *Cube)
 {
+	if (Cube[0] < Cube[1])
+	 	return 1;
+
 	if (Cube[0] < prior->comp_min || Cube[0] > prior->comp_max ||
 	 	Cube[1] < prior->comp_min || Cube[1] > prior->comp_max)
 	 	return 1;
@@ -379,10 +418,24 @@ double CalculateLogL(LLVParams *params, LLVSignal* injection)
     logL = -DBL_MAX;
   }
   else if(ret==SUCCESS) {
-    /* Computing the likelihood for each detector */
-    double loglikelihoodLHO = FDLogLikelihood(injection->LHOSignal, generatedsignal->LHOSignal, NoiseSnLHO, __LLVSimFD_LHONoise_fLow, __LLVSimFD_LHONoise_fHigh, injection->LHOhh, generatedsignal->LHOhh);
-    double loglikelihoodLLO = FDLogLikelihood(injection->LLOSignal, generatedsignal->LLOSignal, NoiseSnLLO, __LLVSimFD_LLONoise_fLow, __LLVSimFD_LLONoise_fHigh, injection->LLOhh, generatedsignal->LLOhh);
-    double loglikelihoodVIRGO = FDLogLikelihood(injection->VIRGOSignal, generatedsignal->VIRGOSignal, NoiseSnVIRGO, __LLVSimFD_VIRGONoise_fLow, __LLVSimFD_VIRGONoise_fHigh, injection->VIRGOhh, generatedsignal->VIRGOhh);
+    /* Computing the likelihood for each detector - last 3 args: ignoring fstartobs, and using wip for the overlap */
+    double fLowLHO, fHighLHO, fLowLLO, fHighLLO, fLowVIRGO, fHighVIRGO;
+    fLowLHO = fmax(globalparams->fmin, __LLVSimFD_LHONoise_fLow);
+    fLowLLO = fmax(globalparams->fmin, __LLVSimFD_LLONoise_fLow);
+    fLowVIRGO = fmax(globalparams->fmin, __LLVSimFD_VIRGONoise_fLow);
+    if(globalparams->fmax==0) {
+      fHighLHO = __LLVSimFD_LHONoise_fHigh;
+      fHighLLO = __LLVSimFD_LLONoise_fHigh;
+      fHighVIRGO = __LLVSimFD_VIRGONoise_fHigh;
+    }
+    else {
+      fHighLHO = fmin(globalparams->fmax, __LLVSimFD_LHONoise_fHigh);
+      fHighLLO = fmin(globalparams->fmax, __LLVSimFD_LLONoise_fHigh);
+      fHighVIRGO = fmin(globalparams->fmax, __LLVSimFD_VIRGONoise_fHigh);
+    }
+    double loglikelihoodLHO = FDLogLikelihood(injection->LHOSignal, generatedsignal->LHOSignal, NoiseSnLHO, fLowLHO, fHighLHO, injection->LHOhh, generatedsignal->LHOhh, 0., 0., 0);
+    double loglikelihoodLLO = FDLogLikelihood(injection->LLOSignal, generatedsignal->LLOSignal, NoiseSnLLO, fLowLLO, fHighLLO, injection->LLOhh, generatedsignal->LLOhh, 0., 0., 0);
+    double loglikelihoodVIRGO = FDLogLikelihood(injection->VIRGOSignal, generatedsignal->VIRGOSignal, NoiseSnVIRGO, fLowVIRGO, fHighVIRGO, injection->VIRGOhh, generatedsignal->VIRGOhh, 0., 0., 0);
 
     /* Output: value of the loglikelihood for the combined signals, assuming noise independence */
     logL = loglikelihoodLHO + loglikelihoodLLO + loglikelihoodVIRGO;

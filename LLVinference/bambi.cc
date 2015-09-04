@@ -11,7 +11,7 @@
 
 /****************************************/
 int myid = 0,nproc=1;
-char root[100],networkinputs[100];
+char root[1000],networkinputs[1000];
 bool likenetinit=false,converged=false,lastconverged=false,netres,firstrun=true,discardpts=true;
 int ignoredbambicalls=0;
 int counter=0;
