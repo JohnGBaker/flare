@@ -33,6 +33,8 @@ double Swhitenoise(double x){
 };
 
 extern int wip_count;
+extern int wip_adapt_verbose;
+extern double wip_adaptTOL;
 
 int main (){
   //Define the test function
@@ -40,8 +42,8 @@ int main (){
   c2=-1.41;
   //c3=+0.0199;
   c3=+0.0203;
-  c2*=5;
-  c3*=5;
+  c2*=-5;
+  c3*=-5;
   xc=3.47;
   x0=-20;
   a0=10.0;
@@ -86,7 +88,7 @@ int main (){
 
   if(1){
     N=N0;
-    printf("\nInterpQuad(vectored) IP (N->%i):\n",N);
+    printf("\nWIP(vectored) IP (N->%i):\n",N);
     int i;
     double ff[N],s1ar[N],s2ar[N],s1ai[N],s2ai[N],s1p[N],s2p[N];
     for(i=0;i<N;i++){
@@ -106,12 +108,19 @@ int main (){
     printf( "ran %i steps.\n",wip_count);
     printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
     printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
+    start=((double)clock())/CLOCKS_PER_SEC;
+    rs0=wip_phase(ff,N,ff,N,s2ar,s2ai,s2p,s1ar,s1ai,s1p,Swhitenoise,1.0,-1,-1);  
+    end=((double)clock())/CLOCKS_PER_SEC;
+    err=conj(rs0)-rex;
+    printf( "ran %i steps.\n",wip_count);
+    printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
+    printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
     printf( "----------------------------------------------------\n");
   }
   
   if(1){
     N=N0*4;
-    printf("\nInterpQuad(vectored) IP (N->%i):\n",N);
+    printf("\nWIP(vectored) IP (N->%i):\n",N);
     int i;
     double ff[N],s1ar[N],s2ar[N],s1ai[N],s2ai[N],s1p[N],s2p[N];
     for(i=0;i<N;i++){
@@ -128,6 +137,13 @@ int main (){
     double complex rs0=wip_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0,-1.0,-1.0);  
     double end=((double)clock())/CLOCKS_PER_SEC;
     double complex err=rs0-rex;
+    printf( "ran %i steps.\n",wip_count);
+    printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
+    printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
+    start=((double)clock())/CLOCKS_PER_SEC;
+    rs0=wip_phase(ff,N,ff,N,s2ar,s2ai,s2p,s1ar,s1ai,s1p,Swhitenoise,1.0,-1,-1);  
+    end=((double)clock())/CLOCKS_PER_SEC;
+    err=conj(rs0)-rex;
     printf( "ran %i steps.\n",wip_count);
     printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
     printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
@@ -136,7 +152,7 @@ int main (){
 
   if(1){
     N=N0*16;
-    printf("\nInterpQuad(vectored) IP (N->%i):\n",N);
+    printf("\nWIP(vectored) IP (N->%i):\n",N);
     int i;
     double ff[N],s1ar[N],s2ar[N],s1ai[N],s2ai[N],s1p[N],s2p[N];
     for(i=0;i<N;i++){
@@ -153,6 +169,13 @@ int main (){
     double complex rs0=wip_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0,-1.0,-1.0);  
     double end=((double)clock())/CLOCKS_PER_SEC;
     double complex err=rs0-rex;
+    printf( "ran %i steps.\n",wip_count);
+    printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
+    printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
+    start=((double)clock())/CLOCKS_PER_SEC;
+    rs0=wip_phase(ff,N,ff,N,s2ar,s2ai,s2p,s1ar,s1ai,s1p,Swhitenoise,1.0,-1,-1);  
+    end=((double)clock())/CLOCKS_PER_SEC;
+    err=conj(rs0)-rex;
     printf( "ran %i steps.\n",wip_count);
     printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
     printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
@@ -161,7 +184,7 @@ int main (){
 
   if(1){
     N=N0*64;
-    printf("\nInterpQuad(vectored) IP (N->%i):\n",N);
+    printf("\nWIP(vectored) IP (N->%i):\n",N);
     int i;
     double ff[N],s1ar[N],s2ar[N],s1ai[N],s2ai[N],s1p[N],s2p[N];
     for(i=0;i<N;i++){
@@ -178,6 +201,13 @@ int main (){
     double complex rs0=wip_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0,-1.0,-1.0);  
     double end=((double)clock())/CLOCKS_PER_SEC;
     double complex err=rs0-rex;
+    printf( "ran %i steps.\n",wip_count);
+    printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
+    printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
+    start=((double)clock())/CLOCKS_PER_SEC;
+    rs0=wip_phase(ff,N,ff,N,s2ar,s2ai,s2p,s1ar,s1ai,s1p,Swhitenoise,1.0,-1,-1);  
+    end=((double)clock())/CLOCKS_PER_SEC;
+    err=conj(rs0)-rex;
     printf( "ran %i steps.\n",wip_count);
     printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
     printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
@@ -186,7 +216,7 @@ int main (){
 
   if(1){
     N=N0*256;
-    printf("\nInterpQuad(vectored) IP (N->%i):\n",N);
+    printf("\nWIP(vectored) IP (N->%i):\n",N);
     int i;
     double ff[N],s1ar[N],s2ar[N],s1ai[N],s2ai[N],s1p[N],s2p[N];
     for(i=0;i<N;i++){
@@ -206,7 +236,540 @@ int main (){
     printf( "ran %i steps.\n",wip_count);
     printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
     printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
+    start=((double)clock())/CLOCKS_PER_SEC;
+    rs0=wip_phase(ff,N,ff,N,s2ar,s2ai,s2p,s1ar,s1ai,s1p,Swhitenoise,1.0,-1,-1);  
+    end=((double)clock())/CLOCKS_PER_SEC;
+    err=conj(rs0)-rex;
+    printf( "ran %i steps.\n",wip_count);
+    printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
+    printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
     printf( "----------------------------------------------------\n");
   }
 
+  double adapttol=1;
+  if(1){
+    N=N0; 
+    adapttol=1e-2;
+    int ndown=16;
+    printf("\nWIPa(vectored) IP (N->%i/%i,tol=%0.4g):\n",N,ndown,adapttol);
+    int i;
+    double ff[N],s1ar[N],s2ar[N],s1ai[N],s2ai[N],s1p[N],s2p[N];
+    for(i=0;i<N;i++){
+      ff[i] = i/(N-1.0)*(fmax-fmin)+fmin;
+      s1ar[i] = 1.0;
+      s1ai[i] = 0.0;
+      s1p[i] = 0.0;
+      double complex s2a=a0*testfn_dI_A(ff[i], c2, c3, sig, x0, xc);
+      s2ar[i] = creal(s2a);
+      s2ai[i] = cimag(s2a);
+      s2p[i] = testfn_I_p(ff[i], c2, c3, x0);
+    }
+    double start=((double)clock())/CLOCKS_PER_SEC;
+    //double complex rs0=wip_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0,-1,-1);  
+    double complex rs0=wip_adaptive_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0,ndown,adapttol,-1,-1);  
+    double end=((double)clock())/CLOCKS_PER_SEC;
+    double complex err=rs0-rex;
+    printf( "ran %i steps.\n",wip_count);
+    printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
+    printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
+    start=((double)clock())/CLOCKS_PER_SEC;
+    rs0=wip_adaptive_phase(ff,N,ff,N,s2ar,s2ai,s2p,s1ar,s1ai,s1p,Swhitenoise,1.0,ndown,adapttol,-1,-1);  
+    end=((double)clock())/CLOCKS_PER_SEC;
+    err=conj(rs0)-rex;
+    printf( "ran %i steps.\n",wip_count);
+    printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
+    printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
+    printf( "----------------------------------------------------\n");
+  }
+  
+  if(1){
+    N=N0*4; 
+    adapttol=1e-2;
+    int ndown=16;
+    printf("\nWIPa(vectored) IP (N->%i/%i,tol=%0.4g):\n",N,ndown,adapttol);
+    int i;
+    double ff[N],s1ar[N],s2ar[N],s1ai[N],s2ai[N],s1p[N],s2p[N];
+    for(i=0;i<N;i++){
+      ff[i] = i/(N-1.0)*(fmax-fmin)+fmin;
+      s1ar[i] = 1.0;
+      s1ai[i] = 0.0;
+      s1p[i] = 0.0;
+      double complex s2a=a0*testfn_dI_A(ff[i], c2, c3, sig, x0, xc);
+      s2ar[i] = creal(s2a);
+      s2ai[i] = cimag(s2a);
+      s2p[i] = testfn_I_p(ff[i], c2, c3, x0);
+    }
+    double start=((double)clock())/CLOCKS_PER_SEC;
+    //double complex rs0=wip_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0,-1,-1);  
+    double complex rs0=wip_adaptive_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0,ndown,adapttol,-1,-1);  
+    double end=((double)clock())/CLOCKS_PER_SEC;
+    double complex err=rs0-rex;
+    printf( "ran %i steps.\n",wip_count);
+    printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
+    printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
+    start=((double)clock())/CLOCKS_PER_SEC;
+    rs0=wip_adaptive_phase(ff,N,ff,N,s2ar,s2ai,s2p,s1ar,s1ai,s1p,Swhitenoise,1.0,ndown,adapttol,-1,-1);  
+    end=((double)clock())/CLOCKS_PER_SEC;
+    err=conj(rs0)-rex;
+    printf( "ran %i steps.\n",wip_count);
+    printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
+    printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
+    printf( "----------------------------------------------------\n");
+  }
+  
+  if(1){
+    N=N0*16; 
+    adapttol=1e-2;
+    int ndown=16;
+    printf("\nWIPa(vectored) IP (N->%i/%i,tol=%0.4g):\n",N,ndown,adapttol);
+    int i;
+    double ff[N],s1ar[N],s2ar[N],s1ai[N],s2ai[N],s1p[N],s2p[N];
+    for(i=0;i<N;i++){
+      ff[i] = i/(N-1.0)*(fmax-fmin)+fmin;
+      s1ar[i] = 1.0;
+      s1ai[i] = 0.0;
+      s1p[i] = 0.0;
+      double complex s2a=a0*testfn_dI_A(ff[i], c2, c3, sig, x0, xc);
+      s2ar[i] = creal(s2a);
+      s2ai[i] = cimag(s2a);
+      s2p[i] = testfn_I_p(ff[i], c2, c3, x0);
+    }
+    double start=((double)clock())/CLOCKS_PER_SEC;
+    //double complex rs0=wip_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0,-1,-1);  
+    double complex rs0=wip_adaptive_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0,ndown,adapttol,-1,-1);  
+    double end=((double)clock())/CLOCKS_PER_SEC;
+    double complex err=rs0-rex;
+    printf( "ran %i steps.\n",wip_count);
+    printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
+    printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
+    start=((double)clock())/CLOCKS_PER_SEC;
+    rs0=wip_adaptive_phase(ff,N,ff,N,s2ar,s2ai,s2p,s1ar,s1ai,s1p,Swhitenoise,1.0,ndown,adapttol,-1,-1);  
+    end=((double)clock())/CLOCKS_PER_SEC;
+    err=conj(rs0)-rex;
+    printf( "ran %i steps.\n",wip_count);
+    printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
+    printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
+    printf( "----------------------------------------------------\n");
+  }
+  
+  if(1){
+    N=N0; 
+    adapttol=1e-3;
+    int ndown=16;
+    printf("\nWIPa(vectored) IP (N->%i/%i,tol=%0.4g):\n",N,ndown,adapttol);
+    int i;
+    double ff[N],s1ar[N],s2ar[N],s1ai[N],s2ai[N],s1p[N],s2p[N];
+    for(i=0;i<N;i++){
+      ff[i] = i/(N-1.0)*(fmax-fmin)+fmin;
+      s1ar[i] = 1.0;
+      s1ai[i] = 0.0;
+      s1p[i] = 0.0;
+      double complex s2a=a0*testfn_dI_A(ff[i], c2, c3, sig, x0, xc);
+      s2ar[i] = creal(s2a);
+      s2ai[i] = cimag(s2a);
+      s2p[i] = testfn_I_p(ff[i], c2, c3, x0);
+    }
+    double start=((double)clock())/CLOCKS_PER_SEC;
+    //double complex rs0=wip_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0,-1,-1);  
+    double complex rs0=wip_adaptive_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0,ndown,adapttol,-1,-1);  
+    double end=((double)clock())/CLOCKS_PER_SEC;
+    double complex err=rs0-rex;
+    printf( "ran %i steps.\n",wip_count);
+    printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
+    printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
+    start=((double)clock())/CLOCKS_PER_SEC;
+    rs0=wip_adaptive_phase(ff,N,ff,N,s2ar,s2ai,s2p,s1ar,s1ai,s1p,Swhitenoise,1.0,ndown,adapttol,-1,-1);  
+    end=((double)clock())/CLOCKS_PER_SEC;
+    err=conj(rs0)-rex;
+    printf( "ran %i steps.\n",wip_count);
+    printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
+    printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
+    printf( "----------------------------------------------------\n");
+  }
+  
+  if(1){
+    N=N0*4; 
+    adapttol=1e-3;
+    int ndown=16;
+    printf("\nWIPa(vectored) IP (N->%i/%i,tol=%0.4g):\n",N,ndown,adapttol);
+    int i;
+    double ff[N],s1ar[N],s2ar[N],s1ai[N],s2ai[N],s1p[N],s2p[N];
+    for(i=0;i<N;i++){
+      ff[i] = i/(N-1.0)*(fmax-fmin)+fmin;
+      s1ar[i] = 1.0;
+      s1ai[i] = 0.0;
+      s1p[i] = 0.0;
+      double complex s2a=a0*testfn_dI_A(ff[i], c2, c3, sig, x0, xc);
+      s2ar[i] = creal(s2a);
+      s2ai[i] = cimag(s2a);
+      s2p[i] = testfn_I_p(ff[i], c2, c3, x0);
+    }
+    double start=((double)clock())/CLOCKS_PER_SEC;
+    //double complex rs0=wip_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0,-1,-1);  
+    double complex rs0=wip_adaptive_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0,ndown,adapttol,-1,-1);  
+    double end=((double)clock())/CLOCKS_PER_SEC;
+    double complex err=rs0-rex;
+    printf( "ran %i steps.\n",wip_count);
+    printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
+    printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
+    start=((double)clock())/CLOCKS_PER_SEC;
+    rs0=wip_adaptive_phase(ff,N,ff,N,s2ar,s2ai,s2p,s1ar,s1ai,s1p,Swhitenoise,1.0,ndown,adapttol,-1,-1);  
+    end=((double)clock())/CLOCKS_PER_SEC;
+    err=conj(rs0)-rex;
+    printf( "ran %i steps.\n",wip_count);
+    printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
+    printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
+    printf( "----------------------------------------------------\n");
+  }
+  
+  if(1){
+    N=N0*16; 
+    adapttol=1e-3;
+    int ndown=16;
+    printf("\nWIPa(vectored) IP (N->%i/%i,tol=%0.4g):\n",N,ndown,adapttol);
+    int i;
+    double ff[N],s1ar[N],s2ar[N],s1ai[N],s2ai[N],s1p[N],s2p[N];
+    for(i=0;i<N;i++){
+      ff[i] = i/(N-1.0)*(fmax-fmin)+fmin;
+      s1ar[i] = 1.0;
+      s1ai[i] = 0.0;
+      s1p[i] = 0.0;
+      double complex s2a=a0*testfn_dI_A(ff[i], c2, c3, sig, x0, xc);
+      s2ar[i] = creal(s2a);
+      s2ai[i] = cimag(s2a);
+      s2p[i] = testfn_I_p(ff[i], c2, c3, x0);
+    }
+    double start=((double)clock())/CLOCKS_PER_SEC;
+    //double complex rs0=wip_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0,-1,-1);  
+    double complex rs0=wip_adaptive_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0,ndown,adapttol,-1,-1);  
+    double end=((double)clock())/CLOCKS_PER_SEC;
+    double complex err=rs0-rex;
+    printf( "ran %i steps.\n",wip_count);
+    printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
+    printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
+    start=((double)clock())/CLOCKS_PER_SEC;
+    rs0=wip_adaptive_phase(ff,N,ff,N,s2ar,s2ai,s2p,s1ar,s1ai,s1p,Swhitenoise,1.0,ndown,adapttol,-1,-1);  
+    end=((double)clock())/CLOCKS_PER_SEC;
+    err=conj(rs0)-rex;
+    printf( "ran %i steps.\n",wip_count);
+    printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
+    printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
+    printf( "----------------------------------------------------\n");
+  }
+  
+  if(1){
+    N=N0; 
+    adapttol=1e-4;
+    int ndown=16;
+    printf("\nWIPa(vectored) IP (N->%i/%i,tol=%0.4g):\n",N,ndown,adapttol);
+    int i;
+    double ff[N],s1ar[N],s2ar[N],s1ai[N],s2ai[N],s1p[N],s2p[N];
+    for(i=0;i<N;i++){
+      ff[i] = i/(N-1.0)*(fmax-fmin)+fmin;
+      s1ar[i] = 1.0;
+      s1ai[i] = 0.0;
+      s1p[i] = 0.0;
+      double complex s2a=a0*testfn_dI_A(ff[i], c2, c3, sig, x0, xc);
+      s2ar[i] = creal(s2a);
+      s2ai[i] = cimag(s2a);
+      s2p[i] = testfn_I_p(ff[i], c2, c3, x0);
+    }
+    double start=((double)clock())/CLOCKS_PER_SEC;
+    //double complex rs0=wip_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0,-1,-1);  
+    double complex rs0=wip_adaptive_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0,ndown,adapttol,-1,-1);  
+    double end=((double)clock())/CLOCKS_PER_SEC;
+    double complex err=rs0-rex;
+    printf( "ran %i steps.\n",wip_count);
+    printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
+    printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
+    start=((double)clock())/CLOCKS_PER_SEC;
+    rs0=wip_adaptive_phase(ff,N,ff,N,s2ar,s2ai,s2p,s1ar,s1ai,s1p,Swhitenoise,1.0,ndown,adapttol,-1,-1);  
+    end=((double)clock())/CLOCKS_PER_SEC;
+    err=conj(rs0)-rex;
+    printf( "ran %i steps.\n",wip_count);
+    printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
+    printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
+    printf( "----------------------------------------------------\n");
+  }
+  
+  if(1){
+    N=N0*4; 
+    adapttol=1e-4;
+    int ndown=16;
+    printf("\nWIPa(vectored) IP (N->%i/%i,tol=%0.4g):\n",N,ndown,adapttol);
+    int i;
+    double ff[N],s1ar[N],s2ar[N],s1ai[N],s2ai[N],s1p[N],s2p[N];
+    for(i=0;i<N;i++){
+      ff[i] = i/(N-1.0)*(fmax-fmin)+fmin;
+      s1ar[i] = 1.0;
+      s1ai[i] = 0.0;
+      s1p[i] = 0.0;
+      double complex s2a=a0*testfn_dI_A(ff[i], c2, c3, sig, x0, xc);
+      s2ar[i] = creal(s2a);
+      s2ai[i] = cimag(s2a);
+      s2p[i] = testfn_I_p(ff[i], c2, c3, x0);
+    }
+    double start=((double)clock())/CLOCKS_PER_SEC;
+    //double complex rs0=wip_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0,-1,-1);  
+    double complex rs0=wip_adaptive_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0,ndown,adapttol,-1,-1);  
+    double end=((double)clock())/CLOCKS_PER_SEC;
+    double complex err=rs0-rex;
+    printf( "ran %i steps.\n",wip_count);
+    printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
+    printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
+    start=((double)clock())/CLOCKS_PER_SEC;
+    rs0=wip_adaptive_phase(ff,N,ff,N,s2ar,s2ai,s2p,s1ar,s1ai,s1p,Swhitenoise,1.0,ndown,adapttol,-1,-1);  
+    end=((double)clock())/CLOCKS_PER_SEC;
+    err=conj(rs0)-rex;
+    printf( "ran %i steps.\n",wip_count);
+    printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
+    printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
+    printf( "----------------------------------------------------\n");
+  }
+  
+  if(1){
+    N=N0*16; 
+    adapttol=1e-4;
+    int ndown=16;
+    printf("\nWIPa(vectored) IP (N->%i/%i,tol=%0.4g):\n",N,ndown,adapttol);
+    int i;
+    double ff[N],s1ar[N],s2ar[N],s1ai[N],s2ai[N],s1p[N],s2p[N];
+    for(i=0;i<N;i++){
+      ff[i] = i/(N-1.0)*(fmax-fmin)+fmin;
+      s1ar[i] = 1.0;
+      s1ai[i] = 0.0;
+      s1p[i] = 0.0;
+      double complex s2a=a0*testfn_dI_A(ff[i], c2, c3, sig, x0, xc);
+      s2ar[i] = creal(s2a);
+      s2ai[i] = cimag(s2a);
+      s2p[i] = testfn_I_p(ff[i], c2, c3, x0);
+    }
+    double start=((double)clock())/CLOCKS_PER_SEC;
+    //double complex rs0=wip_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0,-1,-1);  
+    double complex rs0=wip_adaptive_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0,ndown,adapttol,-1,-1);  
+    double end=((double)clock())/CLOCKS_PER_SEC;
+    double complex err=rs0-rex;
+    printf( "ran %i steps.\n",wip_count);
+    printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
+    printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
+    start=((double)clock())/CLOCKS_PER_SEC;
+    rs0=wip_adaptive_phase(ff,N,ff,N,s2ar,s2ai,s2p,s1ar,s1ai,s1p,Swhitenoise,1.0,ndown,adapttol,-1,-1);  
+    end=((double)clock())/CLOCKS_PER_SEC;
+    err=conj(rs0)-rex;
+    printf( "ran %i steps.\n",wip_count);
+    printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
+    printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
+    printf( "----------------------------------------------------\n");
+  }
+  
+  if(1){
+    N=N0*64; 
+    adapttol=1e-4;
+    int ndown=16;
+    printf("\nWIPa(vectored) IP (N->%i/%i,tol=%0.4g):\n",N,ndown,adapttol);
+    int i;
+    double ff[N],s1ar[N],s2ar[N],s1ai[N],s2ai[N],s1p[N],s2p[N];
+    for(i=0;i<N;i++){
+      ff[i] = i/(N-1.0)*(fmax-fmin)+fmin;
+      s1ar[i] = 1.0;
+      s1ai[i] = 0.0;
+      s1p[i] = 0.0;
+      double complex s2a=a0*testfn_dI_A(ff[i], c2, c3, sig, x0, xc);
+      s2ar[i] = creal(s2a);
+      s2ai[i] = cimag(s2a);
+      s2p[i] = testfn_I_p(ff[i], c2, c3, x0);
+    }
+    double start=((double)clock())/CLOCKS_PER_SEC;
+    //double complex rs0=wip_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0,-1,-1);  
+    double complex rs0=wip_adaptive_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0,ndown,adapttol,-1,-1);  
+    double end=((double)clock())/CLOCKS_PER_SEC;
+    double complex err=rs0-rex;
+    printf( "ran %i steps.\n",wip_count);
+    printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
+    printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
+    start=((double)clock())/CLOCKS_PER_SEC;
+    rs0=wip_adaptive_phase(ff,N,ff,N,s2ar,s2ai,s2p,s1ar,s1ai,s1p,Swhitenoise,1.0,ndown,adapttol,-1,-1);  
+    end=((double)clock())/CLOCKS_PER_SEC;
+    err=conj(rs0)-rex;
+    printf( "ran %i steps.\n",wip_count);
+    printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
+    printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
+    printf( "----------------------------------------------------\n");
+  }
+  
+  if(1){
+    N=N0*256; 
+    adapttol=1e-4;
+    int ndown=16;
+    printf("\nWIPa(vectored) IP (N->%i/%i,tol=%0.4g):\n",N,ndown,adapttol);
+    int i;
+    double ff[N],s1ar[N],s2ar[N],s1ai[N],s2ai[N],s1p[N],s2p[N];
+    for(i=0;i<N;i++){
+      ff[i] = i/(N-1.0)*(fmax-fmin)+fmin;
+      s1ar[i] = 1.0;
+      s1ai[i] = 0.0;
+      s1p[i] = 0.0;
+      double complex s2a=a0*testfn_dI_A(ff[i], c2, c3, sig, x0, xc);
+      s2ar[i] = creal(s2a);
+      s2ai[i] = cimag(s2a);
+      s2p[i] = testfn_I_p(ff[i], c2, c3, x0);
+    }
+    double start=((double)clock())/CLOCKS_PER_SEC;
+    //double complex rs0=wip_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0,-1,-1);  
+    double complex rs0=wip_adaptive_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0,ndown,adapttol,-1,-1);  
+    double end=((double)clock())/CLOCKS_PER_SEC;
+    double complex err=rs0-rex;
+    printf( "ran %i steps.\n",wip_count);
+    printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
+    printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
+    start=((double)clock())/CLOCKS_PER_SEC;
+    rs0=wip_adaptive_phase(ff,N,ff,N,s2ar,s2ai,s2p,s1ar,s1ai,s1p,Swhitenoise,1.0,ndown,adapttol,-1,-1);  
+    end=((double)clock())/CLOCKS_PER_SEC;
+    err=conj(rs0)-rex;
+    printf( "ran %i steps.\n",wip_count);
+    printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
+    printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
+    printf( "----------------------------------------------------\n");
+  }
+  
+  if(1){
+    N=N0*16; 
+    adapttol=1e-5;
+    int ndown=16;
+    printf("\nWIPa(vectored) IP (N->%i/%i,tol=%0.4g):\n",N,ndown,adapttol);
+    int i;
+    double ff[N],s1ar[N],s2ar[N],s1ai[N],s2ai[N],s1p[N],s2p[N];
+    for(i=0;i<N;i++){
+      ff[i] = i/(N-1.0)*(fmax-fmin)+fmin;
+      s1ar[i] = 1.0;
+      s1ai[i] = 0.0;
+      s1p[i] = 0.0;
+      double complex s2a=a0*testfn_dI_A(ff[i], c2, c3, sig, x0, xc);
+      s2ar[i] = creal(s2a);
+      s2ai[i] = cimag(s2a);
+      s2p[i] = testfn_I_p(ff[i], c2, c3, x0);
+    }
+    double start=((double)clock())/CLOCKS_PER_SEC;
+    //double complex rs0=wip_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0,-1,-1);  
+    double complex rs0=wip_adaptive_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0,ndown,adapttol,-1,-1);  
+    double end=((double)clock())/CLOCKS_PER_SEC;
+    double complex err=rs0-rex;
+    printf( "ran %i steps.\n",wip_count);
+    printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
+    printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
+    start=((double)clock())/CLOCKS_PER_SEC;
+    rs0=wip_adaptive_phase(ff,N,ff,N,s2ar,s2ai,s2p,s1ar,s1ai,s1p,Swhitenoise,1.0,ndown,adapttol,-1,-1);  
+    end=((double)clock())/CLOCKS_PER_SEC;
+    err=conj(rs0)-rex;
+    printf( "ran %i steps.\n",wip_count);
+    printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
+    printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
+    printf( "----------------------------------------------------\n");
+  }
+  
+  if(1){
+    N=N0*256; 
+    adapttol=1e-5;
+    int ndown=16;
+    printf("\nWIPa(vectored) IP (N->%i/%i,tol=%0.4g):\n",N,ndown,adapttol);
+    int i;
+    double ff[N],s1ar[N],s2ar[N],s1ai[N],s2ai[N],s1p[N],s2p[N];
+    for(i=0;i<N;i++){
+      ff[i] = i/(N-1.0)*(fmax-fmin)+fmin;
+      s1ar[i] = 1.0;
+      s1ai[i] = 0.0;
+      s1p[i] = 0.0;
+      double complex s2a=a0*testfn_dI_A(ff[i], c2, c3, sig, x0, xc);
+      s2ar[i] = creal(s2a);
+      s2ai[i] = cimag(s2a);
+      s2p[i] = testfn_I_p(ff[i], c2, c3, x0);
+    }
+    double start=((double)clock())/CLOCKS_PER_SEC;
+    //double complex rs0=wip_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0,-1,-1);  
+    double complex rs0=wip_adaptive_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0,ndown,adapttol,-1,-1);  
+    double end=((double)clock())/CLOCKS_PER_SEC;
+    double complex err=rs0-rex;
+    printf( "ran %i steps.\n",wip_count);
+    printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
+    printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
+    start=((double)clock())/CLOCKS_PER_SEC;
+    rs0=wip_adaptive_phase(ff,N,ff,N,s2ar,s2ai,s2p,s1ar,s1ai,s1p,Swhitenoise,1.0,ndown,adapttol,-1,-1);  
+    end=((double)clock())/CLOCKS_PER_SEC;
+    err=conj(rs0)-rex;
+    printf( "ran %i steps.\n",wip_count);
+    printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
+    printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
+    printf( "----------------------------------------------------\n");
+  }
+  
+  if(1){
+    N=N0*16; 
+    adapttol=1e-7;
+    int ndown=16;
+    printf("\nWIPa(vectored) IP (N->%i/%i,tol=%0.4g):\n",N,ndown,adapttol);
+    int i;
+    double ff[N],s1ar[N],s2ar[N],s1ai[N],s2ai[N],s1p[N],s2p[N];
+    for(i=0;i<N;i++){
+      ff[i] = i/(N-1.0)*(fmax-fmin)+fmin;
+      s1ar[i] = 1.0;
+      s1ai[i] = 0.0;
+      s1p[i] = 0.0;
+      double complex s2a=a0*testfn_dI_A(ff[i], c2, c3, sig, x0, xc);
+      s2ar[i] = creal(s2a);
+      s2ai[i] = cimag(s2a);
+      s2p[i] = testfn_I_p(ff[i], c2, c3, x0);
+    }
+    double start=((double)clock())/CLOCKS_PER_SEC;
+    //double complex rs0=wip_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0,-1,-1);  
+    double complex rs0=wip_adaptive_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0,ndown,adapttol,-1,-1);  
+    double end=((double)clock())/CLOCKS_PER_SEC;
+    double complex err=rs0-rex;
+    printf( "ran %i steps.\n",wip_count);
+    printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
+    printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
+    start=((double)clock())/CLOCKS_PER_SEC;
+    rs0=wip_adaptive_phase(ff,N,ff,N,s2ar,s2ai,s2p,s1ar,s1ai,s1p,Swhitenoise,1.0,ndown,adapttol,-1,-1);  
+    end=((double)clock())/CLOCKS_PER_SEC;
+    err=conj(rs0)-rex;
+    printf( "ran %i steps.\n",wip_count);
+    printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
+    printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
+    printf( "----------------------------------------------------\n");
+  }
+  
+  if(1){
+    N=N0*256; 
+    adapttol=1e-7;
+    int ndown=16;
+    printf("\nWIPa(vectored) IP (N->%i/%i,tol=%0.4g):\n",N,ndown,adapttol);
+    int i;
+    double ff[N],s1ar[N],s2ar[N],s1ai[N],s2ai[N],s1p[N],s2p[N];
+    for(i=0;i<N;i++){
+      ff[i] = i/(N-1.0)*(fmax-fmin)+fmin;
+      s1ar[i] = 1.0;
+      s1ai[i] = 0.0;
+      s1p[i] = 0.0;
+      double complex s2a=a0*testfn_dI_A(ff[i], c2, c3, sig, x0, xc);
+      s2ar[i] = creal(s2a);
+      s2ai[i] = cimag(s2a);
+      s2p[i] = testfn_I_p(ff[i], c2, c3, x0);
+    }
+    double start=((double)clock())/CLOCKS_PER_SEC;
+    //double complex rs0=wip_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0,-1,-1);  
+    double complex rs0=wip_adaptive_phase(ff,N,ff,N,s1ar,s1ai,s1p,s2ar,s2ai,s2p,Swhitenoise,1.0,ndown,adapttol,-1,-1);  
+    double end=((double)clock())/CLOCKS_PER_SEC;
+    double complex err=rs0-rex;
+    printf( "ran %i steps.\n",wip_count);
+    printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
+    printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
+    start=((double)clock())/CLOCKS_PER_SEC;
+    rs0=wip_adaptive_phase(ff,N,ff,N,s2ar,s2ai,s2p,s1ar,s1ai,s1p,Swhitenoise,1.0,ndown,adapttol,-1,-1);  
+    end=((double)clock())/CLOCKS_PER_SEC;
+    err=conj(rs0)-rex;
+    printf( "ran %i steps.\n",wip_count);
+    printf( "result= %g + %gi  err= %g + %gi\n",creal(rs0),cimag(rs0),creal(err),cimag(err));
+    printf( "total time= %g   time per eval= %g\n",end-start,(end-start)/wip_count);
+    printf( "----------------------------------------------------\n");
+  }
+  
 }

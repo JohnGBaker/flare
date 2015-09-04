@@ -34,6 +34,7 @@ double wip_mindf=1e-8;
 double wip_errtol=1.0e-8;
 int wip_uselogf=0;
 int wip_count;
+int wip_adapt_verbose=0;
 
 // To avoid loss of precision at small z, cexpm1i(zi) implements cos(zi)-1 + i*sin(zi)
 // The real analogue of this function is part of the standard library, and the C99 standard
@@ -190,6 +191,7 @@ double complex wip_phase (double *f1, int n1, double *f2, int n2, double *s1Ar, 
     double f=fs[i];
     double eps=fs[i+1]-f;
     double eps2=eps*eps;
+    //printf("[ %.8g -- %.8g ]\n",f,f+eps);
 
     //#amp coeffs
     double a0r,a0i,a1r,a1i,a2r,a2i,a3r,a3i;
@@ -294,3 +296,244 @@ double complex wip_phase (double *f1, int n1, double *f2, int n2, double *s1Ar, 
   
   return intsum;
 };
+
+///This is just the one-step part of the integration routine abstracted
+double complex compute_int(double fleft, double fright, double *fs, int nf, double *Ars, double *Arz, double *Ais, double *Aiz, double *dphis, double *dphiz){
+  double f=fleft;
+  double eps=fright-fleft;
+  double eps2=eps*eps;
+
+  if(wip_adapt_verbose)printf("\n[ %.8g -- %.8g ] Delta=%.4g\n",fleft,fright,fright-fleft);
+  //intd3vec(f,fs,Ars,Azs,nf)
+  const double complex sqrti = cexp(0.25*I*M_PI);
+  const double sqrtpi = sqrt(M_PI);
+  
+  //#amp coeffs
+  double a0r,a0i,a1r,a1i,a2r,a2i,a3r,a3i;
+  spline_intd3(f,fs,Ars,Arz,nf,&a0r,&a1r,&a2r,&a3r);
+  spline_intd3(f,fs,Ais,Aiz,nf,&a0i,&a1i,&a2i,&a3i);
+  double complex a0=a0r+I*a0i;
+  double complex a1=a1r+I*a1i;
+  double complex a2=a2r+I*a2i;
+  double complex a3=a3r+I*a3i;
+  
+  a2=a2/2.0;
+  a3=a3/6.0;
+  if(wip_adapt_verbose)printf(" As = %g+%gi ,  %g+%gi ,  %g+%gi , %g+%gi \n",a0r,a0i,a1r,a1i,a2r/2,a2i/2,a3r/6,a3i/6);
+  double complex ampscale=1;
+  if(wip_relative){
+    ampscale=fabs(a0r)+fabs(a0i)+1.0e-50;
+    a0=a0/ampscale;
+    a1=a1/ampscale;
+    a2=a2/ampscale;
+    a3=a3/ampscale;
+  }
+  //#phase coefficients
+  double p0,p1,p2,p3;
+  spline_intd3(f,fs,dphis,dphiz,nf,&p0,&p1,&p2,&p3);
+  p2=p2/2.0;
+  p3=p3/6.0;
+  
+  //#Inm   = Integrate(x^n Em(x), {x,0,eps}) / E0
+  //#Em(x) = Exp(p1*x+...pm*x^m)
+  double p1e=p1*eps;
+  double p2e2=p2*eps2;
+  double p3e3=p3*eps*eps2;
+  double complex E0=cexp(I*p0);
+  double complex E2m1=cexpm1i(p1e+p2e2);
+  double complex E2=E2m1+1.0;
+  //#const phase terms
+  double I00, I10, I20, I30;
+  I00=eps;
+  I10=eps2/2.0;
+  I20=eps2*eps/3.0;
+  I30=eps2*eps2/4.0;
+  if(wip_adapt_verbose)printf(" Ix0s = %g+%gi ,  %g+%gi ,  %g+%gi , %g+%gi \n",creal(I00),cimag(I00),creal(I10),cimag(I10),creal(I20),cimag(I20),creal(I30),cimag(I30));
+  //#linear phase terms (if needed), and quadratic phase terms
+  double complex I01, I11, I21, I31;
+  double complex I02, I12, I22, I32;
+  int useapproxquad=p2e2*p2e2*p2e2*p2<wip_errtol;
+  if(useapproxquad){
+    double p1e2=p1e*p1e;
+    if(p1e2*p1e2<wip_errtol){// #small p1e approx with errs order p1e^4
+      double complex ip1=I*p1;
+      I01=I00+ip1*(I10+ip1/2.0*(I20+ip1/3.0*I30));
+      I11=I10+ip1*(I20+ip1/2.0*I30);
+      I21=I20+ip1*I30;
+      I31=I30;
+    } else {
+      double complex iop1=I/p1;
+      //A space for the cexpm1 function is reserved in the C99 standard, though it need not be implemented.
+      //If it exists it can avoid precision issues with small values of the argument.
+      double complex E1m1=cexpm1i(p1e);
+      double complex E1=1.0+E1m1;
+      I01=-iop1*E1m1;
+      I11=iop1*(I01-I00*E1);
+      I21=2.0*iop1*(I11-I10*E1);
+      I31=3.0*iop1*(I21-I20*E1);
+    }
+    if(wip_adapt_verbose)printf(" Ix1s = %g+%gi ,  %g+%gi ,  %g+%gi , %g+%gi \n",creal(I02),cimag(I01),creal(I11),cimag(I11),creal(I21),cimag(I21),creal(I31),cimag(I31));
+    //#small p2e approx with errs order p2e^2
+    double complex ip2=I*p2;
+    I02=I01+ip2*I21;
+    I12=I11+ip2*I31;
+    I22=I21;
+    I32=I31;
+  } else {
+    double complex io2p2=0.5*I/p2;
+    double complex s=csqrt(p2);
+    double complex z0=p1/s/2.0;
+    double complex w0=Faddeeva_w(sqrti*z0,wip_errtol);
+    double complex wp=Faddeeva_w(sqrti*( eps*s+z0),wip_errtol);
+    double complex ip1=I*p1;
+    I02=-0.5/s*sqrti*sqrtpi*( E2*wp - w0 );
+    I12= -io2p2*(E2m1-ip1*I02);
+    I22=-io2p2*(I00*E2-I02-ip1*I12);
+    I32=-io2p2*(2.0*(I10*E2-I12)-ip1*I22);
+  }
+  if(wip_adapt_verbose)printf(" Ix2s = %g+%gi ,  %g+%gi ,  %g+%gi , %g+%gi \n",creal(I02),cimag(I02),creal(I12),cimag(I12),creal(I22),cimag(I22),creal(I32),cimag(I32));
+  //#cubic phase terms
+  //#small p3e3 approx is our only option (we can keep more terms... above)
+  double complex I03, I13, I23, I33;
+  double complex ip3=I*p3;
+  I03=I02+ip3*I32;
+  I13=I12;
+  I23=I22;
+  I33=I32;
+  if(wip_adapt_verbose){
+    printf(" In3s = %g+%gi ,  %g+%gi ,  %g+%gi , %g+%gi \n",creal(I03),cimag(I03),creal(I13),cimag(I13),creal(I23),cimag(I23),creal(I33),cimag(I33));
+  //#finish
+    printf(" cofac=%g+%gi\n",creal(ampscale*E0),cimag(ampscale*E0));
+    printf(" ampscale=%g+%gi, E0=%g+%gi\n",creal(ampscale),cimag(ampscale),creal(E0),cimag(E0));
+    printf(" As = %g+%gi ,  %g+%gi ,  %g+%gi , %g+%gi \n",creal(a0),cimag(a0),creal(a1),cimag(a1),creal(a2),cimag(a2),creal(a3),cimag(a3));
+  }
+  double complex dint=ampscale*E0*(a0*I03 + a1*I13 + a2*I23 + a3*I33);
+  // #step
+  return dint;
+};
+
+
+//#Now perform the integration adaptively.
+//This version is the same as above, but implementing an experimental adaptive approach.
+//In this approach we test and refine the grid as needed to reach a target accuracy
+double complex wip_adaptive_phase (double *f1, int n1, double *f2, int n2, double *s1Ar, double *s1Ai, double  *s1p, double *s2Ar, double*s2Ai, double *s2p, double (*Snoise)(double), double scalefactor, int downsample, double errtol, double min_f, double max_f){
+  const int maxlev=20;
+  int i;
+  double f1x[n1],f2x[n2];
+
+  if(wip_uselogf){
+    for(i=0; i<n1;i++){
+      double f=f1[i];
+      if(f<=0)printf("wip_adaptive_phase:Trouble using log grid: f1=%g\n",f);
+      f1x[i]=log(f);
+    }
+    for(i=0; i<n2;i++){
+      double f=f2[i];
+      if(f<=0)printf("wip_adaptive_phase:Trouble using log grid: f2=%g\n",f);
+      f2x[i]=log(f);
+    }
+  } else {
+    for(i=0; i<n1;i++)f1x[i]=f1[i];
+    for(i=0; i<n2;i++)f2x[i]=f2[i];
+  }
+
+  //#integrate to new grid
+  int NfMax=(n1+n2)*scalefactor;//should be adequately large. 
+  double fs[NfMax],Ars[NfMax],Ais[NfMax],Arz[NfMax],Aiz[NfMax],dphis[NfMax],dphiz[NfMax];//(does this work in C?)
+  int nf=NfMax;
+  interpolate_ip_integrand(f1x, s1Ar, s1Ai, s1p, n1, f2x, s2Ar, s2Ai, s2p, n2, Snoise, scalefactor, fs, Ars, Ais, dphis, &nf, min_f, max_f);
+  spline_construct(fs,Ars,Arz,nf);
+  spline_construct(fs,Ais,Aiz,nf);
+  spline_construct(fs,dphis,dphiz,nf);
+
+  //printf( "fs: [");for(i=0;i<nf-1;i++)printf(" %g,",fs[i]);printf(" %g ]\n",fs[nf-1]);
+  //printf( "Ars: [");for(i=0;i<nf-1;i++)printf(" %g,",Ars[i]);printf(" %g ]\n",Ars[nf-1]);
+  //printf( "Ais: [");for(i=0;i<nf-1;i++)printf(" %g,",Ais[i]);printf(" %g ]\n",Ais[nf-1]);
+  //printf( "dphis: [");for(i=0;i<nf-1;i++)printf(" %g,",dphis[i]);printf(" %g ]\n",dphis[nf-1]);
+
+  int ncount=0;
+  double complex intsum=0;
+  double dfs[NfMax];
+  int ndf=(nf-2)/downsample+2;
+  //perform downsampling
+  for(i=0;i<nf-1;i+=downsample)dfs[i/downsample]=fs[i];
+  dfs[ndf-1]=fs[nf-1];
+  //printf("fs = {%.4g,%.4g,%.4g,...,%.4g,%.4g,%.4g}\n",fs[0],fs[1],fs[2],fs[nf-3],fs[nf-2],fs[nf-1]);
+  //printf("dfs = {%.4g,%.4g,%.4g,...,%.4g,%.4g,%.4g}\n",dfs[0],dfs[1],dfs[2],dfs[ndf-3],dfs[ndf-2],dfs[ndf-1]);
+  double basetol=errtol/ndf;
+  //printf("ndf=%i, wip_adaptTOL=%0.8g, base_tol=%0.8g,\n",ndf,wip_adaptTOL,basetol);
+  for(i=0;i<ndf-1;i+=1){//loop over freq intervals
+    int ilevel=0;
+    double fleft,fright[maxlev+1];
+    double complex right_result[maxlev+1];
+    fleft=dfs[i];fright[0]=dfs[i+1];
+    int on_right=0;
+    int have_trial=0;
+    double complex trial=0;
+    while(ilevel>=0){
+      if(!have_trial){//First time through at this level, we compute the left-half integral.
+	if(wip_adapt_verbose)printf("\nTrial:\n");
+	trial=compute_int(fleft,fright[ilevel],fs, nf, Ars, Arz, Ais, Aiz, dphis, dphiz);
+	have_trial=1;
+	ncount++;
+	if(wip_adapt_verbose)printf("computed: lev=%2i, trial=%.8g+i%.8g\n",ilevel,trial);
+      }
+      int pass=0;
+      double complex oldtrial=trial;
+      double complex left_result;
+      if(wip_adapt_verbose)printf("set: lev=%2i, oldtrial=%.8g+i%.8g\n",ilevel,oldtrial);
+      double fcent=(fleft+fright[ilevel])/2.0;
+
+      if(ilevel>=maxlev){
+	printf("wip_adaptive_phase:Reached maxlevel without passing tolerance test.\n");
+	pass=1;
+      } else {
+	int k;
+	if(wip_adapt_verbose)for(k=0;k<=ilevel;k++)printf("%i: [%.8g,%.8g]\n",k,fleft,fright[k]);
+
+	if(wip_adapt_verbose)printf("\n  left:\n");
+	left_result=compute_int(fleft,fcent,fs, nf, Ars, Arz, Ais, Aiz, dphis, dphiz);
+	if(wip_adapt_verbose)printf("\n  right:\n");
+	right_result[ilevel]=compute_int(fcent,fright[ilevel],fs, nf, Ars, Arz, Ais, Aiz, dphis, dphiz);
+	trial=left_result+right_result[ilevel];
+	double complex diff=trial-oldtrial;
+	ncount+=2;
+	double tol=basetol/(2<<ilevel);
+	pass=cabs(diff)<tol;
+	if(wip_adapt_verbose){
+	  printf("check: lev=%2i, oldtrial=%.8g\n",ilevel,oldtrial);
+	  printf("testing: lev=%2i, fleft=%.8g, fright=%.8g\n",ilevel,fleft,fright[ilevel]);
+	  printf("testing: lev=%2i, left_result=%.8g+i%.8g, right_result=%.8g+i%.8g\n",ilevel,left_result,right_result[ilevel]);
+	  printf("testing: lev=%2i, trial=%.8g+i%.8g,  oldtrial=%.8g+i%.8g\n",ilevel,trial,oldtrial);
+	  printf("testing: lev=%2i, 2^lev=%i, diff=%.8g, tol=%.8g\n",ilevel,2<<ilevel,cabs(diff),tol);
+	}
+      }
+      if(!pass){
+	//We fail the test and should continue refining
+	fright[ilevel+1]=fcent;
+	trial=left_result;
+	ilevel++;
+	if(wip_adapt_verbose)printf("failing: lev=%2i, fleft=%.8g, fright=%.8g\n",ilevel,fleft,fright[ilevel]);
+      } else { 
+	//We pass the test and thus we finish with this level, and advance the marker.
+	intsum+=trial;
+	fleft=fright[ilevel];
+	fright[ilevel]=fright[ilevel-1];
+	trial=right_result[ilevel-1];
+	while(ilevel>0&&fright[ilevel-1]<=fleft)ilevel--;
+	if(ilevel>0){	  
+	  trial=right_result[ilevel-1];
+	  fright[ilevel]=fright[ilevel-1];
+	} else {
+	  ilevel=-1;
+	  have_trial=0;
+	}
+	if(wip_adapt_verbose)printf("passing:   -->lev=%2i, fleft=%.8g, fright=%.8g\n",ilevel,fleft,fright[ilevel]);
+      }
+    }      
+  }
+  wip_count=ncount;//just for testing/reference
+  return intsum;
+}
+
+
