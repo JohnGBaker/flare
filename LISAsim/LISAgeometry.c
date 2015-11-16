@@ -428,3 +428,70 @@ double complex G31mode(const double f, const double t, const double complex Yfac
 
   return I*PI*f*L_SI/C_SI * (n2Pn2plus*Yfactorplus + n2Pn2cross*Yfactorcross) * sinc( PI*f*L_SI/C_SI * (1.-kn2)) * cexp( I*PI*f*L_SI/C_SI * (1.-kp3plusp1) ); 
 }
+
+/* Function evaluating all coefficients G12, G21, G23, G32, G31, G13, combining the two polarization with the spherical harmonics factors */
+int EvaluateGABmode(
+  double complex* G12,                     /* Output for G12 */
+  double complex* G21,                     /* Output for G21 */
+  double complex* G23,                     /* Output for G23 */
+  double complex* G32,                     /* Output for G32 */
+  double complex* G31,                     /* Output for G31 */
+  double complex* G13,                     /* Output for G13 */
+  const double f,                          /* Frequency */
+  const double t,                          /* Time */
+  const double complex Yfactorplus,        /* Spin-weighted spherical harmonic factor for plus */
+  const double complex Yfactorcross)       /* Spin-weighted spherical harmonic factor for cross */
+{  
+  /* Precompute array of sine/cosine */
+  for(int j=0; j<4; j++) {
+    cosarray[j] = cos((j+1) * Omega_SI * t);
+    sinarray[j] = sin((j+1) * Omega_SI * t);
+  }
+  /* Scalar products with k */
+  double n1Pn1plus = coeffn1Hn1plusconst;
+  double n1Pn1cross = coeffn1Hn1crossconst;
+  double n2Pn2plus = coeffn2Hn2plusconst;
+  double n2Pn2cross = coeffn2Hn2crossconst;
+  double n3Pn3plus = coeffn3Hn3plusconst;
+  double n3Pn3cross = coeffn3Hn3crossconst;
+  for(int j=0; j<4; j++) {
+    n1Pn1plus += cosarray[j] * coeffn1Hn1pluscos[j] + sinarray[j] * coeffn1Hn1plussin[j];
+    n1Pn1cross += cosarray[j] * coeffn1Hn1crosscos[j] + sinarray[j] * coeffn1Hn1crosssin[j];
+    n2Pn2plus += cosarray[j] * coeffn2Hn2pluscos[j] + sinarray[j] * coeffn2Hn2plussin[j];
+    n2Pn2cross += cosarray[j] * coeffn2Hn2crosscos[j] + sinarray[j] * coeffn2Hn2crosssin[j];
+    n3Pn3plus += cosarray[j] * coeffn3Hn3pluscos[j] + sinarray[j] * coeffn3Hn3plussin[j];
+    n3Pn3cross += cosarray[j] * coeffn3Hn3crosscos[j] + sinarray[j] * coeffn3Hn3crosssin[j];
+  }
+  /* Scalar products with k */
+  double kn1 = coeffkn1const;
+  double kn2 = coeffkn2const;
+  double kn3 = coeffkn3const;
+  double kp1plusp2 = coeffkp1plusp2const;
+  double kp2plusp3 = coeffkp2plusp3const;
+  double kp3plusp1 = coeffkp3plusp1const;
+  for(int j=0; j<2; j++) {
+    kn1 += cosarray[j] * coeffkn1cos[j] + sinarray[j] * coeffkn1sin[j];
+    kn2 += cosarray[j] * coeffkn2cos[j] + sinarray[j] * coeffkn2sin[j];
+    kn3 += cosarray[j] * coeffkn3cos[j] + sinarray[j] * coeffkn3sin[j];
+    kp1plusp2 += cosarray[j] * coeffkp1plusp2cos[j] + sinarray[j] * coeffkp1plusp2sin[j];
+    kp2plusp3 += cosarray[j] * coeffkp2plusp3cos[j] + sinarray[j] * coeffkp2plusp3sin[j];
+    kp3plusp1 += cosarray[j] * coeffkp3plusp1cos[j] + sinarray[j] * coeffkp3plusp1sin[j];
+  }
+  /* Common factors */
+  double complex factn1Pn1 = n1Pn1plus*Yfactorplus + n1Pn1cross*Yfactorcross;
+  double complex factn2Pn2 = n2Pn2plus*Yfactorplus + n2Pn2cross*Yfactorcross;
+  double complex factn3Pn3 = n3Pn3plus*Yfactorplus + n3Pn3cross*Yfactorcross;
+  double prefactor = PI*f*L_SI/C_SI;
+  double complex factorcexp12 = cexp(I*prefactor * (1.-kp1plusp2));
+  double complex factorcexp23 = cexp(I*prefactor * (1.-kp2plusp3));
+  double complex factorcexp31 = cexp(I*prefactor * (1.-kp3plusp1));
+  /* Output result */
+  *G12 = I*prefactor * factn3Pn3 * sinc( prefactor * (1.-kn3)) * factorcexp12;
+  *G21 = I*prefactor * factn3Pn3 * sinc( prefactor * (1.+kn3)) * factorcexp12;
+  *G23 = I*prefactor * factn1Pn1 * sinc( prefactor * (1.-kn1)) * factorcexp23;
+  *G32 = I*prefactor * factn1Pn1 * sinc( prefactor * (1.+kn1)) * factorcexp23;
+  *G31 = I*prefactor * factn2Pn2 * sinc( prefactor * (1.-kn2)) * factorcexp31;
+  *G13 = I*prefactor * factn2Pn2 * sinc( prefactor * (1.+kn2)) * factorcexp31;
+
+  return SUCCESS;
+}

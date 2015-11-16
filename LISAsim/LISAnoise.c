@@ -42,33 +42,58 @@
 
 /* Proof mass and optic noises - f in Hz */
 static double Spm(const double f) {
-  return 2.54e-48 /f/f;
+  double invf = 1./f;
+  return 2.54e-48 *invf*invf;
 }
 static double Sop(const double f) {
   return 1.76e-37 *f*f;
 }
 
 /* The noise functions themselves */
+/* Note - we factored out and cancelled the factors of the type sin(n pi f L) */
 double NoiseSnA(const double f) {
   double twopifL = 2.*PI*L_SI/C_SI*f;
-  double sinhalf = sin(1./2*twopifL);
-  double sin3half = sin(3./2*twopifL);
   double cos1 = cos(twopifL);
   double cos2 = cos(2*twopifL);
-  return 32*sinhalf*sinhalf*sin3half*sin3half*( (6 + 4*cos1 + 2*cos2)*Spm(f) + (2 + cos1)*Sop(f) );
+  return 32*( (6 + 4*cos1 + 2*cos2)*Spm(f) + (2 + cos1)*Sop(f) );
 }
 double NoiseSnE(const double f) {
   double twopifL = 2.*PI*L_SI/C_SI*f;
-  double sinhalf = sin(1./2*twopifL);
-  double sin3half = sin(3./2*twopifL);
   double cos1 = cos(twopifL);
   double cos2 = cos(2*twopifL);
-  return 32*sinhalf*sinhalf*sin3half*sin3half*( (6 + 4*cos1 + 2*cos2)*Spm(f) + (2 + cos1)*Sop(f) );
+  return 32*( (6 + 4*cos1 + 2*cos2)*Spm(f) + (2 + cos1)*Sop(f) );
 }
 double NoiseSnT(const double f) {
   double twopifL = 2.*PI*L_SI/C_SI*f;
-  double sinhalf = sin(1./2*twopifL);
-  double sin3half = sin(3./2*twopifL);
+  double sinhalf = sin(0.5*twopifL);
   double cos1 = cos(twopifL);
-  return 8*(1+2*cos1)*(1+2*cos1)*sin3half*sin3half*( 4*sinhalf*sinhalf*Spm(f) + Sop(f) );
+  return 8*( 4*sinhalf*sinhalf*Spm(f) + Sop(f) );
 }
+
+//Previous version - we had put a noise floor to mitigate cancellation lines
+/* double NoiseSnA(const double f) { */
+/*   double twopifL = 2.*PI*L_SI/C_SI*f; */
+/*   double sinhalf = sin(0.5*twopifL); */
+/*   double sin3half = sin(1.5*twopifL); */
+/*   double cos1 = cos(twopifL); */
+/*   double cos2 = cos(2*twopifL); */
+/*   double res = 32*sinhalf*sinhalf*sin3half*sin3half*( (6 + 4*cos1 + 2*cos2)*Spm(f) + (2 + cos1)*Sop(f) ); */
+/*   return fmax(res, 1e-46); */
+/* } */
+/* double NoiseSnE(const double f) { */
+/*   double twopifL = 2.*PI*L_SI/C_SI*f; */
+/*   double sinhalf = sin(0.5*twopifL); */
+/*   double sin3half = sin(1.5*twopifL); */
+/*   double cos1 = cos(twopifL); */
+/*   double cos2 = cos(2*twopifL); */
+/*   double res = 32*sinhalf*sinhalf*sin3half*sin3half*( (6 + 4*cos1 + 2*cos2)*Spm(f) + (2 + cos1)*Sop(f) ); */
+/*   return fmax(res, 1e-46); */
+/* } */
+/* double NoiseSnT(const double f) { */
+/*   double twopifL = 2.*PI*L_SI/C_SI*f; */
+/*   double sinhalf = sin(0.5*twopifL); */
+/*   double sin3half = sin(1.5*twopifL); */
+/*   double cos1 = cos(twopifL); */
+/*   double res = 8*(1+2*cos1)*(1+2*cos1)*sin3half*sin3half*( 4*sinhalf*sinhalf*Spm(f) + Sop(f) ); */
+/*   return fmax(res, 1e-46); */
+/* } */
