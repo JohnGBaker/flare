@@ -19,7 +19,7 @@ LISAinference.o: LISAinference.c LISAinference.h ../LISAsim/LISAFDresponse.h ../
 	$(CC) -c $(CFLAGS) -I$(BAMBIINCLUDE) LISAinference.c
 
 LISAinference: LISAinference.o LISAutils.o bambi.o ../LISAsim/LISAFDresponse.o ../LISAsim/LISAnoise.o ../LISAsim/LISAgeometry.o ../tools/struct.o ../tools/timeconversion.o ../tools/likelihood.o ../EOBNRv2HMROM/EOBNRv2HMROM.o ../EOBNRv2HMROM/EOBNRv2HMROMstruct.o ../integration/wip.o ../integration/spline.o ../integration/Faddeeva.o
-	$(CPP) $(CPPFLAGS) -o LISAinference LISAinference.o LISAutils.o bambi.o ../LISAsim/LISAFDresponse.o ../LISAsim/LISAnoise.o ../LISAsim/LISAgeometry.o ../tools/struct.o ../tools/timeconversion.o ../tools/likelihood.o ../EOBNRv2HMROM/EOBNRv2HMROM.o ../EOBNRv2HMROM/EOBNRv2HMROMstruct.o ../integration/wip.o ../integration/spline.o ../integration/Faddeeva.o -L$(GSLROOT)/lib -L$(BAMBILIB) -lgsl -lgslcblas -lm -lbambi-1.2 $(MPILIBS)
+	$(LD) $(LDFLAGS) -o LISAinference LISAinference.o LISAutils.o bambi.o ../LISAsim/LISAFDresponse.o ../LISAsim/LISAnoise.o ../LISAsim/LISAgeometry.o ../tools/struct.o ../tools/timeconversion.o ../tools/likelihood.o ../EOBNRv2HMROM/EOBNRv2HMROM.o ../EOBNRv2HMROM/EOBNRv2HMROMstruct.o ../integration/wip.o ../integration/spline.o ../integration/Faddeeva.o -L$(GSLROOT)/lib -L$(BAMBILIB) -lgsl -lgslcblas -lm -lbambi-1.2 $(MPILIBS)
 
 clean:
 	-rm *.o
