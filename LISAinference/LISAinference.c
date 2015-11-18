@@ -53,9 +53,14 @@ void getphysparams(double *Cube, int *ndim) //Note: ndim not used here
     inc = priorParams->fix_inc;
   }
 
-  /* Distance */
+  /* Distance - two priors allowed: r^2-weighted or flat */
   if (isnan(priorParams->fix_dist)) {
-    dist = CubeToPowerPrior(2.0, Cube[i++], priorParams->dist_min, priorParams->dist_max);
+    if(priorParams->flat_distprior) {
+      dist = CubeToFlatPrior(Cube[i++], priorParams->dist_min, priorParams->dist_max);
+    }
+    else {
+      dist = CubeToPowerPrior(2.0, Cube[i++], priorParams->dist_min, priorParams->dist_max);
+    }
   } else {
     dist = priorParams->fix_dist;
   }
@@ -131,18 +136,18 @@ void getallparams(double *Cube, int *ndim)
 
 /******************************************** loglikelihood routine ****************************************************/
 
-// Now an example, sample an egg box likelihood
+ /* Now an example, sample an egg box likelihood */
 
-// Input arguments
-// ndim 						= dimensionality (total number of free parameters) of the problem
-// npars 						= total number of free plus derived parameters
-//
-// Input/Output arguments
-// Cube[npars] 						= on entry has the ndim parameters in unit-hypercube
-//	 						on exit, the physical parameters plus copy any derived parameters you want to store with the free parameters
-//
-// Output arguments
-// lnew 						= loglikelihood
+ /* Input arguments */
+ /* ndim 						= dimensionality (total number of free parameters) of the problem */
+ /* npars 						= total number of free plus derived parameters */
+
+ /* Input/Output arguments */
+ /* Cube[npars] 						= on entry has the ndim parameters in unit-hypercube */
+ /* 	 						on exit, the physical parameters plus copy any derived parameters you want to store with the free parameters */
+
+ /* Output arguments */
+ /* lnew 						= loglikelihood */
 
 /* Note: context must point to the LISASignal structure representing the injected signals */
 void getLogLike(double *Cube, int *ndim, int *npars, double *lnew, void *context)
@@ -170,7 +175,7 @@ void getLogLike(double *Cube, int *ndim, int *npars, double *lnew, void *context
 
   /* Note: context points to a LISAContext structure containing a LISASignal* */
   if(globalparams->tagint==0) {
-    LISASignalCAmpPhase* injection = ((LISASignalCAmpPhase*) context);
+    LISAInjectionCAmpPhase* injection = ((LISAInjectionCAmpPhase*) context);
 
     //TESTING
     //clock_t tbeg, tend;
@@ -196,51 +201,51 @@ void getLogLike(double *Cube, int *ndim, int *npars, double *lnew, void *context
 
 /************************************************* dumper routine ******************************************************/
 
-// The dumper routine will be called every updInt*10 iterations
-// MultiNest doesn not need to the user to do anything. User can use the arguments in whichever way he/she wants
-//
-//
-// Arguments:
-//
-// nSamples 						= total number of samples in posterior distribution
-// nlive 						= total number of live points
-// nPar 						= total number of parameters (free + derived)
-// physLive[1][nlive * (nPar + 1)] 			= 2D array containing the last set of live points (physical parameters plus derived parameters) along with their loglikelihood values
-// posterior[1][nSamples * (nPar + 2)] 			= posterior distribution containing nSamples points. Each sample has nPar parameters (physical + derived) along with the their loglike value & posterior probability
-// paramConstr[1][4*nPar]:
-// paramConstr[0][0] to paramConstr[0][nPar - 1] 	= mean values of the parameters
-// paramConstr[0][nPar] to paramConstr[0][2*nPar - 1] 	= standard deviation of the parameters
-// paramConstr[0][nPar*2] to paramConstr[0][3*nPar - 1] = best-fit (maxlike) parameters
-// paramConstr[0][nPar*4] to paramConstr[0][4*nPar - 1] = MAP (maximum-a-posteriori) parameters
-// maxLogLike						= maximum loglikelihood value
-// logZ							= log evidence value
-// logZerr						= error on log evidence value
-// context						void pointer, any additional information
+ /* The dumper routine will be called every updInt*10 iterations */
+ /* MultiNest doesn not need to the user to do anything. User can use the arguments in whichever way he/she wants */
+
+
+ /* Arguments: */
+
+ /* nSamples 						= total number of samples in posterior distribution */
+ /* nlive 						= total number of live points */
+ /* nPar 						= total number of parameters (free + derived) */
+ /* physLive[1][nlive * (nPar + 1)] 			= 2D array containing the last set of live points (physical parameters plus derived parameters) along with their loglikelihood values */
+ /* posterior[1][nSamples * (nPar + 2)] 			= posterior distribution containing nSamples points. Each sample has nPar parameters (physical + derived) along with the their loglike value & posterior probability */
+ /* paramConstr[1][4*nPar]: */
+ /* paramConstr[0][0] to paramConstr[0][nPar - 1] 	= mean values of the parameters */
+ /* paramConstr[0][nPar] to paramConstr[0][2*nPar - 1] 	= standard deviation of the parameters */
+ /* paramConstr[0][nPar*2] to paramConstr[0][3*nPar - 1] = best-fit (maxlike) parameters */
+ /* paramConstr[0][nPar*4] to paramConstr[0][4*nPar - 1] = MAP (maximum-a-posteriori) parameters */
+ /* maxLogLike						= maximum loglikelihood value */
+ /* logZ							= log evidence value */
+ /* logZerr						= error on log evidence value */
+ /* context						void pointer, any additional information */
 
 void dumper(int *nSamples, int *nlive, int *nPar, double **physLive, double **posterior, double **paramConstr, double *maxLogLike, double *logZ, double *logZerr, void *context)
 {
-	// convert the 2D Fortran arrays to C arrays
+  /* convert the 2D Fortran arrays to C arrays */
 
 
-	// the posterior distribution
-	// postdist will have nPar parameters in the first nPar columns & loglike value & the posterior probability in the last two columns
+  /* the posterior distribution */
+  /* postdist will have nPar parameters in the first nPar columns & loglike value & the posterior probability in the last two columns */
 
-	int i, j;
+  int i, j;
 
-	double postdist[*nSamples][*nPar + 2];
-	for( i = 0; i < *nPar + 2; i++ )
-		for( j = 0; j < *nSamples; j++ )
-			postdist[j][i] = posterior[0][i * (*nSamples) + j];
+  double postdist[*nSamples][*nPar + 2];
+  for( i = 0; i < *nPar + 2; i++ )
+    for( j = 0; j < *nSamples; j++ )
+      postdist[j][i] = posterior[0][i * (*nSamples) + j];
 
 
 
-	// last set of live points
-	// pLivePts will have nPar parameters in the first nPar columns & loglike value in the last column
+  /* last set of live points */
+  /* pLivePts will have nPar parameters in the first nPar columns & loglike value in the last column */
 
-	double pLivePts[*nlive][*nPar + 1];
-	for( i = 0; i < *nPar + 1; i++ )
-		for( j = 0; j < *nlive; j++ )
-			pLivePts[j][i] = physLive[0][i * (*nlive) + j];
+  double pLivePts[*nlive][*nPar + 1];
+  for( i = 0; i < *nPar + 1; i++ )
+    for( j = 0; j < *nlive; j++ )
+      pLivePts[j][i] = physLive[0][i * (*nlive) + j];
 }
 
 /***********************************************************************************************************************/
@@ -274,66 +279,252 @@ int main(int argc, char *argv[])
   /* Parse commandline to read parameters of injection - copy the number of modes demanded for the injection */
   parse_args_LISA(argc, argv, injectedparams, globalparams, priorParams, &runParams);
   injectedparams->nbmode = globalparams->nbmodeinj;
+  if(myid == 0) print_parameters_to_file_LISA(injectedparams, globalparams, priorParams, &runParams);
 
   /* Initialize the data structure for the injection */
-  LISASignalCAmpPhase* injectedsignalCAmpPhase = NULL;
+  LISAInjectionCAmpPhase* injectedsignalCAmpPhase = NULL;
   LISAInjectionReIm* injectedsignalReIm = NULL;
   if(globalparams->tagint==0) {
-    LISASignalCAmpPhase_Init(&injectedsignalCAmpPhase);
+    LISAInjectionCAmpPhase_Init(&injectedsignalCAmpPhase);
   }
   else if(globalparams->tagint==1) {
     LISAInjectionReIm_Init(&injectedsignalReIm);
   }
 
+  //
+  //injectedparams->inclination = PI/2;
+  //LISAGenerateInjectionCAmpPhase(injectedparams, injectedsignalCAmpPhase);
+  //exit(0);
+
   /* Generate the injection */
   if(globalparams->tagint==0) {
-    LISAGenerateSignalCAmpPhase(injectedparams, injectedsignalCAmpPhase);
+    LISAGenerateInjectionCAmpPhase(injectedparams, injectedsignalCAmpPhase);
   }
   else if(globalparams->tagint==1) {
-    LISAGenerateInjectionReIm(injectedparams, globalparams->fmin, globalparams->nbptsoverlap, injectedsignalReIm);
+    LISAGenerateInjectionReIm(injectedparams, globalparams->fmin, globalparams->nbptsoverlap, 1, injectedsignalReIm); /* Use here logarithmic sampling as a default */
   }
 
+  //
+  /* LISAInjectionCAmpPhase_Init(&injectedsignalCAmpPhase); */
+  /* LISAGenerateInjectionCAmpPhase(injectedparams, injectedsignalCAmpPhase); */
+  /* LISAInjectionReIm_Init(&injectedsignalReIm); */
+  /* LISAGenerateInjectionReIm(injectedparams, globalparams->fmin, globalparams->nbptsoverlap, 1, injectedsignalReIm); */
+
+  /* double Mfstartobs = NewtonianfoftGeom(testparams->m1 / testparams->m2, (globalparams->deltatobs * YRSID_SI) / ((testparams->m1 + testparams->m2) * MTSUN_SI)); */
+  /* double fstartobs = Mfstartobs / ((testparams->m1 + testparams->m2) * MTSUN_SI); */
+  /* double fLow = fmax(__LISASimFD_Noise_fLow, globalparams->fmin); */
+  /* double fHigh = __LISASimFD_Noise_fHigh; */
+  //TESTING
+  //tbeg = clock();
+  /* double overlapCAmpPhase = FDListmodesFresnelOverlap(signalCAmpPhase->TDIASignal, injectedsignalCAmpPhase->TDIASplines, NoiseSnA, fLow, fHigh, fstartobs, fstartobs); */
+  /* double overlapLinear = FDOverlapReImvsReIm(signalReIm->TDIASignal, injectedsignalReIm->TDIASignal, injectedsignalReIm->noisevaluesA); */
+  /* printf("Overlap CAmpPhase: %g\n", overlapCAmpPhase); */
+  /* printf("Overlap linear: %g\n", overlapLinear); */
+
+  //
+  //exit(0);
+
   /* Define SNRs */
-  double SNRA, SNRE, SNRT;
+  double SNRAET, SNRA, SNRE, SNRT;
   if(globalparams->tagint==0) {
-    SNRA = injectedsignalCAmpPhase->TDIAhh;
-    SNRE = injectedsignalCAmpPhase->TDIEhh;
-    SNRT = injectedsignalCAmpPhase->TDIThh;
+    SNRAET = sqrt(injectedsignalCAmpPhase->TDIAETss);
+    //
+    //printf("SNRAET: %g\n", SNRAET);
   }
   else if(globalparams->tagint==1) {
     SNRA = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDIASignal, injectedsignalReIm->TDIASignal, injectedsignalReIm->noisevaluesA));
     SNRE = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDIESignal, injectedsignalReIm->TDIESignal, injectedsignalReIm->noisevaluesE));
     SNRT = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDITSignal, injectedsignalReIm->TDITSignal, injectedsignalReIm->noisevaluesT));
+    SNRAET = sqrt(SNRA*SNRA + SNRE*SNRE + SNRT*SNRT);
   }
-  double SNR = sqrt(SNRA*SNRA + SNRE*SNRE + SNRT*SNRT);
+
+  //
+/* printf("--------------\n"); */
+/* LISAInjectionReIm_Init(&injectedsignalReIm); */
+/* LISAGenerateInjectionReIm(injectedparams, globalparams->fmin, globalparams->nbptsoverlap, 1, injectedsignalReIm); */
+/*     SNRA = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDIASignal, injectedsignalReIm->TDIASignal, injectedsignalReIm->noisevaluesA)); */
+/*     SNRE = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDIESignal, injectedsignalReIm->TDIESignal, injectedsignalReIm->noisevaluesE)); */
+/*     SNRT = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDITSignal, injectedsignalReIm->TDITSignal, injectedsignalReIm->noisevaluesT)); */
+/*     printf("SNR CAmpPhase: %g \n", sqrt(injectedsignalCAmpPhase->TDIAETss)); */
+/*     printf("SNR ReIm: %g \n", sqrt(SNRA*SNRA + SNRE*SNRE + SNRT*SNRT)); */
+/* printf("--------------\n"); */
 
   /* Rescale distance to match SNR */
   if (!isnan(priorParams->snr_target)) {
     if (myid == 0) printf("Rescaling the distance to obtain a network SNR of %g\n", priorParams->snr_target);
-    injectedparams->distance *= SNR / priorParams->snr_target;
+    //
+    //printf("SNRAET: %g\n", SNRAET);
+    injectedparams->distance *= SNRAET / priorParams->snr_target;
     if (myid == 0) printf("New distance = %g Mpc\n", injectedparams->distance);
+    if(priorParams->rescale_distprior) {
+      priorParams->dist_min *= SNRAET / priorParams->snr_target;
+      priorParams->dist_max *= SNRAET / priorParams->snr_target;
+      if (myid == 0) printf("Distance prior (dist_min, dist_max) = (%g, %g) Mpc\n", priorParams->dist_min, priorParams->dist_max);
+    }
+    if (myid == 0) print_rescaleddist_to_file_LISA(injectedparams, globalparams, priorParams, &runParams);
     if(globalparams->tagint==0) {
-      LISAGenerateSignalCAmpPhase(injectedparams, injectedsignalCAmpPhase);
-      SNRA = injectedsignalCAmpPhase->TDIAhh;
-      SNRE = injectedsignalCAmpPhase->TDIEhh;
-      SNRT = injectedsignalCAmpPhase->TDIThh;
+      LISAGenerateInjectionCAmpPhase(injectedparams, injectedsignalCAmpPhase);
+      SNRAET = sqrt(injectedsignalCAmpPhase->TDIAETss);
+    //
+    //printf("SNRAET: %g\n", SNRAET);
     }
     else if(globalparams->tagint==1) {
-      LISAGenerateInjectionReIm(injectedparams, globalparams->fmin, globalparams->nbptsoverlap, injectedsignalReIm);
+      LISAGenerateInjectionReIm(injectedparams, globalparams->fmin, globalparams->nbptsoverlap, 1, injectedsignalReIm); /* tagsampling fixed to 1, i.e. logarithmic sampling - could be made another global parameter */
       SNRA = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDIASignal, injectedsignalReIm->TDIASignal, injectedsignalReIm->noisevaluesA));
       SNRE = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDIESignal, injectedsignalReIm->TDIESignal, injectedsignalReIm->noisevaluesE));
       SNRT = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDITSignal, injectedsignalReIm->TDITSignal, injectedsignalReIm->noisevaluesT));
+      SNRAET = sqrt(SNRA*SNRA + SNRE*SNRE + SNRT*SNRT);
     }
-    SNR = sqrt(SNRA*SNRA + SNRE*SNRE + SNRT*SNRT);
   }
 
   /* Print SNR */
   if (myid == 0) {
-    printf("SNR A:     %g\n", SNRA);
-    printf("SNR E:     %g\n", SNRE);
-    printf("SNR T:     %g\n", SNRT);
-    printf("SNR Total: %g\n", SNR);
+    printf("SNR AET Total: %g\n", SNRAET);
   }
+
+  //
+  /* LISAParams* testparams = (LISAParams*) malloc(sizeof(LISAParams)); */
+  /* memset(testparams, 0, sizeof(LISAParams)); */
+  /* testparams->m1 = 9.69864542e+07; */
+  /* testparams->m2 = 9.68723593e+07; */
+  /* testparams->tRef =1.72445219e+03; */
+  /* testparams->distance = 1.96081706e+05; */
+  /* testparams->phiRef = 1.15654407e-01; */
+  /* //  testparams->inclination = 1.57028141e+00; */
+  /* testparams->inclination = PI/2; */
+  /* testparams->lambda = 1.66782448e+00; */
+  /* testparams->beta = -1.00200072e-01; */
+  /* testparams->polarization = 5.74529248e+00; */
+  /* testparams->nbmode = 1; */
+  //
+  /* double injecAA, injecEE, injecTT; */
+  /* printf("--------------\n"); */
+  /* LISAInjectionReIm_Init(&injectedsignalReIm); */
+  /* LISAGenerateInjectionReIm(injectedparams, globalparams->fmin, globalparams->nbptsoverlap, 0, injectedsignalReIm); */
+  /* printf("CalculateLogLReIm injectedparams vs injection: %g\n", CalculateLogLReIm(injectedparams, injectedsignalReIm)); */
+  /* printf("CalculateLogLReIm testparams vs injection: %g\n", CalculateLogLReIm(testparams, injectedsignalReIm)); */
+  /* printf("CalculateLogLCAmpPhase injectedparams vs injection: %g\n", CalculateLogLCAmpPhase(injectedparams, injectedsignalCAmpPhase)); */
+  /* printf("CalculateLogLCAmpPhase testparams vs injection: %g\n", CalculateLogLCAmpPhase(testparams, injectedsignalCAmpPhase)); */
+/*   // */
+/*   injecAA = FDOverlapReImvsReIm(injectedsignalReIm->TDIASignal, injectedsignalReIm->TDIASignal, injectedsignalReIm->noisevaluesA); */
+/*   injecEE = FDOverlapReImvsReIm(injectedsignalReIm->TDIESignal, injectedsignalReIm->TDIESignal, injectedsignalReIm->noisevaluesE); */
+/*   injecTT = FDOverlapReImvsReIm(injectedsignalReIm->TDITSignal, injectedsignalReIm->TDITSignal, injectedsignalReIm->noisevaluesT); */
+/*   printf("Linear injAA+injEE+injTT: %g\n", injecAA+injecEE+injecTT); */
+/*   // */
+/*   printf("--------------\n"); */
+/*   printf("With injectedparams->inclination =  PI/2\n"); */
+/*   injectedparams->inclination =  PI/2; */
+/*   LISAGenerateInjectionReIm(injectedparams, globalparams->fmin, globalparams->nbptsoverlap, 0, injectedsignalReIm); */
+/*   LISAGenerateInjectionCAmpPhase(injectedparams, injectedsignalCAmpPhase); */
+/*   injecAA = FDOverlapReImvsReIm(injectedsignalReIm->TDIASignal, injectedsignalReIm->TDIASignal, injectedsignalReIm->noisevaluesA); */
+/*   injecEE = FDOverlapReImvsReIm(injectedsignalReIm->TDIESignal, injectedsignalReIm->TDIESignal, injectedsignalReIm->noisevaluesE); */
+/*   injecTT = FDOverlapReImvsReIm(injectedsignalReIm->TDITSignal, injectedsignalReIm->TDITSignal, injectedsignalReIm->noisevaluesT); */
+/*   printf("Linear injAA+injEE+injTT: %g\n", injecAA+injecEE+injecTT); */
+/*   // */
+/*   printf("--------------\n"); */
+/* printf("Adjusting more parameters to testparameters:\n"); */
+/* //injectedparams->inclination =  PI/2; */
+/*   injectedparams->m1 = testparams->m1; */
+/*   injectedparams->m2 = testparams->m2; */
+/*   //injectedparams->tRef = testparams->tRef; */
+/*   /\* injectedparams->inclination = testparams->inclination; *\/ */
+/*   /\* injectedparams->distance = testparams->distance; *\/ */
+/*   /\* injectedparams->lambda = testparams->lambda; *\/ */
+/*   /\* injectedparams->beta = testparams->beta; *\/ */
+/*   /\* injectedparams->polarization = testparams->polarization; *\/ */
+/*   injectedparams->inclination = PI/2; */
+/*   injectedparams->distance = testparams->distance; */
+/*   injectedparams->lambda = PI/2; */
+/*   injectedparams->beta = 0.; */
+/*   injectedparams->polarization = -PI/6; */
+/*   LISAGenerateInjectionReIm(injectedparams, globalparams->fmin, globalparams->nbptsoverlap, 0, injectedsignalReIm); */
+/*   LISAGenerateInjectionCAmpPhase(injectedparams, injectedsignalCAmpPhase); */
+/*   injecAA = FDOverlapReImvsReIm(injectedsignalReIm->TDIASignal, injectedsignalReIm->TDIASignal, injectedsignalReIm->noisevaluesA); */
+/*   injecEE = FDOverlapReImvsReIm(injectedsignalReIm->TDIESignal, injectedsignalReIm->TDIESignal, injectedsignalReIm->noisevaluesE); */
+/*   injecTT = FDOverlapReImvsReIm(injectedsignalReIm->TDITSignal, injectedsignalReIm->TDITSignal, injectedsignalReIm->noisevaluesT); */
+/*   printf("Linear injAA+injEE+injTT: %g\n", injecAA+injecEE+injecTT); */
+/* printf("--------------\n"); */
+/*   // */
+/*   LISASignalReIm* signalReIm = NULL; */
+/*   LISASignalReIm_Init(&signalReIm); */
+/*   LISAGenerateSignalReIm(testparams, injectedsignalReIm->freq, signalReIm); */
+/*   LISASignalCAmpPhase* signalCAmpPhase = NULL; */
+/*   LISASignalCAmpPhase_Init(&signalCAmpPhase); */
+/*   LISAGenerateSignalCAmpPhase(testparams, signalCAmpPhase); */
+/*   double Mfstartobs = NewtonianfoftGeom(testparams->m1 / testparams->m2, (globalparams->deltatobs * YRSID_SI) / ((testparams->m1 + testparams->m2) * MTSUN_SI)); */
+/*   double fstartobs = Mfstartobs / ((testparams->m1 + testparams->m2) * MTSUN_SI); */
+/*   double fLow = fmax(__LISASimFD_Noise_fLow, globalparams->fmin); */
+/*   double fHigh = __LISASimFD_Noise_fHigh; */
+/*   double overlapCAmpPhase = FDListmodesFresnelOverlap(signalCAmpPhase->TDIASignal, injectedsignalCAmpPhase->TDIASplines, NoiseSnA, fLow, fHigh, fstartobs, fstartobs); */
+/*   printf("Overlap CAmpPhase: %g\n", overlapCAmpPhase); */
+/*  printf("SNRAET signal CAmpPhase: %g\n", signalCAmpPhase->TDIAEThh); */
+/*   // */
+/*   double signalAA = FDOverlapReImvsReIm(signalReIm->TDIASignal, signalReIm->TDIASignal, injectedsignalReIm->noisevaluesA); */
+/*   double signalEE = FDOverlapReImvsReIm(signalReIm->TDIESignal, signalReIm->TDIESignal, injectedsignalReIm->noisevaluesE); */
+/*   double signalTT = FDOverlapReImvsReIm(signalReIm->TDITSignal, signalReIm->TDITSignal, injectedsignalReIm->noisevaluesT); */
+/*   double injAA = FDOverlapReImvsReIm(injectedsignalReIm->TDIASignal, injectedsignalReIm->TDIASignal, injectedsignalReIm->noisevaluesA); */
+/*   double injEE = FDOverlapReImvsReIm(injectedsignalReIm->TDIESignal, injectedsignalReIm->TDIESignal, injectedsignalReIm->noisevaluesE); */
+/*   double injTT = FDOverlapReImvsReIm(injectedsignalReIm->TDITSignal, injectedsignalReIm->TDITSignal, injectedsignalReIm->noisevaluesT); */
+/*   double overlapAA = FDOverlapReImvsReIm(injectedsignalReIm->TDIASignal, signalReIm->TDIASignal, injectedsignalReIm->noisevaluesA); */
+/*   double overlapEE = FDOverlapReImvsReIm(injectedsignalReIm->TDIESignal, signalReIm->TDIESignal, injectedsignalReIm->noisevaluesE); */
+/*   double overlapTT = FDOverlapReImvsReIm(injectedsignalReIm->TDITSignal, signalReIm->TDITSignal, injectedsignalReIm->noisevaluesT); */
+/*     printf("Linear overlap AA+EE+TT: %g\n", overlapAA+overlapEE+overlapTT); */
+/*     printf("Linear signalAA+signalEE+signalTT: %g\n", signalAA+signalEE+signalTT); */
+/*     printf("Linear injAA+injEE+injTT: %g\n", injAA+injEE+injTT); */
+/*  // */
+/*   exit(0); */
+
+  //
+  //printf("Injected distance = %g Mpc\n", injectedparams->distance);
+  //exit(0);
+
+  //
+/* printf("--------------\n"); */
+/* LISAGenerateInjectionCAmpPhase(injectedparams, injectedsignalCAmpPhase); */
+/* SNRAET = sqrt(injectedsignalCAmpPhase->TDIAETss); */
+/* LISAGenerateInjectionReIm(injectedparams, globalparams->fmin, globalparams->nbptsoverlap, 1, injectedsignalReIm); */
+/*     SNRA = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDIASignal, injectedsignalReIm->TDIASignal, injectedsignalReIm->noisevaluesA)); */
+/*     SNRE = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDIESignal, injectedsignalReIm->TDIESignal, injectedsignalReIm->noisevaluesE)); */
+/*     SNRT = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDITSignal, injectedsignalReIm->TDITSignal, injectedsignalReIm->noisevaluesT)); */
+/*     printf("SNR CAmpPhase: %g \n", sqrt(injectedsignalCAmpPhase->TDIAETss)); */
+/*     printf("SNR ReIm: %g \n", sqrt(SNRA*SNRA + SNRE*SNRE + SNRT*SNRT)); */
+/*     printf("(SNRA, SNRE, SNRT): %g, %g, %g\n", SNRA, SNRE, SNRT); */
+
+  //
+/* printf("--------------\n"); */
+/*   double ltest = CalculateLogLCAmpPhase(testparams, injectedsignalCAmpPhase); */
+/*   printf("testparams->distance: %g\n",testparams->distance); */
+/*   printf("injectedparams->distance: %g\n",injectedparams->distance); */
+/*   printf("Test likelihood: %g\n", ltest); */
+  //  LISAInjectionReIm_Init(&injectedsignalReIm);
+  /* LISAGenerateInjectionReIm(injectedparams, globalparams->fmin, globalparams->nbptsoverlap, 0, injectedsignalReIm); */
+  /* printf("CalculateLogLReIm injectedparams vs injection: %g\n", CalculateLogLReIm(injectedparams, injectedsignalReIm)); */
+  /* printf("CalculateLogLReIm testparams vs injection: %g\n", CalculateLogLReIm(testparams, injectedsignalReIm)); */
+/*   LISASignalReIm* signalReIm = NULL; */
+/*   LISASignalReIm_Init(&signalReIm); */
+/*   LISAGenerateSignalReIm(testparams, injectedsignalReIm->freq, signalReIm); */
+/*   double signalAA = FDOverlapReImvsReIm(signalReIm->TDIASignal, signalReIm->TDIASignal, injectedsignalReIm->noisevaluesA); */
+/*   double signalEE = FDOverlapReImvsReIm(signalReIm->TDIESignal, signalReIm->TDIESignal, injectedsignalReIm->noisevaluesE); */
+/*   double signalTT = FDOverlapReImvsReIm(signalReIm->TDITSignal, signalReIm->TDITSignal, injectedsignalReIm->noisevaluesT); */
+/*   double injAA = FDOverlapReImvsReIm(injectedsignalReIm->TDIASignal, injectedsignalReIm->TDIASignal, injectedsignalReIm->noisevaluesA); */
+/*   double injEE = FDOverlapReImvsReIm(injectedsignalReIm->TDIESignal, injectedsignalReIm->TDIESignal, injectedsignalReIm->noisevaluesE); */
+/*   double injTT = FDOverlapReImvsReIm(injectedsignalReIm->TDITSignal, injectedsignalReIm->TDITSignal, injectedsignalReIm->noisevaluesT); */
+/*   double overlapAA = FDOverlapReImvsReIm(injectedsignalReIm->TDIASignal, signalReIm->TDIASignal, injectedsignalReIm->noisevaluesA); */
+/*   double overlapEE = FDOverlapReImvsReIm(injectedsignalReIm->TDIESignal, signalReIm->TDIESignal, injectedsignalReIm->noisevaluesE); */
+/*   double overlapTT = FDOverlapReImvsReIm(injectedsignalReIm->TDITSignal, signalReIm->TDITSignal, injectedsignalReIm->noisevaluesT); */
+/*     printf("Linear signalAA+signalEE+signalTT: %g\n", signalAA+signalEE+signalTT); */
+/*     printf("Linear injAA+injEE+injTT: %g\n", injAA+injEE+injTT); */
+/*     printf("CAmpPhase inj AA+EE+TT: %g\n", injectedsignalCAmpPhase->TDIAETss); */
+
+/*  printf("--------------\n"); */
+/* printf("Linear overlap AA: %g\n", overlapAA); */
+/* printf("Linear overlap EE: %g\n", overlapEE); */
+/* printf("Linear overlap TT: %g\n", overlapTT); */
+/*     printf("Linear overlap AA+EE+TT: %g\n", overlapAA+overlapEE+overlapTT); */
+
+
+  //
+  //exit(0);
 
   /* Calculate logL of data */
   /*double dist_store = injectedparams->distance;
@@ -530,31 +721,31 @@ int main(int argc, char *argv[])
 
 	int i;
 
-	// set the MultiNest sampling parameters
+	/* set the MultiNest sampling parameters */
 
-	int mmodal = runParams.mmodal;			// do mode separation?
+	int mmodal = runParams.mmodal;			/* do mode separation? */
 
-	int ceff = 0;					// run in constant efficiency mode?
+	int ceff = 0;					/* run in constant efficiency mode? */
 
-	int nlive = runParams.nlive;			// number of live points
+	int nlive = runParams.nlive;			/* number of live points */
 
-	double efr = runParams.eff;			// set the required efficiency
+	double efr = runParams.eff;			/* set the required efficiency */
 
-	double tol = runParams.tol;			// tol, defines the stopping criteria
+	double tol = runParams.tol;			/* tol, defines the stopping criteria */
 
-	//int ndim = 9;				// dimensionality (no. of free parameters)
-	//int nPar = 9;					// total no. of parameters including free & derived parameters
+	//int ndim = 9;				        /*dimensionality (no. of free parameters) */
+	//int nPar = 9;					/* total no. of parameters including free & derived parameters */
 
-	int nClsPar = runParams.nclspar;            	// no. of parameters to do mode separation on
+	int nClsPar = runParams.nclspar;            	/* no. of parameters to do mode separation on */
 
-	int updInt = 50;				// after how many iterations feedback is required & the output files should be updated
-							// note: posterior files are updated & dumper routine is called after every updInt*10 iterations
+	int updInt = 50;				/* after how many iterations feedback is required & the output files should be updated */
+							/* note: posterior files are updated & dumper routine is called after every updInt*10 iterations */
 
-	double Ztol = runParams.ztol;	       		// all the modes with logZ < Ztol are ignored
+	double Ztol = runParams.ztol;	       		/* all the modes with logZ < Ztol are ignored */
 
-	int maxModes = runParams.maxcls;		// expected max no. of modes (used only for memory allocation)
+	int maxModes = runParams.maxcls;		/* expected max no. of modes (used only for memory allocation) */
 
-	int pWrap[ndim];				// which parameters to have periodic boundary conditions?
+	int pWrap[ndim];				/* which parameters to have periodic boundary conditions? */
 	for(i = 0; i < ndim; i++) { /* If non-default limiting values have been set for lambda, phase, pol, do not treat them as periodic */
 	  if(freeparamsmap[i]==4 && priorParams->phase_min == 0. && priorParams->phase_max == 2.*PI) pWrap[i] = 1;
 	  else if(freeparamsmap[i]==6 && priorParams->lambda_min == 0. && priorParams->lambda_max == 2.*PI) pWrap[i] = 1;
@@ -562,32 +753,32 @@ int main(int argc, char *argv[])
 	  else pWrap[i] = 0;
 	}
 
-	strcpy(root, runParams.outroot);		// root for output files
-	strcpy(networkinputs, runParams.netfile);	// file with input parameters for network training
+	strcpy(root, runParams.outroot);		/* root for output files */
+	strcpy(networkinputs, runParams.netfile);	/* file with input parameters for network training */
 
-	int seed = -1;					// random no. generator seed, if < 0 then take the seed from system clock
+	int seed = -1;					/* random no. generator seed, if < 0 then take the seed from system clock */
 
-	int fb = 1;					// need feedback on standard output?
+	int fb = 1;					/* need feedback on standard output? */
 
-	resume = runParams.resume;					// resume from a previous job?
+	resume = runParams.resume;			/* resume from a previous job? */
 
-	int outfile = 1;				// write output files?
+	int outfile = 1;				/* write output files? */
 
-	int initMPI = 0;				// initialize MPI routines?, relevant only if compiling with MPI
-							// set it to F if you want your main program to handle MPI initialization
+	int initMPI = 0;				/* initialize MPI routines?, relevant only if compiling with MPI */
+							/* set it to F if you want your main program to handle MPI initialization */
 
-	logZero = -1E90;				// points with loglike < logZero will be ignored by MultiNest
+	logZero = -1E90;				/* points with loglike < logZero will be ignored by MultiNest */
 
-	int maxiter = 0;				// max no. of iterations, a non-positive value means infinity. MultiNest will terminate if either it
-							// has done max no. of iterations or convergence criterion (defined through tol) has been satisfied
+	int maxiter = 0;				/* max no. of iterations, a non-positive value means infinity. MultiNest will terminate if either it */
+							/* has done max no. of iterations or convergence criterion (defined through tol) has been satisfied */
 
-	// void *context = 0;				// not required by MultiNest, any additional information user wants to pass
+	// void *context = 0;				/* not required by MultiNest, any additional information user wants to pass */
 
-	doBAMBI = runParams.bambi;					// BAMBI?
+	doBAMBI = runParams.bambi;			/* BAMBI? */
 
 	useNN = 0;
 
-	// calling MultiNest
+	/* calling MultiNest */
 
 	BAMBIrun(mmodal, ceff, nlive, tol, efr, ndim, nPar, nClsPar, maxModes, updInt, Ztol, root, seed, pWrap, fb, resume, outfile, initMPI, logZero, maxiter, LogLikeFctn, dumper, BAMBIfctn, context);
 

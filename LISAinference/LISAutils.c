@@ -28,6 +28,26 @@ void LISASignalCAmpPhase_Init(LISASignalCAmpPhase** signal) {
   (*signal)->TDITSignal = NULL;
 }
 
+void LISAInjectionCAmpPhase_Cleanup(LISAInjectionCAmpPhase* signal) {
+  if(signal->TDIASplines) ListmodesCAmpPhaseSpline_Destroy(signal->TDIASplines);
+  if(signal->TDIESplines) ListmodesCAmpPhaseSpline_Destroy(signal->TDIESplines);
+  if(signal->TDITSplines) ListmodesCAmpPhaseSpline_Destroy(signal->TDITSplines);
+  free(signal);
+}
+
+void LISAInjectionCAmpPhase_Init(LISAInjectionCAmpPhase** signal) {
+  if(!signal) exit(1);
+  /* Create storage for structures */
+  if(!*signal) *signal = malloc(sizeof(LISAInjectionCAmpPhase));
+  else
+  {
+    LISAInjectionCAmpPhase_Cleanup(*signal);
+  }
+  (*signal)->TDIASplines = NULL;
+  (*signal)->TDIESplines = NULL;
+  (*signal)->TDITSplines = NULL;
+}
+
 void LISASignalReIm_Cleanup(LISASignalReIm* signal) {
   if(signal->TDIASignal) ReImFrequencySeries_Cleanup(signal->TDIASignal);
   if(signal->TDIESignal) ReImFrequencySeries_Cleanup(signal->TDIESignal);
@@ -131,6 +151,7 @@ Arguments are as follows:\n\
  --q-max               Maximum mass ratio, m1/m2 (default=11.98, minimum is 1)\n\
  --dist-min            Minimum distance to source (Mpc, default=100)\n\
  --dist-max            Maximum distance to source (Mpc, default=40*1e3)\n\
+ --rescale-dist        In case a target SNR is given with --snr, rescale dist-min and dist-max accordingly\n\
 Parameters lambda, beta, phase, pol, inc can also ge given min and max values (for testing)\n\
 Syntax: --PARAM-min\n\
 \n\
@@ -229,6 +250,8 @@ Syntax: --PARAM-min\n\
     prior->pin_beta = 0;
     prior->pin_inc = 0;
     prior->snr_target = NAN;
+    prior->rescale_distprior = 0;
+    prior->flat_distprior = 0;
 
     /* set default values for the run settings */
     run->eff = 0.1;
@@ -355,6 +378,10 @@ Syntax: --PARAM-min\n\
             prior->pin_pol = 1;
         } else if (strcmp(argv[i], "--snr") == 0) {
             prior->snr_target = atof(argv[++i]);
+	} else if (strcmp(argv[i], "--rescale-distprior") == 0) {
+            prior->rescale_distprior = 1;
+	} else if (strcmp(argv[i], "--flat-distprior") == 0) {
+            prior->rescale_distprior = 1;
         } else if (strcmp(argv[i], "--eff") == 0) {
             run->eff = atof(argv[++i]);
         } else if (strcmp(argv[i], "--tol") == 0) {
@@ -391,6 +418,142 @@ Syntax: --PARAM-min\n\
     exit(1);
 }
 
+/* Function printing all parameters of the run to an output file for future reference */
+int print_parameters_to_file_LISA(
+                     LISAParams* params,
+		     LISAGlobalParams* globalparams,
+		     LISAPrior* prior,
+		     LISARunParams* run)
+{
+  /* Output file */
+  char *path=malloc(strlen(run->outroot)+64);
+  sprintf(path,"%sparams.txt", run->outroot);
+  FILE *f = fopen(path, "w");
+
+  /* Print injection parameters (before possible rescaling of the distances to match the target snr) */
+  fprintf(f, "-----------------------------------------------\n");
+  fprintf(f, "Injection parameters:\n");
+  fprintf(f, "-----------------------------------------------\n");
+  fprintf(f, "m1:           %.16e\n", params->tRef);
+  fprintf(f, "m2:           %.16e\n", params->phiRef);
+  fprintf(f, "tRef:         %.16e\n", params->tRef);
+  fprintf(f, "phiRef:       %.16e\n", params->phiRef);
+  fprintf(f, "distance:     %.16e\n", params->distance);
+  fprintf(f, "lambda:       %.16e\n", params->lambda);
+  fprintf(f, "beta:         %.16e\n", params->beta);
+  fprintf(f, "inclination:  %.16e\n", params->inclination);
+  fprintf(f, "polarization: %.16e\n", params->polarization);
+  fprintf(f, "-----------------------------------------------\n");
+  fprintf(f, "\n");
+
+  /* Print global parameters */
+  fprintf(f, "-----------------------------------------------\n");
+  fprintf(f, "Global parameters:\n");
+  fprintf(f, "-----------------------------------------------\n");
+  fprintf(f, "fRef:         %.16e\n", globalparams->fRef);
+  fprintf(f, "deltatobs:    %.16e\n", globalparams->deltatobs);
+  fprintf(f, "fmin:         %.16e\n", globalparams->fmin);
+  fprintf(f, "nbmodeinj:    %d\n", globalparams->nbmodeinj);
+  fprintf(f, "nbmodetemp:   %d\n", globalparams->nbmodetemp);
+  fprintf(f, "tagint:       %d\n", globalparams->tagint);
+  fprintf(f, "nbptsoverlap: %d\n", globalparams->nbptsoverlap);
+  fprintf(f, "-----------------------------------------------\n");
+  fprintf(f, "\n");
+
+  /* Print prior parameters */
+  fprintf(f, "-----------------------------------------------\n");
+  fprintf(f, "Prior parameters:\n");
+  fprintf(f, "-----------------------------------------------\n");
+  fprintf(f, "deltaT:            %.16e\n", prior->deltaT);
+  fprintf(f, "comp_min:          %.16e\n", prior->comp_min);
+  fprintf(f, "comp_max:          %.16e\n", prior->comp_max);
+  fprintf(f, "mtot_min:          %.16e\n", prior->mtot_min);
+  fprintf(f, "mtot_max:          %.16e\n", prior->mtot_max);
+  fprintf(f, "qmax:              %.16e\n", prior->qmax);
+  fprintf(f, "dist_min:          %.16e\n", prior->dist_min);
+  fprintf(f, "dist_max:          %.16e\n", prior->dist_max);
+  fprintf(f, "lambda_min:        %.16e\n", prior->lambda_min);
+  fprintf(f, "lambda_max:        %.16e\n", prior->lambda_max);
+  fprintf(f, "beta_min:          %.16e\n", prior->beta_min);
+  fprintf(f, "beta_max:          %.16e\n", prior->beta_max);
+  fprintf(f, "phase_min:         %.16e\n", prior->phase_min);
+  fprintf(f, "phase_max:         %.16e\n", prior->phase_max);
+  fprintf(f, "pol_min:           %.16e\n", prior->pol_min);
+  fprintf(f, "pol_max:           %.16e\n", prior->pol_max);
+  fprintf(f, "inc_min:           %.16e\n", prior->inc_min);
+  fprintf(f, "inc_max:           %.16e\n", prior->inc_max);
+  fprintf(f, "fix_m1:            %.16e\n", prior->fix_m1);
+  fprintf(f, "fix_m2:            %.16e\n", prior->fix_m2);
+  fprintf(f, "fix_dist:          %.16e\n", prior->fix_dist);
+  fprintf(f, "fix_time:          %.16e\n", prior->fix_time);
+  fprintf(f, "fix_phase:         %.16e\n", prior->fix_phase);
+  fprintf(f, "fix_pol:           %.16e\n", prior->fix_pol);
+  fprintf(f, "fix_lambda:        %.16e\n", prior->fix_lambda);
+  fprintf(f, "fix_beta:          %.16e\n", prior->fix_beta);
+  fprintf(f, "fix_inc:           %.16e\n", prior->fix_inc);
+  fprintf(f, "pin_m1:            %d\n", prior->pin_m1);
+  fprintf(f, "pin_m2:            %d\n", prior->pin_m2);
+  fprintf(f, "pin_dist:          %d\n", prior->pin_dist);
+  fprintf(f, "pin_time:          %d\n", prior->pin_time);
+  fprintf(f, "pin_phase:         %d\n", prior->pin_phase);
+  fprintf(f, "pin_pol:           %d\n", prior->pin_pol);
+  fprintf(f, "pin_lambda:        %d\n", prior->pin_lambda);
+  fprintf(f, "pin_beta:          %d\n", prior->pin_beta);
+  fprintf(f, "pin_inc:           %d\n", prior->pin_inc);
+  fprintf(f, "snr_target:        %.16e\n", prior->snr_target);
+  fprintf(f, "rescale_distprior: %d\n", prior->rescale_distprior);
+  fprintf(f, "flat_distprior:    %d\n", prior->flat_distprior);
+  fprintf(f, "-----------------------------------------------\n");
+  fprintf(f, "\n");
+
+  /* Print run parameters */
+  fprintf(f, "-----------------------------------------------\n");
+  fprintf(f, "Run parameters:\n");
+  fprintf(f, "-----------------------------------------------\n");
+  fprintf(f, "eff:     %g\n", run->eff);
+  fprintf(f, "tol:     %g\n", run->tol);
+  fprintf(f, "nlive:   %d\n", run->nlive);
+  fprintf(f, "bambi:   %d\n", run->bambi);
+  fprintf(f, "resume:  %d\n", run->resume);
+  fprintf(f, "mmodal:  %d\n", run->mmodal);
+  fprintf(f, "maxcls:  %d\n", run->maxcls);
+  fprintf(f, "nclspar: %d\n", run->nclspar);
+  fprintf(f, "ztol:    %g\n", run->ztol);
+  fprintf(f, "seed:    %d\n", run->seed);
+  fprintf(f, "-----------------------------------------------\n");
+
+  /* Close output file */
+  fclose(f);
+  return SUCCESS;
+}
+
+/* Function printing distance parameters (used if they have been rescaled to a target snr) */
+int print_rescaleddist_to_file_LISA(
+                     LISAParams* params,
+		     LISAGlobalParams* globalparams,
+		     LISAPrior* prior,
+		     LISARunParams* run)
+{
+  /* Output file */
+  char *path=malloc(strlen(run->outroot)+64);
+  sprintf(path,"%sparams.txt", run->outroot);
+  FILE *f = fopen(path, "a");
+
+  /* Print rescaled distance and dist prior */
+  fprintf(f, "\n");
+  fprintf(f, "-----------------------------------------------\n");
+  fprintf(f, "Rescaled dist parameters:\n");
+  fprintf(f, "-----------------------------------------------\n");
+  fprintf(f, "distance: %.16e\n", params->distance);
+  fprintf(f, "dist_min: %.16e\n", prior->dist_min);
+  fprintf(f, "dist_max: %.16e\n", prior->dist_max);
+  fprintf(f, "-----------------------------------------------\n");
+
+  /* Close output file */
+  fclose(f);
+  return SUCCESS;
+}
+
 /***************************** Functions to generate signals and compute likelihoods ******************************/
 
 /* Function generating a LISA signal as a list of modes in CAmp/Phase form, from LISA parameters */
@@ -414,6 +577,9 @@ int LISAGenerateSignalCAmpPhase(
   /* Note: SimEOBNRv2HMROM accepts masses and distances in SI units, whereas LISA params is in solar masses and Mpc */
   ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
 
+  //
+  //printf("%d|%g|%g|%g|%g|%g|%g\n", params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+
   /* If the ROM waveform generation failed (e.g. parameters were out of bounds) return FAILURE */
   if(ret==FAILURE) return FAILURE;
 
@@ -427,29 +593,150 @@ int LISAGenerateSignalCAmpPhase(
   //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
 
-  /* Precompute the inner products (h|h) - takes into account the length of the observation with deltatobs */
+  //
+  //params->distance = 58667.9;
+  //params->tRef = 0;
+  //params->phiRef = 0;
+  //params->m1 = 1.5e6;
+  //params->m2 = 0.5e6;
+  //params->lambda = 1.7;
+  //params->beta = PI/3;
+  //params->inclination = PI/3;
+  //params->polarization = 1.2;
+  //ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+  //LISASimFDResponseTDIAET(&listROM, &listTDIA, &listTDIE, &listTDIT, params->tRef, params->lambda, params->beta, params->inclination, params->polarization);
+  /* printf("Params in LISAGenerateSignalCAmpPhase:\n"); */
+  /* printf("params->nbmode: %d\n", params->nbmode); */
+  /* printf("params->deltatRef: %g\n", params->tRef - injectedparams->tRef); */
+  /* printf("params->phiRef: %g\n", params->phiRef); */
+  /* printf("globalparams->fRef: %g\n", globalparams->fRef); */
+  /* printf("params->m1: %g\n", params->m1); */
+  /* printf("params->m2: %g\n", params->m2); */
+  /* printf("params->distance: %g\n", params->distance); */
+  /* printf("params->tRef: %g\n", params->tRef); */
+  /* printf("params->lambda: %g\n", params->lambda); */
+  /* printf("params->beta: %g\n", params->beta); */
+  /* printf("params->inclination: %g\n", params->inclination); */
+  /* printf("params->polarization: %g\n", params->polarization); */
+
+  /* Pre-interpolate the injection, building the spline matrices */
+  ListmodesCAmpPhaseSpline* listsplinesgenA = NULL;
+  ListmodesCAmpPhaseSpline* listsplinesgenE = NULL;
+  ListmodesCAmpPhaseSpline* listsplinesgenT = NULL;
+  BuildListmodesCAmpPhaseSpline(&listsplinesgenA, listTDIA);
+  BuildListmodesCAmpPhaseSpline(&listsplinesgenE, listTDIE);
+  BuildListmodesCAmpPhaseSpline(&listsplinesgenT, listTDIT);
+
+  /* Precompute the inner product (h|h) - takes into account the length of the observation with deltatobs */
   double Mfstartobs = NewtonianfoftGeom(params->m1 / params->m2, (globalparams->deltatobs * YRSID_SI) / ((params->m1 + params->m2) * MTSUN_SI));
   double fstartobs = Mfstartobs / ((params->m1 + params->m2) * MTSUN_SI);
   double fLow = fmax(__LISASimFD_Noise_fLow, globalparams->fmin);
   double fHigh = __LISASimFD_Noise_fHigh;
   //TESTING
   //tbeg = clock();
-  double TDIAhh = FDListmodesOverlap(listTDIA, listTDIA, NoiseSnA, fLow, fHigh, fstartobs, fstartobs, globalparams->tagint);
-  double TDIEhh = FDListmodesOverlap(listTDIE, listTDIE, NoiseSnE, fLow, fHigh, fstartobs, fstartobs, globalparams->tagint);
-  double TDIThh = FDListmodesOverlap(listTDIT, listTDIT, NoiseSnT, fLow, fHigh, fstartobs, fstartobs, globalparams->tagint);
+  double TDIAEThh = FDListmodesFresnelOverlapAET(listTDIA, listTDIE, listTDIT, listsplinesgenA, listsplinesgenE, listsplinesgenT, NoiseSnA, NoiseSnE, NoiseSnT, fLow, fHigh, fstartobs, fstartobs);
   //tend = clock();
   //printf("time SNRs: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
+
   //
+  //printf("fstartobs inside LISAGenerateSignalCAmpPhase: %g\n", fstartobs);
+/*   Write_Text_Vector("/Users/marsat/src/flare/test/testfresnel/temp4", "signalAfreq.txt", ListmodesCAmpPhaseFrequencySeries_GetMode(listTDIA, 2, 2)->freqseries->freq); */
+/* Write_Text_Vector("/Users/marsat/src/flare/test/testlisaoverlap/temp4", "signalAampreal.txt", ListmodesCAmpPhaseFrequencySeries_GetMode(listTDIA, 2, 2)->freqseries->amp_real); */
+/* Write_Text_Vector("/Users/marsat/src/flare/test/testlisaoverlap/temp4", "signalAampimag.txt", ListmodesCAmpPhaseFrequencySeries_GetMode(listTDIA, 2, 2)->freqseries->amp_imag); */
+/* Write_Text_Vector("/Users/marsat/src/flare/test/testlisaoverlap/temp4", "signalAphase.txt", ListmodesCAmpPhaseFrequencySeries_GetMode(listTDIA, 2, 2)->freqseries->phase); */
+/*   printf("TDIAEThh inside LISAGenerateSignalCAmpPhase: %g\n", TDIAEThh); */
 
   /* Output and clean up */
   signal->TDIASignal = listTDIA;
   signal->TDIESignal = listTDIE;
   signal->TDITSignal = listTDIT;
-  signal->TDIAhh = TDIAhh;
-  signal->TDIEhh = TDIEhh;
-  signal->TDIThh = TDIThh;
+  signal->TDIAEThh = TDIAEThh;
 
   ListmodesCAmpPhaseFrequencySeries_Destroy(listROM);
+  ListmodesCAmpPhaseSpline_Destroy(listsplinesgenA);
+  ListmodesCAmpPhaseSpline_Destroy(listsplinesgenE);
+  ListmodesCAmpPhaseSpline_Destroy(listsplinesgenT);
+  return SUCCESS;
+}
+
+/* Function generating a LISA signal as a list of modes in CAmp/Phase form, from LISA parameters */
+int LISAGenerateInjectionCAmpPhase(
+  struct tagLISAParams* params,       /* Input: set of LISA parameters of the signal */
+  struct tagLISAInjectionCAmpPhase* signal)   /* Output: structure for the injected signal */
+{
+  int ret;
+  ListmodesCAmpPhaseFrequencySeries* listROM = NULL;
+  ListmodesCAmpPhaseFrequencySeries* listTDIA = NULL;
+  ListmodesCAmpPhaseFrequencySeries* listTDIE = NULL;
+  ListmodesCAmpPhaseFrequencySeries* listTDIT = NULL;
+
+  /* Should add more error checking ? */
+  /* Generate the waveform with the ROM */
+  /* Note: SimEOBNRv2HMROM accepts masses and distances in SI units, whereas LISA params is in solar masses and Mpc */
+  ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+
+  /* If the ROM waveform generation failed (e.g. parameters were out of bounds) return FAILURE */
+  if(ret==FAILURE) return FAILURE;
+
+  /* Process the waveform through the LISA response */
+  //WARNING: tRef is ignored for now, i.e. set to 0
+  //TESTING
+  //clock_t tbeg, tend;
+  //tbeg = clock();
+  LISASimFDResponseTDIAET(&listROM, &listTDIA, &listTDIE, &listTDIT, params->tRef, params->lambda, params->beta, params->inclination, params->polarization);
+  //tend = clock();
+  //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
+  //
+
+  //
+  /* printf("Params in LISAGenerateInjectionCAmpPhase:\n"); */
+  /* printf("params->nbmode: %d\n", params->nbmode); */
+  /* printf("params->deltatRef: %g\n", params->tRef - injectedparams->tRef); */
+  /* printf("params->phiRef: %g\n", params->phiRef); */
+  /* printf("globalparams->fRef: %g\n", globalparams->fRef); */
+  /* printf("params->m1: %g\n", params->m1); */
+  /* printf("params->m2: %g\n", params->m2); */
+  /* printf("params->distance: %g\n", params->distance); */
+  /* printf("params->tRef: %g\n", params->tRef); */
+  /* printf("params->lambda: %g\n", params->lambda); */
+  /* printf("params->beta: %g\n", params->beta); */
+  /* printf("params->inclination: %g\n", params->inclination); */
+  /* printf("params->polarization: %g\n", params->polarization); */
+
+  /* Pre-interpolate the injection, building the spline matrices */
+  ListmodesCAmpPhaseSpline* listsplinesinjA = NULL;
+  ListmodesCAmpPhaseSpline* listsplinesinjE = NULL;
+  ListmodesCAmpPhaseSpline* listsplinesinjT = NULL;
+  BuildListmodesCAmpPhaseSpline(&listsplinesinjA, listTDIA);
+  BuildListmodesCAmpPhaseSpline(&listsplinesinjE, listTDIE);
+  BuildListmodesCAmpPhaseSpline(&listsplinesinjT, listTDIT);
+
+  /* Precompute the inner product (h|h) - takes into account the length of the observation with deltatobs */
+  double Mfstartobs = NewtonianfoftGeom(injectedparams->m1 / injectedparams->m2, (globalparams->deltatobs * YRSID_SI) / ((injectedparams->m1 + injectedparams->m2) * MTSUN_SI));
+  double fstartobs = Mfstartobs / ((injectedparams->m1 + injectedparams->m2) * MTSUN_SI);
+  double fLow = fmax(__LISASimFD_Noise_fLow, globalparams->fmin);
+  double fHigh = __LISASimFD_Noise_fHigh;
+  //TESTING
+  //tbeg = clock();
+  double TDIAETss = FDListmodesFresnelOverlapAET(listTDIA, listTDIE, listTDIT, listsplinesinjA, listsplinesinjE, listsplinesinjT, NoiseSnA, NoiseSnE, NoiseSnT, fLow, fHigh, fstartobs, fstartobs);
+  //tend = clock();
+  //printf("time SNRs: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
+
+  //
+  //printf("fstartobs inside LISAGenerateInjectionCAmpPhase: %g\n", fstartobs);
+  //printf("TDIAETss inside LISAGenerateInjectionCAmpPhase: %g\n", TDIAETss);
+
+  /* Output and clean up */
+  signal->TDIASplines = listsplinesinjA;
+  signal->TDIESplines = listsplinesinjE;
+  signal->TDITSplines = listsplinesinjT;
+  signal->TDIAETss = TDIAETss;
+
+  ListmodesCAmpPhaseFrequencySeries_Destroy(listROM);
+  ListmodesCAmpPhaseFrequencySeries_Destroy(listTDIA);
+  ListmodesCAmpPhaseFrequencySeries_Destroy(listTDIE);
+  ListmodesCAmpPhaseFrequencySeries_Destroy(listTDIT);
+
   return SUCCESS;
 }
 
@@ -467,7 +754,7 @@ int LISAGenerateSignalReIm(
 
   /* Checking that the global injectedparams has been set up */
   if (!injectedparams) {
-    printf("Error: when calling LISAGenerateSignal, injectedparams points to NULL.\n");
+    printf("Error: when calling LISAGenerateSignalReIm, injectedparams points to NULL.\n");
     exit(1);
   }
   /* Should add more error checking ? */
@@ -526,6 +813,7 @@ int LISAGenerateInjectionReIm(
   struct tagLISAParams* injectedparams,      /* Input: set of LISA parameters of the template */
   double fLow,                               /* Input: additional lower frequency limit (argument fmin) */
   int nbpts,                                 /* Input: number of frequency samples */
+  int tagsampling,                           /* Input: tag for using linear (0) or logarithmic (1) sampling */
   struct tagLISAInjectionReIm* injection)    /* Output: structure for the generated signal */
 {
   int ret;
@@ -558,7 +846,7 @@ int LISAGenerateInjectionReIm(
   double fstartobs = Mfstartobs / ((injectedparams->m1 + injectedparams->m2) * MTSUN_SI);
   double fLowCut = fmax(fmax(__LISASimFD_Noise_fLow, fLow), fstartobs);
   double fHigh = __LISASimFD_Noise_fHigh;
-  ListmodesSetLogFrequencies(listROM, fLowCut, fHigh, nbpts, freq);
+  ListmodesSetFrequencies(listROM, fLowCut, fHigh, nbpts, tagsampling, freq);
 
   /* Initialize structures for the ReIm frequency series */
   ReImFrequencySeries* TDIA = NULL;
@@ -604,7 +892,7 @@ int LISAGenerateInjectionReIm(
 
 /* Log-Likelihood function */
 
-double CalculateLogLCAmpPhase(LISAParams *params, LISASignalCAmpPhase* injection)
+double CalculateLogLCAmpPhase(LISAParams *params, LISAInjectionCAmpPhase* injection)
 {
   double logL = -DBL_MAX;
   int ret;
@@ -634,15 +922,33 @@ double CalculateLogLCAmpPhase(LISAParams *params, LISASignalCAmpPhase* injection
     double fHigh = __LISASimFD_Noise_fHigh;
     //TESTING
     //tbeg = clock();
-    double loglikelihoodTDIA = FDLogLikelihood(injection->TDIASignal, generatedsignal->TDIASignal, NoiseSnA, fLow, fHigh, injection->TDIAhh, generatedsignal->TDIAhh, fstartobsinjected, fstartobsgenerated, globalparams->tagint);
-    double loglikelihoodTDIE = FDLogLikelihood(injection->TDIESignal, generatedsignal->TDIESignal, NoiseSnE, fLow, fHigh, injection->TDIEhh, generatedsignal->TDIEhh, fstartobsinjected, fstartobsgenerated, globalparams->tagint);
-    double loglikelihoodTDIT = FDLogLikelihood(injection->TDITSignal, generatedsignal->TDITSignal, NoiseSnT, fLow, fHigh, injection->TDIThh, generatedsignal->TDIThh, fstartobsinjected, fstartobsgenerated, globalparams->tagint);
+    double overlapTDIAET = FDListmodesFresnelOverlapAET(generatedsignal->TDIASignal, generatedsignal->TDIESignal, generatedsignal->TDITSignal, injection->TDIASplines, injection->TDIESplines, injection->TDITSplines, NoiseSnA, NoiseSnE, NoiseSnT, fLow, fHigh, fstartobsinjected, fstartobsgenerated);
+    /* double loglikelihoodTDIA = FDLogLikelihood(injection->TDIASignal, generatedsignal->TDIASignal, NoiseSnA, fLow, fHigh, injection->TDIAhh, generatedsignal->TDIAhh, fstartobsinjected, fstartobsgenerated, globalparams->tagint); */
+    /* double loglikelihoodTDIE = FDLogLikelihood(injection->TDIESignal, generatedsignal->TDIESignal, NoiseSnE, fLow, fHigh, injection->TDIEhh, generatedsignal->TDIEhh, fstartobsinjected, fstartobsgenerated, globalparams->tagint); */
+    /* double loglikelihoodTDIT = FDLogLikelihood(injection->TDITSignal, generatedsignal->TDITSignal, NoiseSnT, fLow, fHigh, injection->TDIThh, generatedsignal->TDIThh, fstartobsinjected, fstartobsgenerated, globalparams->tagint); */
     //tend = clock();
     //printf("time Overlaps: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
     //
 
+    //
+    //printf("-----------------\n");
+    //printf("(s|h) overlap TDIAET: %g\n", overlapTDIAET);
+    //printf("-----------------\n");
+
     /* Output: value of the loglikelihood for the combined signals, assuming noise independence */
-    logL = loglikelihoodTDIA + loglikelihoodTDIE + loglikelihoodTDIT;
+
+    //
+  /* ListmodesCAmpPhaseSpline* listsplinesgenA = NULL; */
+  /* ListmodesCAmpPhaseSpline* listsplinesgenE = NULL; */
+  /* ListmodesCAmpPhaseSpline* listsplinesgenT = NULL; */
+  /* BuildListmodesCAmpPhaseSpline(&listsplinesgenA, generatedsignal->TDIASignal); */
+  /* BuildListmodesCAmpPhaseSpline(&listsplinesgenE, generatedsignal->TDIESignal); */
+  /* BuildListmodesCAmpPhaseSpline(&listsplinesgenT, generatedsignal->TDITSignal); */
+  /* double testhhoverlapTDIAET = FDListmodesFresnelOverlapAET(generatedsignal->TDIASignal, generatedsignal->TDIESignal, generatedsignal->TDITSignal, listsplinesgenA, listsplinesgenE, listsplinesgenT, NoiseSnA, NoiseSnE, NoiseSnT, fLow, fHigh, fstartobsgenerated, fstartobsinjected); */
+  /* printf("hh overlap TDIAET: %g\n", testhhoverlapTDIAET); */
+  /*   printf("(overlapTDIAET,1./2*(injection->TDIAETss), 1./2*(generatedsignal->TDIAEThh): (%g, %g, %g)\n", overlapTDIAET, 1./2*(injection->TDIAETss), 1./2*(generatedsignal->TDIAEThh)); */
+
+    logL = overlapTDIAET - 1./2*(injection->TDIAETss) - 1./2*(generatedsignal->TDIAEThh);
   }
 
   /* Clean up */

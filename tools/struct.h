@@ -47,6 +47,24 @@ typedef struct tagCAmpPhaseFrequencySeries
   gsl_vector* amp_imag; /* We authorize complex amplitudes - will be used for the LISA response */
   gsl_vector* phase;
 } CAmpPhaseFrequencySeries;
+/* GSL splines for complex amplitude and phase representation (for one mode) */
+typedef struct tagCAmpPhaseGSLSpline
+{
+  gsl_vector* freq;
+  gsl_spline* spline_amp_real; /* We authorize complex amplitudes - will be used for the LISA response */
+  gsl_spline* spline_amp_imag; /* We authorize complex amplitudes - will be used for the LISA response */
+  gsl_spline* spline_phase;
+  gsl_interp_accel* accel_amp_real; 
+  gsl_interp_accel* accel_amp_imag; 
+  gsl_interp_accel* accel_phase;
+} CAmpPhaseGSLSpline;
+/* Splines in matrix form for complex amplitude and phase representation (for one mode) */
+typedef struct tagCAmpPhaseSpline
+{
+  gsl_matrix* spline_amp_real; /* We authorize complex amplitudes - will be used for the LISA response */
+  gsl_matrix* spline_amp_imag; /* We authorize complex amplitudes - will be used for the LISA response */
+  gsl_matrix* quadspline_phase;
+} CAmpPhaseSpline;
 
 /* Complex frequency series in real/imaginary part representation (for one mode, or their sum) */
 typedef struct tagReImFrequencySeries
@@ -65,9 +83,19 @@ typedef struct tagListmodesCAmpPhaseFrequencySeries
   struct tagListmodesCAmpPhaseFrequencySeries*    next; /* Next pointer */
 } ListmodesCAmpPhaseFrequencySeries;
 
+/* List structure, for a list of modes, each with interpolated splines in amplitude and phase form */
+typedef struct tagListmodesCAmpPhaseSpline
+{
+  CAmpPhaseSpline*                       splines; /* The frequencies series with amplitude and phase */
+  int                                    l;       /* Node mode l  */
+  int                                    m;       /* Node submode m  */
+  struct tagListmodesCAmpPhaseSpline*    next;    /* Next pointer */
+} ListmodesCAmpPhaseSpline;
+
 /**************************************************************/
-/* Function computing the max between two int */
+/* Functions computing the max and min between two int */
 int max (int a, int b);
+int min (int a, int b);
 
 /**************************************************************/
 /************** GSL error handling and I/O ********************/
@@ -101,16 +129,38 @@ ListmodesCAmpPhaseFrequencySeries* ListmodesCAmpPhaseFrequencySeries_GetMode(
 void ListmodesCAmpPhaseFrequencySeries_Destroy( 
 	   ListmodesCAmpPhaseFrequencySeries* list  /* List structure to destroy; notice that the data is destroyed too */
 );
+ListmodesCAmpPhaseSpline* ListmodesCAmpPhaseSpline_AddModeNoCopy(
+	   ListmodesCAmpPhaseSpline* appended,  /* List structure to prepend to */
+	   CAmpPhaseSpline* freqseries,  /* data to contain */
+	   int l, /*< major mode number */
+	   int m  /*< minor mode number */
+);
+ListmodesCAmpPhaseSpline* ListmodesCAmpPhaseSpline_GetMode( 
+	   ListmodesCAmpPhaseSpline* const list,  /* List structure to get a particular mode from */
+	   int l, /*< major mode number */
+	   int m  /*< minor mode number */    
+);
+void ListmodesCAmpPhaseSpline_Destroy( 
+	   ListmodesCAmpPhaseSpline* list  /* List structure to destroy; notice that the data is destroyed too */
+);
 
 /* Functions to initialize and clean up data structure */
 void CAmpPhaseFrequencySeries_Init(
-	 CAmpPhaseFrequencySeries **freqseries, /* double pointer for initialization */
+	 CAmpPhaseFrequencySeries** freqseries, /* double pointer for initialization */
 	 const int n );                         /* length of the frequency series */
-void CAmpPhaseFrequencySeries_Cleanup(CAmpPhaseFrequencySeries *freqseries);
+void CAmpPhaseFrequencySeries_Cleanup(CAmpPhaseFrequencySeries* freqseries);
+void CAmpPhaseSpline_Init(
+	 CAmpPhaseSpline** splines,             /* double pointer for initialization */
+	 const int n );                         /* length of the frequency series setting the splines */
+void CAmpPhaseSpline_Cleanup(CAmpPhaseSpline* splines);
+void CAmpPhaseGSLSpline_Init(
+	 CAmpPhaseGSLSpline** splines,             /* double pointer for initialization */
+	 const int n );                         /* length of the frequency series setting the splines */
+void CAmpPhaseGSLSpline_Cleanup(CAmpPhaseGSLSpline* splines);
 void ReImFrequencySeries_Init(
-	 ReImFrequencySeries **freqseries,      /* double pointer for initialization */
+	 ReImFrequencySeries** freqseries,      /* double pointer for initialization */
 	 const int n );                         /* length of the frequency series */
-void ReImFrequencySeries_Cleanup(ReImFrequencySeries *freqseries);
+void ReImFrequencySeries_Cleanup(ReImFrequencySeries* freqseries);
 
 /***************** Functions to manipulate ReImFrequencySeries structure ****************/
 

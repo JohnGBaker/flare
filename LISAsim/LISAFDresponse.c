@@ -75,7 +75,7 @@ int LISASimFDResponse21(
     /* Capital Phi is set to 0 by convention */
     double complex Yfactorplus;
     double complex Yfactorcross;
-    if (!l%2) {
+    if (!(l%2)) {
       Yfactorplus = 1/2 * (SpinWeightedSphericalHarmonic(inclination, 0., -2, l, m) + conj(SpinWeightedSphericalHarmonic(inclination, 0., -2, l, -m)));
       Yfactorcross = I/2 * (SpinWeightedSphericalHarmonic(inclination, 0., -2, l, m) - conj(SpinWeightedSphericalHarmonic(inclination, 0., -2, l, -m)));
     }
@@ -127,6 +127,8 @@ int LISASimFDResponse21(
     gsl_spline_free(spline_besselphi);
     gsl_interp_accel_free(accel_besselphi);
   }
+
+  return SUCCESS;
 }
 
 //WARNING: tRef is ignored for now in the response - i.e. set to 0
@@ -162,12 +164,12 @@ int LISASimFDResponseTDIAET(
     gsl_vector* phase = freqseries->phase;
     int len = (int) freq->size;
     double f, tf, bphi;
-    double complex g21mode;
-    double complex g12mode;
-    double complex g32mode;
-    double complex g23mode;
-    double complex g13mode;
-    double complex g31mode;
+    double complex g21mode = 0;
+    double complex g12mode = 0;
+    double complex g32mode = 0;
+    double complex g23mode = 0;
+    double complex g13mode = 0;
+    double complex g31mode = 0;
     double complex camp;
     double complex campA;
     double complex campE;
@@ -177,33 +179,47 @@ int LISASimFDResponseTDIAET(
     /* Capital Phi is set to 0 by convention */
     double complex Yfactorplus;
     double complex Yfactorcross;
-    if (!l%2) {
+    if (!(l%2)) {
+      //
+      //printf("l even: %d\n", l%2);
       Yfactorplus = 1./2 * (SpinWeightedSphericalHarmonic(inclination, 0., -2, l, m) + conj(SpinWeightedSphericalHarmonic(inclination, 0., -2, l, -m)));
       Yfactorcross = I/2 * (SpinWeightedSphericalHarmonic(inclination, 0., -2, l, m) - conj(SpinWeightedSphericalHarmonic(inclination, 0., -2, l, -m)));
     }
     else {
+      //
+      //printf("l odd\n");
       Yfactorplus = 1./2 * (SpinWeightedSphericalHarmonic(inclination, 0., -2, l, m) - conj(SpinWeightedSphericalHarmonic(inclination, 0., -2, l, -m)));
       Yfactorcross = I/2 * (SpinWeightedSphericalHarmonic(inclination, 0., -2, l, m) + conj(SpinWeightedSphericalHarmonic(inclination, 0., -2, l, -m)));
     }
+    //
+/*     printf("Ylm: %g + I*%g\n", creal(SpinWeightedSphericalHarmonic(inclination, 0., -2, l, m)), cimag(SpinWeightedSphericalHarmonic(inclination, 0., -2, l, m))); */
+/* printf("Ylminusm: %g + I*%g\n", creal(SpinWeightedSphericalHarmonic(inclination, 0., -2, l, -m)), cimag(SpinWeightedSphericalHarmonic(inclination, 0., -2, l, -m))); */
+/*     printf("Yfactorplus : %g + I*%g\n", creal(Yfactorplus), cimag(Yfactorplus)); */
+/*     printf("Yfactorcross : %g + I*%g\n", creal(Yfactorcross), cimag(Yfactorcross)); */
 
     /* First step of the processing: orbital delay */
     /* Initializing spline for the phase */
     gsl_spline* spline_phi = gsl_spline_alloc(gsl_interp_cspline, len);
     gsl_interp_accel* accel_phi = gsl_interp_accel_alloc();
     gsl_spline_init(spline_phi, gsl_vector_const_ptr(freq, 0), gsl_vector_const_ptr(phase, 0), len);
-    /* Vector keeping track of the Bessel Phase correction - to be used in the next step */
+    /* Intermediate vectors for the complex amplitude of h0 and for the  Bessel Phase correction */
+    gsl_vector* h0tilde_ampreal = gsl_vector_alloc(len);
+    gsl_vector* h0tilde_ampimag = gsl_vector_alloc(len);
     gsl_vector* besselphi = gsl_vector_alloc(len);
 
     /* Loop over the frequencies - computing the correction due to the orbital delay */
+    //clock_t tbegorbital = clock();
     for(int j=0; j<len; j++) {
       f = gsl_vector_get(freq, j);
-      tf =  gsl_spline_eval_deriv(spline_phi, f, accel_phi)/(2*PI);
+      tf = gsl_spline_eval_deriv(spline_phi, f, accel_phi)/(2*PI);
       bphi = -2*PI*f*R_SI/C_SI*cos(beta) * cos( Omega_SI*tf - lambda );
       camp = gsl_vector_get(amp_real, j) * cexp(I*bphi); /* Amplitude is real before applying this first delay */
-      gsl_vector_set(amp_real, j, creal(camp));
-      gsl_vector_set(amp_imag, j, cimag(camp));
+      gsl_vector_set(h0tilde_ampreal, j, creal(camp));
+      gsl_vector_set(h0tilde_ampimag, j, cimag(camp));
       gsl_vector_set(besselphi, j, bphi);
     }
+    //clock_t tendorbital = clock();
+    //printf("Set orbital delay time: %g s\n", (double)(tendorbital - tbegorbital) / CLOCKS_PER_SEC);
     
     /* Second step of the processing: constellation delay/modulation */
     /* Initializing frequency series structure for this mode, for each of the TDI observables */
@@ -231,28 +247,43 @@ int LISASimFDResponseTDIAET(
     gsl_spline_init(spline_besselphi, gsl_vector_const_ptr(freq, 0), gsl_vector_const_ptr(besselphi, 0), len);
 
     /* Loop over the frequencies - computing the correction due to the constellation delay/modulation */
+    //clock_t tbegcontesllation = clock();
+    //double timingcumulativeGABmode = 0;
     for(int j=0; j<len; j++) {
       f = gsl_vector_get(freq, j);
-      tf =  (gsl_spline_eval_deriv(spline_phi, f, accel_phi) + gsl_spline_eval_deriv(spline_besselphi, f, accel_besselphi))/(2*PI) ;
-      g21mode = G21mode(f, tf, Yfactorplus, Yfactorcross);
-      g12mode = G12mode(f, tf, Yfactorplus, Yfactorcross);
-      g32mode = G32mode(f, tf, Yfactorplus, Yfactorcross);
-      g23mode = G23mode(f, tf, Yfactorplus, Yfactorcross);
-      g13mode = G13mode(f, tf, Yfactorplus, Yfactorcross);
-      g31mode = G31mode(f, tf, Yfactorplus, Yfactorcross);
-      //printf("g21mode: %g+i*%g\n", creal(g21mode), cimag(g21mode));
-      //printf("g12mode: %g+i*%g\n", creal(g12mode), cimag(g12mode));
+      tf = (gsl_spline_eval_deriv(spline_phi, f, accel_phi) + gsl_spline_eval_deriv(spline_besselphi, f, accel_besselphi))/(2*PI) ;
+      //clock_t tbegGAB = clock();
+      /* g21mode = G21mode(f, tf, Yfactorplus, Yfactorcross); */
+      /* g12mode = G12mode(f, tf, Yfactorplus, Yfactorcross); */
+      /* g32mode = G32mode(f, tf, Yfactorplus, Yfactorcross); */
+      /* g23mode = G23mode(f, tf, Yfactorplus, Yfactorcross); */
+      /* g13mode = G13mode(f, tf, Yfactorplus, Yfactorcross); */
+      /* g31mode = G31mode(f, tf, Yfactorplus, Yfactorcross); */
+      EvaluateGABmode(&g12mode, &g21mode, &g23mode, &g32mode, &g31mode, &g13mode, f, tf, Yfactorplus, Yfactorcross);
+      //clock_t tendGAB = clock();
+      //timingcumulativeGABmode += (double) (tendGAB-tbegGAB) /CLOCKS_PER_SEC;
       /**/
-      double sin3pifL = sin(3*PI*f*L_SI/C_SI);
-      double complex exp3ipifL = cexp(3*I*PI*f*L_SI/C_SI);
-      double complex exp2ipifL = cexp(2*I*PI*f*L_SI/C_SI);
-      double complex exp4ipifL = cexp(4*I*PI*f*L_SI/C_SI);
-      double complex commonfac = -2*I*sin3pifL*exp3ipifL;
-      double complex amphOtilde = (gsl_vector_get(amp_real, j) + I * gsl_vector_get(amp_imag, j));
+      //Previous version (presumably wrong, to be checked more)
+      /* double sin3pifL = sin(3*PI*f*L_SI/C_SI); */
+      /* double complex exp3ipifL = cexp(3*I*PI*f*L_SI/C_SI); */
+      /* double complex exp2ipifL = cexp(2*I*PI*f*L_SI/C_SI); */
+      /* double complex exp4ipifL = cexp(4*I*PI*f*L_SI/C_SI); */
+      /* double complex commonfac = -2*I*sin3pifL*exp3ipifL; */
+      /* double complex amphOtilde = (gsl_vector_get(amp_real, j) + I * gsl_vector_get(amp_imag, j)); */
       /**/
-      campA = commonfac/sqrt(2) * ( (g13mode+g31mode)*(exp4ipifL-1.) + (g21mode+g23mode)*(1.-exp2ipifL) + (g32mode+g12mode)*(exp2ipifL-exp4ipifL) ) * amphOtilde;
-      campE = commonfac/sqrt(6) * ( (g23mode-g21mode)*(1.+exp2ipifL-2.*exp4ipifL) + (g31mode-g13mode)*(1.-2.*exp2ipifL+exp4ipifL) + (g12mode-g32mode)*(-2.+exp2ipifL+exp4ipifL) ) * amphOtilde;
-      campT = commonfac/sqrt(3) * (g31mode-g13mode+g12mode-g21mode+g23mode-g32mode) * (1.+exp2ipifL+exp4ipifL) * amphOtilde;
+      /* campA = commonfac/sqrt(2) * ( (g13mode+g31mode)*(exp4ipifL-1.) + (g21mode+g23mode)*(1.-exp2ipifL) + (g32mode+g12mode)*(exp2ipifL-exp4ipifL) ) * amphOtilde; */
+      /* campE = commonfac/sqrt(6) * ( (g23mode-g21mode)*(1.+exp2ipifL-2.*exp4ipifL) + (g31mode-g13mode)*(1.-2.*exp2ipifL+exp4ipifL) + (g12mode-g32mode)*(-2.+exp2ipifL+exp4ipifL) ) * amphOtilde; */
+      /* campT = commonfac/sqrt(3) * (g31mode-g13mode+g12mode-g21mode+g23mode-g32mode) * (1.+exp2ipifL+exp4ipifL) * amphOtilde; */
+      /**/
+      double complex expipifL = cexp(I*PI*f*L_SI/C_SI);
+      double complex exp2ipifL = expipifL*expipifL;
+      double complex exp4ipifL = exp2ipifL*exp2ipifL;
+      double complex commonfac = -2*I*exp4ipifL;
+      double complex amphOtilde = gsl_vector_get(h0tilde_ampreal, j) + I * gsl_vector_get(h0tilde_ampimag, j);
+      /**/
+      campA = commonfac/sqrt(2) * ( (g21mode+g23mode)*(exp2ipifL+1.) - exp2ipifL*(g32mode+g12mode) + (g13mode+g31mode) ) * amphOtilde;
+      campE = commonfac/sqrt(6) * ( (g31mode-g13mode)*(2*exp2ipifL+1.) + (g32mode-g12mode)*(exp2ipifL+2.) + (g21mode-g23mode)*(exp2ipifL-1.) ) * amphOtilde;
+      campT = commonfac/sqrt(3) * expipifL * (g13mode-g31mode+g21mode-g12mode+g32mode-g23mode) * amphOtilde;
       /**/
       gsl_vector_set(amp_realA, j, creal(campA));
       gsl_vector_set(amp_imagA, j, cimag(campA));
@@ -261,6 +292,10 @@ int LISASimFDResponseTDIAET(
       gsl_vector_set(amp_realT, j, creal(campT));
       gsl_vector_set(amp_imagT, j, cimag(campT));
     }
+    //clock_t tendcontesllation = clock();
+  //printf("Set constellation time: %g s\n", (double)(tendcontesllation - tbegcontesllation) / CLOCKS_PER_SEC);
+  //printf("GAB cumulated time: %g s\n", timingcumulativeGABmode);
+
     /* Copying the vectors of frequencies and phases */
     gsl_vector_memcpy(freqA, freq);
     gsl_vector_memcpy(freqE, freq);
@@ -280,8 +315,12 @@ int LISASimFDResponseTDIAET(
     /* Clean up */
     gsl_spline_free(spline_phi);
     gsl_interp_accel_free(accel_phi);
+    gsl_vector_free(h0tilde_ampreal);
+    gsl_vector_free(h0tilde_ampimag);
     gsl_vector_free(besselphi);
     gsl_spline_free(spline_besselphi);
     gsl_interp_accel_free(accel_besselphi);
   }
+
+  return SUCCESS;
 }

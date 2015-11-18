@@ -12,6 +12,8 @@
 #include "EOBNRv2HMROMstruct.h"
 #include "EOBNRv2HMROM.h"
 #include "wip.h"
+#include "splinecoeffs.h"
+#include "fresnel.h"
 #include "likelihood.h"
 #include "LISAFDresponse.h"
 #include "LISAnoise.h"
@@ -48,10 +50,16 @@ typedef struct tagLISASignalCAmpPhase
   struct tagListmodesCAmpPhaseFrequencySeries* TDIASignal;   /* Signal in the 2nd generation TDI A, in the form of a list of the contribution of each mode */
   struct tagListmodesCAmpPhaseFrequencySeries* TDIESignal;   /* Signal in the 2nd generation TDI E, in the form of a list of the contribution of each mode */
   struct tagListmodesCAmpPhaseFrequencySeries* TDITSignal;   /* Signal in the 2nd generation TDI T, in the form of a list of the contribution of each mode */
-  double TDIAhh;                                             /* Inner product (h|h) for TDI A */
-  double TDIEhh;                                             /* Inner product (h|h) for TDI E */
-  double TDIThh;                                             /* Inner product (h|h) for TDI T */
+  double TDIAEThh;                                           /* Combined Inner product (h|h) for TDI A, E and T */
 } LISASignalCAmpPhase;
+
+typedef struct tagLISAInjectionCAmpPhase
+{
+  struct tagListmodesCAmpPhaseSpline* TDIASplines;   /* Signal in the 2nd generation TDI A, in the form of a list of splines for the contribution of each mode */
+  struct tagListmodesCAmpPhaseSpline* TDIESplines;   /* Signal in the 2nd generation TDI E, in the form of a list of splines for the contribution of each mode */
+  struct tagListmodesCAmpPhaseSpline* TDITSplines;   /* Signal in the 2nd generation TDI T, in the form of a list of splines for the contribution of each mode */
+  double TDIAETss;                                   /* Combined Inner product (s|s) for TDI A, E and T */
+} LISAInjectionCAmpPhase;
 
 typedef struct tagLISASignalReIm /* We don't store the SNRs here, as we will use -1/2(h-s|h-s) for the likelihood */
 {
@@ -109,6 +117,8 @@ typedef struct tagLISAPrior {
   int pin_dist;
   int pin_inc;
   double snr_target;
+  int rescale_distprior;
+  int flat_distprior;
 } LISAPrior;
 
 typedef struct tagLISARunParams {
@@ -136,9 +146,23 @@ void parse_args_LISA(ssize_t argc, char **argv,
   LISAPrior* prior, 
   LISARunParams* run);
 
+/* Functions to print the parameters of the run in files for reference */
+int print_parameters_to_file_LISA(
+  LISAParams* params,
+  LISAGlobalParams* globalparams,
+  LISAPrior* prior,
+  LISARunParams* run);
+int print_rescaleddist_to_file_LISA(
+  LISAParams* params,
+  LISAGlobalParams* globalparams,
+  LISAPrior* prior,
+  LISARunParams* run);
+
 /* Initialization and clean-up for LISASignal structures */
 void LISASignalCAmpPhase_Cleanup(LISASignalCAmpPhase* signal);
 void LISASignalCAmpPhase_Init(LISASignalCAmpPhase** signal);
+void LISAInjectionCAmpPhase_Cleanup(LISAInjectionCAmpPhase* signal);
+void LISAInjectionCAmpPhase_Init(LISAInjectionCAmpPhase** signal);
 void LISASignalReIm_Cleanup(LISASignalReIm* signal);
 void LISASignalReIm_Init(LISASignalReIm** signal);
 void LISAInjectionReIm_Cleanup(LISAInjectionReIm* signal);
@@ -148,6 +172,10 @@ void LISAInjectionReIm_Init(LISAInjectionReIm** signal);
 int LISAGenerateSignalCAmpPhase(
   struct tagLISAParams* params,            /* Input: set of LISA parameters of the signal */
   struct tagLISASignalCAmpPhase* signal);  /* Output: structure for the generated signal */
+/* Function generating a LISA injection as a list of modes, given as preinterpolated splines, from LISA parameters */
+int LISAGenerateInjectionCAmpPhase(
+  struct tagLISAParams* injectedparams,    /* Input: set of LISA parameters of the signal */
+  struct tagLISAInjectionCAmpPhase* signal);  /* Output: structure for the generated signal */
 /* Function generating a LISA signal as a frequency series in Re/Im form where the modes have been summed, from LISA parameters - takes as argument the frequencies on which to evaluate */
 int LISAGenerateSignalReIm(
   struct tagLISAParams* params,       /* Input: set of LISA parameters of the template */
@@ -158,7 +186,8 @@ int LISAGenerateInjectionReIm(
   struct tagLISAParams* injectedparams,       /* Input: set of LISA parameters of the injection */
   double fLow,                                /* Input: starting frequency */
   int nbpts,                                  /* Input: number of frequency samples */
-  struct tagLISAInjectionReIm* signal);          /* Output: structure for the generated signal */
+  int tagsampling,                            /* Input: tag for using linear (0) or logarithmic (1) sampling */ 
+  struct tagLISAInjectionReIm* signal);       /* Output: structure for the generated signal */
 
 /* checks prior boundaires */
 int PriorBoundaryCheck(LISAPrior *prior, double *Cube);
@@ -182,7 +211,7 @@ double SinPriorToCube(double y, double x1, double x2);
 double CosPriorToCube(double y, double x1, double x2);
 
 /* log-Likelihood functions */
-double CalculateLogLCAmpPhase(LISAParams *params, LISASignalCAmpPhase* injection);
+double CalculateLogLCAmpPhase(LISAParams *params, LISAInjectionCAmpPhase* injection);
 double CalculateLogLReIm(LISAParams *params, LISAInjectionReIm* injection);
 
 /************ Global Parameters ************/

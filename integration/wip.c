@@ -476,12 +476,12 @@ double complex wip_adaptive_phase (double *f1, int n1, double *f2, int n2, doubl
 	trial=compute_int(fleft,fright[ilevel],fs, nf, Ars, Arz, Ais, Aiz, dphis, dphiz);
 	have_trial=1;
 	ncount++;
-	if(wip_adapt_verbose)printf("computed: lev=%2i, trial=%.8g+i%.8g\n",ilevel,trial);
+	if(wip_adapt_verbose)printf("computed: lev=%2i, trial=%.8g+i%.8g\n",ilevel, creal(trial), cimag(trial));
       }
       int pass=0;
       double complex oldtrial=trial;
       double complex left_result;
-      if(wip_adapt_verbose)printf("set: lev=%2i, oldtrial=%.8g+i%.8g\n",ilevel,oldtrial);
+      if(wip_adapt_verbose)printf("set: lev=%2i, oldtrial=%.8g+i%.8g\n",ilevel, creal(oldtrial), cimag(oldtrial));
       double fcent=(fleft+fright[ilevel])/2.0;
 
       if(ilevel>=maxlev){
@@ -501,10 +501,10 @@ double complex wip_adaptive_phase (double *f1, int n1, double *f2, int n2, doubl
 	double tol=basetol/(2<<ilevel);
 	pass=cabs(diff)<tol;
 	if(wip_adapt_verbose){
-	  printf("check: lev=%2i, oldtrial=%.8g\n",ilevel,oldtrial);
+	  printf("check: lev=%2i, oldtrial=%.8g+i%.8g\n",ilevel, creal(oldtrial), cimag(oldtrial));
 	  printf("testing: lev=%2i, fleft=%.8g, fright=%.8g\n",ilevel,fleft,fright[ilevel]);
-	  printf("testing: lev=%2i, left_result=%.8g+i%.8g, right_result=%.8g+i%.8g\n",ilevel,left_result,right_result[ilevel]);
-	  printf("testing: lev=%2i, trial=%.8g+i%.8g,  oldtrial=%.8g+i%.8g\n",ilevel,trial,oldtrial);
+	  printf("testing: lev=%2i, left_result=%.8g+i%.8g, right_result=%.8g+i%.8g\n",ilevel,creal(left_result),cimag(left_result),creal(right_result[ilevel]),cimag(right_result[ilevel]));
+	  printf("testing: lev=%2i, trial=%.8g+i%.8g,  oldtrial=%.8g+i%.8g\n",ilevel,creal(trial),cimag(trial),creal(oldtrial),cimag(oldtrial));
 	  printf("testing: lev=%2i, 2^lev=%i, diff=%.8g, tol=%.8g\n",ilevel,2<<ilevel,cabs(diff),tol);
 	}
       }

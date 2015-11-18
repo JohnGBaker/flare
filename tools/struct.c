@@ -35,14 +35,16 @@
 
 
 /**************************************************************/
-/* Function computing the max between two int */
+/* Functions computing the max and min between two int */
 int max (int a, int b) { return a > b ? a : b; }
+int min (int a, int b) { return a < b ? a : b; }
 
 /************** GSL error handling and I/O ********************/
 
 /* GSL error handler */
 void Err_Handler(const char *reason, const char *file, int line, int gsl_errno) {
   printf("gsl: %s:%d: %s - %d\n", file, line, reason, gsl_errno);
+  exit(1);
 }
 
 /* Functions to read binary data from files */
@@ -180,6 +182,55 @@ void CAmpPhaseFrequencySeries_Cleanup(CAmpPhaseFrequencySeries *freqseries) {
   free(freqseries);
 }
 
+/******** Functions to initialize and clean up CAmpPhaseSpline structure ********/
+void CAmpPhaseSpline_Init(CAmpPhaseSpline **splines, const int n) {
+  if(!splines) exit(1);
+  /* Create storage for structures */
+  if(!*splines) *splines=malloc(sizeof(CAmpPhaseSpline));
+  else
+  {
+    CAmpPhaseSpline_Cleanup(*splines);
+  }
+  gsl_set_error_handler(&Err_Handler);
+  (*splines)->spline_amp_real = gsl_matrix_alloc(n, 5);
+  (*splines)->spline_amp_imag = gsl_matrix_alloc(n, 5);
+  (*splines)->quadspline_phase = gsl_matrix_alloc(n, 4);
+}
+void CAmpPhaseSpline_Cleanup(CAmpPhaseSpline *splines) {
+  if(splines->spline_amp_real) gsl_matrix_free(splines->spline_amp_real);
+  if(splines->spline_amp_imag) gsl_matrix_free(splines->spline_amp_imag);
+  if(splines->quadspline_phase) gsl_matrix_free(splines->quadspline_phase);
+  free(splines);
+}
+
+/******** Functions to initialize and clean up CAmpPhaseGSLSpline structure ********/
+void CAmpPhaseGSLSpline_Init(CAmpPhaseGSLSpline **splines, const int n) {
+  if(!splines) exit(1);
+  /* Create storage for structures */
+  if(!*splines) *splines=malloc(sizeof(CAmpPhaseGSLSpline));
+  else
+  {
+    CAmpPhaseGSLSpline_Cleanup(*splines);
+  }
+  gsl_set_error_handler(&Err_Handler);
+  /* Note: for freq we won't copy the vector but simply copy the pointer to the existing one, so we don't allocate anything here */
+  (*splines)->spline_amp_real = gsl_spline_alloc(gsl_interp_cspline, n);
+  (*splines)->spline_amp_imag = gsl_spline_alloc(gsl_interp_cspline, n);
+  (*splines)->spline_phase = gsl_spline_alloc(gsl_interp_cspline, n);
+  (*splines)->accel_amp_real = gsl_interp_accel_alloc();
+  (*splines)->accel_amp_imag = gsl_interp_accel_alloc();
+  (*splines)->accel_phase = gsl_interp_accel_alloc();
+}
+void CAmpPhaseGSLSpline_Cleanup(CAmpPhaseGSLSpline *splines) {
+  if(splines->spline_amp_real) gsl_spline_free(splines->spline_amp_real);
+  if(splines->spline_amp_imag) gsl_spline_free(splines->spline_amp_imag);
+  if(splines->spline_phase) gsl_spline_free(splines->spline_phase);
+  if(splines->accel_amp_real) gsl_interp_accel_free(splines->accel_amp_real);
+  if(splines->accel_amp_imag) gsl_interp_accel_free(splines->accel_amp_imag);
+  if(splines->accel_phase) gsl_interp_accel_free(splines->accel_phase);
+  free(splines);
+}
+
 /******** Functions to initialize and clean up ReImFrequencySeries structure ********/
 void ReImFrequencySeries_Init(ReImFrequencySeries **freqseries, const int n) {
   if(!freqseries) exit(1);
@@ -262,6 +313,74 @@ void ListmodesCAmpPhaseFrequencySeries_Destroy(
   while( (pop = list) ){
     if( pop->freqseries ){ /* Destroying the CAmpPhaseFrequencySeries data */
       CAmpPhaseFrequencySeries_Cleanup( pop->freqseries );
+    }
+    /* Notice that the mode indices l and m are not freed, like in SphHarmTimeSeries struct indices l and m */
+    list = pop->next;
+    free( pop );
+  }
+}
+
+/***************** Functions for the ListmodesCAmpPhaseSpline structure ****************/
+ListmodesCAmpPhaseSpline* ListmodesCAmpPhaseSpline_AddModeNoCopy(
+	   ListmodesCAmpPhaseSpline* appended,  /* List structure to prepend to */
+	   CAmpPhaseSpline* splines,  /* data to contain */
+	   int l, /* major mode number */
+	   int m  /* minor mode number */)
+{
+    ListmodesCAmpPhaseSpline* list;
+    /* Check if the node with this mode already exists */
+    list = appended;
+    while( list ){
+      if( l == list->l && m == list->m ){
+	break;
+      }
+      list = list->next;
+    }
+    if( list ){ /* We don't allow for the case where the mode already exists in the list*/
+      printf("Error: Tried to add an already existing mode to a ListmodesCAmpPhaseSpline ");
+      return(NULL);
+    } else { /* In that case, we do NOT COPY the input interpolated data, which therefore can't be
+		used anywhere else; this will be acceptable as these operations will only be done
+		when interpolating the initialization data */
+      list = malloc( sizeof(ListmodesCAmpPhaseSpline) );
+    }
+    list->l = l;
+    list->m = m;
+    if( splines ){
+      list->splines = splines;
+    } else {
+      list->splines = NULL;
+    }
+    if( appended ){
+      list->next = appended;
+    } else {
+        list->next = NULL;
+    }
+    return list;
+}
+/* Get the element of a ListmodesCAmpPhaseSpline with a given index */
+ListmodesCAmpPhaseSpline* ListmodesCAmpPhaseSpline_GetMode( 
+	   ListmodesCAmpPhaseSpline* const list,  /* List structure to get a particular mode from */
+	   int l, /*< major mode number */
+	   int m  /*< minor mode number */ )
+{
+    if( !list ) return NULL;
+
+    ListmodesCAmpPhaseSpline *itr = list;
+    while( itr->l != l || itr->m != m ){
+        itr = itr->next;
+        if( !itr ) return NULL;
+    }
+    return itr; /* The element returned is itself a pointer to a ListmodesCAmpPhaseSpline */
+}
+void ListmodesCAmpPhaseSpline_Destroy( 
+	   ListmodesCAmpPhaseSpline* list  /* List structure to destroy; notice that the data is destroyed too */
+)
+{
+  ListmodesCAmpPhaseSpline* pop;
+  while( (pop = list) ){
+    if( pop->splines ){ /* Destroying the CAmpPhaseSpline data */
+      CAmpPhaseSpline_Cleanup( pop->splines );
     }
     /* Notice that the mode indices l and m are not freed, like in SphHarmTimeSeries struct indices l and m */
     list = pop->next;

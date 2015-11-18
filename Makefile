@@ -1,5 +1,7 @@
 GSLROOT = /usr/local/other/SLES11.1/gsl/1.16/intel-13.0.1.117
+#GSLROOT = /opt/local
 BAMBIROOT = /discover/nobackup/jgbaker/sw/bambi/
+#BAMBIROOT = $(HOME)/build/bambi
 CC = icc
 CPP = icpc
 LD = $(CPP)
@@ -7,7 +9,7 @@ LDFLAGS =
 #Uncomment this for MPI and specify your needed MPI libraries
 CC += -DPARALLEL
 CPP += -DPARALLEL
-MPILIBS = -lmpi
+MPILIBS = -lmpi -lmpi_cxx -lmpi_mpifh
 
 #Need to add/change the following to build on discover
 GSLROOT = /usr/local/other/SLES11.1/gsl/1.15/intel-12.1.0.233
@@ -49,9 +51,6 @@ LLVinference: tools integration EOBNRv2HMROM LLVsim
 
 phaseSNR: tools integration EOBNRv2HMROM LLVsim
 	$(MAKE) -C LLVinference phaseSNR
-
-findDist: tools integration EOBNRv2HMROM LLVsim
-	$(MAKE) -C LLVinference findDist
 
 all: subdirs
 

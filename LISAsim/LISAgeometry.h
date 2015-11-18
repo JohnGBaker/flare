@@ -51,6 +51,17 @@ double complex G32mode(const double f, const double t, const double complex Yfac
 double complex G23mode(const double f, const double t, const double complex Yfactorplus, const double complex Yfactorcross);
 double complex G13mode(const double f, const double t, const double complex Yfactorplus, const double complex Yfactorcross);
 double complex G31mode(const double f, const double t, const double complex Yfactorplus, const double complex Yfactorcross);
+int EvaluateGABmode(
+  double complex* G12,                     /* Output for G12 */
+  double complex* G21,                     /* Output for G21 */
+  double complex* G23,                     /* Output for G23 */
+  double complex* G32,                     /* Output for G32 */
+  double complex* G31,                     /* Output for G31 */
+  double complex* G13,                     /* Output for G13 */
+  const double f,                          /* Frequency */
+  const double t,                          /* Time */
+  const double complex Yfactorplus,        /* Spin-weighted spherical harmonic factor for plus */
+  const double complex Yfactorcross);      /* Spin-weighted spherical harmonic factor for cross */
 
 #if 0
 { /* so that editors will match succeeding brace */
