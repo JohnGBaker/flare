@@ -63,6 +63,53 @@ int EvaluateGABmode(
   const double complex Yfactorplus,        /* Spin-weighted spherical harmonic factor for plus */
   const double complex Yfactorcross);      /* Spin-weighted spherical harmonic factor for cross */
 
+/* Functions for the response in time domain */
+double y12TD(
+  gsl_spline* splinehp,                    /* Input spline for TD hplus */
+  gsl_spline* splinehc,                    /* Input spline for TD hcross */
+  gsl_interp_accel* accelhp,               /* Accelerator for hp spline */
+  gsl_interp_accel* accelhc,               /* Accelerator for hc spline */
+  const double t);                         /* Time */
+double y21TD(
+  gsl_spline* splinehp,                    /* Input spline for TD hplus */
+  gsl_spline* splinehc,                    /* Input spline for TD hcross */
+  gsl_interp_accel* accelhp,               /* Accelerator for hp spline */
+  gsl_interp_accel* accelhc,               /* Accelerator for hc spline */
+  const double t);                         /* Time */
+double y23TD(
+  gsl_spline* splinehp,                    /* Input spline for TD hplus */
+  gsl_spline* splinehc,                    /* Input spline for TD hcross */
+  gsl_interp_accel* accelhp,               /* Accelerator for hp spline */
+  gsl_interp_accel* accelhc,               /* Accelerator for hc spline */
+  const double t);                         /* Time */
+double y32TD(
+  gsl_spline* splinehp,                    /* Input spline for TD hplus */
+  gsl_spline* splinehc,                    /* Input spline for TD hcross */
+  gsl_interp_accel* accelhp,               /* Accelerator for hp spline */
+  gsl_interp_accel* accelhc,               /* Accelerator for hc spline */
+  const double t);                         /* Time */
+double y31TD(
+  gsl_spline* splinehp,                    /* Input spline for TD hplus */
+  gsl_spline* splinehc,                    /* Input spline for TD hcross */
+  gsl_interp_accel* accelhp,               /* Accelerator for hp spline */
+  gsl_interp_accel* accelhc,               /* Accelerator for hc spline */
+  const double t);                         /* Time */
+double y13TD(
+  gsl_spline* splinehp,                    /* Input spline for TD hplus */
+  gsl_spline* splinehc,                    /* Input spline for TD hcross */
+  gsl_interp_accel* accelhp,               /* Accelerator for hp spline */
+  gsl_interp_accel* accelhc,               /* Accelerator for hc spline */
+  const double t);                         /* Time */
+int EvaluateTDIXYZTD(
+  double* TDIX,                            /* Output: value of TDI observable X */
+  double* TDIY,                            /* Output: value of TDI observable Y */
+  double* TDIZ,                            /* Output: value of TDI observable Z */
+  gsl_spline* splinehp,                    /* Input spline for TD hplus */
+  gsl_spline* splinehc,                    /* Input spline for TD hcross */
+  gsl_interp_accel* accelhp,               /* Accelerator for hp spline */
+  gsl_interp_accel* accelhc,               /* Accelerator for hc spline */
+  const double t);                         /* Time */
+
 #if 0
 { /* so that editors will match succeeding brace */
 #elif defined(__cplusplus)

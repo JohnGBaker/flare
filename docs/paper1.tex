@@ -1,0 +1,609 @@
+\documentclass[aps,showpacs,twocolumn,prd,superscriptaddress,nofootinbib]{revtex4}
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{latexsym}
+\usepackage{graphicx}
+\usepackage{bm}
+\usepackage{color}
+\usepackage{enumerate}
+\usepackage{ulem}
+
+\newcommand{\be}{\begin{equation}}
+\newcommand{\ee}{\end{equation}}
+\newcommand\ud{{\mathrm{d}}}
+\newcommand\uD{{\mathrm{D}}}
+\newcommand\calO{{\mathcal{O}}}
+\newcommand\bfx{\mathbf{x}}
+\newcommand{\ov}[1]{\overline{#1}}
+\newcommand{\ph}[1]{\phantom{#1}}
+\newcommand{\cte}{\mathrm{cte}}
+\newcommand{\nn}{\nonumber}
+\newcommand{\hatk}{\hat{k}}
+\newcommand{\Hz}{\,\mathrm{Hz}}
+\newcommand{\sinc}{\,\mathrm{sinc}}
+\newcommand{\Msol}{M_{\odot}}
+
+\begin{document}
+
+\title{Accelerated prospective parameter estimation of non-spinning compact binaries with higher modes for LIGO/VIRGO and LISA-type detectors}
+
+\author{John G. Baker}
+\affiliation{Gravitational Astrophysics Laboratory, NASA Goddard Space Flight Center, 8800 Greenbelt Rd., Greenbelt, MD 20771, USA}
+\author{Alessandra Buonanno}
+\affiliation{Department of Physics, University of Maryland, College Park, MD 20742, USA}
+\affiliation{Max Planck Institute for Gravitational Physics (Albert Einstein Institute), Am M\"uhlenberg 1, Potsdam-Golm, 14476, Germany}
+\author{Philip. B. Graff}
+\affiliation{Department of Physics, University of Maryland, College Park, MD 20742, USA}
+\affiliation{Gravitational Astrophysics Laboratory, NASA Goddard Space Flight Center, 8800 Greenbelt Rd., Greenbelt, MD 20771, USA}
+\author{Sylvain Marsat}
+\affiliation{Department of Physics, University of Maryland, College Park, MD 20742, USA}
+\affiliation{Gravitational Astrophysics Laboratory, NASA Goddard Space Flight Center, 8800 Greenbelt Rd., Greenbelt, MD 20771, USA}
+\affiliation{Max Planck Institute for Gravitational Physics (Albert Einstein Institute), Am M\"uhlenberg 1, Potsdam-Golm, 14476, Germany}
+
+
+\date{\today}
+
+\begin{abstract}
+
+[Abstract]
+
+\end{abstract}
+
+\pacs{
+04.25.D-, % numerical relativity
+04.70.Bw, % classical black holes
+04.80.Nn, % Gravitational wave detectors and experiments
+95.30.Sf, % relativity and gravitation
+95.55.Ym, % Gravitational radiation detectors
+97.60.Lf  % black holes (astrophysics)
+}
+
+\maketitle
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Introduction}
+\label{sec:intro}
+
+[Introduction]
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Methodology}
+\label{sec:methodology}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Reduced order models for fast waveform generation}
+\label{subsec:rom}
+
+[review recent advances in this field: surrogates, ROQ, P\"urrer's SVD method in some more details]
+
+[present the mode-by-mode time and phase offset tracking, specific to HM]
+
+[specific choices: logarithmic sampling, 1D spline interpolation, smoothing spline for projection coefficients]
+
+[give summary plot of unfaithfulness]
+
+[compare speedup with ordinary EOB]
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Fourier-domain response of LISA-type detectors}
+\label{subsec:fdresponse}
+
+We use the notations of the Kr\'olak \& al paper. We denote the annual frequency of the motion by $f_{0}=1/\mathrm{year}$, and $\Omega = 2\pi f_{0}$. We set $c=1$ except for numerical applications.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsubsection*{Definitions}
+
+The primary observables for a LISA-type instrument are given by (taking $y_{21}$ as an example)
+%
+\be
+	y_{21}(t) = \left( 1-\hatk \cdot n_{3}\right) \left[ \Psi_{3}(t+\hatk\cdot p_{2} - L) - \Psi_{3}(t+\hatk\cdot p_{1}) \right] \,,
+\ee
+%
+with the definitions
+%
+\be
+	\Psi_{A} = \frac{\Phi_{A}}{1-(\hatk\cdot n_{A})^{2}} \,, \quad \Phi_{A} = \frac{1}{2} n_{A}^{i} H_{ij} n_{A}^{j} \,.
+\ee
+%
+Here we follow the approximation made in~\cite{Krolak+04}: all vectors related to the positions, $n_{A}$ and $p_{A}$, will be considered evaluated at the time $t$, neglecting their variation on the time scale of light propagation in the system, which is motivated by $\Omega R/c \ll 1$, $\Omega L/c\ll 1$. It seems also that this approximation is used anyway in the first place when deriving the above form for the frequency variation of the lasers [to check]. We will also idealize the geometry of the constellation by keeping the linear order in eccentricity and neglecting higher-order orbital perturbations. Another convenient definition is
+%
+\be
+	\Phi_{A} = P_{A}^{+} h_{+} + P_{A}^{\times}h_{\times} \,,
+\ee
+%
+where $h_{+}$, $h_{\times}$ are the two polarizations of the wave and the $P_{A}$'s are combinations of trigonometric functions depending on $\Omega t$. 
+
+\subsection*{Fourier transform of a delayed signal}
+
+Let us consider, in general, the problem of determining the Fourier transform of a signal $h$ (whose Fourier transform $\tilde{h}$ is known), when applying a varying delay $d(t)$ and also multiplying by some function $F(t)$. Defining
+%
+\be
+	h_{d}(t) = h(t+d(t)) \,, \quad s(t) = F(t)h_{d}(t) \,,
+\ee
+%
+we have
+%
+\be
+	h_{d}(t) = \int \ud f \, e^{-2i\pi f (t+d(t))}\tilde{h}(f) \,,
+\ee
+%
+and
+%
+\begin{align}
+	\tilde{s}(f) &= \int \ud t \, e^{2i\pi f t} F(t)  \int \ud f' \, e^{-2i\pi f' (t+d(t))}\tilde{h}(f') \nn\\
+	&= \int \ud f' \, \tilde{h}(f-f') \int \ud t \, e^{2i\pi f' t} e^{-2i\pi (f-f') d(t)} F(t) \,.
+\end{align}
+%
+We can rewrite the last equation as a kind of convolution with a frequency-dependent Kernel, according to
+%
+\begin{align}\label{eq:freqkernel}
+	\tilde{s}(f) &= \int \ud f' \, \tilde{h}(f-f') G(f,f') \,, \nn\\
+	G(f,f') &= \int \ud t \, e^{2i\pi f' t} e^{-2i\pi (f-f') d(t)} F(t) \,.
+\end{align}
+%
+Since in our case both $d(t)$ and $F(t)$ are $2\pi/\Omega$-periodic, the latter Kernel will reduce to a discrete comb in frequency. If we define $g[f](t) = e^{-2i\pi f d(t)} F(t)$, a Fourier series decomposition gives
+%
+\begin{align}
+	g[f](t) &= \sum\limits_{n\in \mathbb{Z}} c_{n}[g](f) e^{-i n\Omega t} \,, \nn\\
+	c_{n}[g](f) &= \frac{\Omega}{2\pi}\int_{0}^{\frac{2\pi}{\Omega}} \ud t \, g[f](t) e^{i n \Omega t} \,,
+\end{align}
+%
+which transforms~\eqref{eq:freqkernel} into
+%
+\begin{align}
+	G(f,f') &= \sum\limits_{n\in \mathbb{Z}} c_{n}[g](f-f') \delta\left(f' - n f_{0}\right) \,, \nn\\
+	\tilde{s}(f) &= \sum\limits_{n\in \mathbb{Z}} c_{n}[g]\left(f - n f_{0}\right) \tilde{h}\left(f - n f_{0}\right) \,.
+\end{align}
+%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsubsection*{Application to $y_{AB}$ observables}
+
+We now apply the above results to $y_{AB}$ observables, with the example of $y_{21}$. We will assume our starting point are the Fourier transforms of $h_{+}$ and $h_{\times}$. We get for either polarization
+%
+\begin{widetext}
+\begin{align}
+	g_{21}^{+,\times}[f](t) &= \frac{P_{3}^{+,\times}}{1+\hatk\cdot n_{3}} \left[ e^{-2i\pi f (\hatk\cdot p_{2} - L)} - e^{-2i\pi f \hatk\cdot p_{1}} \right] \,, \nn\\
+	&= i\pi L f P_{3}^{+,\times} \sinc\left[ \pi L f(1+\hatk \cdot n_{3})\right]\exp\left[ i \pi f L \left(  1 - \hatk \cdot \frac{p_{1}+p_{2}}{L}\right) \right] \,,
+\end{align}
+\end{widetext}
+%
+where we used $p_{2}-p_{1} = -L n_{3}$ and the dependence in $t$ is in the vectors $n_{A}$, $p_{A}$. $(p_{2}+p_{1})/2 $ also has a simple expression in the LISA frame. Thus the complete result before any further approximation is
+%
+\begin{widetext}
+\begin{subequations}
+\begin{align}
+	\tilde{y}_{21}^{+,\times}(f) &= \sum\limits_{n\in \mathbb{Z}} c_{n}[g_{21}^{+,\times}]\left(f - n f_{0}\right) \tilde{h}_{+,\times}\left(f - n f_{0}\right)\,, \\
+	c_{n}[g_{21}^{+,\times}]\left(f\right) &= \frac{\Omega}{2\pi}\int_{0}^{\frac{2\pi}{\Omega}} \ud t \, e^{i n \Omega t} i\pi L f P_{3}^{+,\times} \sinc\left[ \pi L f(1+\hatk \cdot n_{3})\right]\exp\left[ i \pi f L \left(  1 - \hatk \cdot \frac{p_{1}+p_{2}}{L}\right) \right]  \,.
+\end{align}
+\end{subequations}
+\end{widetext}
+%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsubsection*{Separating the orbital delay from the constellation delay}
+
+Some numerical tests for the coefficients $c_{n}$ on the frequency band $10^{-5}$Hz-$1$Hz show that the extent in $n$ of the frequency comb rises a lot (up to several hundreds) at the high frequency end. This seems attributable to the presence of $\hatk\cdot r/c$ in the argument of te exponential and the large number of oscillations this causes. Indeed, this contribution is roughly $f R/c$ with $c/R\sim 2.10^{-3}\Hz$, whereas $c/L\sim 2.10^{-1}\Hz$, so that the oscillations due to $L/c$ terms are relatively mild, while those due to the $R/c$ term are much more rapid and yield extended harmonic content.
+
+Luckily, it is possible to factor out this term, and to control it analytically. It corresponds to the part of the delay that corresponds to the GW propagating from the solar system barycenter ($\Omega$) to the moving center of the constellation ($O$), and has a simple expression involving only the sine and cosine of $\Omega t$. If we define
+%
+\be
+	h_{+,\times}^{O} = h_{+,\times} (t + \hatk \cdot r)
+\ee
+%
+as the signal as measured at the center of the constellation $O$, since $\hatk \cdot r = R \cos \beta \cos(\Omega t - \lambda)$ (choosing $\eta_{0} = 0$), applying the same calculation as above yields for this simplified retardation
+%
+\begin{align}
+	\tilde{h}_{+,\times}^{O}\left(f\right) &= \sum\limits_{n\in \mathbb{Z}} c_{n}[g_{O}^{+,\times}]\left(f - n f_{0}\right) \tilde{h}_{+,\times}\left(f - n f_{0}\right)\,, \\
+	c_{n}[g_{O}^{+,\times}]\left(f\right) &= \frac{\Omega}{2\pi}\int_{0}^{\frac{2\pi}{\Omega}} \ud t \, e^{i n \Omega t} \exp\left[ -2i \pi f R \cos \beta \cos (\Omega t - \lambda) \right] \nn\\ 
+	&= e^{i n \lambda} \frac{1}{2\pi}\int_{0}^{2\pi} \ud u \, e^{i n u} \exp\left[ -2i \pi f R \cos \beta \cos u \right] \nn\\
+	&= i^{n}e^{i n \lambda} J_{n}\left[ -2\pi f R \cos \beta \right] \,.
+\end{align}
+%
+Thus we obtain, in two steps,
+%
+\begin{widetext}
+\begin{subequations}
+\begin{align}
+	\tilde{h}_{+,\times}^{O}\left(f\right) &= \sum\limits_{n\in \mathbb{Z}} i^{n}e^{i n \lambda} J_{n}\left[ -2\pi \left(f - n f_{0}\right) R \cos \beta \right]\tilde{h}_{+,\times}\left(f - n f_{0}\right)\,, \\
+	\tilde{y}_{21}^{+,\times}(f) &= \sum\limits_{n\in \mathbb{Z}} c_{n}[\gamma_{21}^{+,\times}]\left(f - n f_{0}\right) \tilde{h}_{+,\times}^{O}\left(f - n f_{0}\right)\,, \\
+	c_{n}[\gamma_{21}^{+,\times}]\left(f\right) &= \frac{\Omega}{2\pi}\int_{0}^{\frac{2\pi}{\Omega}} \ud t \, e^{i n \Omega t} 2 i\pi L f f_{3}^{+,\times}\sinc\left[ \pi L f (1+\hatk \cdot n_{3})\right]\exp\left[ i \pi f L\left(1 - \hatk \cdot O_{2} \cdot \frac{p_{1}^{L}+p_{2}^{L}}{L} \right) \right] \,.
+\end{align}
+\end{subequations}
+\end{widetext}
+%
+Now we find that the Bessel comb that relates $\tilde{h}^{O}$ to $\tilde{h}$ (which we can control analytically) contains all the spread in $n$, as the new $c_{n}$ coefficients (expressed with integrals) do not extend beyond $n=\pm 10$. These comb coefficients show a smooth variation with frequency (they vary much less than the Fourier-domain signal): in the worst case, one should be able to compute them numerically at a handful of frequencies and interpolate inbetween.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsubsection*{Locally linear phase approximation (LLP)}
+
+If we put actual numbers, we have $\Omega/2\pi \simeq 3.1\times10^{-8}\mathrm{Hz} \ll f$ over all the frequency band we consider. Considering that the comb is of limited extend in $n$, we might want to Taylor expand the relevant quantities accross the comb. Since the phase is rapidly varying, and since we have to consider a constant and a linear term in the phase as arbitrary, it is natural to Taylor expand the phase at the first order (that is, approximate the phase linearly locally), neglect the $n\Omega/2\pi$ in $(f-n\Omega/2\pi)$ appearing in the argument of the amplitude andother terms, and assess the quality of this approximation.
+
+Preliminary tests show that this approximation should be valid, unsurprisingly, for all the mildly varying functions encountered: $\sinc$, $\exp$ and the linear term in the $c_{n}$'s, and the Bessel functions $J_{n}$. However, $\tilde{h}$ has a Fourier-domain phase which becomes very rapidly varying at low frequencies, in the deep inspiral, $\Psi\propto f^{-5/3}$; here it is not obvious that we can neglect the second derivative of the phase.
+
+For a Newtonian inspiral, applying the SPA gives $\tilde{h}(f) = A_{N}(f)e^{-i\Psi_{N}(f)}$ with
+%
+\begin{subequations}
+\begin{align}
+	A_{N}(f) &= -\sqrt{\frac{5\pi}{24}} \frac{G^{2}m^{2}}{Dc^{5}} \nu^{1/2}v^{-7/2}\,,\\
+	\Psi_{N}(f) &= 2\pi f t_{0} - \phi_{0} + \frac{3}{128\nu v^{5}} \,, 
+\end{align}
+\end{subequations}
+%
+where $v=(G m \pi f/c^{3})^{1/3}$. The magnitude of the first terms in a Taylor expansion in $f_{0}$ is (taking $10^{-5}\mathrm{Hz}$ as a reference starting frequency):
+%
+\begin{widetext}
+\begin{subequations}
+\begin{align}
+	|\delta A/A| &= \left| \frac{1}{A_{N}}\frac{\ud A_{N}}{\ud f} f_0 \right| \simeq 3\times10^{-3} \left(\frac{f}{10^{-5}\Hz}\right)^{-1} \,,\\
+	|\delta^{1}\Psi | &= \left| f_0\frac{\ud \Psi_{N}}{\ud f} \right| \simeq 10^{3}\left( \frac{m}{10^{6}\Msol} \right)^{-5/3} \left( \frac{\nu}{1/4} \right)^{-1} \left( \frac{f}{10^{-5}\Hz} \right)^{-8/3} \,, \\
+	|\delta^{2}\Psi | &= \left| \frac{1}{2} f_0^{2}\frac{\ud^{2} \Psi_{N}}{\ud f^{2}} \right| \simeq 5 \left( \frac{m}{10^{6}\Msol} \right)^{-5/3} \left( \frac{\nu}{1/4} \right)^{-1} \left( \frac{f}{10^{-5}\Hz} \right)^{-11/3} \,, \\
+	|\delta^{3}\Psi | &= \left| \frac{1}{6} f_0^{3}\frac{\ud^{3} \Psi_{N}}{\ud f^{3}} \right| \simeq 2\times 10^{-2} \left( \frac{m}{10^{6}\Msol} \right)^{-5/3} \left( \frac{\nu}{1/4} \right)^{-1} \left( \frac{f}{10^{-5}\Hz} \right)^{-14/3} \,.
+\end{align}
+\end{subequations}
+\end{widetext}
+%
+The approximation degrades for lower starting frequencies, and, at a fixed frequency, when the total mass decreases and/or the mass ratio increases. However, if we consider only merging binaries, that is to say binaries of which the merger is seen during the observation period of the mission, we have a lower limit for the starting frequency which can be larger than the detector's lowest frequency in band.
+
+Namely, if we take a Newtonian estimate for the relation between the frequency and the time to coalescence, we have
+%
+\be
+	\pi f(t) = \left[ \frac{256\nu}{5c^{5}} (Gm)^{5/3} \Delta t \right]^{-3/8} \,,
+\ee
+%
+with $\Delta t$ the time to coalescence, and the starting frequency is then
+%
+\be
+	f_{\rm start} = 10^{-5}\mathrm{Hz} \left( \frac{m}{8.5\times10^{6}\Msol} \right)^{-5/8} \left( \frac{\nu}{1/4} \right)^{-3/8} \left( \frac{\Delta t}{5 \mathrm{yr}} \right)^{-3/8} \,.
+\ee
+%
+So we see that the ``worst'' total mass is $8.5\times10^6\Msol (\nu/(1/4))^{3/5}$, for 5 years of observation and $f_{\rm low} = 10^{-5}\mathrm{Hz}$ for the entry in band, which are conservative values; for higher masses, part of the signal is cut because it is out-of-band, while for lower masses, the signal is cut because of the limited time of observation before merger, and we have the scaling
+%
+\be
+	|\delta^{2}\Psi |_{f_\mathrm{start}} \propto m^{5/8}\nu^{3/8}\Delta t^{11/8} \,,
+\ee
+%
+which shows that the effect of the truncation of the signal for a finite observation time wins: the approximation becomes better for lower mass and higher mass ratios systems. The worse point in the parameter space should be, for these Newtonian estimates, at equal mass and $m=8.5\times 10^{6} \Msol$, with $|\delta^{2}\Psi |_{\mathrm{worst}} \simeq 0.15$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsubsection*{Direct summation}
+
+The Newtonian estimates above indicate that the locally linear phase approximation is going to be at least marginally valid for all sources of which we observe the inspiral, merger and ringdown. We adopt for the results above the generic notation
+%
+\begin{align}
+	\tilde{s}(f) &=  \sum\limits_{n\in \mathbb{Z}} c_{n}[G]\left(f - n f_{0}\right) \tilde{h}\left(f - n f_{0}\right)\,, \nn\\
+	c_{n}[G](f) &= \frac{1}{T} \int_{0}^{T}\ud t\, e^{in\Omega t} G[f](t)
+\end{align}
+%
+with $T=2\pi/\Omega=1\mathrm{yr}$ and $G[f](t)$ a function of frequency and time.
+
+At the lowest order in the approximation, with $|\delta A/A| \ll 1$ and $|\delta^{2} \Psi | \ll 1$, and also neglecting $f_{0}$ in the frequency-dependence of $G$, we have $\tilde{h}(f-n f_{0}) \simeq \tilde{h}(f) \exp\left[ i n f_{0} \ud \Psi/\ud f \right]$ and (after commuting the sum and integral):
+%
+\be
+	\tilde{s}(f) \simeq \tilde{h}(f) \frac{1}{T} \int_{0}^{T}\ud t\, G[f](t) \sum\limits_{n} e^{i n \Omega t} \exp\left[ i n f_{0} \frac{\ud \Psi}{\ud f} \right] \,.
+\ee
+%
+Using the Dirac comb relation
+%
+\be
+	\sum\limits_{n} e^{i n \Omega (t-t_{0})} = \frac{2\pi}{\Omega} \sum\limits_{n} \delta\left( t-t_{0} - \frac{n\Omega}{2\pi} \right) \,,
+\ee
+%
+we have
+%
+\be
+	\sum\limits_{n} e^{i n \Omega t} \exp\left[ i n f_{0} \frac{\ud \Psi}{\ud f }\right] = T \sum\limits_{n} \delta\left( t + \frac{1}{2\pi}\frac{\ud \Psi}{\ud f} - n T \right) \,,
+\ee
+%
+and since only one of the Dirac deltas has support on $[0,T]$, we obtain simply
+%
+\be
+	\tilde{s}(f) \simeq \tilde{h}(f) \times G[f]\left( -\frac{1}{2\pi} \frac{\ud \Psi}{\ud f} \right)\,.
+\ee
+%
+Now, recall that when the SPA applies (which it does not in the merger-ringdown phase of the signal), we have the relations
+%
+\begin{align}
+	\Psi_{\rm SPA} &= \phi(t_{f}) - 2\pi f t_{f} + \mathrm{const} \,,\nn\\
+	\frac{\ud \Psi_{\rm SPA}}{\ud f} &= -2\pi t_{f} \,,
+\end{align}
+%
+thus providing a simple physical interpretation: at leading order, we can simply use the time-domain modulation and delays, as evaluated at a fixed time $t_{f}$, the time at which the corresponding frequency is dominantly emitted. Notice however that the above result is more general, as it extends to the merger-ringdown phase, and that the limits of validity of the two approximations differ: the SPA becomes increasingly valid in the deep inspiral, whereas the LLP breaks down in the limit of almost monochromatic sources but becomes increasingly valid at the end of the inspiral, when the signal evolves quickly compared to the orbital timescale.
+
+Notice that these Newtonian estimates are very poor to cover the merger and ringdown; for instance, above the dominant ringdown frequency the Fourier-domain amplitude drops rapidly in a way that is not captured by the power law above.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsubsection*{Summation of $\tilde{h}_{O}\left(f\right)$}
+
+The expression obtained above for $\tilde{h}_{O}\left(f\right)$ can be summed, either by applying the above general formulas with the function $G[f](t) = \exp\left[ -2i \pi f R \cos \beta \cos (\Omega t - \lambda) \right]$, either directly by means of the Jacobi-Anger expansion:
+%
+\begin{widetext}
+\begin{align}
+	\tilde{h}_{O}\left(f\right) &\simeq \sum\limits_{n\in \mathbb{Z}} i^{n}e^{i n \lambda} J_{n}\left[ -2\pi f R \cos \beta \right] A(f) \exp\left[ -i \Psi \left(f-\frac{n\Omega}{2\pi}\right) \right] \nn \\
+	&\simeq A(f) e^{-i \Psi \left(f\right)} \sum\limits_{n\in \mathbb{Z}} i^{n}e^{i n \lambda} J_{n}\left[ -2\pi f R \cos \beta \right] \exp\left[ i \frac{n\Omega}{2\pi} \frac{\ud \Psi}{\ud f} + \calO(\Omega^{2})  \right]
+\end{align}
+\end{widetext}
+%
+We can then use the Jacobi-Anger expansion (with the notation $z\equiv 2\pi R f \cos\beta$)
+%
+\be
+	e^{i z \cos \theta}= \sum\limits_{n\in \mathbb{Z}} i^{n}J_{n}[z]e^{i n \theta} \,,
+\ee
+%
+to obtain a simple phase correction
+%
+\begin{subequations}
+\begin{align}
+	\tilde{h}_{O}\left(f\right) &\simeq \tilde{h}(f) \exp\left[ -iz \cos\left( \lambda + \frac{\Omega}{2\pi} \frac{\ud \Psi}{\ud f} \right) \right]\,.
+\end{align}
+\end{subequations}
+%
+The corrections beyond the leading order can be derived directly by a kind of Feynman trick, introducing derivatives with respect to the parameter $\lambda$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Accelerated overlap computations for modeled waveforms}
+\label{subsec:overlaps}
+
+[present recursion relations - Fresnel integrals]
+
+[discuss numerical robustness, power-law cut in the space of phase coefficients]
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Summary \& performance}
+\label{subsec:performance}
+
+[give speedup for linear overlap and Fresnel overlap, for 22 only and HM]
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Impact of noise realizations on parameter estimation for LIGO}
+\label{sec:noiseligo}
+
+[no-noise corresponds to a geometric average on the posteriors themselves across noise realizations; how does this translate in practice ?]
+
+[Phil's plot: example of the distribution of the MAP across noise realizations, compared to the posterior itself]
+
+[Phil's plot: example(s) of 100 cumulative distributions compared to the no-noise case]
+
+[evolution of results when increasing SNR: 12, 15, 20]
+
+[table giving the ``averaged'' broadening of the posterior and the ``averaged'' departure of the MAP from injection across noise realizations, for all SNR=12 simulations]
+
+[discussion: validation of the no-noise analysis as a first proxy to do parameter estimation estimation]
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Impact of merger/ringdown and higher modes on parameter estimation for LISA}
+\label{sec:pelisa}
+
+[connection to previous work: McWilliams\&al, Littenberg\&al]
+
+[plot: example posterior with/without HM, EOBNRv2HMROM injection]
+
+[plot: example posterior with/without merger/ringdown, EOBNRv2HMROM injection]
+
+[plot: posterior with information contained in the inspiral only: inspiral-only injection and templates, vs IMR injection and template]
+
+[discuss multimodal structure of the posterior (sky position notably), if it holds]
+
+[improvement on ]
+
+[sky localization errors across the sky with full bayesian inference on a few example cases: a sufficiently large number of inferences for this to be interesting ?]
+
+[accumulation of information with time ? - future studies]
+
+[compare to Fisher matrix analysis on some examples ?]
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Summary and Conclusions}
+\label{sec:conc}
+
+[extension to longer waveforms, lower masses]
+
+[use of other fast FD waveforms: SEOBNRv2ROM, PhenomP]
+
+[impact of aligned spins ? of simple precession ?]
+
+[impact of merger-ringdown in the aligned spins case and simple precession case ?]
+
+[validation of existing Fischer matrix analysis, at least on some examples, with full Bayesian inference]
+
+[compare different instrument designs, across astrophysical models (Sesana-Barausse\&al)]
+
+[extend analysis to a full population ?]
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\vspace{4.5mm}
+
+\hspace{0.85in}
+{\bf Acknowledgments}
+
+\vspace{3.5mm}
+
+[Acknowledgments]
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\appendix
+
+\section{Details on Fourier-domain reduced order models}
+\label{app:rom}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Details on the Fourier-domain LISA response}
+\label{app:fdresponse}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{TDI observables}
+\label{appsubsec:TDI}
+
+For the constellation delay and modulation, if we associate as above a function $G_{AB}$ to each basic Doppler shift observable $y_{AB}$ (as with the example of $y_{21}$ above), for each of the polarizations we obtain:
+%
+\begin{align}
+	G_{21}^{+,\times} &= i\pi f L \left(n_{3}\cdot P_{+,\times}\cdot n_{3}\right) \sinc\left[ \pi f L \left( 1 + k\cdot n_{3} \right) \right] \exp\left[ i\pi f L \left( 1 - k\cdot (p_{1}+p_{2})/L  \right) \right] \nn\\
+	G_{12}^{+,\times} &= i\pi f L \left(n_{3}\cdot P_{+,\times}\cdot n_{3}\right) \sinc\left[ \pi f L \left( 1 - k\cdot n_{3} \right) \right] \exp\left[ i\pi f L \left( 1 - k\cdot (p_{1}+p_{2})/L  \right) \right] \nn\\
+	G_{32}^{+,\times} &= i\pi f L \left(n_{1}\cdot P_{+,\times}\cdot n_{1}\right) \sinc\left[ \pi f L \left( 1 + k\cdot n_{1} \right) \right] \exp\left[ i\pi f L \left( 1 - k\cdot (p_{2}+p_{3})/L  \right) \right] \nn\\
+	G_{23}^{+,\times} &= i\pi f L \left(n_{1}\cdot P_{+,\times}\cdot n_{1}\right) \sinc\left[ \pi f L \left( 1 - k\cdot n_{1} \right) \right] \exp\left[ i\pi f L \left( 1 - k\cdot (p_{2}+p_{3})/L  \right) \right] \nn\\
+	G_{13}^{+,\times} &= i\pi f L \left(n_{2}\cdot P_{+,\times}\cdot n_{2}\right) \sinc\left[ \pi f L \left( 1 + k\cdot n_{2} \right) \right] \exp\left[ i\pi f L \left( 1 - k\cdot (p_{3}+p_{1})/L  \right) \right] \nn\\
+	G_{31}^{+,\times} &= i\pi f L \left(n_{2}\cdot P_{+,\times}\cdot n_{2}\right) \sinc\left[ \pi f L \left( 1 - k\cdot n_{2} \right) \right] \exp\left[ i\pi f L \left( 1 - k\cdot (p_{3}+p_{1})/L  \right) \right] \,,
+\end{align}
+%
+where the $p_{A}$ vectors refer to the positions with respect to the center of the constellation $O$ (that is to say, they are given by $O_{2}\cdot p_{A}^{L}$).
+
+The expression for the $X_{A}$ second-generation TDI observables are given by (c.f. Kr\'olak\&al)
+%
+\begin{widetext}
+\begin{align}
+	X_{1} &= \left[ \left( y_{31} + y_{13,2} \right) - \left( y_{21} + y_{12,3} \right) - \left( y_{31} + y_{13,2} \right)_{,33} + \left( y_{21} + y_{12,3} \right)_{,22} \right] \nn\\
+	& - \left[ \left( y_{31} + y_{13,2} \right) - \left( y_{21} + y_{12,3} \right) - \left( y_{31} + y_{13,2} \right)_{,33} + \left( y_{21} + y_{12,3} \right)_{,22} \right]_{,2233} \,.
+\end{align}
+\end{widetext}
+%
+Within the rigid approximation, all the delays are considered equal to $L/c$ as far as the gravitational wave response is concerned. We are applying successive constant delays to the basic observables, and the translation in Fourier domain is simply
+%
+\begin{widetext}
+\begin{align}
+	\tilde{X}_{1}(f) &= -4 \sin\left( 2\pi f L \right) \sin\left( 4\pi f L \right) e^{6 i \pi f L} \left[ \tilde{y}_{31} - \tilde{y}_{21} + e^{2i\pi f L} \left( \tilde{y}_{13} - \tilde{y}_{12} \right) \right] \,, \nn\\
+	\tilde{X}_{2}(f) &= -4 \sin\left( 2\pi f L \right) \sin\left( 4\pi f L \right) e^{6 i \pi f L} \left[ \tilde{y}_{12} - \tilde{y}_{32} + e^{2i\pi f L} \left( \tilde{y}_{21} - \tilde{y}_{23} \right) \right] \,, \nn\\
+	\tilde{X}_{3}(f) &= -4 \sin\left( 2\pi f L \right) \sin\left( 4\pi f L \right) e^{6 i \pi f L}\left[ \tilde{y}_{23} - \tilde{y}_{13} + e^{2i\pi f L} \left( \tilde{y}_{32} - \tilde{y}_{31} \right) \right] \,.
+\end{align}
+\end{widetext}
+%
+
+For the Sagnac observables, we have similarly ((8) of Shaddock\&al)
+%
+\begin{align}
+	\alpha_{1} &= \left[ \left( y_{31} + y_{23,2} + y_{12,12} \right) - \left( y_{21} + y_{32,3} + y_{13,13} \right) \right] \nn\\
+	& - \left[ \left( y_{31} + y_{23,2} + y_{12,12} \right)_{,213} - \left( y_{21} + y_{32,3} + y_{13,13} \right)_{,312} \right]
+\end{align}
+%
+and
+%
+\begin{widetext}
+\begin{align}
+	\tilde{\alpha}_{1}(f) &= - 2i \sin\left(3\pi f L\right) e^{3 i \pi f L} \left[ \tilde{y}_{31} - \tilde{y}_{21} + e^{2i\pi f L} \left( \tilde{y}_{23} - \tilde{y}_{32} \right) + e^{4i\pi f L} \left( \tilde{y}_{12} - \tilde{y}_{13} \right) \right] \,, \nn\\
+	\tilde{\alpha}_{2}(f) &= - 2i \sin\left(3\pi f L\right) e^{3 i \pi f L} \left[ \tilde{y}_{12} - \tilde{y}_{32} + e^{2i\pi f L} \left( \tilde{y}_{31} - \tilde{y}_{13} \right) + e^{4i\pi f L} \left( \tilde{y}_{23} - \tilde{y}_{21} \right) \right] \,, \nn\\
+	\tilde{\alpha}_{3}(f) &= - 2i \sin\left(3\pi f L\right) e^{3 i \pi f L} \left[ \tilde{y}_{23} - \tilde{y}_{13} + e^{2i\pi f L} \left( \tilde{y}_{12} - \tilde{y}_{21} \right) + e^{4i\pi f L} \left( \tilde{y}_{31} - \tilde{y}_{32} \right) \right] \,.
+\end{align}
+\end{widetext}
+%
+The optimal second-generation combinations $A$, $E$ and $T$ are given by ((57) of Kr\'olak\&al)
+%
+\begin{align}
+	A &= \frac{1}{\sqrt{2}} \left( \alpha_{3} - \alpha_{1} \right) \nn\\
+	E &= \frac{1}{\sqrt{6}} \left( \alpha_{1} - 2\alpha_{2} + \alpha_{3} \right) \nn\\
+	T &= \frac{1}{\sqrt{3}} \left( \alpha_{1} + \alpha_{2} + \alpha_{3} \right) \,,
+\end{align}
+%
+which gives
+%
+\begin{widetext}
+\begin{align}
+	\tilde{A}(f) &= - \frac{2i}{\sqrt{2}} \sin\left(3\pi f L\right) e^{3 i \pi f L} \left[ \left( \tilde{y}_{13} + \tilde{y}_{31} \right) \left( e^{4i\pi f L} - 1 \right) + \left( \tilde{y}_{21} + \tilde{y}_{23} \right) \left( 1 - e^{2i\pi f L} \right) \right. \nn\\
+	& \qquad\qquad\qquad\qquad\qquad\qquad \left. + \left( \tilde{y}_{32} + \tilde{y}_{12} \right) \left( e^{2i\pi f L} - e^{4i\pi f L} \right) \right] \nn\\
+	\tilde{E}(f) &= - \frac{2i}{\sqrt{6}} \sin\left(3\pi f L\right) e^{3 i \pi f L} \left[ \left( \tilde{y}_{23} - \tilde{y}_{21} \right) \left( 1 + e^{2i\pi f L} - 2e^{4i \pi f L} \right) + \left( \tilde{y}_{31} - \tilde{y}_{13} \right) \left( 1 - 2e^{2i\pi f L} + e^{4i \pi f L} \right) \right. \nn\\
+	& \qquad\qquad\qquad\qquad\qquad\qquad + \left( \tilde{y}_{12} - \tilde{y}_{32} \right) \left( -2 + e^{2i\pi f L} + e^{4i \pi f L} \right) \left. \right] \nn\\
+	\tilde{T}(f) &= - \frac{2i}{\sqrt{3}} \sin\left(3\pi f L\right) e^{3 i \pi f L} \left( \tilde{y}_{31} - \tilde{y}_{13} + \tilde{y}_{12} - \tilde{y}_{21} + \tilde{y}_{23} - \tilde{y}_{32} \right) \left( 1 + e^{2i\pi f L} + e^{4i \pi f L} \right) \,.
+\end{align}
+\end{widetext}
+%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Beyond the leading-order Fourier-domain response}
+\label{appsubsec:nloresponse}
+
+We derive in the following analytical corrections to this leading order formula. In practice, we expect that the first and second correction terms, at the very most, will be needed.
+
+\subsubsection*{Frequency dependence of the modulation/delay}
+
+If we want to keep the full frequency dependence of the modulation/delay function $G$ in the sum, then we can expand
+%
+\be
+	G[f-n f_{0}](t) = \sum\limits_{k\geq 0} \frac{1}{k!}\left( \frac{-n \Omega}{2\pi} \right)^{k} \frac{\partial^{k} G}{\partial f^{k}}[f](t) \,,
+\ee
+%
+and we have
+%
+\begin{widetext}
+\begin{align}
+	\tilde{s}(f) &\simeq \tilde{h}(f) \frac{1}{T} \int_{0}^{T}\ud t\, \sum\limits_{n}\sum\limits_{k} e^{i n \Omega t} \exp\left[ i n f_{0} \frac{\ud \Psi}{\ud f} \right] \frac{1}{k!}\left( \frac{-n \Omega}{2\pi} \right)^{k} \frac{\partial^{k} G}{\partial f^{k}}[f](t) \nn\\
+	&= \tilde{h}(f) \sum\limits_{n}\sum\limits_{k} \exp\left[ i n f_{0} \frac{\ud \Psi}{\ud f} \right] \frac{1}{k!} \frac{1}{(2i\pi)^{k}} \frac{1}{T} \int_{0}^{T}\ud t\, (-i n \Omega)^{k}  e^{i n \Omega t}  \frac{\partial^{k} G}{\partial f^{k}}[f](t) \nn\\
+	&= \tilde{h}(f) \sum\limits_{n}\sum\limits_{k} \exp\left[ i n f_{0} \frac{\ud \Psi}{\ud f} \right] \frac{1}{k!} \frac{1}{(2i\pi)^{k}} \frac{1}{T} \int_{0}^{T}\ud t\, e^{i n \Omega t}  \frac{\partial^{2k} G}{\partial f^{k}\partial t^{k}}[f](t) \nn\\
+	&= \tilde{h}(f) \sum\limits_{k\geq 0} \frac{1}{k!} \frac{1}{(2i\pi)^{k}}  \frac{\partial^{2k} G}{\partial f^{k}\partial t^{k}}[f]\left(-\frac{1}{2\pi} \frac{\ud \Psi}{\ud f} \right) \,,
+\end{align}
+\end{widetext}
+%
+where we performed $k$ integrations by parts (using the periodicity of $G$ for any frequency) and summed over $n$ in the same way as in the leading order calculation.
+
+\subsubsection*{Quadratic term in the phase}
+
+If we keep the first correction in the phase beyond the LLP, the quadratic term $\delta^{2}\Psi$, but ignore all the subsequent terms, we can Taylor-expand the exponential according to
+%
+\begin{widetext}
+\begin{align}
+	\tilde{h}(f-n f_{0}) &\simeq \tilde{h}(f)  \exp\left[ i n f_{0} \frac{\ud \Psi}{\ud f} \right] \exp\left[ -\frac{1}{2} i (n f_{0})^{2} \frac{\ud^{2}\Psi}{\ud f^{2}} \right] \nn\\
+	&= \tilde{h}(f)  \exp\left[ i n f_{0} \frac{\ud \Psi}{\ud f} \right] \sum\limits_{k\geq 0} \frac{1}{k!}\left( \frac{-i}{2} \right)^{k} \left( \frac{n\Omega}{2\pi} \right)^{2k} \left( \frac{\ud^{2}\Psi}{\ud f^{2}}  \right)^{k} \,,
+\end{align}
+\end{widetext}
+% 
+and we have
+%
+\begin{widetext}
+\begin{align}
+	\tilde{s}(f) &\simeq \tilde{h}(f) \frac{1}{T} \int_{0}^{T}\ud t\, \sum\limits_{n}\sum\limits_{k} e^{i n \Omega t} \exp\left[ i n f_{0} \frac{\ud \Psi}{\ud f} \right] \frac{1}{k!} \left( \frac{-i}{2} \right)^{k} \left( \frac{n\Omega}{2\pi} \right)^{2k} \left( \frac{\ud^{2}\Psi}{\ud f^{2}}  \right)^{k} G[f](t) \nn\\
+	&= \tilde{h}(f) \sum\limits_{n}\sum\limits_{k} \exp\left[ i n f_{0} \frac{\ud \Psi}{\ud f} \right] \frac{1}{k!} \left( \frac{i}{2} \right)^{k} \frac{1}{(2\pi)^{2k}} \left( \frac{\ud^{2}\Psi}{\ud f^{2}}  \right)^{k} \frac{1}{T} \int_{0}^{T}\ud t\, (i n \Omega)^{2 k}  e^{i n \Omega t} G[f](t) \nn\\
+	&= \tilde{h}(f) \sum\limits_{k\geq 0} \frac{1}{2^k k!} \left( \frac{i}{4\pi^{2}}\frac{\ud^{2}\Psi}{\ud f^{2}}  \right)^{k} \frac{\partial^{k} G}{\partial t^{k}}[f]\left(-\frac{1}{2\pi} \frac{\ud \Psi}{\ud f} \right) \,.
+\end{align}
+\end{widetext}
+%
+
+\subsubsection*{Linear term in the amplitude}
+
+If we keep the first correction in the amplitude, we have
+%
+\be
+	\tilde{h}(f-n f_{0}) \simeq \tilde{h}(f)  \exp\left[ i n f_{0} \frac{\ud \Psi}{\ud f} \right] \left( 1 - \frac{n \Omega}{2\pi} \frac{1}{A}\frac{\ud A}{\ud f} \right) \,,
+\ee
+%
+and we obtain similarly
+%
+\be
+	\tilde{s}(f) \simeq \tilde{h}(f) \left[ G[f]\left(-\frac{1}{2\pi} \frac{\ud \Psi}{\ud f} \right) + \frac{1}{2 i \pi} \frac{1}{A} \frac{\partial G}{\partial t}[f]\left(-\frac{1}{2\pi} \frac{\ud \Psi}{\ud f} \right) \right]\,.
+\ee
+%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\bibliography{ListeRef.bib}
+\bibliography{/Users/marsat/Documents/publications/bibliographie/ListeRef.bib}
+
+
+\end{document}
+
