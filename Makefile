@@ -1,5 +1,8 @@
 GSLROOT = /opt/local
+GSLINC = $(GSLROOT)/include
 BAMBIROOT = $(HOME)/build/bambi
+BAMBIINC = $(BAMBIROOT)/include
+BAMBILIB = $(BAMBIROOT)/lib
 CC = gcc
 CPP = g++
 #Uncomment this for MPI and specify your needed MPI libraries
@@ -7,13 +10,13 @@ CC += -DPARALLEL
 CPP += -DPARALLEL
 MPILIBS = -lmpi -lmpi_cxx -lmpi_mpifh
 
-GSLINC = $(GSLROOT)/include
-CFLAGS += -O2 -std=c99 -I$(GSLINC) -I./tools -I./EOBNRv2HMROM -I./integration -I./LISAsim -I./LLVsim -I./LLVinference
+CFLAGS += -O2 -std=c99 -I$(GSLINC)
+CPPFLAGS += -O2 -I$(GSLINC)
 
 SUBDIRS = tools EOBNRv2HMROM LISAsim LLVsim integration LISAinference LLVinference
 SUBCLEAN = $(addsuffix .clean,$(SUBDIRS))
 
-export CC CPP GSLROOT BAMBIROOT MPILIBS
+export CC CPP GSLROOT GSLINC BAMBIROOT BAMBIINC BAMBILIB MPILIBS CFLAGS CPPFLAGS
 
 .PHONY: all clean subdirs $(SUBDIRS)
 
