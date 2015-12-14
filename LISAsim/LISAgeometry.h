@@ -35,8 +35,31 @@
 
 #include "constants.h"
 
+/*****************************************************/
+/**************** TDI variables **********************/
+
+typedef enum TDItag {
+  TDIXYZ,
+  TDIalphabetagamma,
+  TDIAETXYZ,
+  TDIAETalphabetagamma,
+  TDIX,
+  TDIalpha,
+  TDIAXYZ,
+  TDIEXYZ,
+  TDITXYZ,
+  TDIAalphabetagamma,
+  TDIEalphabetagamma,
+  TDITalphabetagamma
+} TDItag;
+
 /**************************************************/
 /**************** Prototypes **********************/
+
+/* Function to convert string input TDI string to TDItag */
+TDItag ParseTDItag(char* string);
+/* Function returning the number of channels for a TDItag */
+int nbchanTDI(TDItag tditag);
 
 /* Function cardinal sine */
 double sinc(const double x);
@@ -62,6 +85,32 @@ int EvaluateGABmode(
   const double t,                          /* Time */
   const double complex Yfactorplus,        /* Spin-weighted spherical harmonic factor for plus */
   const double complex Yfactorcross);      /* Spin-weighted spherical harmonic factor for cross */
+
+/* Functions evaluating the Fourier-domain factors (combinations of the GAB's) for TDI observables */
+/* Note: in case only one channel is considered, amplitudes for channels 2 and 3 are simply set to 0 */
+/* (allows minimal changes from the old structure that assumed KTV A,E,T - but probably not optimal) */
+int EvaluateTDIfactor3Chan(
+  double complex* factor1,                       /* Output for factor for TDI channel 1 */
+  double complex* factor2,                       /* Output for factor for TDI channel 2 */
+  double complex* factor3,                       /* Output for factor for TDI channel 3 */
+  const double complex G12,                      /* Input for G12 */
+  const double complex G21,                      /* Input for G21 */
+  const double complex G23,                      /* Input for G23 */
+  const double complex G32,                      /* Input for G32 */
+  const double complex G31,                      /* Input for G31 */
+  const double complex G13,                      /* Input for G13 */
+  const double f,                                /* Frequency */
+  const TDItag tditag);                          /* Selector for the TDI observables */
+/* int EvaluateTDIfactor1Chan( */
+/*   double complex* factor,                       /\* Output for factor for TDI channel *\/ */
+/*   const double complex G12,                      /\* Input for G12 *\/ */
+/*   const double complex G21,                      /\* Input for G21 *\/ */
+/*   const double complex G23,                      /\* Input for G23 *\/ */
+/*   const double complex G32,                      /\* Input for G32 *\/ */
+/*   const double complex G31,                      /\* Input for G31 *\/ */
+/*   const double complex G13,                      /\* Input for G13 *\/ */
+/*   const double f,                                /\* Frequency *\/ */
+/*   const TDItag tditag);                          /\* Selector for the TDI observable *\/ */
 
 /* Functions for the response in time domain */
 double y12TD(

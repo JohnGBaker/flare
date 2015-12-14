@@ -133,16 +133,17 @@ int LISASimFDResponse21(
 
 //WARNING: tRef is ignored for now in the response - i.e. set to 0
 /* Core function processing a signal (in the form of a list of modes) through the Fourier-domain LISA response, for given values of the inclination, position in the sky and polarization angle */
-int LISASimFDResponseTDIAET(
-  struct tagListmodesCAmpPhaseFrequencySeries **list,  /* Input: list of modes in Frequency-domain amplitude and phase form as produced by the ROM */
-  struct tagListmodesCAmpPhaseFrequencySeries **listA,  /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the second-generation TDI observable A */
-  struct tagListmodesCAmpPhaseFrequencySeries **listE,  /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the second-generation TDI observable E */
-  struct tagListmodesCAmpPhaseFrequencySeries **listT,  /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the second-generation TDI observable T */
+int LISASimFDResponseTDI3Chan(
+  struct tagListmodesCAmpPhaseFrequencySeries **list,      /* Input: list of modes in Frequency-domain amplitude and phase form as produced by the ROM */
+  struct tagListmodesCAmpPhaseFrequencySeries **listTDI1,  /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the TDI channel 1 */
+  struct tagListmodesCAmpPhaseFrequencySeries **listTDI2,  /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the TDI channel 2 */
+  struct tagListmodesCAmpPhaseFrequencySeries **listTDI3,  /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the TDI channel 3 */
   const double tRef,                                          /* Time at coalescence */
   const double lambda,                                        /* First angle for the position in the sky */
   const double beta,                                          /* Second angle for the position in the sky */
   const double inclination,                                   /* Inclination of the source */
-  const double psi)                                           /* Polarization angle */
+  const double psi,                                           /* Polarization angle */
+  const TDItag tditag)                                        /* Selector for the set of TDI observables */
 {
   /* Computing the complicated trigonometric coefficients */
   //clock_t begsetcoeffs = clock();
@@ -164,16 +165,19 @@ int LISASimFDResponseTDIAET(
     gsl_vector* phase = freqseries->phase;
     int len = (int) freq->size;
     double f, tf, bphi;
-    double complex g21mode = 0;
-    double complex g12mode = 0;
-    double complex g32mode = 0;
-    double complex g23mode = 0;
-    double complex g13mode = 0;
-    double complex g31mode = 0;
+    double complex g21mode = 0.;
+    double complex g12mode = 0.;
+    double complex g32mode = 0.;
+    double complex g23mode = 0.;
+    double complex g13mode = 0.;
+    double complex g31mode = 0.;
     double complex camp;
-    double complex campA;
-    double complex campE;
-    double complex campT;
+    double complex camp1;
+    double complex camp2;
+    double complex camp3;
+    double complex factor1 = 0.;
+    double complex factor2 = 0.;
+    double complex factor3 = 0.;
 
     /* Computing the Ylm combined factors for plus and cross for this mode */
     /* Capital Phi is set to 0 by convention */
@@ -223,24 +227,24 @@ int LISASimFDResponseTDIAET(
     
     /* Second step of the processing: constellation delay/modulation */
     /* Initializing frequency series structure for this mode, for each of the TDI observables */
-    CAmpPhaseFrequencySeries *modefreqseriesA = NULL;
-    CAmpPhaseFrequencySeries *modefreqseriesE = NULL;
-    CAmpPhaseFrequencySeries *modefreqseriesT = NULL;
-    CAmpPhaseFrequencySeries_Init(&modefreqseriesA, len);
-    CAmpPhaseFrequencySeries_Init(&modefreqseriesE, len);
-    CAmpPhaseFrequencySeries_Init(&modefreqseriesT, len);
-    gsl_vector* freqA = modefreqseriesA->freq;
-    gsl_vector* amp_realA = modefreqseriesA->amp_real;
-    gsl_vector* amp_imagA = modefreqseriesA->amp_imag;
-    gsl_vector* phaseA = modefreqseriesA->phase;
-    gsl_vector* freqE = modefreqseriesE->freq;
-    gsl_vector* amp_realE = modefreqseriesE->amp_real;
-    gsl_vector* amp_imagE = modefreqseriesE->amp_imag;
-    gsl_vector* phaseE = modefreqseriesE->phase;
-    gsl_vector* freqT = modefreqseriesT->freq;
-    gsl_vector* amp_realT = modefreqseriesT->amp_real;
-    gsl_vector* amp_imagT = modefreqseriesT->amp_imag;
-    gsl_vector* phaseT = modefreqseriesT->phase;
+    CAmpPhaseFrequencySeries *modefreqseries1 = NULL;
+    CAmpPhaseFrequencySeries *modefreqseries2 = NULL;
+    CAmpPhaseFrequencySeries *modefreqseries3 = NULL;
+    CAmpPhaseFrequencySeries_Init(&modefreqseries1, len);
+    CAmpPhaseFrequencySeries_Init(&modefreqseries2, len);
+    CAmpPhaseFrequencySeries_Init(&modefreqseries3, len);
+    gsl_vector* freq1 = modefreqseries1->freq;
+    gsl_vector* amp_real1 = modefreqseries1->amp_real;
+    gsl_vector* amp_imag1 = modefreqseries1->amp_imag;
+    gsl_vector* phase1 = modefreqseries1->phase;
+    gsl_vector* freq2 = modefreqseries2->freq;
+    gsl_vector* amp_real2 = modefreqseries2->amp_real;
+    gsl_vector* amp_imag2 = modefreqseries2->amp_imag;
+    gsl_vector* phase2 = modefreqseries2->phase;
+    gsl_vector* freq3 = modefreqseries3->freq;
+    gsl_vector* amp_real3 = modefreqseries3->amp_real;
+    gsl_vector* amp_imag3 = modefreqseries3->amp_imag;
+    gsl_vector* phase3 = modefreqseries3->phase;
     /* Initializing spline for the bessel phase */
     gsl_spline* spline_besselphi = gsl_spline_alloc(gsl_interp_cspline, len);
     gsl_interp_accel* accel_besselphi = gsl_interp_accel_alloc();
@@ -253,61 +257,39 @@ int LISASimFDResponseTDIAET(
       f = gsl_vector_get(freq, j);
       tf = (gsl_spline_eval_deriv(spline_phi, f, accel_phi) + gsl_spline_eval_deriv(spline_besselphi, f, accel_besselphi))/(2*PI) ;
       //clock_t tbegGAB = clock();
-      /* g21mode = G21mode(f, tf, Yfactorplus, Yfactorcross); */
-      /* g12mode = G12mode(f, tf, Yfactorplus, Yfactorcross); */
-      /* g32mode = G32mode(f, tf, Yfactorplus, Yfactorcross); */
-      /* g23mode = G23mode(f, tf, Yfactorplus, Yfactorcross); */
-      /* g13mode = G13mode(f, tf, Yfactorplus, Yfactorcross); */
-      /* g31mode = G31mode(f, tf, Yfactorplus, Yfactorcross); */
       EvaluateGABmode(&g12mode, &g21mode, &g23mode, &g32mode, &g31mode, &g13mode, f, tf, Yfactorplus, Yfactorcross);
       //clock_t tendGAB = clock();
       //timingcumulativeGABmode += (double) (tendGAB-tbegGAB) /CLOCKS_PER_SEC;
       /**/
-      //Previous version (presumably wrong, to be checked more)
-      /* double sin3pifL = sin(3*PI*f*L_SI/C_SI); */
-      /* double complex exp3ipifL = cexp(3*I*PI*f*L_SI/C_SI); */
-      /* double complex exp2ipifL = cexp(2*I*PI*f*L_SI/C_SI); */
-      /* double complex exp4ipifL = cexp(4*I*PI*f*L_SI/C_SI); */
-      /* double complex commonfac = -2*I*sin3pifL*exp3ipifL; */
-      /* double complex amphOtilde = (gsl_vector_get(amp_real, j) + I * gsl_vector_get(amp_imag, j)); */
-      /**/
-      /* campA = commonfac/sqrt(2) * ( (g13mode+g31mode)*(exp4ipifL-1.) + (g21mode+g23mode)*(1.-exp2ipifL) + (g32mode+g12mode)*(exp2ipifL-exp4ipifL) ) * amphOtilde; */
-      /* campE = commonfac/sqrt(6) * ( (g23mode-g21mode)*(1.+exp2ipifL-2.*exp4ipifL) + (g31mode-g13mode)*(1.-2.*exp2ipifL+exp4ipifL) + (g12mode-g32mode)*(-2.+exp2ipifL+exp4ipifL) ) * amphOtilde; */
-      /* campT = commonfac/sqrt(3) * (g31mode-g13mode+g12mode-g21mode+g23mode-g32mode) * (1.+exp2ipifL+exp4ipifL) * amphOtilde; */
-      /**/
-      double complex expipifL = cexp(I*PI*f*L_SI/C_SI);
-      double complex exp2ipifL = expipifL*expipifL;
-      double complex exp4ipifL = exp2ipifL*exp2ipifL;
-      double complex commonfac = -2*I*exp4ipifL;
+      EvaluateTDIfactor3Chan(&factor1, &factor2, &factor3, g12mode, g21mode, g23mode, g32mode, g31mode, g13mode, f, tditag);
       double complex amphOtilde = gsl_vector_get(h0tilde_ampreal, j) + I * gsl_vector_get(h0tilde_ampimag, j);
+      camp1 = factor1 * amphOtilde;
+      camp2 = factor2 * amphOtilde;
+      camp3 = factor3 * amphOtilde;
       /**/
-      campA = commonfac/sqrt(2) * ( (g21mode+g23mode)*(exp2ipifL+1.) - exp2ipifL*(g32mode+g12mode) + (g13mode+g31mode) ) * amphOtilde;
-      campE = commonfac/sqrt(6) * ( (g31mode-g13mode)*(2*exp2ipifL+1.) + (g32mode-g12mode)*(exp2ipifL+2.) + (g21mode-g23mode)*(exp2ipifL-1.) ) * amphOtilde;
-      campT = commonfac/sqrt(3) * expipifL * (g13mode-g31mode+g21mode-g12mode+g32mode-g23mode) * amphOtilde;
-      /**/
-      gsl_vector_set(amp_realA, j, creal(campA));
-      gsl_vector_set(amp_imagA, j, cimag(campA));
-      gsl_vector_set(amp_realE, j, creal(campE));
-      gsl_vector_set(amp_imagE, j, cimag(campE));
-      gsl_vector_set(amp_realT, j, creal(campT));
-      gsl_vector_set(amp_imagT, j, cimag(campT));
+      gsl_vector_set(amp_real1, j, creal(camp1));
+      gsl_vector_set(amp_imag1, j, cimag(camp1));
+      gsl_vector_set(amp_real2, j, creal(camp2));
+      gsl_vector_set(amp_imag2, j, cimag(camp2));
+      gsl_vector_set(amp_real3, j, creal(camp3));
+      gsl_vector_set(amp_imag3, j, cimag(camp3));
     }
     //clock_t tendcontesllation = clock();
   //printf("Set constellation time: %g s\n", (double)(tendcontesllation - tbegcontesllation) / CLOCKS_PER_SEC);
   //printf("GAB cumulated time: %g s\n", timingcumulativeGABmode);
 
     /* Copying the vectors of frequencies and phases */
-    gsl_vector_memcpy(freqA, freq);
-    gsl_vector_memcpy(freqE, freq);
-    gsl_vector_memcpy(freqT, freq);
-    gsl_vector_memcpy(phaseA, phase);
-    gsl_vector_memcpy(phaseE, phase);
-    gsl_vector_memcpy(phaseT, phase);
+    gsl_vector_memcpy(freq1, freq);
+    gsl_vector_memcpy(freq2, freq);
+    gsl_vector_memcpy(freq3, freq);
+    gsl_vector_memcpy(phase1, phase);
+    gsl_vector_memcpy(phase2, phase);
+    gsl_vector_memcpy(phase3, phase);
     
     /* Append the modes to the ouput list-of-modes structures */
-    *listA = ListmodesCAmpPhaseFrequencySeries_AddModeNoCopy(*listA, modefreqseriesA, l, m);
-    *listE = ListmodesCAmpPhaseFrequencySeries_AddModeNoCopy(*listE, modefreqseriesE, l, m);
-    *listT = ListmodesCAmpPhaseFrequencySeries_AddModeNoCopy(*listT, modefreqseriesT, l, m);
+    *listTDI1 = ListmodesCAmpPhaseFrequencySeries_AddModeNoCopy(*listTDI1, modefreqseries1, l, m);
+    *listTDI2 = ListmodesCAmpPhaseFrequencySeries_AddModeNoCopy(*listTDI2, modefreqseries2, l, m);
+    *listTDI3 = ListmodesCAmpPhaseFrequencySeries_AddModeNoCopy(*listTDI3, modefreqseries3, l, m);
 
     /* Going to the next mode in the list */
     listelement = listelement->next;

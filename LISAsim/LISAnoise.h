@@ -36,6 +36,7 @@
 #include <gsl/gsl_complex.h>
 
 #include "constants.h"
+#include "LISAgeometry.h"
 
 
 /************************************************************************/
@@ -47,10 +48,26 @@
 /**************************************************************/
 /****** Prototypes: functions evaluating the noise PSD  *******/
 
+/* Function returning the relevant noise function, given a set of TDI observables and a channel */
+RealFunction* NoiseFunction(const TDItag tditag, const int nchan);
+
+/* Noise Sn for TDI observables - factors have been scaled out both in the response and the noise */
+double SnXYZ(double f);
+double Snalphabetagamma(double f);
+double SnAXYZ(double f);
+double SnEXYZ(double f);
+double SnTXYZ(double f);
+double SnAalphabetagamma(double f);
+double SnEalphabetagamma(double f);
+double SnTalphabetagamma(double f);
+
+/* Function returning the relevant noise function, given a set of TDI observables and a channel */
+double (*NoiseFunction(const TDItag tditag, const int chan))(double);
+
 /* The noise functions themselves */
-double NoiseSnA(const double f);
-double NoiseSnE(const double f);
-double NoiseSnT(const double f);
+/* double NoiseSnA(const double f); */
+/* double NoiseSnE(const double f); */
+/* double NoiseSnT(const double f); */
 
 #if 0
 { /* so that editors will match succeeding brace */

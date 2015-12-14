@@ -9,9 +9,9 @@ LISAPrior* priorParams = NULL;
 /************ Functions to initalize and clean up structure for the signals ************/
 
 void LISASignalCAmpPhase_Cleanup(LISASignalCAmpPhase* signal) {
-  if(signal->TDIASignal) ListmodesCAmpPhaseFrequencySeries_Destroy(signal->TDIASignal);
-  if(signal->TDIESignal) ListmodesCAmpPhaseFrequencySeries_Destroy(signal->TDIESignal);
-  if(signal->TDITSignal) ListmodesCAmpPhaseFrequencySeries_Destroy(signal->TDITSignal);
+  if(signal->TDI1Signal) ListmodesCAmpPhaseFrequencySeries_Destroy(signal->TDI1Signal);
+  if(signal->TDI2Signal) ListmodesCAmpPhaseFrequencySeries_Destroy(signal->TDI2Signal);
+  if(signal->TDI3Signal) ListmodesCAmpPhaseFrequencySeries_Destroy(signal->TDI3Signal);
   free(signal);
 }
 
@@ -23,15 +23,15 @@ void LISASignalCAmpPhase_Init(LISASignalCAmpPhase** signal) {
   {
     LISASignalCAmpPhase_Cleanup(*signal);
   }
-  (*signal)->TDIASignal = NULL;
-  (*signal)->TDIESignal = NULL;
-  (*signal)->TDITSignal = NULL;
+  (*signal)->TDI1Signal = NULL;
+  (*signal)->TDI2Signal = NULL;
+  (*signal)->TDI3Signal = NULL;
 }
 
 void LISAInjectionCAmpPhase_Cleanup(LISAInjectionCAmpPhase* signal) {
-  if(signal->TDIASplines) ListmodesCAmpPhaseSpline_Destroy(signal->TDIASplines);
-  if(signal->TDIESplines) ListmodesCAmpPhaseSpline_Destroy(signal->TDIESplines);
-  if(signal->TDITSplines) ListmodesCAmpPhaseSpline_Destroy(signal->TDITSplines);
+  if(signal->TDI1Splines) ListmodesCAmpPhaseSpline_Destroy(signal->TDI1Splines);
+  if(signal->TDI2Splines) ListmodesCAmpPhaseSpline_Destroy(signal->TDI2Splines);
+  if(signal->TDI3Splines) ListmodesCAmpPhaseSpline_Destroy(signal->TDI3Splines);
   free(signal);
 }
 
@@ -43,15 +43,15 @@ void LISAInjectionCAmpPhase_Init(LISAInjectionCAmpPhase** signal) {
   {
     LISAInjectionCAmpPhase_Cleanup(*signal);
   }
-  (*signal)->TDIASplines = NULL;
-  (*signal)->TDIESplines = NULL;
-  (*signal)->TDITSplines = NULL;
+  (*signal)->TDI1Splines = NULL;
+  (*signal)->TDI2Splines = NULL;
+  (*signal)->TDI3Splines = NULL;
 }
 
 void LISASignalReIm_Cleanup(LISASignalReIm* signal) {
-  if(signal->TDIASignal) ReImFrequencySeries_Cleanup(signal->TDIASignal);
-  if(signal->TDIESignal) ReImFrequencySeries_Cleanup(signal->TDIESignal);
-  if(signal->TDITSignal) ReImFrequencySeries_Cleanup(signal->TDITSignal);
+  if(signal->TDI1Signal) ReImFrequencySeries_Cleanup(signal->TDI1Signal);
+  if(signal->TDI2Signal) ReImFrequencySeries_Cleanup(signal->TDI2Signal);
+  if(signal->TDI3Signal) ReImFrequencySeries_Cleanup(signal->TDI3Signal);
   free(signal);
 }
 
@@ -63,19 +63,19 @@ void LISASignalReIm_Init(LISASignalReIm** signal) {
   {
     LISASignalReIm_Cleanup(*signal);
   }
-  (*signal)->TDIASignal = NULL;
-  (*signal)->TDIESignal = NULL;
-  (*signal)->TDITSignal = NULL;
+  (*signal)->TDI1Signal = NULL;
+  (*signal)->TDI2Signal = NULL;
+  (*signal)->TDI3Signal = NULL;
 }
 
 void LISAInjectionReIm_Cleanup(LISAInjectionReIm* signal) {
-  if(signal->TDIASignal) ReImFrequencySeries_Cleanup(signal->TDIASignal);
-  if(signal->TDIESignal) ReImFrequencySeries_Cleanup(signal->TDIESignal);
-  if(signal->TDITSignal) ReImFrequencySeries_Cleanup(signal->TDITSignal);
+  if(signal->TDI1Signal) ReImFrequencySeries_Cleanup(signal->TDI1Signal);
+  if(signal->TDI2Signal) ReImFrequencySeries_Cleanup(signal->TDI2Signal);
+  if(signal->TDI3Signal) ReImFrequencySeries_Cleanup(signal->TDI3Signal);
   if(signal->freq) gsl_vector_free(signal->freq);
-  if(signal->noisevaluesA) gsl_vector_free(signal->noisevaluesA);
-  if(signal->noisevaluesE) gsl_vector_free(signal->noisevaluesE);
-  if(signal->noisevaluesT) gsl_vector_free(signal->noisevaluesT);
+  if(signal->noisevalues1) gsl_vector_free(signal->noisevalues1);
+  if(signal->noisevalues2) gsl_vector_free(signal->noisevalues2);
+  if(signal->noisevalues3) gsl_vector_free(signal->noisevalues3);
   free(signal);
 }
 
@@ -87,13 +87,13 @@ void LISAInjectionReIm_Init(LISAInjectionReIm** signal) {
   {
     LISAInjectionReIm_Cleanup(*signal);
   }
-  (*signal)->TDIASignal = NULL;
-  (*signal)->TDIESignal = NULL;
-  (*signal)->TDITSignal = NULL;
+  (*signal)->TDI1Signal = NULL;
+  (*signal)->TDI2Signal = NULL;
+  (*signal)->TDI3Signal = NULL;
   (*signal)->freq = NULL;
-  (*signal)->noisevaluesA = NULL;
-  (*signal)->noisevaluesE = NULL;
-  (*signal)->noisevaluesT = NULL;
+  (*signal)->noisevalues1 = NULL;
+  (*signal)->noisevalues2 = NULL;
+  (*signal)->noisevalues3 = NULL;
 }
 
 
@@ -138,6 +138,7 @@ Arguments are as follows:\n\
  --nbmodeinj           Number of modes of radiation to use for the injection (1-5, default=5)\n\
  --nbmodetemp          Number of modes of radiation to use for the templates (1-5, default=5)\n\
  --tagint              Tag choosing the integrator: 0 for wip (default), 1 for linear integration\n\
+ --tagtdi              Tag choosing the set of TDI variables to use (default TDIAETXYZ)\n\
  --nbptsoverlap        Number of points to use for linear integration (default 32768)\n\
 \n\
 --------------------------------------------------\n\
@@ -210,6 +211,7 @@ Syntax: --PARAM-min\n\
     globalparams->nbmodeinj = 5;
     globalparams->nbmodetemp = 5;
     globalparams->tagint = 0;
+    globalparams->tagtdi = TDIAETXYZ;
     globalparams->nbptsoverlap = 32768;
 
     /* set default values for the prior limits */
@@ -302,6 +304,8 @@ Syntax: --PARAM-min\n\
             globalparams->nbmodetemp = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--tagint") == 0) {
             globalparams->tagint = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "--tagtdi") == 0) {
+            globalparams->tagtdi = ParseTDItag(argv[++i]);
         } else if (strcmp(argv[i], "--nbptsoverlap") == 0) {
             globalparams->nbptsoverlap = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--deltaT") == 0) {
@@ -456,6 +460,7 @@ int print_parameters_to_file_LISA(
   fprintf(f, "nbmodeinj:    %d\n", globalparams->nbmodeinj);
   fprintf(f, "nbmodetemp:   %d\n", globalparams->nbmodetemp);
   fprintf(f, "tagint:       %d\n", globalparams->tagint);
+  fprintf(f, "tagtdi:       %d\n", globalparams->tagtdi); //Translation back from enum to string not implemented yet
   fprintf(f, "nbptsoverlap: %d\n", globalparams->nbptsoverlap);
   fprintf(f, "-----------------------------------------------\n");
   fprintf(f, "\n");
@@ -563,9 +568,9 @@ int LISAGenerateSignalCAmpPhase(
 {
   int ret;
   ListmodesCAmpPhaseFrequencySeries* listROM = NULL;
-  ListmodesCAmpPhaseFrequencySeries* listTDIA = NULL;
-  ListmodesCAmpPhaseFrequencySeries* listTDIE = NULL;
-  ListmodesCAmpPhaseFrequencySeries* listTDIT = NULL;
+  ListmodesCAmpPhaseFrequencySeries* listTDI1 = NULL;
+  ListmodesCAmpPhaseFrequencySeries* listTDI2 = NULL;
+  ListmodesCAmpPhaseFrequencySeries* listTDI3 = NULL;
 
   /* Checking that the global injectedparams has been set up */
   if (!injectedparams) {
@@ -588,7 +593,7 @@ int LISAGenerateSignalCAmpPhase(
   //TESTING
   //clock_t tbeg, tend;
   //tbeg = clock();
-  LISASimFDResponseTDIAET(&listROM, &listTDIA, &listTDIE, &listTDIT, params->tRef, params->lambda, params->beta, params->inclination, params->polarization);
+  LISASimFDResponseTDI3Chan(&listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, globalparams->tagtdi);
   //tend = clock();
   //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
@@ -620,21 +625,24 @@ int LISAGenerateSignalCAmpPhase(
   /* printf("params->polarization: %g\n", params->polarization); */
 
   /* Pre-interpolate the injection, building the spline matrices */
-  ListmodesCAmpPhaseSpline* listsplinesgenA = NULL;
-  ListmodesCAmpPhaseSpline* listsplinesgenE = NULL;
-  ListmodesCAmpPhaseSpline* listsplinesgenT = NULL;
-  BuildListmodesCAmpPhaseSpline(&listsplinesgenA, listTDIA);
-  BuildListmodesCAmpPhaseSpline(&listsplinesgenE, listTDIE);
-  BuildListmodesCAmpPhaseSpline(&listsplinesgenT, listTDIT);
+  ListmodesCAmpPhaseSpline* listsplinesgen1 = NULL;
+  ListmodesCAmpPhaseSpline* listsplinesgen2 = NULL;
+  ListmodesCAmpPhaseSpline* listsplinesgen3 = NULL;
+  BuildListmodesCAmpPhaseSpline(&listsplinesgen1, listTDI1);
+  BuildListmodesCAmpPhaseSpline(&listsplinesgen2, listTDI2);
+  BuildListmodesCAmpPhaseSpline(&listsplinesgen3, listTDI3);
 
   /* Precompute the inner product (h|h) - takes into account the length of the observation with deltatobs */
   double Mfstartobs = NewtonianfoftGeom(params->m1 / params->m2, (globalparams->deltatobs * YRSID_SI) / ((params->m1 + params->m2) * MTSUN_SI));
   double fstartobs = Mfstartobs / ((params->m1 + params->m2) * MTSUN_SI);
   double fLow = fmax(__LISASimFD_Noise_fLow, globalparams->fmin);
   double fHigh = __LISASimFD_Noise_fHigh;
+  RealFunction* NoiseSn1 = NoiseFunction(globalparams->tagtdi, 1);
+  RealFunction* NoiseSn2 = NoiseFunction(globalparams->tagtdi, 2);
+  RealFunction* NoiseSn3 = NoiseFunction(globalparams->tagtdi, 3);
   //TESTING
   //tbeg = clock();
-  double TDIAEThh = FDListmodesFresnelOverlapAET(listTDIA, listTDIE, listTDIT, listsplinesgenA, listsplinesgenE, listsplinesgenT, NoiseSnA, NoiseSnE, NoiseSnT, fLow, fHigh, fstartobs, fstartobs);
+  double TDI123hh = FDListmodesFresnelOverlap3Chan(listTDI1, listTDI2, listTDI3, listsplinesgen1, listsplinesgen2, listsplinesgen3, NoiseSn1, NoiseSn2, NoiseSn3, fLow, fHigh, fstartobs, fstartobs);
   //tend = clock();
   //printf("time SNRs: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
 
@@ -647,15 +655,15 @@ int LISAGenerateSignalCAmpPhase(
 /*   printf("TDIAEThh inside LISAGenerateSignalCAmpPhase: %g\n", TDIAEThh); */
 
   /* Output and clean up */
-  signal->TDIASignal = listTDIA;
-  signal->TDIESignal = listTDIE;
-  signal->TDITSignal = listTDIT;
-  signal->TDIAEThh = TDIAEThh;
+  signal->TDI1Signal = listTDI1;
+  signal->TDI2Signal = listTDI2;
+  signal->TDI3Signal = listTDI3;
+  signal->TDI123hh = TDI123hh;
 
   ListmodesCAmpPhaseFrequencySeries_Destroy(listROM);
-  ListmodesCAmpPhaseSpline_Destroy(listsplinesgenA);
-  ListmodesCAmpPhaseSpline_Destroy(listsplinesgenE);
-  ListmodesCAmpPhaseSpline_Destroy(listsplinesgenT);
+  ListmodesCAmpPhaseSpline_Destroy(listsplinesgen1);
+  ListmodesCAmpPhaseSpline_Destroy(listsplinesgen2);
+  ListmodesCAmpPhaseSpline_Destroy(listsplinesgen3);
   return SUCCESS;
 }
 
@@ -666,9 +674,9 @@ int LISAGenerateInjectionCAmpPhase(
 {
   int ret;
   ListmodesCAmpPhaseFrequencySeries* listROM = NULL;
-  ListmodesCAmpPhaseFrequencySeries* listTDIA = NULL;
-  ListmodesCAmpPhaseFrequencySeries* listTDIE = NULL;
-  ListmodesCAmpPhaseFrequencySeries* listTDIT = NULL;
+  ListmodesCAmpPhaseFrequencySeries* listTDI1 = NULL;
+  ListmodesCAmpPhaseFrequencySeries* listTDI2 = NULL;
+  ListmodesCAmpPhaseFrequencySeries* listTDI3 = NULL;
 
   /* Should add more error checking ? */
   /* Generate the waveform with the ROM */
@@ -683,7 +691,7 @@ int LISAGenerateInjectionCAmpPhase(
   //TESTING
   //clock_t tbeg, tend;
   //tbeg = clock();
-  LISASimFDResponseTDIAET(&listROM, &listTDIA, &listTDIE, &listTDIT, params->tRef, params->lambda, params->beta, params->inclination, params->polarization);
+  LISASimFDResponseTDI3Chan(&listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, globalparams->tagtdi);
   //tend = clock();
   //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
@@ -704,21 +712,24 @@ int LISAGenerateInjectionCAmpPhase(
   /* printf("params->polarization: %g\n", params->polarization); */
 
   /* Pre-interpolate the injection, building the spline matrices */
-  ListmodesCAmpPhaseSpline* listsplinesinjA = NULL;
-  ListmodesCAmpPhaseSpline* listsplinesinjE = NULL;
-  ListmodesCAmpPhaseSpline* listsplinesinjT = NULL;
-  BuildListmodesCAmpPhaseSpline(&listsplinesinjA, listTDIA);
-  BuildListmodesCAmpPhaseSpline(&listsplinesinjE, listTDIE);
-  BuildListmodesCAmpPhaseSpline(&listsplinesinjT, listTDIT);
+  ListmodesCAmpPhaseSpline* listsplinesinj1 = NULL;
+  ListmodesCAmpPhaseSpline* listsplinesinj2 = NULL;
+  ListmodesCAmpPhaseSpline* listsplinesinj3 = NULL;
+  BuildListmodesCAmpPhaseSpline(&listsplinesinj1, listTDI1);
+  BuildListmodesCAmpPhaseSpline(&listsplinesinj2, listTDI2);
+  BuildListmodesCAmpPhaseSpline(&listsplinesinj3, listTDI3);
 
   /* Precompute the inner product (h|h) - takes into account the length of the observation with deltatobs */
   double Mfstartobs = NewtonianfoftGeom(injectedparams->m1 / injectedparams->m2, (globalparams->deltatobs * YRSID_SI) / ((injectedparams->m1 + injectedparams->m2) * MTSUN_SI));
   double fstartobs = Mfstartobs / ((injectedparams->m1 + injectedparams->m2) * MTSUN_SI);
   double fLow = fmax(__LISASimFD_Noise_fLow, globalparams->fmin);
   double fHigh = __LISASimFD_Noise_fHigh;
+  RealFunction* NoiseSn1 = NoiseFunction(globalparams->tagtdi, 1);
+  RealFunction* NoiseSn2 = NoiseFunction(globalparams->tagtdi, 2);
+  RealFunction* NoiseSn3 = NoiseFunction(globalparams->tagtdi, 3);
   //TESTING
   //tbeg = clock();
-  double TDIAETss = FDListmodesFresnelOverlapAET(listTDIA, listTDIE, listTDIT, listsplinesinjA, listsplinesinjE, listsplinesinjT, NoiseSnA, NoiseSnE, NoiseSnT, fLow, fHigh, fstartobs, fstartobs);
+  double TDI123ss = FDListmodesFresnelOverlap3Chan(listTDI1, listTDI2, listTDI3, listsplinesinj1, listsplinesinj2, listsplinesinj3, NoiseSn1, NoiseSn2, NoiseSn3, fLow, fHigh, fstartobs, fstartobs);
   //tend = clock();
   //printf("time SNRs: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
 
@@ -727,15 +738,15 @@ int LISAGenerateInjectionCAmpPhase(
   //printf("TDIAETss inside LISAGenerateInjectionCAmpPhase: %g\n", TDIAETss);
 
   /* Output and clean up */
-  signal->TDIASplines = listsplinesinjA;
-  signal->TDIESplines = listsplinesinjE;
-  signal->TDITSplines = listsplinesinjT;
-  signal->TDIAETss = TDIAETss;
+  signal->TDI1Splines = listsplinesinj1;
+  signal->TDI2Splines = listsplinesinj2;
+  signal->TDI3Splines = listsplinesinj3;
+  signal->TDI123ss = TDI123ss;
 
   ListmodesCAmpPhaseFrequencySeries_Destroy(listROM);
-  ListmodesCAmpPhaseFrequencySeries_Destroy(listTDIA);
-  ListmodesCAmpPhaseFrequencySeries_Destroy(listTDIE);
-  ListmodesCAmpPhaseFrequencySeries_Destroy(listTDIT);
+  ListmodesCAmpPhaseFrequencySeries_Destroy(listTDI1);
+  ListmodesCAmpPhaseFrequencySeries_Destroy(listTDI2);
+  ListmodesCAmpPhaseFrequencySeries_Destroy(listTDI3);
 
   return SUCCESS;
 }
@@ -748,9 +759,9 @@ int LISAGenerateSignalReIm(
 {
   int ret;
   ListmodesCAmpPhaseFrequencySeries* listROM = NULL;
-  ListmodesCAmpPhaseFrequencySeries* listTDIA = NULL;
-  ListmodesCAmpPhaseFrequencySeries* listTDIE = NULL;
-  ListmodesCAmpPhaseFrequencySeries* listTDIT = NULL;
+  ListmodesCAmpPhaseFrequencySeries* listTDI1 = NULL;
+  ListmodesCAmpPhaseFrequencySeries* listTDI2 = NULL;
+  ListmodesCAmpPhaseFrequencySeries* listTDI3 = NULL;
 
   /* Checking that the global injectedparams has been set up */
   if (!injectedparams) {
@@ -770,41 +781,41 @@ int LISAGenerateSignalReIm(
   //TESTING
   //clock_t tbeg, tend;
   //tbeg = clock();
-  LISASimFDResponseTDIAET(&listROM, &listTDIA, &listTDIE, &listTDIT, params->tRef, params->lambda, params->beta, params->inclination, params->polarization);
+  LISASimFDResponseTDI3Chan(&listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, globalparams->tagtdi);
   //tend = clock();
   //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
 
   /* Initialize structures for the ReIm frequency series */
   int nbpts = (int) freq->size;
-  ReImFrequencySeries* TDIA = NULL;
-  ReImFrequencySeries* TDIE = NULL;
-  ReImFrequencySeries* TDIT = NULL;
-  ReImFrequencySeries_Init(&TDIA, nbpts);
-  ReImFrequencySeries_Init(&TDIE, nbpts);
-  ReImFrequencySeries_Init(&TDIT, nbpts);
+  ReImFrequencySeries* TDI1 = NULL;
+  ReImFrequencySeries* TDI2 = NULL;
+  ReImFrequencySeries* TDI3 = NULL;
+  ReImFrequencySeries_Init(&TDI1, nbpts);
+  ReImFrequencySeries_Init(&TDI2, nbpts);
+  ReImFrequencySeries_Init(&TDI3, nbpts);
 
   /* Compute the Re/Im frequency series - takes into account the length of the observation with deltatobs */
   double Mfstartobs = NewtonianfoftGeom(params->m1 / params->m2, (globalparams->deltatobs * YRSID_SI) / ((params->m1 + params->m2) * MTSUN_SI));
   double fstartobs = Mfstartobs / ((params->m1 + params->m2) * MTSUN_SI);
   //TESTING
   //tbeg = clock();
-  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(TDIA, listTDIA, freq, fstartobs);
-  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(TDIE, listTDIE, freq, fstartobs);
-  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(TDIT, listTDIT, freq, fstartobs);
+  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(TDI1, listTDI1, freq, fstartobs);
+  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(TDI2, listTDI2, freq, fstartobs);
+  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(TDI3, listTDI3, freq, fstartobs);
   //tend = clock();
   //printf("time ReIm: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
 
   /* Output and clean up */
-  signal->TDIASignal = TDIA;
-  signal->TDIESignal = TDIE;
-  signal->TDITSignal = TDIT;
+  signal->TDI1Signal = TDI1;
+  signal->TDI2Signal = TDI2;
+  signal->TDI3Signal = TDI3;
 
   ListmodesCAmpPhaseFrequencySeries_Destroy(listROM);
-  ListmodesCAmpPhaseFrequencySeries_Destroy(listTDIA);
-  ListmodesCAmpPhaseFrequencySeries_Destroy(listTDIE);
-  ListmodesCAmpPhaseFrequencySeries_Destroy(listTDIT);
+  ListmodesCAmpPhaseFrequencySeries_Destroy(listTDI1);
+  ListmodesCAmpPhaseFrequencySeries_Destroy(listTDI2);
+  ListmodesCAmpPhaseFrequencySeries_Destroy(listTDI3);
   return SUCCESS;
 }
 
@@ -818,9 +829,9 @@ int LISAGenerateInjectionReIm(
 {
   int ret;
   ListmodesCAmpPhaseFrequencySeries* listROM = NULL;
-  ListmodesCAmpPhaseFrequencySeries* listTDIA = NULL;
-  ListmodesCAmpPhaseFrequencySeries* listTDIE = NULL;
-  ListmodesCAmpPhaseFrequencySeries* listTDIT = NULL;
+  ListmodesCAmpPhaseFrequencySeries* listTDI1 = NULL;
+  ListmodesCAmpPhaseFrequencySeries* listTDI2 = NULL;
+  ListmodesCAmpPhaseFrequencySeries* listTDI3 = NULL;
 
   /* Should add more error checking ? */
   /* Generate the waveform with the ROM */
@@ -835,7 +846,7 @@ int LISAGenerateInjectionReIm(
   //TESTING
   //clock_t tbeg, tend;
   //tbeg = clock();
-  LISASimFDResponseTDIAET(&listROM, &listTDIA, &listTDIE, &listTDIT, injectedparams->tRef, injectedparams->lambda, injectedparams->beta, injectedparams->inclination, injectedparams->polarization);
+  LISASimFDResponseTDI3Chan(&listROM, &listTDI1, &listTDI2, &listTDI3, injectedparams->tRef, injectedparams->lambda, injectedparams->beta, injectedparams->inclination, injectedparams->polarization, globalparams->tagtdi);
   //tend = clock();
   //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
@@ -849,44 +860,47 @@ int LISAGenerateInjectionReIm(
   ListmodesSetFrequencies(listROM, fLowCut, fHigh, nbpts, tagsampling, freq);
 
   /* Initialize structures for the ReIm frequency series */
-  ReImFrequencySeries* TDIA = NULL;
-  ReImFrequencySeries* TDIE = NULL;
-  ReImFrequencySeries* TDIT = NULL;
-  ReImFrequencySeries_Init(&TDIA, nbpts);
-  ReImFrequencySeries_Init(&TDIE, nbpts);
-  ReImFrequencySeries_Init(&TDIT, nbpts);
+  ReImFrequencySeries* TDI1 = NULL;
+  ReImFrequencySeries* TDI2 = NULL;
+  ReImFrequencySeries* TDI3 = NULL;
+  ReImFrequencySeries_Init(&TDI1, nbpts);
+  ReImFrequencySeries_Init(&TDI2, nbpts);
+  ReImFrequencySeries_Init(&TDI3, nbpts);
 
   /* Compute the Re/Im frequency series */
   //TESTING
   //tbeg = clock();
-  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(TDIA, listTDIA, freq, fstartobs);
-  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(TDIE, listTDIE, freq, fstartobs);
-  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(TDIT, listTDIT, freq, fstartobs);
+  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(TDI1, listTDI1, freq, fstartobs);
+  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(TDI2, listTDI2, freq, fstartobs);
+  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(TDI3, listTDI3, freq, fstartobs);
   //tend = clock();
   //printf("time ReIm: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
 
   /* Compute the noise values */
-  gsl_vector* noisevaluesA = gsl_vector_alloc(nbpts);
-  gsl_vector* noisevaluesE = gsl_vector_alloc(nbpts);
-  gsl_vector* noisevaluesT = gsl_vector_alloc(nbpts);
-  EvaluateNoise(noisevaluesA, freq, NoiseSnA, __LISASimFD_Noise_fLow, __LISASimFD_Noise_fHigh);
-  EvaluateNoise(noisevaluesE, freq, NoiseSnE, __LISASimFD_Noise_fLow, __LISASimFD_Noise_fHigh);
-  EvaluateNoise(noisevaluesT, freq, NoiseSnT, __LISASimFD_Noise_fLow, __LISASimFD_Noise_fHigh);
+  RealFunction* NoiseSn1 = NoiseFunction(globalparams->tagtdi, 1);
+  RealFunction* NoiseSn2 = NoiseFunction(globalparams->tagtdi, 2);
+  RealFunction* NoiseSn3 = NoiseFunction(globalparams->tagtdi, 3);
+  gsl_vector* noisevalues1 = gsl_vector_alloc(nbpts);
+  gsl_vector* noisevalues2 = gsl_vector_alloc(nbpts);
+  gsl_vector* noisevalues3 = gsl_vector_alloc(nbpts);
+  EvaluateNoise(noisevalues1, freq, NoiseSn1, __LISASimFD_Noise_fLow, __LISASimFD_Noise_fHigh);
+  EvaluateNoise(noisevalues2, freq, NoiseSn2, __LISASimFD_Noise_fLow, __LISASimFD_Noise_fHigh);
+  EvaluateNoise(noisevalues3, freq, NoiseSn3, __LISASimFD_Noise_fLow, __LISASimFD_Noise_fHigh);
 
   /* Output and clean up */
-  injection->TDIASignal = TDIA;
-  injection->TDIESignal = TDIE;
-  injection->TDITSignal = TDIT;
+  injection->TDI1Signal = TDI1;
+  injection->TDI2Signal = TDI2;
+  injection->TDI3Signal = TDI3;
   injection->freq = freq;
-  injection->noisevaluesA = noisevaluesA;
-  injection->noisevaluesE = noisevaluesE;
-  injection->noisevaluesT = noisevaluesT;
+  injection->noisevalues1 = noisevalues1;
+  injection->noisevalues2 = noisevalues2;
+  injection->noisevalues3 = noisevalues3;
 
   ListmodesCAmpPhaseFrequencySeries_Destroy(listROM);
-  ListmodesCAmpPhaseFrequencySeries_Destroy(listTDIA);
-  ListmodesCAmpPhaseFrequencySeries_Destroy(listTDIE);
-  ListmodesCAmpPhaseFrequencySeries_Destroy(listTDIT);
+  ListmodesCAmpPhaseFrequencySeries_Destroy(listTDI1);
+  ListmodesCAmpPhaseFrequencySeries_Destroy(listTDI2);
+  ListmodesCAmpPhaseFrequencySeries_Destroy(listTDI3);
   return SUCCESS;
 }
 
@@ -920,9 +934,12 @@ double CalculateLogLCAmpPhase(LISAParams *params, LISAInjectionCAmpPhase* inject
     double fstartobsgenerated = Mfstartobsgenerated / ((params->m1 + params->m2) * MTSUN_SI);
     double fLow = fmax(__LISASimFD_Noise_fLow, globalparams->fmin);
     double fHigh = __LISASimFD_Noise_fHigh;
+    RealFunction* NoiseSn1 = NoiseFunction(globalparams->tagtdi, 1);
+    RealFunction* NoiseSn2 = NoiseFunction(globalparams->tagtdi, 2);
+    RealFunction* NoiseSn3 = NoiseFunction(globalparams->tagtdi, 3);
     //TESTING
     //tbeg = clock();
-    double overlapTDIAET = FDListmodesFresnelOverlapAET(generatedsignal->TDIASignal, generatedsignal->TDIESignal, generatedsignal->TDITSignal, injection->TDIASplines, injection->TDIESplines, injection->TDITSplines, NoiseSnA, NoiseSnE, NoiseSnT, fLow, fHigh, fstartobsinjected, fstartobsgenerated);
+    double overlapTDI123 = FDListmodesFresnelOverlap3Chan(generatedsignal->TDI1Signal, generatedsignal->TDI2Signal, generatedsignal->TDI3Signal, injection->TDI1Splines, injection->TDI2Splines, injection->TDI3Splines, NoiseSn1, NoiseSn2, NoiseSn3, fLow, fHigh, fstartobsinjected, fstartobsgenerated);
     /* double loglikelihoodTDIA = FDLogLikelihood(injection->TDIASignal, generatedsignal->TDIASignal, NoiseSnA, fLow, fHigh, injection->TDIAhh, generatedsignal->TDIAhh, fstartobsinjected, fstartobsgenerated, globalparams->tagint); */
     /* double loglikelihoodTDIE = FDLogLikelihood(injection->TDIESignal, generatedsignal->TDIESignal, NoiseSnE, fLow, fHigh, injection->TDIEhh, generatedsignal->TDIEhh, fstartobsinjected, fstartobsgenerated, globalparams->tagint); */
     /* double loglikelihoodTDIT = FDLogLikelihood(injection->TDITSignal, generatedsignal->TDITSignal, NoiseSnT, fLow, fHigh, injection->TDIThh, generatedsignal->TDIThh, fstartobsinjected, fstartobsgenerated, globalparams->tagint); */
@@ -948,7 +965,7 @@ double CalculateLogLCAmpPhase(LISAParams *params, LISAInjectionCAmpPhase* inject
   /* printf("hh overlap TDIAET: %g\n", testhhoverlapTDIAET); */
   /*   printf("(overlapTDIAET,1./2*(injection->TDIAETss), 1./2*(generatedsignal->TDIAEThh): (%g, %g, %g)\n", overlapTDIAET, 1./2*(injection->TDIAETss), 1./2*(generatedsignal->TDIAEThh)); */
 
-    logL = overlapTDIAET - 1./2*(injection->TDIAETss) - 1./2*(generatedsignal->TDIAEThh);
+    logL = overlapTDI123 - 1./2*(injection->TDI123ss) - 1./2*(generatedsignal->TDI123hh);
   }
 
   /* Clean up */
@@ -984,15 +1001,15 @@ double CalculateLogLReIm(LISAParams *params, LISAInjectionReIm* injection)
     /* Computing the likelihood for each TDI channel - fstartobs has already been taken into account */
     //TESTING
     //tbeg = clock();
-    double loglikelihoodTDIA = FDLogLikelihoodReIm(injection->TDIASignal, generatedsignal->TDIASignal, injection->noisevaluesA);
-    double loglikelihoodTDIE = FDLogLikelihoodReIm(injection->TDIESignal, generatedsignal->TDIESignal, injection->noisevaluesE);
-    double loglikelihoodTDIT = FDLogLikelihoodReIm(injection->TDITSignal, generatedsignal->TDITSignal, injection->noisevaluesT);
+    double loglikelihoodTDI1 = FDLogLikelihoodReIm(injection->TDI1Signal, generatedsignal->TDI1Signal, injection->noisevalues1);
+    double loglikelihoodTDI2 = FDLogLikelihoodReIm(injection->TDI2Signal, generatedsignal->TDI2Signal, injection->noisevalues2);
+    double loglikelihoodTDI3 = FDLogLikelihoodReIm(injection->TDI3Signal, generatedsignal->TDI3Signal, injection->noisevalues3);
     //tend = clock();
     //printf("time Overlaps: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
     //
 
     /* Output: value of the loglikelihood for the combined signals, assuming noise independence */
-    logL = loglikelihoodTDIA + loglikelihoodTDIE + loglikelihoodTDIT;
+    logL = loglikelihoodTDI1 + loglikelihoodTDI2 + loglikelihoodTDI3;
   }
 
   /* Clean up */

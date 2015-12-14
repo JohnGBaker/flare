@@ -3,7 +3,7 @@
 /******************************************** getphysparams routine ****************************************************/
 
 /* Order of the parameters (fixed): m1, m2, tRef, dist, phase, inc, lambda, beta, pol */
-void getphysparams(double *Cube, int *ndim) //Note: ndim not used here
+void getphysparams(double *Cube, int *ndim) /* Note: ndim not used here */
 {
   int i = 0;
   double m1=0., m2=0., tRef=0., dist=0., phase=0., inc=0., lambda=0., beta=0., pol=0.;
@@ -151,7 +151,6 @@ void getallparams(double *Cube, int *ndim)
 
 /* Note: context must point to the LISASignal structure representing the injected signals */
 void getLogLike(double *Cube, int *ndim, int *npars, double *lnew, void *context)
-//void getLogLike(LISAParams *params, double *lnew, void *context)
 {
   /* Convert Cube to physical parameters and check prior boundary */
   getallparams(Cube,ndim);
@@ -291,11 +290,6 @@ int main(int argc, char *argv[])
     LISAInjectionReIm_Init(&injectedsignalReIm);
   }
 
-  //
-  //injectedparams->inclination = PI/2;
-  //LISAGenerateInjectionCAmpPhase(injectedparams, injectedsignalCAmpPhase);
-  //exit(0);
-
   /* Generate the injection */
   if(globalparams->tagint==0) {
     LISAGenerateInjectionCAmpPhase(injectedparams, injectedsignalCAmpPhase);
@@ -304,227 +298,46 @@ int main(int argc, char *argv[])
     LISAGenerateInjectionReIm(injectedparams, globalparams->fmin, globalparams->nbptsoverlap, 1, injectedsignalReIm); /* Use here logarithmic sampling as a default */
   }
 
-  //
-  /* LISAInjectionCAmpPhase_Init(&injectedsignalCAmpPhase); */
-  /* LISAGenerateInjectionCAmpPhase(injectedparams, injectedsignalCAmpPhase); */
-  /* LISAInjectionReIm_Init(&injectedsignalReIm); */
-  /* LISAGenerateInjectionReIm(injectedparams, globalparams->fmin, globalparams->nbptsoverlap, 1, injectedsignalReIm); */
-
-  /* double Mfstartobs = NewtonianfoftGeom(testparams->m1 / testparams->m2, (globalparams->deltatobs * YRSID_SI) / ((testparams->m1 + testparams->m2) * MTSUN_SI)); */
-  /* double fstartobs = Mfstartobs / ((testparams->m1 + testparams->m2) * MTSUN_SI); */
-  /* double fLow = fmax(__LISASimFD_Noise_fLow, globalparams->fmin); */
-  /* double fHigh = __LISASimFD_Noise_fHigh; */
-  //TESTING
-  //tbeg = clock();
-  /* double overlapCAmpPhase = FDListmodesFresnelOverlap(signalCAmpPhase->TDIASignal, injectedsignalCAmpPhase->TDIASplines, NoiseSnA, fLow, fHigh, fstartobs, fstartobs); */
-  /* double overlapLinear = FDOverlapReImvsReIm(signalReIm->TDIASignal, injectedsignalReIm->TDIASignal, injectedsignalReIm->noisevaluesA); */
-  /* printf("Overlap CAmpPhase: %g\n", overlapCAmpPhase); */
-  /* printf("Overlap linear: %g\n", overlapLinear); */
-
-  //
-  //exit(0);
-
   /* Define SNRs */
-  double SNRAET, SNRA, SNRE, SNRT;
+  double SNR123, SNR1, SNR2, SNR3;
   if(globalparams->tagint==0) {
-    SNRAET = sqrt(injectedsignalCAmpPhase->TDIAETss);
-    //
-    //printf("SNRAET: %g\n", SNRAET);
+    SNR123 = sqrt(injectedsignalCAmpPhase->TDI123ss);
   }
   else if(globalparams->tagint==1) {
-    SNRA = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDIASignal, injectedsignalReIm->TDIASignal, injectedsignalReIm->noisevaluesA));
-    SNRE = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDIESignal, injectedsignalReIm->TDIESignal, injectedsignalReIm->noisevaluesE));
-    SNRT = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDITSignal, injectedsignalReIm->TDITSignal, injectedsignalReIm->noisevaluesT));
-    SNRAET = sqrt(SNRA*SNRA + SNRE*SNRE + SNRT*SNRT);
+    SNR1 = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDI1Signal, injectedsignalReIm->TDI1Signal, injectedsignalReIm->noisevalues1));
+    SNR2 = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDI2Signal, injectedsignalReIm->TDI2Signal, injectedsignalReIm->noisevalues2));
+    SNR3 = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDI3Signal, injectedsignalReIm->TDI3Signal, injectedsignalReIm->noisevalues3));
+    SNR123 = sqrt(SNR1*SNR1 + SNR2*SNR2 + SNR3*SNR3);
   }
-
-  //
-/* printf("--------------\n"); */
-/* LISAInjectionReIm_Init(&injectedsignalReIm); */
-/* LISAGenerateInjectionReIm(injectedparams, globalparams->fmin, globalparams->nbptsoverlap, 1, injectedsignalReIm); */
-/*     SNRA = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDIASignal, injectedsignalReIm->TDIASignal, injectedsignalReIm->noisevaluesA)); */
-/*     SNRE = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDIESignal, injectedsignalReIm->TDIESignal, injectedsignalReIm->noisevaluesE)); */
-/*     SNRT = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDITSignal, injectedsignalReIm->TDITSignal, injectedsignalReIm->noisevaluesT)); */
-/*     printf("SNR CAmpPhase: %g \n", sqrt(injectedsignalCAmpPhase->TDIAETss)); */
-/*     printf("SNR ReIm: %g \n", sqrt(SNRA*SNRA + SNRE*SNRE + SNRT*SNRT)); */
-/* printf("--------------\n"); */
 
   /* Rescale distance to match SNR */
   if (!isnan(priorParams->snr_target)) {
     if (myid == 0) printf("Rescaling the distance to obtain a network SNR of %g\n", priorParams->snr_target);
-    //
-    //printf("SNRAET: %g\n", SNRAET);
-    injectedparams->distance *= SNRAET / priorParams->snr_target;
+    injectedparams->distance *= SNR123 / priorParams->snr_target;
     if (myid == 0) printf("New distance = %g Mpc\n", injectedparams->distance);
     if(priorParams->rescale_distprior) {
-      priorParams->dist_min *= SNRAET / priorParams->snr_target;
-      priorParams->dist_max *= SNRAET / priorParams->snr_target;
+      priorParams->dist_min *= SNR123 / priorParams->snr_target;
+      priorParams->dist_max *= SNR123 / priorParams->snr_target;
       if (myid == 0) printf("Distance prior (dist_min, dist_max) = (%g, %g) Mpc\n", priorParams->dist_min, priorParams->dist_max);
     }
     if (myid == 0) print_rescaleddist_to_file_LISA(injectedparams, globalparams, priorParams, &runParams);
     if(globalparams->tagint==0) {
       LISAGenerateInjectionCAmpPhase(injectedparams, injectedsignalCAmpPhase);
-      SNRAET = sqrt(injectedsignalCAmpPhase->TDIAETss);
-    //
-    //printf("SNRAET: %g\n", SNRAET);
+      SNR123 = sqrt(injectedsignalCAmpPhase->TDI123ss);
     }
     else if(globalparams->tagint==1) {
       LISAGenerateInjectionReIm(injectedparams, globalparams->fmin, globalparams->nbptsoverlap, 1, injectedsignalReIm); /* tagsampling fixed to 1, i.e. logarithmic sampling - could be made another global parameter */
-      SNRA = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDIASignal, injectedsignalReIm->TDIASignal, injectedsignalReIm->noisevaluesA));
-      SNRE = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDIESignal, injectedsignalReIm->TDIESignal, injectedsignalReIm->noisevaluesE));
-      SNRT = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDITSignal, injectedsignalReIm->TDITSignal, injectedsignalReIm->noisevaluesT));
-      SNRAET = sqrt(SNRA*SNRA + SNRE*SNRE + SNRT*SNRT);
+      SNR1 = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDI1Signal, injectedsignalReIm->TDI1Signal, injectedsignalReIm->noisevalues1));
+      SNR2 = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDI2Signal, injectedsignalReIm->TDI2Signal, injectedsignalReIm->noisevalues2));
+      SNR3 = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDI3Signal, injectedsignalReIm->TDI3Signal, injectedsignalReIm->noisevalues3));
+      SNR123 = sqrt(SNR1*SNR1 + SNR2*SNR2 + SNR3*SNR3);
     }
   }
 
   /* Print SNR */
   if (myid == 0) {
-    printf("SNR AET Total: %g\n", SNRAET);
+    printf("Total SNR: %g\n", SNR123);
   }
-
-  //
-  /* LISAParams* testparams = (LISAParams*) malloc(sizeof(LISAParams)); */
-  /* memset(testparams, 0, sizeof(LISAParams)); */
-  /* testparams->m1 = 9.69864542e+07; */
-  /* testparams->m2 = 9.68723593e+07; */
-  /* testparams->tRef =1.72445219e+03; */
-  /* testparams->distance = 1.96081706e+05; */
-  /* testparams->phiRef = 1.15654407e-01; */
-  /* //  testparams->inclination = 1.57028141e+00; */
-  /* testparams->inclination = PI/2; */
-  /* testparams->lambda = 1.66782448e+00; */
-  /* testparams->beta = -1.00200072e-01; */
-  /* testparams->polarization = 5.74529248e+00; */
-  /* testparams->nbmode = 1; */
-  //
-  /* double injecAA, injecEE, injecTT; */
-  /* printf("--------------\n"); */
-  /* LISAInjectionReIm_Init(&injectedsignalReIm); */
-  /* LISAGenerateInjectionReIm(injectedparams, globalparams->fmin, globalparams->nbptsoverlap, 0, injectedsignalReIm); */
-  /* printf("CalculateLogLReIm injectedparams vs injection: %g\n", CalculateLogLReIm(injectedparams, injectedsignalReIm)); */
-  /* printf("CalculateLogLReIm testparams vs injection: %g\n", CalculateLogLReIm(testparams, injectedsignalReIm)); */
-  /* printf("CalculateLogLCAmpPhase injectedparams vs injection: %g\n", CalculateLogLCAmpPhase(injectedparams, injectedsignalCAmpPhase)); */
-  /* printf("CalculateLogLCAmpPhase testparams vs injection: %g\n", CalculateLogLCAmpPhase(testparams, injectedsignalCAmpPhase)); */
-/*   // */
-/*   injecAA = FDOverlapReImvsReIm(injectedsignalReIm->TDIASignal, injectedsignalReIm->TDIASignal, injectedsignalReIm->noisevaluesA); */
-/*   injecEE = FDOverlapReImvsReIm(injectedsignalReIm->TDIESignal, injectedsignalReIm->TDIESignal, injectedsignalReIm->noisevaluesE); */
-/*   injecTT = FDOverlapReImvsReIm(injectedsignalReIm->TDITSignal, injectedsignalReIm->TDITSignal, injectedsignalReIm->noisevaluesT); */
-/*   printf("Linear injAA+injEE+injTT: %g\n", injecAA+injecEE+injecTT); */
-/*   // */
-/*   printf("--------------\n"); */
-/*   printf("With injectedparams->inclination =  PI/2\n"); */
-/*   injectedparams->inclination =  PI/2; */
-/*   LISAGenerateInjectionReIm(injectedparams, globalparams->fmin, globalparams->nbptsoverlap, 0, injectedsignalReIm); */
-/*   LISAGenerateInjectionCAmpPhase(injectedparams, injectedsignalCAmpPhase); */
-/*   injecAA = FDOverlapReImvsReIm(injectedsignalReIm->TDIASignal, injectedsignalReIm->TDIASignal, injectedsignalReIm->noisevaluesA); */
-/*   injecEE = FDOverlapReImvsReIm(injectedsignalReIm->TDIESignal, injectedsignalReIm->TDIESignal, injectedsignalReIm->noisevaluesE); */
-/*   injecTT = FDOverlapReImvsReIm(injectedsignalReIm->TDITSignal, injectedsignalReIm->TDITSignal, injectedsignalReIm->noisevaluesT); */
-/*   printf("Linear injAA+injEE+injTT: %g\n", injecAA+injecEE+injecTT); */
-/*   // */
-/*   printf("--------------\n"); */
-/* printf("Adjusting more parameters to testparameters:\n"); */
-/* //injectedparams->inclination =  PI/2; */
-/*   injectedparams->m1 = testparams->m1; */
-/*   injectedparams->m2 = testparams->m2; */
-/*   //injectedparams->tRef = testparams->tRef; */
-/*   /\* injectedparams->inclination = testparams->inclination; *\/ */
-/*   /\* injectedparams->distance = testparams->distance; *\/ */
-/*   /\* injectedparams->lambda = testparams->lambda; *\/ */
-/*   /\* injectedparams->beta = testparams->beta; *\/ */
-/*   /\* injectedparams->polarization = testparams->polarization; *\/ */
-/*   injectedparams->inclination = PI/2; */
-/*   injectedparams->distance = testparams->distance; */
-/*   injectedparams->lambda = PI/2; */
-/*   injectedparams->beta = 0.; */
-/*   injectedparams->polarization = -PI/6; */
-/*   LISAGenerateInjectionReIm(injectedparams, globalparams->fmin, globalparams->nbptsoverlap, 0, injectedsignalReIm); */
-/*   LISAGenerateInjectionCAmpPhase(injectedparams, injectedsignalCAmpPhase); */
-/*   injecAA = FDOverlapReImvsReIm(injectedsignalReIm->TDIASignal, injectedsignalReIm->TDIASignal, injectedsignalReIm->noisevaluesA); */
-/*   injecEE = FDOverlapReImvsReIm(injectedsignalReIm->TDIESignal, injectedsignalReIm->TDIESignal, injectedsignalReIm->noisevaluesE); */
-/*   injecTT = FDOverlapReImvsReIm(injectedsignalReIm->TDITSignal, injectedsignalReIm->TDITSignal, injectedsignalReIm->noisevaluesT); */
-/*   printf("Linear injAA+injEE+injTT: %g\n", injecAA+injecEE+injecTT); */
-/* printf("--------------\n"); */
-/*   // */
-/*   LISASignalReIm* signalReIm = NULL; */
-/*   LISASignalReIm_Init(&signalReIm); */
-/*   LISAGenerateSignalReIm(testparams, injectedsignalReIm->freq, signalReIm); */
-/*   LISASignalCAmpPhase* signalCAmpPhase = NULL; */
-/*   LISASignalCAmpPhase_Init(&signalCAmpPhase); */
-/*   LISAGenerateSignalCAmpPhase(testparams, signalCAmpPhase); */
-/*   double Mfstartobs = NewtonianfoftGeom(testparams->m1 / testparams->m2, (globalparams->deltatobs * YRSID_SI) / ((testparams->m1 + testparams->m2) * MTSUN_SI)); */
-/*   double fstartobs = Mfstartobs / ((testparams->m1 + testparams->m2) * MTSUN_SI); */
-/*   double fLow = fmax(__LISASimFD_Noise_fLow, globalparams->fmin); */
-/*   double fHigh = __LISASimFD_Noise_fHigh; */
-/*   double overlapCAmpPhase = FDListmodesFresnelOverlap(signalCAmpPhase->TDIASignal, injectedsignalCAmpPhase->TDIASplines, NoiseSnA, fLow, fHigh, fstartobs, fstartobs); */
-/*   printf("Overlap CAmpPhase: %g\n", overlapCAmpPhase); */
-/*  printf("SNRAET signal CAmpPhase: %g\n", signalCAmpPhase->TDIAEThh); */
-/*   // */
-/*   double signalAA = FDOverlapReImvsReIm(signalReIm->TDIASignal, signalReIm->TDIASignal, injectedsignalReIm->noisevaluesA); */
-/*   double signalEE = FDOverlapReImvsReIm(signalReIm->TDIESignal, signalReIm->TDIESignal, injectedsignalReIm->noisevaluesE); */
-/*   double signalTT = FDOverlapReImvsReIm(signalReIm->TDITSignal, signalReIm->TDITSignal, injectedsignalReIm->noisevaluesT); */
-/*   double injAA = FDOverlapReImvsReIm(injectedsignalReIm->TDIASignal, injectedsignalReIm->TDIASignal, injectedsignalReIm->noisevaluesA); */
-/*   double injEE = FDOverlapReImvsReIm(injectedsignalReIm->TDIESignal, injectedsignalReIm->TDIESignal, injectedsignalReIm->noisevaluesE); */
-/*   double injTT = FDOverlapReImvsReIm(injectedsignalReIm->TDITSignal, injectedsignalReIm->TDITSignal, injectedsignalReIm->noisevaluesT); */
-/*   double overlapAA = FDOverlapReImvsReIm(injectedsignalReIm->TDIASignal, signalReIm->TDIASignal, injectedsignalReIm->noisevaluesA); */
-/*   double overlapEE = FDOverlapReImvsReIm(injectedsignalReIm->TDIESignal, signalReIm->TDIESignal, injectedsignalReIm->noisevaluesE); */
-/*   double overlapTT = FDOverlapReImvsReIm(injectedsignalReIm->TDITSignal, signalReIm->TDITSignal, injectedsignalReIm->noisevaluesT); */
-/*     printf("Linear overlap AA+EE+TT: %g\n", overlapAA+overlapEE+overlapTT); */
-/*     printf("Linear signalAA+signalEE+signalTT: %g\n", signalAA+signalEE+signalTT); */
-/*     printf("Linear injAA+injEE+injTT: %g\n", injAA+injEE+injTT); */
-/*  // */
-/*   exit(0); */
-
-  //
-  //printf("Injected distance = %g Mpc\n", injectedparams->distance);
-  //exit(0);
-
-  //
-/* printf("--------------\n"); */
-/* LISAGenerateInjectionCAmpPhase(injectedparams, injectedsignalCAmpPhase); */
-/* SNRAET = sqrt(injectedsignalCAmpPhase->TDIAETss); */
-/* LISAGenerateInjectionReIm(injectedparams, globalparams->fmin, globalparams->nbptsoverlap, 1, injectedsignalReIm); */
-/*     SNRA = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDIASignal, injectedsignalReIm->TDIASignal, injectedsignalReIm->noisevaluesA)); */
-/*     SNRE = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDIESignal, injectedsignalReIm->TDIESignal, injectedsignalReIm->noisevaluesE)); */
-/*     SNRT = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDITSignal, injectedsignalReIm->TDITSignal, injectedsignalReIm->noisevaluesT)); */
-/*     printf("SNR CAmpPhase: %g \n", sqrt(injectedsignalCAmpPhase->TDIAETss)); */
-/*     printf("SNR ReIm: %g \n", sqrt(SNRA*SNRA + SNRE*SNRE + SNRT*SNRT)); */
-/*     printf("(SNRA, SNRE, SNRT): %g, %g, %g\n", SNRA, SNRE, SNRT); */
-
-  //
-/* printf("--------------\n"); */
-/*   double ltest = CalculateLogLCAmpPhase(testparams, injectedsignalCAmpPhase); */
-/*   printf("testparams->distance: %g\n",testparams->distance); */
-/*   printf("injectedparams->distance: %g\n",injectedparams->distance); */
-/*   printf("Test likelihood: %g\n", ltest); */
-  //  LISAInjectionReIm_Init(&injectedsignalReIm);
-  /* LISAGenerateInjectionReIm(injectedparams, globalparams->fmin, globalparams->nbptsoverlap, 0, injectedsignalReIm); */
-  /* printf("CalculateLogLReIm injectedparams vs injection: %g\n", CalculateLogLReIm(injectedparams, injectedsignalReIm)); */
-  /* printf("CalculateLogLReIm testparams vs injection: %g\n", CalculateLogLReIm(testparams, injectedsignalReIm)); */
-/*   LISASignalReIm* signalReIm = NULL; */
-/*   LISASignalReIm_Init(&signalReIm); */
-/*   LISAGenerateSignalReIm(testparams, injectedsignalReIm->freq, signalReIm); */
-/*   double signalAA = FDOverlapReImvsReIm(signalReIm->TDIASignal, signalReIm->TDIASignal, injectedsignalReIm->noisevaluesA); */
-/*   double signalEE = FDOverlapReImvsReIm(signalReIm->TDIESignal, signalReIm->TDIESignal, injectedsignalReIm->noisevaluesE); */
-/*   double signalTT = FDOverlapReImvsReIm(signalReIm->TDITSignal, signalReIm->TDITSignal, injectedsignalReIm->noisevaluesT); */
-/*   double injAA = FDOverlapReImvsReIm(injectedsignalReIm->TDIASignal, injectedsignalReIm->TDIASignal, injectedsignalReIm->noisevaluesA); */
-/*   double injEE = FDOverlapReImvsReIm(injectedsignalReIm->TDIESignal, injectedsignalReIm->TDIESignal, injectedsignalReIm->noisevaluesE); */
-/*   double injTT = FDOverlapReImvsReIm(injectedsignalReIm->TDITSignal, injectedsignalReIm->TDITSignal, injectedsignalReIm->noisevaluesT); */
-/*   double overlapAA = FDOverlapReImvsReIm(injectedsignalReIm->TDIASignal, signalReIm->TDIASignal, injectedsignalReIm->noisevaluesA); */
-/*   double overlapEE = FDOverlapReImvsReIm(injectedsignalReIm->TDIESignal, signalReIm->TDIESignal, injectedsignalReIm->noisevaluesE); */
-/*   double overlapTT = FDOverlapReImvsReIm(injectedsignalReIm->TDITSignal, signalReIm->TDITSignal, injectedsignalReIm->noisevaluesT); */
-/*     printf("Linear signalAA+signalEE+signalTT: %g\n", signalAA+signalEE+signalTT); */
-/*     printf("Linear injAA+injEE+injTT: %g\n", injAA+injEE+injTT); */
-/*     printf("CAmpPhase inj AA+EE+TT: %g\n", injectedsignalCAmpPhase->TDIAETss); */
-
-/*  printf("--------------\n"); */
-/* printf("Linear overlap AA: %g\n", overlapAA); */
-/* printf("Linear overlap EE: %g\n", overlapEE); */
-/* printf("Linear overlap TT: %g\n", overlapTT); */
-/*     printf("Linear overlap AA+EE+TT: %g\n", overlapAA+overlapEE+overlapTT); */
-
-
-  //
-  //exit(0);
 
   /* Calculate logL of data */
   /*double dist_store = injectedparams->distance;
@@ -733,8 +546,8 @@ int main(int argc, char *argv[])
 
 	double tol = runParams.tol;			/* tol, defines the stopping criteria */
 
-	//int ndim = 9;				        /*dimensionality (no. of free parameters) */
-	//int nPar = 9;					/* total no. of parameters including free & derived parameters */
+	/* int ndim = 9; */				        /*dimensionality (no. of free parameters) */
+	/* int nPar = 9; */					/* total no. of parameters including free & derived parameters */
 
 	int nClsPar = runParams.nclspar;            	/* no. of parameters to do mode separation on */
 
@@ -772,7 +585,7 @@ int main(int argc, char *argv[])
 	int maxiter = 0;				/* max no. of iterations, a non-positive value means infinity. MultiNest will terminate if either it */
 							/* has done max no. of iterations or convergence criterion (defined through tol) has been satisfied */
 
-	// void *context = 0;				/* not required by MultiNest, any additional information user wants to pass */
+	/* void *context = 0; */				/* not required by MultiNest, any additional information user wants to pass */
 
 	doBAMBI = runParams.bambi;			/* BAMBI? */
 

@@ -41,33 +41,170 @@
 /* static double twopitflight_SI = 2.*PI*L_SI/C_SI; */
 
 /* Proof mass and optic noises - f in Hz */
+/* Taken from (4) in McWilliams&al_0911 */
 static double Spm(const double f) {
-  double invf = 1./f;
-  return 2.54e-48 *invf*invf;
+  double invf2 = 1./(f*f);
+  return 2.5e-48 * invf2 * sqrt(1. + 1e-8*invf2);
 }
 static double Sop(const double f) {
-  return 1.76e-37 *f*f;
+  return 1.8e-37 *f*f;
 }
 
-/* The noise functions themselves */
+/* Noise Sn for TDI observables - factors have been scaled out both in the response and the noise */
+/* Rescaled by 4*sin2pifL^2 */
+double SnXYZ(double f) {
+  double twopifL = 2.*PI*L_SI/C_SI*f;
+  double c2 = cos(twopifL);
+  return 4*( 2*(1. + c2*c2)*Spm(f) + Sop(f) );
+}
+/* No rescaling */
+double Snalphabetagamma(double f) {
+  double pifL = PI*L_SI/C_SI*f;
+  double s1 = sin(pifL);
+  double s3 = sin(3*pifL);
+  return 2*( (4*s3*s3 + 8*s1*s1)*Spm(f) + 3*Sop(f) );
+}
+/* Rescaled by 2*sin2pifL^2 */
+double SnAXYZ(double f) {
+  double twopifL = 2.*PI*L_SI/C_SI*f;
+  double c2 = cos(twopifL);
+  double c4 = cos(2*twopifL);
+  return 2*(3. + 2*c2 + c4)*Spm(f) + (2 + c2)*Sop(f);
+}
+/* Rescaled by 2*sin2pifL^2 */
+double SnEXYZ(double f) {
+  double twopifL = 2.*PI*L_SI/C_SI*f;
+  double c2 = cos(twopifL);
+  double c4 = cos(2*twopifL);
+  return 2*(3. + 2*c2 + c4)*Spm(f) + (2 + c2)*Sop(f);
+}
+/* Rescaled by 8*sin2pifL^2*sinpifL^2 */
+double SnTXYZ(double f) {
+  double pifL = PI*L_SI/C_SI*f;
+  double s1 = sin(pifL);
+  return 4*s1*s1*Spm(f) + Sop(f);
+}
+/* Rescaled by 8*sin2pifL^2 */
+double SnAalphabetagamma(double f) {
+  double twopifL = 2.*PI*L_SI/C_SI*f;
+  double c2 = cos(twopifL);
+  double c4 = cos(2*twopifL);
+  return 2*(3. + 2*c2 + c4)*Spm(f) + (2 + c2)*Sop(f);
+}
+/* Rescaled by 8*sin2pifL^2 */
+double SnEalphabetagamma(double f) {
+  double twopifL = 2.*PI*L_SI/C_SI*f;
+  double c2 = cos(twopifL);
+  double c4 = cos(2*twopifL);
+  return 2*(3. + 2*c2 + c4)*Spm(f) + (2 + c2)*Sop(f);
+}
+/* Rescaled by sin3pifL^2/sinpifL^2 */
+double SnTalphabetagamma(double f) {
+  double pifL = PI*L_SI/C_SI*f;
+  double s1 = sin(pifL);
+  return 8*s1*s1*Spm(f) + 2*Sop(f);
+}
+
+/* The noise functions themselves
 /* Note - we factored out and cancelled the factors of the type sin(n pi f L) */
-double NoiseSnA(const double f) {
-  double twopifL = 2.*PI*L_SI/C_SI*f;
-  double cos1 = cos(twopifL);
-  double cos2 = cos(2*twopifL);
-  return 32*( (6 + 4*cos1 + 2*cos2)*Spm(f) + (2 + cos1)*Sop(f) );
-}
-double NoiseSnE(const double f) {
-  double twopifL = 2.*PI*L_SI/C_SI*f;
-  double cos1 = cos(twopifL);
-  double cos2 = cos(2*twopifL);
-  return 32*( (6 + 4*cos1 + 2*cos2)*Spm(f) + (2 + cos1)*Sop(f) );
-}
-double NoiseSnT(const double f) {
-  double twopifL = 2.*PI*L_SI/C_SI*f;
-  double sinhalf = sin(0.5*twopifL);
-  double cos1 = cos(twopifL);
-  return 8*( 4*sinhalf*sinhalf*Spm(f) + Sop(f) );
+/* double NoiseSnA(const double f) { */
+/*   double twopifL = 2.*PI*L_SI/C_SI*f; */
+/*   double cos1 = cos(twopifL); */
+/*   double cos2 = cos(2*twopifL); */
+/*   return 32*( (6 + 4*cos1 + 2*cos2)*Spm(f) + (2 + cos1)*Sop(f) ); */
+/* } */
+/* double NoiseSnE(const double f) { */
+/*   double twopifL = 2.*PI*L_SI/C_SI*f; */
+/*   double cos1 = cos(twopifL); */
+/*   double cos2 = cos(2*twopifL); */
+/*   return 32*( (6 + 4*cos1 + 2*cos2)*Spm(f) + (2 + cos1)*Sop(f) ); */
+/* } */
+/* double NoiseSnT(const double f) { */
+/*   double twopifL = 2.*PI*L_SI/C_SI*f; */
+/*   double sinhalf = sin(0.5*twopifL); */
+/*   double cos1 = cos(twopifL); */
+/*   return 8*( 4*sinhalf*sinhalf*Spm(f) + Sop(f) ); */
+/* } */
+
+/* Function returning the relevant noise function, given a set of TDI observables and a channel */
+RealFunction* NoiseFunction(const TDItag tditag, const int nchan)
+{
+  RealFunction* ptr = NULL;
+  switch(tditag) {
+  case TDIXYZ: {
+    switch(nchan) {
+    case 1: ptr = &SnXYZ;
+    case 2: ptr = &SnXYZ;
+    case 3: ptr = &SnXYZ;
+    }
+  }
+  case TDIalphabetagamma: {
+    switch(nchan) {
+    case 1: ptr = &Snalphabetagamma;
+    case 2: ptr = &Snalphabetagamma;
+    case 3: ptr = &Snalphabetagamma;
+    }
+  }
+  case TDIAETXYZ: {
+    switch(nchan) {
+    case 1: ptr = &SnAXYZ;
+    case 2: ptr = &SnEXYZ;
+    case 3: ptr = &SnTXYZ;
+    }
+  }
+  case TDIAETalphabetagamma: {
+    switch(nchan) {
+    case 1: ptr = &SnAalphabetagamma;
+    case 2: ptr = &SnEalphabetagamma;
+    case 3: ptr = &SnTalphabetagamma;
+    }
+  }
+  case TDIX: {
+    switch(nchan) {
+    case 1: ptr = &SnXYZ;
+    }
+  }
+  case TDIalpha: {
+    switch(nchan) {
+    case 1: ptr = &Snalphabetagamma;
+    }
+  }
+  case TDIAXYZ: {
+    switch(nchan) {
+    case 1: ptr = &SnAXYZ;
+    }
+  }
+  case TDIEXYZ: {
+    switch(nchan) {
+    case 1: ptr = &SnEXYZ;
+    }
+  }
+  case TDITXYZ: {
+    switch(nchan) {
+    case 1: ptr = &SnTXYZ;
+    }
+  }
+  case TDIAalphabetagamma: {
+    switch(nchan) {
+    case 1: ptr = &SnAalphabetagamma;
+    }
+  }
+  case TDIEalphabetagamma: {
+    switch(nchan) {
+    case 1: ptr = &SnEalphabetagamma;
+    }
+  }
+  case TDITalphabetagamma: {
+    switch(nchan) {
+    case 1: ptr = &SnTalphabetagamma;
+    }
+  }
+  }
+  if(ptr==NULL) {
+    printf("Error in NoiseFunction: incorrect argument.\n");
+    exit(1);
+  }
+  return ptr;
 }
 
 //Previous version - we had put a noise floor to mitigate cancellation lines

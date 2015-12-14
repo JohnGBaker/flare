@@ -695,31 +695,31 @@ gsl_set_error_handler(&Err_Handler);
   }
 }
 
-/* Function computing the integrand values, combining the three channels A, E and T */
-void ComputeIntegrandValuesAET(
+/* Function computing the integrand values, combining three non-correlated channels */
+void ComputeIntegrandValues3Chan(
   CAmpPhaseFrequencySeries** integrand,     /* Output: values of the integrand on common frequencies (initialized in the function) */
-  CAmpPhaseFrequencySeries* freqseries1A,    /* Input: frequency series for wf 1, channel A */
-  CAmpPhaseFrequencySeries* freqseries1E,    /* Input: frequency series for wf 1, channel E */
-  CAmpPhaseFrequencySeries* freqseries1T,    /* Input: frequency series for wf 1, channel T */
-  CAmpPhaseSpline* splines2A,                /* Input: splines in matrix form for wf 2, channel A */
-  CAmpPhaseSpline* splines2E,                /* Input: splines in matrix form for wf 2, channel E */
-  CAmpPhaseSpline* splines2T,                /* Input: splines in matrix form for wf 2, channel T */
-  double (*SnoiseA)(double),                /* Noise function for A */
-  double (*SnoiseE)(double),                /* Noise function for E */
-  double (*SnoiseT)(double),                /* Noise function for T */
+  CAmpPhaseFrequencySeries* freqseries1chan1,    /* Input: frequency series for wf 1, channel 1 */
+  CAmpPhaseFrequencySeries* freqseries1chan2,    /* Input: frequency series for wf 1, channel 2 */
+  CAmpPhaseFrequencySeries* freqseries1chan3,    /* Input: frequency series for wf 1, channel 3 */
+  CAmpPhaseSpline* splines2chan1,                /* Input: splines in matrix form for wf 2, channel 1 */
+  CAmpPhaseSpline* splines2chan2,                /* Input: splines in matrix form for wf 2, channel 2 */
+  CAmpPhaseSpline* splines2chan3,                /* Input: splines in matrix form for wf 2, channel 3 */
+  double (*Snoise1)(double),                /* Noise function for channel 1 */
+  double (*Snoise2)(double),                /* Noise function for channel 2 */
+  double (*Snoise3)(double),                /* Noise function for channel 3 */
   double fLow,                              /* Lower bound of the frequency - 0 to ignore */
   double fHigh)                             /* Upper bound of the frequency - 0 to ignore */
 {
   //
   gsl_set_error_handler(&Err_Handler);
 
-  /* Determining the boundaries of indices - frequency vectors assumed to be the same for A, E, T */
-  gsl_vector* freq1 = freqseries1A->freq;
+  /* Determining the boundaries of indices - frequency vectors assumed to be the same for channels 1,2,3 */
+  gsl_vector* freq1 = freqseries1chan1->freq;
   int imin1 = 0;
   int imax1 = freq1->size - 1;
   double* f1 = freq1->data;
-  double f2min = gsl_matrix_get(splines2A->quadspline_phase, 0, 0);
-  double f2max = gsl_matrix_get(splines2A->quadspline_phase, splines2A->quadspline_phase->size1 - 1, 0);
+  double f2min = gsl_matrix_get(splines2chan1->quadspline_phase, 0, 0);
+  double f2max = gsl_matrix_get(splines2chan1->quadspline_phase, splines2chan1->quadspline_phase->size1 - 1, 0);
   if((fLow>0 && (f1[imax1]<=fLow || f2max<=fLow)) || (fHigh>0 && (f1[imin1]>=fHigh || f2min>=fHigh))) {
     printf("Error: range of frequencies incompatible with fLow, fHigh in IntegrandValues.\n");
     exit(1);
@@ -731,103 +731,103 @@ void ComputeIntegrandValuesAET(
   if(fHigh>0) {maxf = fmin(fHigh,maxf);}
   while(f1[imin1+1]<=minf) imin1++;
   while(f1[imax1-1]>=maxf) imax1--;
-  /* Estimate locally values for freqseries1 at the boundaries - phase vectors assumed to be the same for A, E, T  */
-  double areal1Aminf = EstimateBoundaryLegendreQuad(freq1, freqseries1A->amp_real, imin1, minf);
-  double aimag1Aminf = EstimateBoundaryLegendreQuad(freq1, freqseries1A->amp_imag, imin1, minf);
-  double areal1Eminf = EstimateBoundaryLegendreQuad(freq1, freqseries1E->amp_real, imin1, minf);
-  double aimag1Eminf = EstimateBoundaryLegendreQuad(freq1, freqseries1E->amp_imag, imin1, minf);
-  double areal1Tminf = EstimateBoundaryLegendreQuad(freq1, freqseries1T->amp_real, imin1, minf);
-  double aimag1Tminf = EstimateBoundaryLegendreQuad(freq1, freqseries1T->amp_imag, imin1, minf);
-  double phi1minf = EstimateBoundaryLegendreQuad(freq1, freqseries1A->phase, imin1, minf);
-  double areal1Amaxf = EstimateBoundaryLegendreQuad(freq1, freqseries1A->amp_real, imax1-2, maxf); /* Note the imax1-2 */
-  double aimag1Amaxf = EstimateBoundaryLegendreQuad(freq1, freqseries1A->amp_imag, imax1-2, maxf); /* Note the imax1-2 */
-  double areal1Emaxf = EstimateBoundaryLegendreQuad(freq1, freqseries1E->amp_real, imax1-2, maxf); /* Note the imax1-2 */
-  double aimag1Emaxf = EstimateBoundaryLegendreQuad(freq1, freqseries1E->amp_imag, imax1-2, maxf); /* Note the imax1-2 */
-  double areal1Tmaxf = EstimateBoundaryLegendreQuad(freq1, freqseries1T->amp_real, imax1-2, maxf); /* Note the imax1-2 */
-  double aimag1Tmaxf = EstimateBoundaryLegendreQuad(freq1, freqseries1T->amp_imag, imax1-2, maxf); /* Note the imax1-2 */
-  double phi1maxf = EstimateBoundaryLegendreQuad(freq1, freqseries1A->phase, imax1-2, maxf); /* Note the imax1-2 */
+  /* Estimate locally values for freqseries1 at the boundaries - phase vectors assumed to be the same for channels 1,2,3 */
+  double areal1chan1minf = EstimateBoundaryLegendreQuad(freq1, freqseries1chan1->amp_real, imin1, minf);
+  double aimag1chan1minf = EstimateBoundaryLegendreQuad(freq1, freqseries1chan1->amp_imag, imin1, minf);
+  double areal1chan2minf = EstimateBoundaryLegendreQuad(freq1, freqseries1chan2->amp_real, imin1, minf);
+  double aimag1chan2minf = EstimateBoundaryLegendreQuad(freq1, freqseries1chan2->amp_imag, imin1, minf);
+  double areal1chan3minf = EstimateBoundaryLegendreQuad(freq1, freqseries1chan3->amp_real, imin1, minf);
+  double aimag1chan3minf = EstimateBoundaryLegendreQuad(freq1, freqseries1chan3->amp_imag, imin1, minf);
+  double phi1minf = EstimateBoundaryLegendreQuad(freq1, freqseries1chan1->phase, imin1, minf);
+  double areal1chan1maxf = EstimateBoundaryLegendreQuad(freq1, freqseries1chan1->amp_real, imax1-2, maxf); /* Note the imax1-2 */
+  double aimag1chan1maxf = EstimateBoundaryLegendreQuad(freq1, freqseries1chan1->amp_imag, imax1-2, maxf); /* Note the imax1-2 */
+  double areal1chan2maxf = EstimateBoundaryLegendreQuad(freq1, freqseries1chan2->amp_real, imax1-2, maxf); /* Note the imax1-2 */
+  double aimag1chan2maxf = EstimateBoundaryLegendreQuad(freq1, freqseries1chan2->amp_imag, imax1-2, maxf); /* Note the imax1-2 */
+  double areal1chan3maxf = EstimateBoundaryLegendreQuad(freq1, freqseries1chan3->amp_real, imax1-2, maxf); /* Note the imax1-2 */
+  double aimag1chan3maxf = EstimateBoundaryLegendreQuad(freq1, freqseries1chan3->amp_imag, imax1-2, maxf); /* Note the imax1-2 */
+  double phi1maxf = EstimateBoundaryLegendreQuad(freq1, freqseries1chan1->phase, imax1-2, maxf); /* Note the imax1-2 */
 
   /* Initializing output structure */
   int nbpts = imax1 + 1 - imin1;
   CAmpPhaseFrequencySeries_Init(integrand, nbpts);
 
-  /* Loop computing integrand values - phases are the same for A, E and T */
+  /* Loop computing integrand values - phases are the same for chan1, chan2 and chan3 */
   gsl_vector* freq = (*integrand)->freq;
   gsl_vector* ampreal = (*integrand)->amp_real;
   gsl_vector* ampimag = (*integrand)->amp_imag;
   gsl_vector* phase = (*integrand)->phase;
-  double f, eps, eps2, eps3, ampreal1A, ampimag1A, ampreal1E, ampimag1E, ampreal1T, ampimag1T, phase1, ampreal2A, ampimag2A, ampreal2E, ampimag2E, ampreal2T, ampimag2T, phase2, invSnA, invSnE, invSnT;
+  double f, eps, eps2, eps3, ampreal1chan1, ampimag1chan1, ampreal1chan2, ampimag1chan2, ampreal1chan3, ampimag1chan3, phase1, ampreal2chan1, ampimag2chan1, ampreal2chan2, ampimag2chan2, ampreal2chan3, ampimag2chan3, phase2, invSnchan1, invSnchan2, invSnchan3;
   double complex camp;
-  double* areal1A = freqseries1A->amp_real->data;
-  double* aimag1A = freqseries1A->amp_imag->data;
-  double* areal1E = freqseries1E->amp_real->data;
-  double* aimag1E = freqseries1E->amp_imag->data;
-  double* areal1T = freqseries1T->amp_real->data;
-  double* aimag1T = freqseries1T->amp_imag->data;
-  double* phi1 = freqseries1A->phase->data;
-  gsl_matrix* splineAreal2A = splines2A->spline_amp_real;
-  gsl_matrix* splineAimag2A = splines2A->spline_amp_imag;
-  gsl_matrix* splineAreal2E = splines2E->spline_amp_real;
-  gsl_matrix* splineAimag2E = splines2E->spline_amp_imag;
-  gsl_matrix* splineAreal2T = splines2T->spline_amp_real;
-  gsl_matrix* splineAimag2T = splines2T->spline_amp_imag;
-  gsl_matrix* quadsplinephase2 = splines2A->quadspline_phase;
+  double* areal1chan1 = freqseries1chan1->amp_real->data;
+  double* aimag1chan1 = freqseries1chan1->amp_imag->data;
+  double* areal1chan2 = freqseries1chan2->amp_real->data;
+  double* aimag1chan2 = freqseries1chan2->amp_imag->data;
+  double* areal1chan3 = freqseries1chan3->amp_real->data;
+  double* aimag1chan3 = freqseries1chan3->amp_imag->data;
+  double* phi1 = freqseries1chan1->phase->data;
+  gsl_matrix* splinechan1real2chan1 = splines2chan1->spline_amp_real;
+  gsl_matrix* splinechan1imag2chan1 = splines2chan1->spline_amp_imag;
+  gsl_matrix* splinechan1real2chan2 = splines2chan2->spline_amp_real;
+  gsl_matrix* splinechan1imag2chan2 = splines2chan2->spline_amp_imag;
+  gsl_matrix* splinechan1real2chan3 = splines2chan3->spline_amp_real;
+  gsl_matrix* splinechan1imag2chan3 = splines2chan3->spline_amp_imag;
+  gsl_matrix* quadsplinephase2 = splines2chan1->quadspline_phase;
   int i2 = 0; int j = 0;
   for(int i=imin1; i<=imax1; i++) {
     /* Distinguish the case where we are at minf or maxf */
     if(i==imin1) {
       f = minf;
-      ampreal1A = areal1Aminf;
-      ampimag1A = aimag1Aminf;
-      ampreal1E = areal1Eminf;
-      ampimag1E = aimag1Eminf;
-      ampreal1T = areal1Tminf;
-      ampimag1T = aimag1Tminf;
+      ampreal1chan1 = areal1chan1minf;
+      ampimag1chan1 = aimag1chan1minf;
+      ampreal1chan2 = areal1chan2minf;
+      ampimag1chan2 = aimag1chan2minf;
+      ampreal1chan3 = areal1chan3minf;
+      ampimag1chan3 = aimag1chan3minf;
       phase1 = phi1minf;
     }
     else if(i==imax1) {
       f = maxf;
-      ampreal1A = areal1Amaxf;
-      ampimag1A = aimag1Amaxf;
-      ampreal1E = areal1Emaxf;
-      ampimag1E = aimag1Emaxf;
-      ampreal1T = areal1Tmaxf;
-      ampimag1T = aimag1Tmaxf;
+      ampreal1chan1 = areal1chan1maxf;
+      ampimag1chan1 = aimag1chan1maxf;
+      ampreal1chan2 = areal1chan2maxf;
+      ampimag1chan2 = aimag1chan2maxf;
+      ampreal1chan3 = areal1chan3maxf;
+      ampimag1chan3 = aimag1chan3maxf;
       phase1 = phi1maxf;
     }
     else {
       f = gsl_vector_get(freq1, i);
-      ampreal1A = areal1A[i];
-      ampimag1A = aimag1A[i];
-      ampreal1E = areal1E[i];
-      ampimag1E = aimag1E[i];
-      ampreal1T = areal1T[i];
-      ampimag1T = aimag1T[i];
+      ampreal1chan1 = areal1chan1[i];
+      ampimag1chan1 = aimag1chan1[i];
+      ampreal1chan2 = areal1chan2[i];
+      ampimag1chan2 = aimag1chan2[i];
+      ampreal1chan3 = areal1chan3[i];
+      ampimag1chan3 = aimag1chan3[i];
       phase1 = phi1[i];
     }
     /* Adjust the index in the spline if necessary and compute */
-    while(gsl_matrix_get(splines2A->quadspline_phase, i2+1, 0)<f) i2++;
-    eps = f - gsl_matrix_get(splines2A->quadspline_phase, i2, 0);
+    while(gsl_matrix_get(splines2chan1->quadspline_phase, i2+1, 0)<f) i2++;
+    eps = f - gsl_matrix_get(splines2chan1->quadspline_phase, i2, 0);
     eps2 = eps*eps;
     eps3 = eps2*eps;
-    gsl_vector_view coeffsampreal2A = gsl_matrix_row(splineAreal2A, i2);
-    gsl_vector_view coeffsampimag2A = gsl_matrix_row(splineAimag2A, i2);
-    gsl_vector_view coeffsampreal2E = gsl_matrix_row(splineAreal2E, i2);
-    gsl_vector_view coeffsampimag2E = gsl_matrix_row(splineAimag2E, i2);
-    gsl_vector_view coeffsampreal2T = gsl_matrix_row(splineAreal2T, i2);
-    gsl_vector_view coeffsampimag2T = gsl_matrix_row(splineAimag2T, i2);
+    gsl_vector_view coeffsampreal2chan1 = gsl_matrix_row(splinechan1real2chan1, i2);
+    gsl_vector_view coeffsampimag2chan1 = gsl_matrix_row(splinechan1imag2chan1, i2);
+    gsl_vector_view coeffsampreal2chan2 = gsl_matrix_row(splinechan1real2chan2, i2);
+    gsl_vector_view coeffsampimag2chan2 = gsl_matrix_row(splinechan1imag2chan2, i2);
+    gsl_vector_view coeffsampreal2chan3 = gsl_matrix_row(splinechan1real2chan3, i2);
+    gsl_vector_view coeffsampimag2chan3 = gsl_matrix_row(splinechan1imag2chan3, i2);
     gsl_vector_view coeffsphase2 = gsl_matrix_row(quadsplinephase2, i2);
-    ampreal2A = EvalCubic(&coeffsampreal2A.vector, eps, eps2, eps3);
-    ampimag2A = EvalCubic(&coeffsampimag2A.vector, eps, eps2, eps3);
-    ampreal2E = EvalCubic(&coeffsampreal2E.vector, eps, eps2, eps3);
-    ampimag2E = EvalCubic(&coeffsampimag2E.vector, eps, eps2, eps3);
-    ampreal2T = EvalCubic(&coeffsampreal2T.vector, eps, eps2, eps3);
-    ampimag2T = EvalCubic(&coeffsampimag2T.vector, eps, eps2, eps3);
+    ampreal2chan1 = EvalCubic(&coeffsampreal2chan1.vector, eps, eps2, eps3);
+    ampimag2chan1 = EvalCubic(&coeffsampimag2chan1.vector, eps, eps2, eps3);
+    ampreal2chan2 = EvalCubic(&coeffsampreal2chan2.vector, eps, eps2, eps3);
+    ampimag2chan2 = EvalCubic(&coeffsampimag2chan2.vector, eps, eps2, eps3);
+    ampreal2chan3 = EvalCubic(&coeffsampreal2chan3.vector, eps, eps2, eps3);
+    ampimag2chan3 = EvalCubic(&coeffsampimag2chan3.vector, eps, eps2, eps3);
     phase2 = EvalQuad(&coeffsphase2.vector, eps, eps2);
-    invSnA = 1./SnoiseA(f);
-    invSnE = 1./SnoiseE(f);
-    invSnT = 1./SnoiseT(f);
-    camp = invSnA * (ampreal1A + I*ampimag1A) * (ampreal2A - I*ampimag2A) + invSnE * (ampreal1E + I*ampimag1E) * (ampreal2E - I*ampimag2E) + invSnT * (ampreal1T + I*ampimag1T) * (ampreal2T - I*ampimag2T);
+    invSnchan1 = 1./Snoise1(f);
+    invSnchan2 = 1./Snoise2(f);
+    invSnchan3 = 1./Snoise3(f);
+    camp = invSnchan1 * (ampreal1chan1 + I*ampimag1chan1) * (ampreal2chan1 - I*ampimag2chan1) + invSnchan2 * (ampreal1chan2 + I*ampimag1chan2) * (ampreal2chan2 - I*ampimag2chan2) + invSnchan3 * (ampreal1chan3 + I*ampimag1chan3) * (ampreal2chan3 - I*ampimag2chan3);
     gsl_vector_set(freq, j, f);
     gsl_vector_set(ampreal, j, creal(camp));
     gsl_vector_set(ampimag, j, cimag(camp));
@@ -874,17 +874,17 @@ double FDSinglemodeFresnelOverlap(
   return overlap;
 }
 
-/* Function computing the overlap (h1|h2) between two given modes in amplitude/phase form for each channel A, E, T, one being already interpolated, for a given noise function - uses the amplitude/phase representation (Fresnel) */
-double FDSinglemodeFresnelOverlapAET(
-  struct tagCAmpPhaseFrequencySeries *freqseries1A, /* First mode h1 for A, in amplitude/phase form */
-  struct tagCAmpPhaseFrequencySeries *freqseries1E, /* First mode h1 for E, in amplitude/phase form */
-  struct tagCAmpPhaseFrequencySeries *freqseries1T, /* First mode h1 for T, in amplitude/phase form */
-  struct tagCAmpPhaseSpline *splines2A,             /* Second mode h2 for A, already interpolated in matrix form */
-  struct tagCAmpPhaseSpline *splines2E,             /* Second mode h2 for E, already interpolated in matrix form */
-  struct tagCAmpPhaseSpline *splines2T,             /* Second mode h2 for T, already interpolated in matrix form */
-  double (*SnoiseA)(double),                        /* Noise function for A */
-  double (*SnoiseE)(double),                        /* Noise function for E */
-  double (*SnoiseT)(double),                        /* Noise function for T */
+/* Function computing the overlap (h1|h2) between two given modes in amplitude/phase form for each non-correlated channel 1,2,3, one being already interpolated, for a given noise function - uses the amplitude/phase representation (Fresnel) */
+double FDSinglemodeFresnelOverlap3Chan(
+  struct tagCAmpPhaseFrequencySeries *freqseries1chan1, /* First mode h1 for channel 1, in amplitude/phase form */
+  struct tagCAmpPhaseFrequencySeries *freqseries1chan2, /* First mode h1 for channel 2, in amplitude/phase form */
+  struct tagCAmpPhaseFrequencySeries *freqseries1chan3, /* First mode h1 for channel 3, in amplitude/phase form */
+  struct tagCAmpPhaseSpline *splines2chan1,             /* Second mode h2 for channel 1, already interpolated in matrix form */
+  struct tagCAmpPhaseSpline *splines2chan2,             /* Second mode h2 for channel 2, already interpolated in matrix form */
+  struct tagCAmpPhaseSpline *splines2chan3,             /* Second mode h2 for channel 3, already interpolated in matrix form */
+  double (*Snoisechan1)(double),                        /* Noise function for channel 1 */
+  double (*Snoisechan2)(double),                        /* Noise function for channel 2 */
+  double (*Snoisechan3)(double),                        /* Noise function for channel 3 */
   double fLow,                                      /* Lower bound of the frequency window for the detector */
   double fHigh)                                     /* Upper bound of the frequency window for the detector */
 {
@@ -893,9 +893,9 @@ double FDSinglemodeFresnelOverlapAET(
 
   /////////
   //ComputeIntegrandValues(&integrand, freqseries1A, splines2A, SnoiseA, fLow, fHigh);
-  //ComputeIntegrandValues(&integrand, freqseries1E, splines2E, SnoiseE, fLow, fHigh);
+  //ComputeIntegrandValues(&integrand, freqseries1chan2, splines2chan2, Snoisechan2, fLow, fHigh);
   //ComputeIntegrandValues(&integrand, freqseries1T, splines2T, SnoiseT, fLow, fHigh);
-  ComputeIntegrandValuesAET(&integrand, freqseries1A, freqseries1E, freqseries1T, splines2A, splines2E, splines2T, SnoiseA, SnoiseE, SnoiseT, fLow, fHigh);
+  ComputeIntegrandValues3Chan(&integrand, freqseries1chan1, freqseries1chan2, freqseries1chan3, splines2chan1, splines2chan2, splines2chan3, Snoisechan1, Snoisechan2, Snoisechan3, fLow, fHigh);
 
   /* Rescaling the integrand */
   double scaling = 10./gsl_vector_get(integrand->freq, integrand->freq->size-1);
@@ -951,17 +951,17 @@ double FDListmodesFresnelOverlap(
   return overlap;
 }
 
-/* Function computing the overlap (h1|h2) between two waveforms given as list of modes for each channel A, E and T, one being already interpolated, for a given noise function - two additional parameters for the starting 22-mode frequencies (then properly scaled for the other modes) for a limited duration of the observations */
-double FDListmodesFresnelOverlapAET(
-  struct tagListmodesCAmpPhaseFrequencySeries *listh1A, /* First waveform channel A, list of modes in amplitude/phase form */
-  struct tagListmodesCAmpPhaseFrequencySeries *listh1E, /* First waveform channel E, list of modes in amplitude/phase form */
-  struct tagListmodesCAmpPhaseFrequencySeries *listh1T, /* First waveform channel T, list of modes in amplitude/phase form */
-  struct tagListmodesCAmpPhaseSpline *listsplines2A,    /* Second waveform channel A, list of modes already interpolated in matrix form */
-  struct tagListmodesCAmpPhaseSpline *listsplines2E,    /* Second waveform channel E, list of modes already interpolated in matrix form */
-  struct tagListmodesCAmpPhaseSpline *listsplines2T,    /* Second waveform channel T, list of modes already interpolated in matrix form */
-  double (*SnoiseA)(double),                            /* Noise function for A */
-  double (*SnoiseE)(double),                            /* Noise function for E */
-  double (*SnoiseT)(double),                            /* Noise function for T */
+/* Function computing the overlap (h1|h2) between two waveforms given as list of modes for each non-correlated channel 1,2,3, one being already interpolated, for a given noise function - two additional parameters for the starting 22-mode frequencies (then properly scaled for the other modes) for a limited duration of the observations */
+double FDListmodesFresnelOverlap3Chan(
+  struct tagListmodesCAmpPhaseFrequencySeries *listh1chan1, /* First waveform channel channel 1, list of modes in amplitude/phase form */
+  struct tagListmodesCAmpPhaseFrequencySeries *listh1chan2, /* First waveform channel channel 2, list of modes in amplitude/phase form */
+  struct tagListmodesCAmpPhaseFrequencySeries *listh1chan3, /* First waveform channel channel 3, list of modes in amplitude/phase form */
+  struct tagListmodesCAmpPhaseSpline *listsplines2chan1,    /* Second waveform channel channel 1, list of modes already interpolated in matrix form */
+  struct tagListmodesCAmpPhaseSpline *listsplines2chan2,    /* Second waveform channel channel 2, list of modes already interpolated in matrix form */
+  struct tagListmodesCAmpPhaseSpline *listsplines2chan3,    /* Second waveform channel channel 3, list of modes already interpolated in matrix form */
+  double (*Snoise1)(double),                            /* Noise function for channel 1 */
+  double (*Snoise2)(double),                            /* Noise function for channel 2 */
+  double (*Snoise3)(double),                            /* Noise function for channel 3 */
   double fLow,                                          /* Lower bound of the frequency window for the detector */
   double fHigh,                                         /* Upper bound of the frequency window for the detector */
   double fstartobs1,                                    /* Starting frequency for the 22 mode of wf 1 - as determined from a limited duration of the observation - set to 0 to ignore */
@@ -969,24 +969,24 @@ double FDListmodesFresnelOverlapAET(
 {
   double overlap = 0;
 
-  /* Main loop over the modes - goes through all the modes present, the same for all three channels A, E, T */
-  ListmodesCAmpPhaseFrequencySeries* listelementh1A = listh1A;
-  while(listelementh1A) { /* We use the structure for channel A to loop through modes */
-    ListmodesCAmpPhaseFrequencySeries* listelementh1E = ListmodesCAmpPhaseFrequencySeries_GetMode(listh1E, listelementh1A->l, listelementh1A->m);
-    ListmodesCAmpPhaseFrequencySeries* listelementh1T = ListmodesCAmpPhaseFrequencySeries_GetMode(listh1T, listelementh1A->l, listelementh1A->m);
-    ListmodesCAmpPhaseSpline* listelementsplines2A = listsplines2A;
-    while(listelementsplines2A) { /* We use the structure for channel A to loop through modes */
-      ListmodesCAmpPhaseSpline* listelementsplines2E = ListmodesCAmpPhaseSpline_GetMode(listsplines2E, listelementsplines2A->l, listelementsplines2A->m);
-      ListmodesCAmpPhaseSpline* listelementsplines2T = ListmodesCAmpPhaseSpline_GetMode(listsplines2T, listelementsplines2A->l, listelementsplines2A->m);
+  /* Main loop over the modes - goes through all the modes present, the same for all three channels 1,2,3 */
+  ListmodesCAmpPhaseFrequencySeries* listelementh1chan1 = listh1chan1;
+  while(listelementh1chan1) { /* We use the structure for channel 1 to loop through modes */
+    ListmodesCAmpPhaseFrequencySeries* listelementh1chan2 = ListmodesCAmpPhaseFrequencySeries_GetMode(listh1chan2, listelementh1chan1->l, listelementh1chan1->m);
+    ListmodesCAmpPhaseFrequencySeries* listelementh1chan3 = ListmodesCAmpPhaseFrequencySeries_GetMode(listh1chan3, listelementh1chan1->l, listelementh1chan1->m);
+    ListmodesCAmpPhaseSpline* listelementsplines2chan1 = listsplines2chan1;
+    while(listelementsplines2chan1) { /* We use the structure for channel 1 to loop through modes */
+      ListmodesCAmpPhaseSpline* listelementsplines2chan2 = ListmodesCAmpPhaseSpline_GetMode(listsplines2chan2, listelementsplines2chan1->l, listelementsplines2chan1->m);
+      ListmodesCAmpPhaseSpline* listelementsplines2chan3 = ListmodesCAmpPhaseSpline_GetMode(listsplines2chan3, listelementsplines2chan1->l, listelementsplines2chan1->m);
       /* Scaling fstartobs1/2 with the appropriate factor of m (for the 21 mode we use m=2) - setting fmin in the overlap accordingly */
-      int mmax1 = max(2, listelementh1A->m);
-      int mmax2 = max(2, listelementsplines2A->m);
+      int mmax1 = max(2, listelementh1chan1->m);
+      int mmax2 = max(2, listelementsplines2chan1->m);
       double fcutLow = fmax(fLow, fmax(((double) mmax1)/2. * fstartobs1, ((double) mmax2)/2. * fstartobs2));
-      double overlapmode = FDSinglemodeFresnelOverlapAET(listelementh1A->freqseries, listelementh1E->freqseries, listelementh1T->freqseries, listelementsplines2A->splines, listelementsplines2E->splines, listelementsplines2T->splines, SnoiseA, SnoiseE, SnoiseT, fcutLow, fHigh);
+      double overlapmode = FDSinglemodeFresnelOverlap3Chan(listelementh1chan1->freqseries, listelementh1chan2->freqseries, listelementh1chan3->freqseries, listelementsplines2chan1->splines, listelementsplines2chan2->splines, listelementsplines2chan3->splines, Snoise1, Snoise2, Snoise3, fcutLow, fHigh);
       overlap += overlapmode;
-      listelementsplines2A = listelementsplines2A->next;
+      listelementsplines2chan1 = listelementsplines2chan1->next;
     }
-    listelementh1A = listelementh1A->next;
+    listelementh1chan1 = listelementh1chan1->next;
   }
 
   return overlap;
