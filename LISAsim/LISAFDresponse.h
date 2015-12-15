@@ -52,16 +52,26 @@ int LISASimFDResponse21(
 
 //WARNING: tRef is ignored for now in the response - i.e. set to 0
 /* Core function processing a signal (in the form of a list of modes) through the Fourier-domain LISA response, for given values of the inclination, position in the sky and polarization angle */
-int LISASimFDResponseTDIAET(
-  struct tagListmodesCAmpPhaseFrequencySeries **list,  /* Input: list of modes in Frequency-domain amplitude and phase form as produced by the ROM */
-  struct tagListmodesCAmpPhaseFrequencySeries **listA,  /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the second-generation TDI observable A */
-  struct tagListmodesCAmpPhaseFrequencySeries **listE,  /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the second-generation TDI observable E */
-  struct tagListmodesCAmpPhaseFrequencySeries **listT,  /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the second-generation TDI observable T */
+int LISASimFDResponseTDI3Chan(
+  struct tagListmodesCAmpPhaseFrequencySeries **list,      /* Input: list of modes in Frequency-domain amplitude and phase form as produced by the ROM */
+  struct tagListmodesCAmpPhaseFrequencySeries **listTDI1,  /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the TDI channel 1 */
+  struct tagListmodesCAmpPhaseFrequencySeries **listTDI2,  /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the TDI channel 2 */
+  struct tagListmodesCAmpPhaseFrequencySeries **listTDI3,  /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the TDI channel 3 */
   const double tRef,                                          /* Time at coalescence */
   const double lambda,                                        /* First angle for the position in the sky */
   const double beta,                                          /* Second angle for the position in the sky */
   const double inclination,                                   /* Inclination of the source */
-  const double psi);                                          /* Polarization angle */ 
+  const double psi,                                           /* Polarization angle */
+  const TDItag tditag);                                       /* Selector for the set of TDI observables */
+int LISASimFDResponseTDI1Chan(
+  struct tagListmodesCAmpPhaseFrequencySeries **list,      /* Input: list of modes in Frequency-domain amplitude and phase form as produced by the ROM */
+  struct tagListmodesCAmpPhaseFrequencySeries **listTDI,   /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the TDI channel 1 */
+  const double tRef,                                          /* Time at coalescence */
+  const double lambda,                                        /* First angle for the position in the sky */
+  const double beta,                                          /* Second angle for the position in the sky */
+  const double inclination,                                   /* Inclination of the source */
+  const double psi,                                           /* Polarization angle */
+  const TDItag tditag);                                       /* Selector for the set of TDI observables */
 
 #if 0
 { /* so that editors will match succeeding brace */

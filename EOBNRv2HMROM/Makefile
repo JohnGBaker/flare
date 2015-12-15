@@ -1,5 +1,4 @@
-GSLINC = $(GSLROOT)/include
-CFLAGS := -O2 -std=c99 -I$(GSLINC) -I../tools -I../integration -I../EOBNRv2HMROM -I../LISAsim -I../LLVsim -I../LLVinference
+CFLAGS += -I../tools -I../integration -I../EOBNRv2HMROM -I../LISAsim -I../LLVsim -I../LLVinference
 
 OBJ = EOBNRv2HMROM.o EOBNRv2HMROMstruct.o
 

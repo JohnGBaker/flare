@@ -81,6 +81,44 @@ static double sinarray[4];
 /*************************************************************/
 /********* Functions for the geometric response **************/
 
+/* Function to convert string input TDI string to TDItag */
+TDItag ParseTDItag(char* string) {
+  if(strcmp(string, "TDIXYZ")==0) return TDIXYZ;
+  else if(strcmp(string, "TDIalphabetagamma")==0) return TDIalphabetagamma;
+  else if(strcmp(string, "TDIAETXYZ")==0) return TDIAETXYZ;
+  else if(strcmp(string, "TDIAETalphabetagamma")==0) return TDIAETalphabetagamma;
+  else if(strcmp(string, "TDIX")==0) return TDIX;
+  else if(strcmp(string, "TDIalpha")==0) return TDIalpha;
+  else if(strcmp(string, "TDIAXYZ")==0) return TDIAXYZ;
+  else if(strcmp(string, "TDIEXYZ")==0) return TDIEXYZ;
+  else if(strcmp(string, "TDITXYZ")==0) return TDITXYZ;
+  else if(strcmp(string, "TDIAalphabetagamma")==0) return TDIAalphabetagamma;
+  else if(strcmp(string, "TDIEalphabetagamma")==0) return TDIEalphabetagamma;
+  else if(strcmp(string, "TDITalphabetagamma")==0) return TDITalphabetagamma;
+  else {
+    printf("Eror in ParseTDItag: string not recognized.\n");
+  }
+}
+/* Function returning the number of channels for a TDItag */
+int nbchanTDI(TDItag tditag) {
+  int nbchan;
+  switch(tditag) {
+  case TDIXYZ: nbchan = 3;
+  case TDIalphabetagamma: nbchan = 3;
+  case TDIAETXYZ: nbchan = 3;
+  case TDIAETalphabetagamma: nbchan = 3;
+  case TDIX: nbchan = 1;
+  case TDIalpha: nbchan = 1;
+  case TDIAXYZ: nbchan = 1;
+  case TDIEXYZ: nbchan = 1;
+  case TDITXYZ: nbchan = 1;
+  case TDIAalphabetagamma: nbchan = 1;
+  case TDIEalphabetagamma: nbchan = 1;
+  case TDITalphabetagamma: nbchan = 1;
+  }
+  return nbchan;
+}
+
 /* Function cardinal sine */
 double sinc(const double x) {
   if (x==0)
@@ -91,7 +129,6 @@ double sinc(const double x) {
 /* Function to compute, given a value of a sky position and polarization, all the complicated time-independent trigonometric coefficients entering the response */
 void SetCoeffsG(const double lambda, const double beta, const double psi) {
   /* Precomputing cosines and sines */
-  double sqrt3 = sqrt(3);
   double coslambda = cos(lambda);
   double sinlambda = sin(lambda);
   double cosbeta = cos(beta);
@@ -548,6 +585,163 @@ int EvaluateGABmode(
 
   return SUCCESS;
 }
+
+/*********************** Fourier-domain TDI factors ************************/
+
+/* Functions evaluating the Fourier-domain factors (combinations of the GAB's) for TDI observables */
+/* Note: in case only one channel is considered, amplitudes for channels 2 and 3 are simply set to 0 */
+/* (allows minimal changes from the old structure that assumed KTV A,E,T - but probably not optimal) */
+int EvaluateTDIfactor3Chan(
+  double complex* factor1,                       /* Output for factor for TDI channel 1 */
+  double complex* factor2,                       /* Output for factor for TDI channel 2 */
+  double complex* factor3,                       /* Output for factor for TDI channel 3 */
+  const double complex G12,                      /* Input for G12 */
+  const double complex G21,                      /* Input for G21 */
+  const double complex G23,                      /* Input for G23 */
+  const double complex G32,                      /* Input for G32 */
+  const double complex G31,                      /* Input for G31 */
+  const double complex G13,                      /* Input for G13 */
+  const double f,                                /* Frequency */
+  const TDItag tditag)                           /* Selector for the TDI observables */
+{
+  /* Notation: x=pifL, z=e^2ix*/
+  double x = PI*f*L_SI/C_SI;
+  double complex z = cexp(2*I*x);
+  double sin2x = sin(2*x);
+  switch(tditag) {
+    /* First-generation rescaled TDI aet from X,Y,Z */
+    /* With x=pifL, factors scaled out: A,E I*sqrt2*sin2x*eix - T 2*sqrt2*sin2x*sinx*e2ix */
+  case TDIAETXYZ:
+    *factor1 = 0.5 * ( (1.+z)*(G31+G13) - G23 - z*G32 - G21 - z*G12 );
+    *factor2 = 0.5*invsqrt3 * ( (1.-z)*(G13-G31) + (2.+z)*(G12-G32) + (1.+2*z)*(G12-G23) );
+    *factor3 = invsqrt6 * ( G21-G12 + G32-G23 + G13-G31);
+    break;
+    /* First-generation rescaled TDI aet from alpha, beta, gamma */
+    /* With x=pifL, factors scaled out: A,E -I*2sqrt2*sinx*eix - T sinx/(sin3x*eix) */
+  case TDIAETalphabetagamma:
+    *factor1 = 0.5 * (G13+G31 + z*(G12+G32) - (1.+z)*(G21+G13));
+    *factor2 = 0.5*invsqrt3 * ((2.+z)*(G12-G32) + (1.+z)*(G21-G23) + (1.+2*z)*(G13-G31));
+    *factor3 = invsqrt3 * (G21-G12 + G32-G23 + G13-G31);
+    break;
+    /* First-generation TDI XYZ */
+  case TDIXYZ:
+    *factor1 = G21 + z*G12 - G31 - z*G13;
+    *factor2 = G32 + z*G23 - G12 - z*G21;
+    *factor3 = G13 + z*G31 - G23 - z*G32;
+    break;
+    /* First-generation TDI alpha beta gamma */
+  case TDIalphabetagamma:
+    *factor1 = G21-G31 + z*(G13-G12) + z*z*(G32-G23);
+    *factor2 = G32-G12 + z*(G21-G23) + z*z*(G13-G31);
+    *factor3 = G13-G23 + z*(G32-G31) + z*z*(G21-G12);
+    break;
+  /* First-generation TDI XYZ */
+  case TDIX:
+    *factor1 = G21 + z*G12 - G31 - z*G13;
+    *factor2 = 0.;
+    *factor3 = 0.;
+    break;
+  /* First-generation TDI alpha beta gamma */
+  case TDIalpha:
+    *factor1 = G21-G31 + z*(G13-G12) + z*z*(G32-G23);
+    *factor2 = 0.;
+    *factor3 = 0.;
+    break;
+  /* First-generation rescaled TDI aet from X,Y,Z */
+  /* With x=pifL, factors scaled out: A,E I*sqrt2*sin2x*eix - T 2*sqrt2*sin2x*sinx*e2ix */
+  case TDIAXYZ:
+    *factor1 = 0.5 * ( (1.+z)*(G31+G13) - G23 - z*G32 - G21 - z*G12 );
+    *factor2 = 0.;
+    *factor3 = 0.;
+    break;
+  case TDIEXYZ:
+    *factor1 = 0.5*invsqrt3 * ( (1.-z)*(G13-G31) + (2.+z)*(G12-G32) + (1.+2*z)*(G12-G23) );
+    *factor2 = 0.;
+    *factor3 = 0.;
+    break;
+  case TDITXYZ:
+    *factor1 = invsqrt6 * ( G21-G12 + G32-G23 + G13-G31);
+    *factor2 = 0.;
+    *factor3 = 0.;
+    break;
+  /* First-generation rescaled TDI aet from alpha, beta, gamma */
+  /* With x=pifL, factors scaled out: A,E -I*2sqrt2*sinx*eix - T sinx/(sin3x*eix) */
+  case TDIAalphabetagamma:
+    *factor1 = 0.5 * (G13+G31 + z*(G12+G32) - (1.+z)*(G21+G13));
+    *factor2 = 0.;
+    *factor3 = 0.;
+    break;
+  case TDIEalphabetagamma:
+    *factor1 = 0.5*invsqrt3 * ((2.+z)*(G12-G32) + (1.+z)*(G21-G23) + (1.+2*z)*(G13-G31));
+    *factor2 = 0.;
+    *factor3 = 0.;
+    break;
+  case TDITalphabetagamma:
+    *factor1 = invsqrt3 * (G21-G12 + G32-G23 + G13-G31);
+    *factor2 = 0.;
+    *factor3 = 0.;
+    break;
+  default:
+    printf("Error in EvaluateTDIfactor3Chan: tditag not recognized.\n");
+    exit(1);
+  }
+}
+/* Functions evaluating the Fourier-domain factors (combinations of the GAB's) for TDI observables */
+/* int EvaluateTDIfactor1Chan( */
+/*   double complex* factor,                        /\* Output for factor for TDI channel *\/ */
+/*   const double complex G12,                      /\* Input for G12 *\/ */
+/*   const double complex G21,                      /\* Input for G21 *\/ */
+/*   const double complex G23,                      /\* Input for G23 *\/ */
+/*   const double complex G32,                      /\* Input for G32 *\/ */
+/*   const double complex G31,                      /\* Input for G31 *\/ */
+/*   const double complex G13,                      /\* Input for G13 *\/ */
+/*   const double f,                                /\* Frequency *\/ */
+/*   const TDItag tditag)                           /\* Selector for the TDI observables *\/ */
+/* { */
+/*   /\* Notation: x=pifL, z = e^2ix*\/ */
+/*   double x = PI*f*L_SI/C_SI; */
+/*   double complex z = cexp(2*I*x); */
+/*   double sin2x = sin(2*x); */
+/*   double complex commonfac; */
+/*   switch(tditag) { */
+/*   /\* First-generation TDI XYZ *\/ */
+/*   case TDIX: { */
+/*     commonfac = 2*I*z*sin2x; */
+/*     *factor = commonfac * (G21 + z*G12 - G31 - z*G13); } */
+/*   case TDIY: { */
+/*     commonfac = 2*I*z*sin2x; */
+/*     *factor = commonfac * (G32 + z*G23 - G12 - z*G21); } */
+/*   case TDIZ: { */
+/*     commonfac = 2*I*z*sin2x; */
+/*     *factor = commonfac * (G13 + z*G31 - G23 - z*G32); } */
+/*   /\* First-generation TDI alpha beta gamma *\/ */
+/*   case TDIalpha: { */
+/*     *factor = G21-G31 + z*(G13-G12) + z*z*(G32-G23); } */
+/*   case TDIbeta: { */
+/*     *factor = G32-G12 + z*(G21-G23) + z*z*(G13-G31); } */
+/*   case TDIgamma: { */
+/*     *factor = G13-G23 + z*(G32-G31) + z*z*(G21-G12); } */
+/*   /\* First-generation rescaled TDI aet from X,Y,Z *\/ */
+/*   /\* With x=pifL, factors scaled out: A,E I*sqrt2*sin2x*eix - T 2*sqrt2*sin2x*sinx*e2ix *\/ */
+/*   case TDIAXYZ: { */
+/*     *factor = 0.5 * ( (1.+z)*(G31+G13) - G23 - z*G32 - G21 - z*G12 ); } */
+/*   case TDIEXYZ: { */
+/*     *factor = 0.5*invsqrt3 * ( (1.-z)*(G13-G31) + (2.+z)*(G12-G32) + (1.+2*z)*(G12-G23) ); } */
+/*   case TDITXYZ: { */
+/*     *factor = invsqrt6 * ( G21-G12 + G32-G23 + G13-G31); } */
+/*   /\* First-generation rescaled TDI aet from alpha, beta, gamma *\/ */
+/*   /\* With x=pifL, factors scaled out: A,E -I*2sqrt2*sinx*eix - T sinx/(sin3x*eix) *\/ */
+/*   case TDIAalphabetagamma: { */
+/*     *factor = 0.5 * (G13+G31 + z*(G12+G32) - (1.+z)*(G21+G13)); } */
+/*   case TDIEalphabetagamma: { */
+/*     *factor = 0.5*invsqrt3 * ((2+z)*(G12-G32) + (1+z)*(G21-G23) + (1.+2*z)*(G13-G31)); } */
+/*   case TDITalphabetagamma: { */
+/*     *factor = invsqrt3 * (G21-G12 + G32-G23 + G13-G31); } */
+/*   default: { */
+/*     printf("Error in EvaluateTDIfactor3Chan: tditag not recognized."); */
+/*     exit(1); } */
+/*   } */
+/* } */
 
 /*********************** Time-domain response ************************/
 

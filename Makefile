@@ -1,5 +1,7 @@
-MACHINE=discover
-ifeq ($MACHINE,sylvainsmac)
+MESSAGE="Specify which machine to compile for in the Makefile."
+MACHINE="discover"
+ifeq ($(MACHINE),"sylvainsmac")
+  MESSAGE="Compiling for Sylvain's Mac"
   GSLROOT = /opt/local
   BAMBIROOT = $(HOME)/build/bambi
   CC = gcc
@@ -10,9 +12,10 @@ ifeq ($MACHINE,sylvainsmac)
   CC += -DPARALLEL
   CPP += -DPARALLEL
   MPILIBS = -lmpi -lmpi_cxx -lmpi_mpifh
-else if ($MACHINE,discover) 
+else ifeq ($(MACHINE),"discover") 
   #based on modules:
   #module load comp/intel-15.0.3.187 lib/mkl-15.0.3.187 mpi/impi-5.0.3.048
+  MESSAGE="Compiling for Discover at NCCS"
   GSLROOT = /usr/local/other/SLES11.1/gsl/1.16/intel-13.0.1.117
   BAMBIROOT = /discover/nobackup/jgbaker/sw/bambi/
   FC = mpif90 -DPARALLEL
@@ -25,16 +28,27 @@ else if ($MACHINE,discover)
 endif
 
 GSLINC = $(GSLROOT)/include
+BAMBIINC = $(BAMBIROOT)/include
+BAMBILIB = $(BAMBIROOT)/lib
 CFLAGS += -O2 -std=c99 -I$(GSLINC) -I./tools -I./EOBNRv2HMROM -I./integration -I./LISAsim -I./LLVsim -I./LLVinference
+CPPFLAGS += -O2 -I$(GSLINC)
 
 SUBDIRS = tools EOBNRv2HMROM LISAsim LLVsim integration LISAinference LLVinference
 SUBCLEAN = $(addsuffix .clean,$(SUBDIRS))
 
-export CC CPP GSLROOT BAMBIROOT MPILIBS LD LDFLAGS
+export CC CPP GSLROOT GSLINC BAMBIROOT BAMBIINC BAMBILIB MPILIBS CFLAGS CPPFLAGS LD LDFLAGS
 
-.PHONY: all clean subdirs $(SUBDIRS)
+
+.PHONY: all clean message subdirs $(SUBDIRS)
+
+
+all: message subdirs
+
+message:
+	@echo $(MESSAGE)
 
 subdirs: $(SUBDIRS)
+	@echo Making in subdirs:
 
 $(SUBDIRS):
 	$(MAKE) -C $@
@@ -52,7 +66,6 @@ LLVinference: tools integration EOBNRv2HMROM LLVsim
 phaseSNR: tools integration EOBNRv2HMROM LLVsim
 	$(MAKE) -C LLVinference phaseSNR
 
-all: subdirs
 
 clean: $(SUBCLEAN)
 

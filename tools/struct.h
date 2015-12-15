@@ -39,6 +39,9 @@
 /***************************************************/
 /*************** Type definitions ******************/
 
+/* Type for real functions */
+typedef double RealFunction(double);
+
 /* Complex frequency series in amplitude and phase representation (for one mode) */
 typedef struct tagCAmpPhaseFrequencySeries
 {

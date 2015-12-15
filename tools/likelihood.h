@@ -176,17 +176,17 @@ void ComputeIntegrandValues(
   double fLow,                              /* Lower bound of the frequency - 0 to ignore */
   double fHigh);                            /* Upper bound of the frequency - 0 to ignore */
 /* Function computing the integrand values, combining the three channels A, E and T */
-void ComputeIntegrandValuesAET(
+void ComputeIntegrandValues3Chan(
   CAmpPhaseFrequencySeries** integrand,     /* Output: values of the integrand on common frequencies (initialized in the function) */
-  CAmpPhaseFrequencySeries* freqseries1A,    /* Input: frequency series for wf 1, channel A */
-  CAmpPhaseFrequencySeries* freqseries1E,    /* Input: frequency series for wf 1, channel E */
-  CAmpPhaseFrequencySeries* freqseries1T,    /* Input: frequency series for wf 1, channel T */
-  CAmpPhaseSpline* splines2A,                /* Input: splines in matrix form for wf 2, channel A */
-  CAmpPhaseSpline* splines2E,                /* Input: splines in matrix form for wf 2, channel E */
-  CAmpPhaseSpline* splines2T,                /* Input: splines in matrix form for wf 2, channel T */
-  double (*SnoiseA)(double),                /* Noise function for A */
-  double (*SnoiseE)(double),                /* Noise function for E */
-  double (*SnoiseT)(double),                /* Noise function for T */
+  CAmpPhaseFrequencySeries* freqseries1chan1,    /* Input: frequency series for wf 1, channel 1 */
+  CAmpPhaseFrequencySeries* freqseries1chan2,    /* Input: frequency series for wf 1, channel 2 */
+  CAmpPhaseFrequencySeries* freqseries1chan3,    /* Input: frequency series for wf 1, channel 3 */
+  CAmpPhaseSpline* splines2chan1,                /* Input: splines in matrix form for wf 2, channel 1 */
+  CAmpPhaseSpline* splines2chan2,                /* Input: splines in matrix form for wf 2, channel 2 */
+  CAmpPhaseSpline* splines2chan3,                /* Input: splines in matrix form for wf 2, channel 3 */
+  double (*Snoise1)(double),                /* Noise function for channel 1 */
+  double (*Snoise2)(double),                /* Noise function for channel 2 */
+  double (*Snoise3)(double),                /* Noise function for channel 3 */
   double fLow,                              /* Lower bound of the frequency - 0 to ignore */
   double fHigh);                            /* Upper bound of the frequency - 0 to ignore */
 
@@ -198,16 +198,16 @@ double FDSinglemodeFresnelOverlap(
   double fLow,                                     /* Lower bound of the frequency window for the detector */
   double fHigh);                                   /* Upper bound of the frequency window for the detector */
 /* Function computing the overlap (h1|h2) between two given modes in amplitude/phase form for each channel A, E, T, one being already interpolated, for a given noise function - uses the amplitude/phase representation (Fresnel) */
-double FDSinglemodeFresnelOverlapAET(
-  struct tagCAmpPhaseFrequencySeries *freqseries1A, /* First mode h1 for A, in amplitude/phase form */
-  struct tagCAmpPhaseFrequencySeries *freqseries1E, /* First mode h1 for E, in amplitude/phase form */
-  struct tagCAmpPhaseFrequencySeries *freqseries1T, /* First mode h1 for T, in amplitude/phase form */
-  struct tagCAmpPhaseSpline *splines2A,             /* Second mode h2 for A, already interpolated in matrix form */
-  struct tagCAmpPhaseSpline *splines2E,             /* Second mode h2 for E, already interpolated in matrix form */
-  struct tagCAmpPhaseSpline *splines2T,             /* Second mode h2 for T, already interpolated in matrix form */
-  double (*SnoiseA)(double),                        /* Noise function for A */
-  double (*SnoiseE)(double),                        /* Noise function for E */
-  double (*SnoiseT)(double),                        /* Noise function for T */
+double FDSinglemodeFresnelOverlap3Chan(
+  struct tagCAmpPhaseFrequencySeries *freqseries1chan1, /* First mode h1 for channel 1, in amplitude/phase form */
+  struct tagCAmpPhaseFrequencySeries *freqseries1chan2, /* First mode h1 for channel 2, in amplitude/phase form */
+  struct tagCAmpPhaseFrequencySeries *freqseries1chan3, /* First mode h1 for channel 3, in amplitude/phase form */
+  struct tagCAmpPhaseSpline *splines2chan1,             /* Second mode h2 for channel 1, already interpolated in matrix form */
+  struct tagCAmpPhaseSpline *splines2chan2,             /* Second mode h2 for channel 2, already interpolated in matrix form */
+  struct tagCAmpPhaseSpline *splines2chan3,             /* Second mode h2 for channel 3, already interpolated in matrix form */
+  double (*Snoise1)(double),                        /* Noise function for channel 1 */
+  double (*Snoise2)(double),                        /* Noise function for channel 2 */
+  double (*Snoise3)(double),                        /* Noise function for channel 3 */
   double fLow,                                      /* Lower bound of the frequency window for the detector */
   double fHigh);                                    /* Upper bound of the frequency window for the detector */
 
@@ -220,17 +220,17 @@ double FDListmodesFresnelOverlap(
   double fHigh,                                        /* Upper bound of the frequency window for the detector */
   double fstartobs1,                                   /* Starting frequency for the 22 mode of wf 1 - as determined from a limited duration of the observation - set to 0 to ignore */
   double fstartobs2);                                  /* Starting frequency for the 22 mode of wf 2 - as determined from a limited duration of the observation - set to 0 to ignore */
-/* Function computing the overlap (h1|h2) between two waveforms given as list of modes for each channel A, E and T, one being already interpolated, for a given noise function - two additional parameters for the starting 22-mode frequencies (then properly scaled for the other modes) for a limited duration of the observations */
-double FDListmodesFresnelOverlapAET(
-  struct tagListmodesCAmpPhaseFrequencySeries *listh1A, /* First waveform channel A, list of modes in amplitude/phase form */
-  struct tagListmodesCAmpPhaseFrequencySeries *listh1E, /* First waveform channel E, list of modes in amplitude/phase form */
-  struct tagListmodesCAmpPhaseFrequencySeries *listh1T, /* First waveform channel T, list of modes in amplitude/phase form */
-  struct tagListmodesCAmpPhaseSpline *listsplines2A,    /* Second waveform channel A, list of modes already interpolated in matrix form */
-  struct tagListmodesCAmpPhaseSpline *listsplines2E,    /* Second waveform channel E, list of modes already interpolated in matrix form */
-  struct tagListmodesCAmpPhaseSpline *listsplines2T,    /* Second waveform channel T, list of modes already interpolated in matrix form */
-  double (*SnoiseA)(double),                            /* Noise function for A */
-  double (*SnoiseE)(double),                            /* Noise function for E */
-  double (*SnoiseT)(double),                            /* Noise function for T */
+/* Function computing the overlap (h1|h2) between two waveforms given as list of modes for each non-correlated channel 1,2,3, one being already interpolated, for a given noise function - two additional parameters for the starting 22-mode frequencies (then properly scaled for the other modes) for a limited duration of the observations */
+double FDListmodesFresnelOverlap3Chan(
+  struct tagListmodesCAmpPhaseFrequencySeries *listh1chan1, /* First waveform channel channel 1, list of modes in amplitude/phase form */
+  struct tagListmodesCAmpPhaseFrequencySeries *listh1chan2, /* First waveform channel channel 2, list of modes in amplitude/phase form */
+  struct tagListmodesCAmpPhaseFrequencySeries *listh1chan3, /* First waveform channel channel 3, list of modes in amplitude/phase form */
+  struct tagListmodesCAmpPhaseSpline *listsplines2chan1,    /* Second waveform channel channel 1, list of modes already interpolated in matrix form */
+  struct tagListmodesCAmpPhaseSpline *listsplines2chan2,    /* Second waveform channel channel 2, list of modes already interpolated in matrix form */
+  struct tagListmodesCAmpPhaseSpline *listsplines2chan3,    /* Second waveform channel channel 3, list of modes already interpolated in matrix form */
+  double (*Snoise1)(double),                            /* Noise function for channel 1 */
+  double (*Snoise2)(double),                            /* Noise function for channel 2 */
+  double (*Snoise3)(double),                            /* Noise function for channel 3 */
   double fLow,                                          /* Lower bound of the frequency window for the detector */
   double fHigh,                                         /* Upper bound of the frequency window for the detector */
   double fstartobs1,                                    /* Starting frequency for the 22 mode of wf 1 - as determined from a limited duration of the observation - set to 0 to ignore */

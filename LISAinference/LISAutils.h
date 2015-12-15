@@ -42,41 +42,42 @@ typedef struct tagLISAGlobalParams {
   int nbmodeinj;             /* number of modes to include in the injection (starting with 22) - defaults to 5 (all modes) */
   int nbmodetemp;            /* number of modes to include in the templates (starting with 22) - defaults to 5 (all modes) */
   int tagint;                /* Tag choosing the integrator: 0 for wip (default), 1 for linear integration */
+  int tagtdi;                /* Tag choosing the TDI variables to use */
   int nbptsoverlap;          /* Number of points to use in loglinear overlaps (default 32768) */
 } LISAGlobalParams;
 
 typedef struct tagLISASignalCAmpPhase
 {
-  struct tagListmodesCAmpPhaseFrequencySeries* TDIASignal;   /* Signal in the 2nd generation TDI A, in the form of a list of the contribution of each mode */
-  struct tagListmodesCAmpPhaseFrequencySeries* TDIESignal;   /* Signal in the 2nd generation TDI E, in the form of a list of the contribution of each mode */
-  struct tagListmodesCAmpPhaseFrequencySeries* TDITSignal;   /* Signal in the 2nd generation TDI T, in the form of a list of the contribution of each mode */
-  double TDIAEThh;                                           /* Combined Inner product (h|h) for TDI A, E and T */
+  struct tagListmodesCAmpPhaseFrequencySeries* TDI1Signal;   /* Signal in the TDI channel 1, in the form of a list of the contribution of each mode */
+  struct tagListmodesCAmpPhaseFrequencySeries* TDI2Signal;   /* Signal in the TDI channel 2, in the form of a list of the contribution of each mode */
+  struct tagListmodesCAmpPhaseFrequencySeries* TDI3Signal;   /* Signal in the TDI channel 3, in the form of a list of the contribution of each mode */
+  double TDI123hh;                                           /* Combined Inner product (h|h) for TDI channels 123 */
 } LISASignalCAmpPhase;
 
 typedef struct tagLISAInjectionCAmpPhase
 {
-  struct tagListmodesCAmpPhaseSpline* TDIASplines;   /* Signal in the 2nd generation TDI A, in the form of a list of splines for the contribution of each mode */
-  struct tagListmodesCAmpPhaseSpline* TDIESplines;   /* Signal in the 2nd generation TDI E, in the form of a list of splines for the contribution of each mode */
-  struct tagListmodesCAmpPhaseSpline* TDITSplines;   /* Signal in the 2nd generation TDI T, in the form of a list of splines for the contribution of each mode */
-  double TDIAETss;                                   /* Combined Inner product (s|s) for TDI A, E and T */
+  struct tagListmodesCAmpPhaseSpline* TDI1Splines;   /* Signal in the TDI channel 1, in the form of a list of splines for the contribution of each mode */
+  struct tagListmodesCAmpPhaseSpline* TDI2Splines;   /* Signal in the TDI channel 2, in the form of a list of splines for the contribution of each mode */
+  struct tagListmodesCAmpPhaseSpline* TDI3Splines;   /* Signal in the TDI channel 3, in the form of a list of splines for the contribution of each mode */
+  double TDI123ss;                                   /* Combined Inner product (s|s) for TDI channels 123 */
 } LISAInjectionCAmpPhase;
 
 typedef struct tagLISASignalReIm /* We don't store the SNRs here, as we will use -1/2(h-s|h-s) for the likelihood */
 {
-  struct tagReImFrequencySeries* TDIASignal;   /* Signal in the 2nd generation TDI A, in the form of a Re/Im frequency series where the modes have been summed */
-  struct tagReImFrequencySeries* TDIESignal;   /* Signal in the 2nd generation TDI E, in the form of a Re/Im frequency series where the modes have been summed */
-  struct tagReImFrequencySeries* TDITSignal;   /* Signal in the 2nd generation TDI T, in the form of a Re/Im frequency series where the modes have been summed */
+  struct tagReImFrequencySeries* TDI1Signal;   /* Signal in the TDI channel 1, in the form of a Re/Im frequency series where the modes have been summed */
+  struct tagReImFrequencySeries* TDI2Signal;   /* Signal in the TDI channel 2, in the form of a Re/Im frequency series where the modes have been summed */
+  struct tagReImFrequencySeries* TDI3Signal;   /* Signal in the TDI channel 3, in the form of a Re/Im frequency series where the modes have been summed */
 } LISASignalReIm;
 
 typedef struct tagLISAInjectionReIm /* Storing the vectors of frequencies and noise values - We don't store the SNRs here, as we will use -1/2(h-s|h-s) for the likelihood */
 {
-  struct tagReImFrequencySeries* TDIASignal;   /* Signal in the 2nd generation TDI A, in the form of a Re/Im frequency series where the modes have been summed */
-  struct tagReImFrequencySeries* TDIESignal;   /* Signal in the 2nd generation TDI E, in the form of a Re/Im frequency series where the modes have been summed */
-  struct tagReImFrequencySeries* TDITSignal;   /* Signal in the 2nd generation TDI T, in the form of a Re/Im frequency series where the modes have been summed */
+  struct tagReImFrequencySeries* TDI1Signal;   /* Signal in the TDI channel 1, in the form of a Re/Im frequency series where the modes have been summed */
+  struct tagReImFrequencySeries* TDI2Signal;   /* Signal in the TDI channel 2, in the form of a Re/Im frequency series where the modes have been summed */
+  struct tagReImFrequencySeries* TDI3Signal;   /* Signal in the TDI channel 3, in the form of a Re/Im frequency series where the modes have been summed */
   gsl_vector* freq;                            /* Vector of frequencies of the injection (assumed to be the same for A,E,T) */
-  gsl_vector* noisevaluesA;                    /* Vector of noise values on freq for A */
-  gsl_vector* noisevaluesE;                    /* Vector of noise values on freq for E */
-  gsl_vector* noisevaluesT;                    /* Vector of noise values on freq for T */
+  gsl_vector* noisevalues1;                    /* Vector of noise values on freq for TDI channel 1 */
+  gsl_vector* noisevalues2;                    /* Vector of noise values on freq for TDI channel 2 */
+  gsl_vector* noisevalues3;                    /* Vector of noise values on freq for TDI channel 3 */
 } LISAInjectionReIm;
 
 typedef struct tagLISAPrior {
@@ -170,7 +171,7 @@ void LISAInjectionReIm_Init(LISAInjectionReIm** signal);
 
 /* Function generating a LISA signal as a list of modes in CAmp/Phase form, from LISA parameters */
 int LISAGenerateSignalCAmpPhase(
-  struct tagLISAParams* params,            /* Input: set of LISA parameters of the signal */
+  struct tagLISAParams* params,                 /* Input: set of LISA parameters of the signal */
   struct tagLISASignalCAmpPhase* signal);  /* Output: structure for the generated signal */
 /* Function generating a LISA injection as a list of modes, given as preinterpolated splines, from LISA parameters */
 int LISAGenerateInjectionCAmpPhase(
