@@ -16,7 +16,7 @@ LLVinference.o: LLVinference.c LLVinference.h ../LLVsim/LLVFDresponse.h ../LLVsi
 	$(CC) -c $(CFLAGS) -I$(BAMBIINC) LLVinference.c
 
 LLVinference: LLVinference.o LLVutils.o bambi.o ../LLVsim/LLVFDresponse.o ../LLVsim/LLVnoise.o ../tools/struct.o ../tools/timeconversion.o ../tools/splinecoeffs.o ../tools/fresnel.o ../tools/likelihood.o ../EOBNRv2HMROM/EOBNRv2HMROM.o ../EOBNRv2HMROM/EOBNRv2HMROMstruct.o ../integration/wip.o ../integration/spline.o ../integration/Faddeeva.o
-	$(CPP) $(CCFLAGS) -o LLVinference LLVinference.o LLVutils.o bambi.o ../LLVsim/LLVFDresponse.o ../LLVsim/LLVnoise.o ../tools/struct.o ../tools/timeconversion.o ../tools/splinecoeffs.o ../tools/fresnel.o ../tools/likelihood.o ../EOBNRv2HMROM/EOBNRv2HMROM.o ../EOBNRv2HMROM/EOBNRv2HMROMstruct.o ../integration/wip.o ../integration/spline.o ../integration/Faddeeva.o -L$(GSLROOT)/lib -L$(BAMBILIB) -lgsl -lgslcblas -lm -lbambi-1.2 $(MPILIBS)
+	$(LD) $(LDFLAGS) -o LLVinference LLVinference.o LLVutils.o bambi.o ../LLVsim/LLVFDresponse.o ../LLVsim/LLVnoise.o ../tools/struct.o ../tools/timeconversion.o ../tools/splinecoeffs.o ../tools/fresnel.o ../tools/likelihood.o ../EOBNRv2HMROM/EOBNRv2HMROM.o ../EOBNRv2HMROM/EOBNRv2HMROMstruct.o ../integration/wip.o ../integration/spline.o ../integration/Faddeeva.o -L$(GSLROOT)/lib -L$(BAMBILIB) -lgsl -lgslcblas -lm -lbambi-1.2 $(MPILIBS)
 
 phaseSNR.o: phaseSNR.c LLVinference.h ../LLVsim/LLVFDresponse.h ../LLVsim/LLVnoise.h ../LLVsim/LLVgeometry.h ../tools/constants.h ../tools/struct.h ../tools/likelihood.h ../EOBNRv2HMROM/EOBNRv2HMROM.h ../EOBNRv2HMROM/EOBNRv2HMROMstruct.h ../integration/wip.h
 	$(CC) -c $(CFLAGS) phaseSNR.c

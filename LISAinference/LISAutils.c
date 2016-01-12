@@ -152,7 +152,7 @@ Arguments are as follows:\n\
  --q-max               Maximum mass ratio, m1/m2 (default=11.98, minimum is 1)\n\
  --dist-min            Minimum distance to source (Mpc, default=100)\n\
  --dist-max            Maximum distance to source (Mpc, default=40*1e3)\n\
- --rescale-dist        In case a target SNR is given with --snr, rescale dist-min and dist-max accordingly\n\
+ --rescale-distprior        In case a target SNR is given with --snr, rescale dist-min and dist-max accordingly\n\
 Parameters lambda, beta, phase, pol, inc can also ge given min and max values (for testing)\n\
 Syntax: --PARAM-min\n\
 \n\
