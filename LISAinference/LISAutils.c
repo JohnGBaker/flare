@@ -637,9 +637,9 @@ int LISAGenerateSignalCAmpPhase(
   double fstartobs = Mfstartobs / ((params->m1 + params->m2) * MTSUN_SI);
   double fLow = fmax(__LISASimFD_Noise_fLow, globalparams->fmin);
   double fHigh = __LISASimFD_Noise_fHigh;
-  RealFunction* NoiseSn1 = NoiseFunction(globalparams->tagtdi, 1);
-  RealFunction* NoiseSn2 = NoiseFunction(globalparams->tagtdi, 2);
-  RealFunction* NoiseSn3 = NoiseFunction(globalparams->tagtdi, 3);
+  RealFunctionPtr NoiseSn1 = NoiseFunction(globalparams->tagtdi, 1);
+  RealFunctionPtr NoiseSn2 = NoiseFunction(globalparams->tagtdi, 2);
+  RealFunctionPtr NoiseSn3 = NoiseFunction(globalparams->tagtdi, 3);
   //TESTING
   //tbeg = clock();
   double TDI123hh = FDListmodesFresnelOverlap3Chan(listTDI1, listTDI2, listTDI3, listsplinesgen1, listsplinesgen2, listsplinesgen3, NoiseSn1, NoiseSn2, NoiseSn3, fLow, fHigh, fstartobs, fstartobs);
@@ -724,9 +724,9 @@ int LISAGenerateInjectionCAmpPhase(
   double fstartobs = Mfstartobs / ((injectedparams->m1 + injectedparams->m2) * MTSUN_SI);
   double fLow = fmax(__LISASimFD_Noise_fLow, globalparams->fmin);
   double fHigh = __LISASimFD_Noise_fHigh;
-  RealFunction* NoiseSn1 = NoiseFunction(globalparams->tagtdi, 1);
-  RealFunction* NoiseSn2 = NoiseFunction(globalparams->tagtdi, 2);
-  RealFunction* NoiseSn3 = NoiseFunction(globalparams->tagtdi, 3);
+  RealFunctionPtr NoiseSn1 = NoiseFunction(globalparams->tagtdi, 1);
+  RealFunctionPtr NoiseSn2 = NoiseFunction(globalparams->tagtdi, 2);
+  RealFunctionPtr NoiseSn3 = NoiseFunction(globalparams->tagtdi, 3);
   //TESTING
   //tbeg = clock();
   double TDI123ss = FDListmodesFresnelOverlap3Chan(listTDI1, listTDI2, listTDI3, listsplinesinj1, listsplinesinj2, listsplinesinj3, NoiseSn1, NoiseSn2, NoiseSn3, fLow, fHigh, fstartobs, fstartobs);
@@ -878,9 +878,9 @@ int LISAGenerateInjectionReIm(
   //
 
   /* Compute the noise values */
-  RealFunction* NoiseSn1 = NoiseFunction(globalparams->tagtdi, 1);
-  RealFunction* NoiseSn2 = NoiseFunction(globalparams->tagtdi, 2);
-  RealFunction* NoiseSn3 = NoiseFunction(globalparams->tagtdi, 3);
+  RealFunctionPtr NoiseSn1 = NoiseFunction(globalparams->tagtdi, 1);
+  RealFunctionPtr NoiseSn2 = NoiseFunction(globalparams->tagtdi, 2);
+  RealFunctionPtr NoiseSn3 = NoiseFunction(globalparams->tagtdi, 3);
   gsl_vector* noisevalues1 = gsl_vector_alloc(nbpts);
   gsl_vector* noisevalues2 = gsl_vector_alloc(nbpts);
   gsl_vector* noisevalues3 = gsl_vector_alloc(nbpts);
@@ -934,9 +934,9 @@ double CalculateLogLCAmpPhase(LISAParams *params, LISAInjectionCAmpPhase* inject
     double fstartobsgenerated = Mfstartobsgenerated / ((params->m1 + params->m2) * MTSUN_SI);
     double fLow = fmax(__LISASimFD_Noise_fLow, globalparams->fmin);
     double fHigh = __LISASimFD_Noise_fHigh;
-    RealFunction* NoiseSn1 = NoiseFunction(globalparams->tagtdi, 1);
-    RealFunction* NoiseSn2 = NoiseFunction(globalparams->tagtdi, 2);
-    RealFunction* NoiseSn3 = NoiseFunction(globalparams->tagtdi, 3);
+    RealFunctionPtr NoiseSn1 = NoiseFunction(globalparams->tagtdi, 1);
+    RealFunctionPtr NoiseSn2 = NoiseFunction(globalparams->tagtdi, 2);
+    RealFunctionPtr NoiseSn3 = NoiseFunction(globalparams->tagtdi, 3);
     //TESTING
     //tbeg = clock();
     double overlapTDI123 = FDListmodesFresnelOverlap3Chan(generatedsignal->TDI1Signal, generatedsignal->TDI2Signal, generatedsignal->TDI3Signal, injection->TDI1Splines, injection->TDI2Splines, injection->TDI3Splines, NoiseSn1, NoiseSn2, NoiseSn3, fLow, fHigh, fstartobsinjected, fstartobsgenerated);
