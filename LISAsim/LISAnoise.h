@@ -49,7 +49,7 @@
 /****** Prototypes: functions evaluating the noise PSD  *******/
 
 /* Function returning the relevant noise function, given a set of TDI observables and a channel */
-RealFunction* NoiseFunction(const TDItag tditag, const int nchan);
+RealFunctionPtr NoiseFunction(const TDItag tditag, const int nchan);
 
 /* Noise Sn for TDI observables - factors have been scaled out both in the response and the noise */
 double SnXYZ(double f);

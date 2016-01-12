@@ -52,6 +52,17 @@ int LISASimFDResponse21(
 
 //WARNING: tRef is ignored for now in the response - i.e. set to 0
 /* Core function processing a signal (in the form of a list of modes) through the Fourier-domain LISA response, for given values of the inclination, position in the sky and polarization angle */
+int LISASimFDResponsey12(
+  struct tagListmodesCAmpPhaseFrequencySeries **list,      /* Input: list of modes in Frequency-domain amplitude and phase form as produced by the ROM */
+  struct tagListmodesCAmpPhaseFrequencySeries **listy12,   /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the y12 observable */
+  const double tRef,                                          /* Time at coalescence */
+  const double lambda,                                        /* First angle for the position in the sky */
+  const double beta,                                          /* Second angle for the position in the sky */
+  const double inclination,                                   /* Inclination of the source */
+  const double psi);                                          /* Polarization angle */
+
+//WARNING: tRef is ignored for now in the response - i.e. set to 0
+/* Core function processing a signal (in the form of a list of modes) through the Fourier-domain LISA response, for given values of the inclination, position in the sky and polarization angle */
 int LISASimFDResponseTDI3Chan(
   struct tagListmodesCAmpPhaseFrequencySeries **list,      /* Input: list of modes in Frequency-domain amplitude and phase form as produced by the ROM */
   struct tagListmodesCAmpPhaseFrequencySeries **listTDI1,  /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the TDI channel 1 */

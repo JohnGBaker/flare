@@ -127,77 +127,88 @@ double SnTalphabetagamma(double f) {
 /* } */
 
 /* Function returning the relevant noise function, given a set of TDI observables and a channel */
-RealFunction* NoiseFunction(const TDItag tditag, const int nchan)
+RealFunctionPtr NoiseFunction(const TDItag tditag, const int nchan)
 {
-  RealFunction* ptr = NULL;
+  RealFunctionPtr ptr = NULL;
   switch(tditag) {
   case TDIXYZ: {
     switch(nchan) {
-    case 1: ptr = &SnXYZ;
-    case 2: ptr = &SnXYZ;
-    case 3: ptr = &SnXYZ;
+    case 1: ptr = &SnXYZ; break;
+    case 2: ptr = &SnXYZ; break;
+    case 3: ptr = &SnXYZ; break;
     }
+    break;
   }
   case TDIalphabetagamma: {
     switch(nchan) {
-    case 1: ptr = &Snalphabetagamma;
-    case 2: ptr = &Snalphabetagamma;
-    case 3: ptr = &Snalphabetagamma;
+    case 1: ptr = &Snalphabetagamma; break;
+    case 2: ptr = &Snalphabetagamma; break;
+    case 3: ptr = &Snalphabetagamma; break;
     }
+    break;
   }
   case TDIAETXYZ: {
     switch(nchan) {
-    case 1: ptr = &SnAXYZ;
-    case 2: ptr = &SnEXYZ;
-    case 3: ptr = &SnTXYZ;
+    case 1: ptr = &SnAXYZ; break;
+    case 2: ptr = &SnEXYZ; break;
+    case 3: ptr = &SnTXYZ; break;
     }
+    break;
   }
   case TDIAETalphabetagamma: {
     switch(nchan) {
-    case 1: ptr = &SnAalphabetagamma;
-    case 2: ptr = &SnEalphabetagamma;
-    case 3: ptr = &SnTalphabetagamma;
+    case 1: ptr = &SnAalphabetagamma; break;
+    case 2: ptr = &SnEalphabetagamma; break;
+    case 3: ptr = &SnTalphabetagamma; break;
     }
+    break;
   }
   case TDIX: {
     switch(nchan) {
-    case 1: ptr = &SnXYZ;
+    case 1: ptr = &SnXYZ; break;
     }
+    break;
   }
   case TDIalpha: {
     switch(nchan) {
-    case 1: ptr = &Snalphabetagamma;
+    case 1: ptr = &Snalphabetagamma; break;
     }
+    break;
   }
   case TDIAXYZ: {
     switch(nchan) {
-    case 1: ptr = &SnAXYZ;
+    case 1: ptr = &SnAXYZ; break;
     }
   }
   case TDIEXYZ: {
     switch(nchan) {
-    case 1: ptr = &SnEXYZ;
+    case 1: ptr = &SnEXYZ; break;
     }
+    break;
   }
   case TDITXYZ: {
     switch(nchan) {
-    case 1: ptr = &SnTXYZ;
+    case 1: ptr = &SnTXYZ; break;
     }
+    break;
   }
   case TDIAalphabetagamma: {
     switch(nchan) {
-    case 1: ptr = &SnAalphabetagamma;
+    case 1: ptr = &SnAalphabetagamma; break;
     }
+    break;
   }
   case TDIEalphabetagamma: {
     switch(nchan) {
-    case 1: ptr = &SnEalphabetagamma;
+    case 1: ptr = &SnEalphabetagamma; break;
     }
+    break;
   }
   case TDITalphabetagamma: {
     switch(nchan) {
-    case 1: ptr = &SnTalphabetagamma;
+    case 1: ptr = &SnTalphabetagamma; break;
     }
+    break;
   }
   }
   if(ptr==NULL) {

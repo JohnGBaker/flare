@@ -100,7 +100,7 @@ double FDListmodesLogLinearOverlap(
 
 /* Function computing the overlap (h1|h2) between h1 given in Re/Im form and h2 given as a list of mode contributions (factos sYlm already included), for a given vector of noise values - uses simple trapeze integration - generates the frequency series of h2 in Re/Im form by summing the mode contributions first, then computes the overlap */
 double FDOverlapReImvsListmodesCAmpPhase(
-  struct tagReImFrequencySeries *freqseries1,       /* First waveform, in Re/Im form */
+  struct tagReImFrequencySeries *freqseries1,            /* First waveform, in Re/Im form */
   struct tagListmodesCAmpPhaseFrequencySeries *list2,    /* Second waveform, list of modes in amplitude/phase form */
   gsl_vector* noisevalues,                               /* Vector for the noise values on the freq of h1 */
   double fstartobs2);                                    /* Starting frequency for the 22 mode of wf 2 - as determined from a limited duration of the observation - set to 0 to ignore */

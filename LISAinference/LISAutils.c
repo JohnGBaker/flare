@@ -385,7 +385,7 @@ Syntax: --PARAM-min\n\
 	} else if (strcmp(argv[i], "--rescale-distprior") == 0) {
             prior->rescale_distprior = 1;
 	} else if (strcmp(argv[i], "--flat-distprior") == 0) {
-            prior->rescale_distprior = 1;
+            prior->flat_distprior = 1;
         } else if (strcmp(argv[i], "--eff") == 0) {
             run->eff = atof(argv[++i]);
         } else if (strcmp(argv[i], "--tol") == 0) {

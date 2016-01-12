@@ -158,6 +158,15 @@ int EvaluateTDIXYZTD(
   gsl_interp_accel* accelhp,               /* Accelerator for hp spline */
   gsl_interp_accel* accelhc,               /* Accelerator for hc spline */
   const double t);                         /* Time */
+int EvaluateTDIAETXYZTD(
+  double* TDIA,                            /* Output: value of TDI observable X */
+  double* TDIE,                            /* Output: value of TDI observable Y */
+  double* TDIT,                            /* Output: value of TDI observable Z */
+  gsl_spline* splinehp,                    /* Input spline for TD hplus */
+  gsl_spline* splinehc,                    /* Input spline for TD hcross */
+  gsl_interp_accel* accelhp,               /* Accelerator for hp spline */
+  gsl_interp_accel* accelhc,               /* Accelerator for hc spline */
+  const double t);                         /* Time */
 
 #if 0
 { /* so that editors will match succeeding brace */
