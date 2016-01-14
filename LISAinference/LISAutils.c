@@ -438,8 +438,8 @@ int print_parameters_to_file_LISA(
   fprintf(f, "-----------------------------------------------\n");
   fprintf(f, "Injection parameters:\n");
   fprintf(f, "-----------------------------------------------\n");
-  fprintf(f, "m1:           %.16e\n", params->tRef);
-  fprintf(f, "m2:           %.16e\n", params->phiRef);
+  fprintf(f, "m1:           %.16e\n", params->m1);
+  fprintf(f, "m2:           %.16e\n", params->m2);
   fprintf(f, "tRef:         %.16e\n", params->tRef);
   fprintf(f, "phiRef:       %.16e\n", params->phiRef);
   fprintf(f, "distance:     %.16e\n", params->distance);
@@ -549,9 +549,9 @@ int print_rescaleddist_to_file_LISA(
   fprintf(f, "-----------------------------------------------\n");
   fprintf(f, "Rescaled dist parameters:\n");
   fprintf(f, "-----------------------------------------------\n");
-  fprintf(f, "distance: %.16e\n", params->distance);
-  fprintf(f, "dist_min: %.16e\n", prior->dist_min);
-  fprintf(f, "dist_max: %.16e\n", prior->dist_max);
+  fprintf(f, "dist_resc: %.16e\n", params->distance);
+  fprintf(f, "dist_min:  %.16e\n", prior->dist_min);
+  fprintf(f, "dist_max:  %.16e\n", prior->dist_max);
   fprintf(f, "-----------------------------------------------\n");
 
   /* Close output file */
