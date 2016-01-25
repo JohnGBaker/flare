@@ -1,0 +1,6 @@
+./GenerateWaveform --phiRef 0.7 --m1 1.5e6 --m2 0.5e6 --distance 4.86472956023343024e05 --inclination 1.0471976 --nbmode 5 --taggenwave hlm --outfile "genwf_hlm.txt"
+
+./GenerateWaveform --phiRef 0.7 --m1 1.5e6 --m2 0.5e6 --distance 4.86472956023343024e05 --inclination 1.0471976 --fLow 3e-4 --nbmode 1 --taggenwave hphcFD --outfile "genwf_hphcFD.txt"
+
+./GenerateWaveform --phiRef 0.7 --m1 1.5e6 --m2 0.5e6 --distance 4.86472956023343024e05 --inclination 1.0471976 --fLow 3e-4 --nbmode 1 --taggenwave hphcTD --outfile "genwf_hphcTD.txt"
+

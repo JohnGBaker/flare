@@ -1,0 +1,10 @@
+#For TDI AET
+
+./ComputeLISASNR --phiRef 0.7 --m1 1.5e6 --m2 0.5e6 --distance 4.86472956023343024e05 --inclination 1.0471976 --lambda 1.7 --beta 1.0471976 --polarization 1.2 --nbmode 1 --fLow 3.5e-4 --tagtdi TDIAETXYZ --tagint 0
+
+./ComputeLISASNR --phiRef 0.7 --m1 1.5e6 --m2 0.5e6 --distance 4.86472956023343024e05 --inclination 1.0471976 --lambda 1.7 --beta 1.0471976 --polarization 1.2 --nbmode 1 --fLow 3.5e-4 --tagtdi TDIAETXYZ --tagint 1 --nbptsoverlap 32768
+
+./ComputeLISASNR --phiRef 0.7 --m1 1.5e6 --m2 0.5e6 --distance 4.86472956023343024e05 --inclination 1.0471976 --lambda 1.7 --beta 1.0471976 --polarization 1.2 --nbmode 1 --fLow 3.5e-4 --tagtdi TDIAETXYZ --tagint 1 --nbptsoverlap 1048576
+
+./ComputeLISASNR --fromtditdfile --nlinesinfile 131072 --tagtdi TDIAETXYZ --indir "/Users/marsat/src/flare/test/testcompareSNRtoFFT" --infile "gentditd_AET.txt" --fLow 3.5e-4
+

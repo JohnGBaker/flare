@@ -105,6 +105,31 @@ double SnTalphabetagamma(double f) {
   return 8*s1*s1*Spm(f) + 2*Sop(f);
 }
 
+/* Noise functions for AET(XYZ) without rescaling */
+/* Scaling by 2*sin2pifL^2 put back */
+double SnAXYZNoRescaling(double f) {
+  double twopifL = 2.*PI*L_SI/C_SI*f;
+  double c2 = cos(twopifL);
+  double c4 = cos(2*twopifL);
+  double s2 = sin(twopifL);
+  return 2*s2*s2 * (2*(3. + 2*c2 + c4)*Spm(f) + (2 + c2)*Sop(f));
+}
+/* Scaling by 2*sin2pifL^2 put back */
+double SnEXYZNoRescaling(double f) {
+  double twopifL = 2.*PI*L_SI/C_SI*f;
+  double c2 = cos(twopifL);
+  double c4 = cos(2*twopifL);
+  double s2 = sin(twopifL);
+  return 2*s2*s2 * (2*(3. + 2*c2 + c4)*Spm(f) + (2 + c2)*Sop(f));
+}
+/* Scaling by 8*sin2pifL^2*sinpifL^2 put back*/
+double SnTXYZNoRescaling(double f) {
+  double pifL = PI*L_SI/C_SI*f;
+  double s1 = sin(pifL);
+  double s2 = sin(2*pifL);
+  return 8*s1*s1*s2*s2 * (4*s1*s1*Spm(f) + Sop(f));
+}
+
 /* The noise functions themselves
 /* Note - we factored out and cancelled the factors of the type sin(n pi f L) */
 /* double NoiseSnA(const double f) { */

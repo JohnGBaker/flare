@@ -117,10 +117,10 @@ Arguments are as follows:\n\
 ----- Injected Signal Parameters -----------------\n\
 --------------------------------------------------\n\
  --tRef                Time at reference frequency (sec, default=0)\n\
- --phiRef              Orbital phase at reference frequency (radians, default=0)\n\
+ --phiRef              Orbital phase at reference frequency fRef (radians, default=0)\n\
  --m1                  Component mass 1 in Solar masses (larger, default=2e6)\n\
  --m2                  Component mass 2 in Solar masses (smaller, default=1e6)\n\
- --distance            Distance to source in Mpc (default=1e9)\n\
+ --distance            Distance to source in Mpc (default=40*1e3)\n\
  --lambda              First angle for the position in the sky (radians, default=0)\n\
  --beta                Second angle for the position in the sky (radians, default=0)\n\
  --inclination         Inclination of source orbital plane to observer line of sight\n\
@@ -132,12 +132,12 @@ Arguments are as follows:\n\
 -----------------------------------------------------------------\n\
 ----- Global Waveform/Inner products Parameters -----------------\n\
 -----------------------------------------------------------------\n\
- --fRef                Reference frequency (Hz, default=0, interpreted as Mf=0.14)\n\
+ --fRef                Reference frequency where phiRef is set (Hz, default=0, interpreted as Mf=0.14)\n\
  --deltatobs           Observation time (years, default=2)\n\
  --fmin                Minimal frequency (Hz, default=0) - when set to 0, use the first frequency covered by the noise data of the detector\n\
  --nbmodeinj           Number of modes of radiation to use for the injection (1-5, default=5)\n\
  --nbmodetemp          Number of modes of radiation to use for the templates (1-5, default=5)\n\
- --tagint              Tag choosing the integrator: 0 for wip (default), 1 for linear integration\n\
+ --tagint              Tag choosing the integrator: 0 for Fresnel (default), 1 for linear integration\n\
  --tagtdi              Tag choosing the set of TDI variables to use (default TDIAETXYZ)\n\
  --nbptsoverlap        Number of points to use for linear integration (default 32768)\n\
 \n\

@@ -1,7 +1,3 @@
-// build commmand:
-// gcc -c test_fresnel.c -O2 -std=c99 -I../LISAsim -I/opt/local/include
-// gcc -o test_fresnel test_fresnel.o struct.o ../LISAsim/LISAnoise.o -lgsl -lgslcblas
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>

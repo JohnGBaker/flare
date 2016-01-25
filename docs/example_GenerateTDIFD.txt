@@ -1,0 +1,16 @@
+#For TDI XYZ
+
+./GenerateTDIFD --phiRef 0.7 --m1 1.5e6 --m2 0.5e6 --distance 4.86472956023343024e05 --inclination 1.0471976 --lambda 1.7 --beta 1.0471976 --polarization 1.2 --nbmode 1 --fLow 3e-4 --tagtdi TDIXYZ --taggenwave TDIhlm --outdir "/Users/marsat/src/flare/test/testgeneratetdifd" --outfileprefix "gentdifd_XYZFDhlm"
+
+./GenerateTDIFD --phiRef 0.7 --m1 1.5e6 --m2 0.5e6 --distance 4.86472956023343024e05 --inclination 1.0471976 --lambda 1.7 --beta 1.0471976 --polarization 1.2 --nbmode 1 --fLow 3e-4 --tagtdi TDIXYZ --restorescaledfactor --taggenwave TDIFD --outdir "/Users/marsat/src/flare/test/testgeneratetdifd" --outfileprefix "gentdifd_XYZFD"
+
+./GenerateTDIFD --fromtditdfile --nlinesinfile 131072 --tagtdi TDIXYZ --indir "/Users/marsat/src/flare/test/testgeneratetdifd" --infile "gentditd_XYZ.txt" --outdir "/Users/marsat/src/flare/test/testgeneratetdifd" --outfileprefix "gentdifd_XYZFDFFT"
+
+#For TDI AET
+
+./GenerateTDIFD --phiRef 0.7 --m1 1.5e6 --m2 0.5e6 --distance 4.86472956023343024e05 --inclination 1.0471976 --lambda 1.7 --beta 1.0471976 --polarization 1.2 --nbmode 1 --fLow 3e-4 --tagtdi TDIAETXYZ --taggenwave TDIhlm --outdir "/Users/marsat/src/flare/test/testgeneratetdifd" --outfileprefix "gentdifd_AETFDhlm"
+
+./GenerateTDIFD --phiRef 0.7 --m1 1.5e6 --m2 0.5e6 --distance 4.86472956023343024e05 --inclination 1.0471976 --lambda 1.7 --beta 1.0471976 --polarization 1.2 --nbmode 1 --fLow 3e-4 --tagtdi TDIAETXYZ --restorescaledfactor --taggenwave TDIFD --outdir "/Users/marsat/src/flare/test/testgeneratetdifd" --outfileprefix "gentdifd_AETFD"
+
+./GenerateTDIFD --fromtditdfile --nlinesinfile 131072 --tagtdi TDIAETXYZ --indir "/Users/marsat/src/flare/test/testgeneratetdifd" --infile "gentditd_AET.txt" --outdir "/Users/marsat/src/flare/test/testgeneratetdifd" --outfileprefix "gentdifd_AETFDFFT"
+

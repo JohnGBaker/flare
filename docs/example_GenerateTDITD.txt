@@ -1,0 +1,7 @@
+# For TDI XYZ
+
+./GenerateTDITD --lambda 1.7 --beta 1.0471976 --polarization 1.2 --tagtdi TDIXYZ --nlinesinfile 131072 --indir "/Users/marsat/src/flare/test/testgeneratetditd" --infile "genwf_hphcTD.txt" --outdir "/Users/marsat/src/flare/test/testgeneratetditd" --outfile "gentditd_XYZ.txt"
+
+# For TDI AET
+
+./GenerateTDITD --lambda 1.7 --beta 1.0471976 --polarization 1.2 --tagtdi TDIAETXYZ --nlinesinfile 131072 --indir "/Users/marsat/src/flare/test/testgeneratetditd" --infile "genwf_hphcTD.txt" --outdir "/Users/marsat/src/flare/test/testgeneratetditd" --outfile "gentditd_AET.txt"

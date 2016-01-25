@@ -61,6 +61,11 @@ double SnAalphabetagamma(double f);
 double SnEalphabetagamma(double f);
 double SnTalphabetagamma(double f);
 
+/* Noise functions for AET(XYZ) without rescaling */
+double SnAXYZNoRescaling(double f);
+double SnEXYZNoRescaling(double f);
+double SnTXYZNoRescaling(double f);
+
 /* Function returning the relevant noise function, given a set of TDI observables and a channel */
 double (*NoiseFunction(const TDItag tditag, const int chan))(double);
 

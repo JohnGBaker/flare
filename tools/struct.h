@@ -77,6 +77,13 @@ typedef struct tagReImFrequencySeries
   gsl_vector* h_imag;
 } ReImFrequencySeries;
 
+/* Real time series */
+typedef struct tagRealTimeSeries
+{
+  gsl_vector* times;
+  gsl_vector* h;
+} RealTimeSeries;
+
 /* List structure, for a list of modes, each in amplitude and phase form */
 typedef struct tagListmodesCAmpPhaseFrequencySeries
 {
@@ -164,23 +171,10 @@ void ReImFrequencySeries_Init(
 	 ReImFrequencySeries** freqseries,      /* double pointer for initialization */
 	 const int n );                         /* length of the frequency series */
 void ReImFrequencySeries_Cleanup(ReImFrequencySeries* freqseries);
-
-/***************** Functions to manipulate ReImFrequencySeries structure ****************/
-
-void ReImFrequencySeries_AddCAmpPhaseFrequencySeries(
-  struct tagReImFrequencySeries* freqseriesReIm,              /* Output Re/Im frequency series */
-  struct tagCAmpPhaseFrequencySeries* freqseriesCAmpPhase,    /* Input CAmp/Phase frequency series, to be interpolated and added to the output */
-  double fstartobsmode);                                      /* Starting frequency in case of limited duration of observations- assumed to have been scaled with the proper factor m/2 for this mode - set to 0 to ignore */
-/* Function evaluating a ReImFrequencySeries by interpolating wach mode of a ListmodesCAmpPhaseFrequencySeries and summing them, given a set of frequencies */
-void ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(
-  struct tagReImFrequencySeries* freqseriesReIm,                    /* Output Re/Im frequency series - already initialized */
-  struct tagListmodesCAmpPhaseFrequencySeries* listmodesCAmpPhase,  /* Input CAmp/Phase frequency series, to be interpolated */
-  gsl_vector* freq,                                                 /* Input set of frequencies on which evaluating */
-  double fstartobs);                                                /* Starting frequency in case of limited duration of observations - set to 0 to ignore */
-
-/***************** Other structure functions ****************/
-/* Additional function reproducing XLALSpinWeightedSphericalHarmonic */
-double complex SpinWeightedSphericalHarmonic(double theta, double phi, int s, int l, int m); /* Currently only supports s=-2, l=2,3,4,5 modes */
+void RealTimeSeries_Init(
+	 RealTimeSeries** timeseries,      /* double pointer for initialization */
+	 const int n );                /* length of the time series */
+void RealTimeSeries_Cleanup(RealTimeSeries* timeseries);
 
 #if 0
 { /* so that editors will match succeeding brace */

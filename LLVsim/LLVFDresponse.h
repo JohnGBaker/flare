@@ -37,6 +37,7 @@
 #include "constants.h"
 #include "LLVgeometry.h"
 #include "struct.h"
+#include "waveform.h"
 #include "timeconversion.h"
 
 

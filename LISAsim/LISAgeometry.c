@@ -590,6 +590,7 @@ int EvaluateGABmode(
 /*********************** Fourier-domain TDI factors ************************/
 
 /* Functions evaluating the Fourier-domain factors (combinations of the GAB's) for TDI observables */
+/* NOTE: factors have been scaled out, in parallel of what is done for the noise function */
 /* Note: in case only one channel is considered, amplitudes for channels 2 and 3 are simply set to 0 */
 /* (allows minimal changes from the old structure that assumed KTV A,E,T - but probably not optimal) */
 int EvaluateTDIfactor3Chan(
@@ -625,6 +626,7 @@ int EvaluateTDIfactor3Chan(
     *factor3 = invsqrt3 * (G21-G12 + G32-G23 + G13-G31);
     break;
     /* First-generation TDI XYZ */
+    /* With x=pifL, factor scaled out: 2I*sin2x*e2ix */
   case TDIXYZ:
     *factor1 = G21 + z*G12 - G31 - z*G13;
     *factor2 = G32 + z*G23 - G12 - z*G21;
@@ -686,7 +688,134 @@ int EvaluateTDIfactor3Chan(
     printf("Error in EvaluateTDIfactor3Chan: tditag not recognized.\n");
     exit(1);
   }
+  return SUCCESS;
 }
+
+/* Function evaluating the Fourier-domain factors that have been scaled out of TDI observables */
+/* The factors scaled out, parallel what is done for the noise functions */
+/* Note: in case only one channel is considered, factors for channels 2 and 3 are simply set to 0 */
+int ScaledTDIfactor3Chan(
+  double complex* factor1,                       /* Output for factor for TDI factor 1 */
+  double complex* factor2,                       /* Output for factor for TDI factor 2 */
+  double complex* factor3,                       /* Output for factor for TDI factor 3 */
+  const double f,                                /* Frequency */
+  const TDItag tditag)                           /* Selector for the TDI observables */
+{
+  /* Notation: x=pifL */
+  double x = PI*f*L_SI/C_SI;
+  switch(tditag) {
+    /* First-generation rescaled TDI aet from X,Y,Z */
+  case TDIAETXYZ:
+    *factor1 = I*sqrt(2)*sin(2*x)*cexp(2*I*x);
+    *factor2 = I*sqrt(2)*sin(2*x)*cexp(2*I*x);
+    *factor3 = 2*sqrt(2)*sin(x)*sin(2*x)*cexp(3*I*x);
+    break;
+    /* First-generation rescaled TDI aet from alpha, beta, gamma */
+  case TDIAETalphabetagamma:
+    *factor1 = -I*2*sqrt(2)*sin(x)*cexp(I*x);
+    *factor2 = -I*2*sqrt(2)*sin(x)*cexp(I*x);
+    *factor3 = sin(3*x)/sin(x)*cexp(I*x);
+    break;
+    /* First-generation TDI XYZ */
+  case TDIXYZ:
+    *factor1 = 2*I*sin(2*x)*cexp(2*I*x);
+    *factor2 = 2*I*sin(2*x)*cexp(2*I*x);
+    *factor3 = 2*I*sin(2*x)*cexp(2*I*x);
+    break;
+    /* First-generation TDI alpha beta gamma */
+  case TDIalphabetagamma:
+    *factor1 = 1.;
+    *factor2 = 1.;
+    *factor3 = 1.;
+    break;
+  /* First-generation TDI XYZ */
+  case TDIX:
+    *factor1 = 2*I*sin(2*x)*cexp(2*I*x);
+    *factor2 = 0.;
+    *factor3 = 0.;
+    break;
+  /* First-generation TDI alpha beta gamma */
+  case TDIalpha:
+    *factor1 = 1.;
+    *factor2 = 0.;
+    *factor3 = 0.;
+    break;
+  /* First-generation rescaled TDI aet from X,Y,Z */
+  /* With x=pifL, factors scaled out: A,E I*sqrt2*sin2x*eix - T 2*sqrt2*sin2x*sinx*e2ix */
+  case TDIAXYZ:
+    *factor1 = I*sqrt(2)*sin(2*x)*cexp(2*I*x);
+    *factor2 = 0.;
+    *factor3 = 0.;
+    break;
+  case TDIEXYZ:
+    *factor1 = I*sqrt(2)*sin(2*x)*cexp(2*I*x);
+    *factor2 = 0.;
+    *factor3 = 0.;
+    break;
+  case TDITXYZ:
+    *factor1 = 2*sqrt(2)*sin(x)*sin(2*x)*cexp(3*I*x);
+    *factor2 = 0.;
+    *factor3 = 0.;
+    break;
+  /* First-generation rescaled TDI aet from alpha, beta, gamma */
+  /* With x=pifL, factors scaled out: A,E -I*2sqrt2*sinx*eix - T sinx/(sin3x*eix) */
+  case TDIAalphabetagamma:
+    *factor1 = -I*2*sqrt(2)*sin(x)*cexp(I*x);
+    *factor2 = 0.;
+    *factor3 = 0.;
+    break;
+  case TDIEalphabetagamma:
+    *factor1 = -I*2*sqrt(2)*sin(x)*cexp(I*x);
+    *factor2 = 0.;
+    *factor3 = 0.;
+    break;
+  case TDITalphabetagamma:
+    *factor1 = sin(3*x)/sin(x)*cexp(I*x);
+    *factor2 = 0.;
+    *factor3 = 0.;
+    break;
+  default:
+    printf("Error in EvaluateTDIfactor3Chan: tditag not recognized.\n");
+    exit(1);
+  }
+  return SUCCESS;
+}
+
+/* Function restoring the factor that have been scaled out of the TDI observables */
+/* NOTE: the operation is made in-place, and the input is overwritten */
+int RestoreInPlaceScaledFactorTDI(
+  ListmodesCAmpPhaseFrequencySeries* listtdi,     /* Output/Input: list of mode contributions to TDI observable */
+  TDItag tditag,                                  /* Tag selecting the TDI observable */
+  int nchannel)                                   /* TDI channel number */
+{
+  double complex factor1 = 0;
+  double complex factor2 = 0;
+  double complex factor3 = 0;
+  double complex factor;
+  double complex camp;
+  ListmodesCAmpPhaseFrequencySeries* listelement = listtdi;
+  /* Going throug the list of modes */
+  while(listelement) {
+    gsl_vector* freq = listelement->freqseries->freq;
+    gsl_vector* ampreal = listelement->freqseries->amp_real;
+    gsl_vector* ampimag = listelement->freqseries->amp_imag;
+    for(int i=0; i<freq->size; i++) {
+      ScaledTDIfactor3Chan(&factor1, &factor2, &factor3, gsl_vector_get(freq, i), tditag);
+      switch(nchannel) {
+      case 1: factor = factor1; break;
+      case 2: factor = factor2; break;
+      case 3: factor = factor3; break;
+      }
+      camp = factor * (gsl_vector_get(ampreal, i) + I*gsl_vector_get(ampimag, i));
+      gsl_vector_set(ampreal, i, creal(camp));
+      gsl_vector_set(ampimag, i, cimag(camp));
+    }
+    listelement = listelement->next;
+  }
+  return SUCCESS;
+}
+
+
 /* Functions evaluating the Fourier-domain factors (combinations of the GAB's) for TDI observables */
 /* int EvaluateTDIfactor1Chan( */
 /*   double complex* factor,                        /\* Output for factor for TDI channel *\/ */
@@ -1032,6 +1161,70 @@ int EvaluateTDIAETXYZTD(
   *TDIA = 1./(2*sqrt(2)) * (Z-X);
   *TDIE = 1./(2*sqrt(6)) * (X-2*Y+Z);
   *TDIT = 1./(2*sqrt(3)) * (X+Y+Z);
+
+  return SUCCESS;
+}
+
+/**/
+int GenerateTDITD3Chan(
+  RealTimeSeries** TDI1,                   /* Output: real time series for TDI channel 1 */
+  RealTimeSeries** TDI2,                   /* Output: real time series for TDI channel 2 */
+  RealTimeSeries** TDI3,                   /* Output: real time series for TDI channel 3 */
+  gsl_spline* splinehp,                    /* Input spline for TD hplus */
+  gsl_spline* splinehc,                    /* Input spline for TD hcross */
+  gsl_interp_accel* accelhp,               /* Accelerator for hp spline */
+  gsl_interp_accel* accelhc,               /* Accelerator for hc spline */
+  gsl_vector* times,                       /* Vector of times to evaluate */
+  int nbptmargin,                          /* Margin set to 0 on both side to avoid problems with delays out of the domain */
+  TDItag tditag)                           /* Tag selecting the TDI observables */
+{
+  /* Initialize output */
+  int nbpt = times->size;
+  RealTimeSeries_Init(TDI1, nbpt);
+  RealTimeSeries_Init(TDI2, nbpt);
+  RealTimeSeries_Init(TDI3, nbpt);
+  gsl_vector_memcpy((*TDI1)->times, times);
+  gsl_vector_memcpy((*TDI2)->times, times);
+  gsl_vector_memcpy((*TDI3)->times, times);
+  gsl_vector_set_zero((*TDI1)->h);
+  gsl_vector_set_zero((*TDI2)->h);
+  gsl_vector_set_zero((*TDI3)->h);
+
+  /* Loop over time samples - we take a margin to avoid problems with the domain */
+  double t;
+  double* tval = times->data;
+  double* tdi1 = (*TDI1)->h->data;
+  double* tdi2 = (*TDI2)->h->data;
+  double* tdi3 = (*TDI3)->h->data;
+  double tdi1val = 0, tdi2val = 0, tdi3val = 0;
+
+  /* // */
+  /* printf("%g\n", gsl_spline_eval(splinehp, tval[10000], accelhp)); */
+  /* EvaluateTDIXYZTD(&tdi1val, &tdi2val, &tdi3val, splinehp, splinehc, accelhp, accelhc, tval[10000]); */
+  /* printf("%g | %g | %g \n", tdi1val, tdi2val, tdi3val); */
+  /* exit(0); */
+
+  if(tditag==TDIXYZ) {
+    for(int i=nbptmargin; i<nbpt-nbptmargin; i++) {
+      t = tval[i];
+      EvaluateTDIXYZTD(&tdi1val, &tdi2val, &tdi3val, splinehp, splinehc, accelhp, accelhc, t);
+      tdi1[i] = tdi1val;
+      tdi2[i] = tdi2val;
+      tdi3[i] = tdi3val;
+    }
+  }
+  else if(tditag==TDIAETXYZ) {
+    for(int i=nbptmargin; i<nbpt-nbptmargin; i++) {
+      t = tval[i];
+      EvaluateTDIAETXYZTD(&tdi1val, &tdi2val, &tdi3val, splinehp, splinehc, accelhp, accelhc, t);
+      tdi1[i] = tdi1val;
+      tdi2[i] = tdi2val;
+      tdi3[i] = tdi3val;
+    }
+  }
+  else {
+    printf("Error: in GenerateTDITD3Chan, TDI tag not recognized.\n");
+  }
 
   return SUCCESS;
 }

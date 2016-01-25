@@ -34,6 +34,7 @@
 #include <gsl/gsl_complex.h>
 
 #include "constants.h"
+#include "struct.h"
 
 /*****************************************************/
 /**************** TDI variables **********************/
@@ -87,6 +88,7 @@ int EvaluateGABmode(
   const double complex Yfactorcross);      /* Spin-weighted spherical harmonic factor for cross */
 
 /* Functions evaluating the Fourier-domain factors (combinations of the GAB's) for TDI observables */
+/* NOTE: factors have been scaled out, in parallel of what is done for the noise function */
 /* Note: in case only one channel is considered, amplitudes for channels 2 and 3 are simply set to 0 */
 /* (allows minimal changes from the old structure that assumed KTV A,E,T - but probably not optimal) */
 int EvaluateTDIfactor3Chan(
@@ -111,6 +113,21 @@ int EvaluateTDIfactor3Chan(
 /*   const double complex G13,                      /\* Input for G13 *\/ */
 /*   const double f,                                /\* Frequency *\/ */
 /*   const TDItag tditag);                          /\* Selector for the TDI observable *\/ */
+/* Function evaluating the Fourier-domain factors that have been scaled out of TDI observables */
+/* The factors scaled out, parallel what is done for the noise functions */
+/* Note: in case only one channel is considered, factors for channels 2 and 3 are simply set to 0 */
+int ScaledTDIfactor3Chan(
+  double complex* factor1,                       /* Output for factor for TDI factor 1 */
+  double complex* factor2,                       /* Output for factor for TDI factor 2 */
+  double complex* factor3,                       /* Output for factor for TDI factor 3 */
+  const double f,                                /* Frequency */
+  const TDItag tditag);                          /* Selector for the TDI observables */
+/* Function restoring the factor that have been scaled out of the TDI observables */
+/* NOTE: the operation is made in-place, and the input is overwritten */
+int RestoreInPlaceScaledFactorTDI(
+  ListmodesCAmpPhaseFrequencySeries* listtdi,     /* Output/Input: list of mode contributions to TDI observable */
+  TDItag tditag,                                  /* Tag selecting the TDI observable */
+  int nchannel);                                  /* TDI channel number */
 
 /* Functions for the response in time domain */
 double y12TD(
@@ -167,6 +184,17 @@ int EvaluateTDIAETXYZTD(
   gsl_interp_accel* accelhp,               /* Accelerator for hp spline */
   gsl_interp_accel* accelhc,               /* Accelerator for hc spline */
   const double t);                         /* Time */
+int GenerateTDITD3Chan(
+  RealTimeSeries** TDI1,                   /* Output: real time series for TDI channel 1 */
+  RealTimeSeries** TDI2,                   /* Output: real time series for TDI channel 2 */
+  RealTimeSeries** TDI3,                   /* Output: real time series for TDI channel 3 */
+  gsl_spline* splinehp,                    /* Input spline for TD hplus */
+  gsl_spline* splinehc,                    /* Input spline for TD hcross */
+  gsl_interp_accel* accelhp,               /* Accelerator for hp spline */
+  gsl_interp_accel* accelhc,               /* Accelerator for hc spline */
+  gsl_vector* times,                       /* Vector of times to evaluate */
+  int nbptsmargin,                         /* Margin set to 0 on both side to avoid problems with delays out of the domain */
+  TDItag tditag);                          /* Tag selecting the TDI observables */
 
 #if 0
 { /* so that editors will match succeeding brace */

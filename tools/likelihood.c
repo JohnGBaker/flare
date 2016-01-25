@@ -397,6 +397,10 @@ double FDOverlapReImvsReIm(
   for(int i=0; i<nbpts; i++) {
     gsl_vector_set(valuesoverlap, i, 4.*creal( (hreal1data[i] + I*himag1data[i]) * (hreal2data[i] - I*himag2data[i]) / noisedata[i]));
   }
+
+  //
+  Write_Text_Vector("/Users/marsat/src/flare/test/testcompareSNRtoFFT", "testfreqoverlap.txt", freqoverlap);
+  Write_Text_Vector("/Users/marsat/src/flare/test/testcompareSNRtoFFT", "testvaluesoverlap.txt", valuesoverlap);
   
   /* Final trapeze integration */
   double overlap = TrapezeIntegrate(freqoverlap, valuesoverlap);

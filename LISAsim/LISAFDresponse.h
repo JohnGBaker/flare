@@ -35,6 +35,7 @@
 
 #include "constants.h"
 #include "struct.h"
+#include "waveform.h"
 #include "EOBNRv2HMROMstruct.h"
 #include "LISAgeometry.h"
 

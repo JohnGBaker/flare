@@ -11,6 +11,7 @@
 #include "struct.h"
 #include "EOBNRv2HMROMstruct.h"
 #include "EOBNRv2HMROM.h"
+#include "waveform.h"
 #include "wip.h"
 #include "splinecoeffs.h"
 #include "fresnel.h"
