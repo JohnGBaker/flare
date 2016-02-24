@@ -36,6 +36,12 @@
 #include "constants.h"
 
 
+#if defined(__cplusplus)
+extern "C" {
+#elif 0
+} /* so that editors will match preceding brace */
+#endif
+
 /***************************************************/
 /*************** Type definitions ******************/
 

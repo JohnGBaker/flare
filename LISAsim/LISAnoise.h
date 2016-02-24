@@ -39,6 +39,12 @@
 #include "LISAgeometry.h"
 
 
+#if defined(__cplusplus)
+extern "C" {
+#elif 0
+} /* so that editors will match preceding brace */
+#endif
+
 /************************************************************************/
 /****** Global variables storing min and max f for the noise PSD  *******/
 

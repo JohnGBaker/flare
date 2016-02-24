@@ -115,6 +115,7 @@ Arguments are as follows:\n\
       strcpy(params->infile, argv[++i]);
     } else {
       printf("Error: invalid option: %s\n", argv[i]);
+      printf("argc-i=%i\n",argc-i); 
       goto fail;
     }
   }

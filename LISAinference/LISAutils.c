@@ -1,4 +1,5 @@
 #include "LISAutils.h"
+#include "omp.h"
 
 /************ Global Parameters ************/
 
@@ -230,7 +231,7 @@ Syntax: --PARAM-min\n\
     prior->phase_min = 0.;
     prior->phase_max = 2*PI;
     prior->pol_min = 0.;
-    prior->pol_max = 2*PI;
+    prior->pol_max = PI;
     prior->inc_min = 0.;
     prior->inc_max = PI;
     prior->fix_m1 = NAN;
@@ -254,6 +255,7 @@ Syntax: --PARAM-min\n\
     prior->snr_target = NAN;
     prior->rescale_distprior = 0;
     prior->flat_distprior = 0;
+    prior->logflat_massprior = 0;
 
     /* set default values for the run settings */
     run->eff = 0.1;
@@ -386,6 +388,8 @@ Syntax: --PARAM-min\n\
             prior->rescale_distprior = 1;
 	} else if (strcmp(argv[i], "--flat-distprior") == 0) {
             prior->flat_distprior = 1;
+	} else if (strcmp(argv[i], "--logflat-massprior") == 0) {
+            prior->logflat_massprior = 1;
         } else if (strcmp(argv[i], "--eff") == 0) {
             run->eff = atof(argv[++i]);
         } else if (strcmp(argv[i], "--tol") == 0) {
@@ -433,7 +437,9 @@ int print_parameters_to_file_LISA(
   char *path=malloc(strlen(run->outroot)+64);
   sprintf(path,"%sparams.txt", run->outroot);
   FILE *f = fopen(path, "w");
-
+  if(f==NULL){printf("Failed to open file:%s\n",path);}
+  
+  
   /* Print injection parameters (before possible rescaling of the distances to match the target snr) */
   fprintf(f, "-----------------------------------------------\n");
   fprintf(f, "Injection parameters:\n");
@@ -593,6 +599,8 @@ int LISAGenerateSignalCAmpPhase(
   //TESTING
   //clock_t tbeg, tend;
   //tbeg = clock();
+  
+  //#pragma omp critical(LISAgensig)
   LISASimFDResponseTDI3Chan(&listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, globalparams->tagtdi);
   //tend = clock();
   //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
@@ -910,7 +918,6 @@ double CalculateLogLCAmpPhase(LISAParams *params, LISAInjectionCAmpPhase* inject
 {
   double logL = -DBL_MAX;
   int ret;
-
   /* Generating the signal in the three detectors for the input parameters */
   LISASignalCAmpPhase* generatedsignal = NULL;
   LISASignalCAmpPhase_Init(&generatedsignal);
@@ -939,7 +946,8 @@ double CalculateLogLCAmpPhase(LISAParams *params, LISAInjectionCAmpPhase* inject
     RealFunctionPtr NoiseSn3 = NoiseFunction(globalparams->tagtdi, 3);
     //TESTING
     //tbeg = clock();
-    double overlapTDI123 = FDListmodesFresnelOverlap3Chan(generatedsignal->TDI1Signal, generatedsignal->TDI2Signal, generatedsignal->TDI3Signal, injection->TDI1Splines, injection->TDI2Splines, injection->TDI3Splines, NoiseSn1, NoiseSn2, NoiseSn3, fLow, fHigh, fstartobsinjected, fstartobsgenerated);
+    double overlapTDI123;
+      overlapTDI123= FDListmodesFresnelOverlap3Chan(generatedsignal->TDI1Signal, generatedsignal->TDI2Signal, generatedsignal->TDI3Signal, injection->TDI1Splines, injection->TDI2Splines, injection->TDI3Splines, NoiseSn1, NoiseSn2, NoiseSn3, fLow, fHigh, fstartobsinjected, fstartobsgenerated);
     /* double loglikelihoodTDIA = FDLogLikelihood(injection->TDIASignal, generatedsignal->TDIASignal, NoiseSnA, fLow, fHigh, injection->TDIAhh, generatedsignal->TDIAhh, fstartobsinjected, fstartobsgenerated, globalparams->tagint); */
     /* double loglikelihoodTDIE = FDLogLikelihood(injection->TDIESignal, generatedsignal->TDIESignal, NoiseSnE, fLow, fHigh, injection->TDIEhh, generatedsignal->TDIEhh, fstartobsinjected, fstartobsgenerated, globalparams->tagint); */
     /* double loglikelihoodTDIT = FDLogLikelihood(injection->TDITSignal, generatedsignal->TDITSignal, NoiseSnT, fLow, fHigh, injection->TDIThh, generatedsignal->TDIThh, fstartobsinjected, fstartobsgenerated, globalparams->tagint); */
@@ -967,7 +975,6 @@ double CalculateLogLCAmpPhase(LISAParams *params, LISAInjectionCAmpPhase* inject
 
     logL = overlapTDI123 - 1./2*(injection->TDI123ss) - 1./2*(generatedsignal->TDI123hh);
   }
-
   /* Clean up */
   LISASignalCAmpPhase_Cleanup(generatedsignal);
 

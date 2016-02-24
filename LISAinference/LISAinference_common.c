@@ -1,0 +1,195 @@
+#include "LISAinference_common.h"
+
+/***********************************************************************************************************************/
+
+/*********** Addendum *************/
+void addendum(int argc, char *argv[],LISARunParams *runParams, int *ndim, int *nPar,int **freeparamsmapp,void **contextp, double *logZtrue){
+  /* Initialize structs for holding various options */
+  //LISARunParams runParams;
+    int myid = 0;
+#ifdef PARALLEL
+ 	MPI_Init(&argc,&argv);
+	MPI_Comm_rank(MPI_COMM_WORLD,&myid);
+#endif
+
+
+  injectedparams = (LISAParams*) malloc(sizeof(LISAParams));
+  memset(injectedparams, 0, sizeof(LISAParams));
+  globalparams = (LISAGlobalParams*) malloc(sizeof(LISAGlobalParams));
+  memset(globalparams, 0, sizeof(LISAGlobalParams));
+  priorParams = (LISAPrior*) malloc(sizeof(LISAPrior));
+  memset(priorParams, 0, sizeof(LISAPrior));
+  
+  /* Parse commandline to read parameters of injection - copy the number of modes demanded for the injection */
+  parse_args_LISA(argc, argv, injectedparams, globalparams, priorParams, runParams);
+  injectedparams->nbmode = globalparams->nbmodeinj;
+  if(myid == 0) print_parameters_to_file_LISA(injectedparams, globalparams, priorParams, runParams);
+
+  /* Initialize the data structure for the injection */
+  LISAInjectionCAmpPhase* injectedsignalCAmpPhase = NULL;
+  LISAInjectionReIm* injectedsignalReIm = NULL;
+  if(globalparams->tagint==0) {
+    LISAInjectionCAmpPhase_Init(&injectedsignalCAmpPhase);
+  }
+  else if(globalparams->tagint==1) {
+    LISAInjectionReIm_Init(&injectedsignalReIm);
+  }
+
+  /* Generate the injection */
+  if(globalparams->tagint==0) {
+    LISAGenerateInjectionCAmpPhase(injectedparams, injectedsignalCAmpPhase);
+  }
+  else if(globalparams->tagint==1) {
+    LISAGenerateInjectionReIm(injectedparams, globalparams->fmin, globalparams->nbptsoverlap, 1, injectedsignalReIm); /* Use here logarithmic sampling as a default */
+  }
+
+  /* Define SNRs */
+  double SNR123, SNR1, SNR2, SNR3;
+  if(globalparams->tagint==0) {
+    SNR123 = sqrt(injectedsignalCAmpPhase->TDI123ss);
+  }
+  else if(globalparams->tagint==1) {
+    SNR1 = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDI1Signal, injectedsignalReIm->TDI1Signal, injectedsignalReIm->noisevalues1));
+    SNR2 = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDI2Signal, injectedsignalReIm->TDI2Signal, injectedsignalReIm->noisevalues2));
+    SNR3 = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDI3Signal, injectedsignalReIm->TDI3Signal, injectedsignalReIm->noisevalues3));
+    SNR123 = sqrt(SNR1*SNR1 + SNR2*SNR2 + SNR3*SNR3);
+  }
+
+  /* Rescale distance to match SNR */
+  if (!isnan(priorParams->snr_target)) {
+    if (myid == 0) printf("Rescaling the distance to obtain a network SNR of %g\n", priorParams->snr_target);
+    injectedparams->distance *= SNR123 / priorParams->snr_target;
+    if (myid == 0) printf("New distance = %g Mpc\n", injectedparams->distance);
+    if(priorParams->rescale_distprior) {
+      priorParams->dist_min *= SNR123 / priorParams->snr_target;
+      priorParams->dist_max *= SNR123 / priorParams->snr_target;
+      if (myid == 0) printf("Distance prior (dist_min, dist_max) = (%g, %g) Mpc\n", priorParams->dist_min, priorParams->dist_max);
+    }
+    if (myid == 0) print_rescaleddist_to_file_LISA(injectedparams, globalparams, priorParams, runParams);
+    if(globalparams->tagint==0) {
+      LISAGenerateInjectionCAmpPhase(injectedparams, injectedsignalCAmpPhase);
+      SNR123 = sqrt(injectedsignalCAmpPhase->TDI123ss);
+    }
+    else if(globalparams->tagint==1) {
+      LISAGenerateInjectionReIm(injectedparams, globalparams->fmin, globalparams->nbptsoverlap, 1, injectedsignalReIm); /* tagsampling fixed to 1, i.e. logarithmic sampling - could be made another global parameter */
+      SNR1 = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDI1Signal, injectedsignalReIm->TDI1Signal, injectedsignalReIm->noisevalues1));
+      SNR2 = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDI2Signal, injectedsignalReIm->TDI2Signal, injectedsignalReIm->noisevalues2));
+      SNR3 = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDI3Signal, injectedsignalReIm->TDI3Signal, injectedsignalReIm->noisevalues3));
+      SNR123 = sqrt(SNR1*SNR1 + SNR2*SNR2 + SNR3*SNR3);
+    }
+  }
+
+  /* Print SNR */
+  if (myid == 0) {
+    printf("Total SNR: %g\n", SNR123);
+  }
+
+  /* Calculate logL of data */
+  /*double dist_store = injectedparams->distance;
+    injectedparams->distance = 1.0e9;
+    logZdata = CalculateLogL(injectedparams, injectedsignal);
+    printf("logZdata = %lf\n", logZdata);
+    injectedparams->distance = dist_store;*/
+  logZdata = 0.0;
+  *logZtrue = 0.;
+  if(globalparams->tagint==0) {
+    *logZtrue = CalculateLogLCAmpPhase(injectedparams, injectedsignalCAmpPhase);
+  }
+  else if(globalparams->tagint==1) {
+    *logZtrue = CalculateLogLReIm(injectedparams, injectedsignalReIm);
+  }
+  if (myid == 0) printf("logZtrue = %lf\n", *logZtrue-logZdata);
+  
+  /* Set the context pointer */
+  if(globalparams->tagint==0) {
+    *contextp = injectedsignalCAmpPhase;
+  }
+  else if(globalparams->tagint==1) {
+    *contextp = injectedsignalReIm;
+  }
+
+  *nPar = 9;	  /* Total no. of parameters including free & derived parameters */
+  *ndim = 9;  /* No. of free parameters - to be changed later if some parameters are fixed */
+
+  /* check for parameters pinned to injected values */
+  if (priorParams->pin_m1)
+    priorParams->fix_m1 = injectedparams->m1;
+  if (priorParams->pin_m2)
+    priorParams->fix_m2 = injectedparams->m2;
+  if (priorParams->pin_dist)
+    priorParams->fix_dist = injectedparams->distance;
+  if (priorParams->pin_inc)
+    priorParams->fix_inc = injectedparams->inclination;
+  if (priorParams->pin_phase)
+    priorParams->fix_phase = injectedparams->phiRef;
+  if (priorParams->pin_pol)
+    priorParams->fix_pol = injectedparams->polarization;
+  if (priorParams->pin_lambda)
+    priorParams->fix_lambda = injectedparams->lambda;
+  if (priorParams->pin_beta)
+    priorParams->fix_beta = injectedparams->beta;
+  if (priorParams->pin_time)
+    priorParams->fix_time = injectedparams->tRef;
+
+  /* Check for fixed parameters, and build the map from the free cube parameters to the orignal 9 parameters */
+  /* Order of the 9 original parameters (fixed): m1, m2, tRef, dist, phase, inc, lambda, beta, pol */
+  /* Order of the 9 cube parameters (modified for clustering): lambda, beta, tRef, phase, pol, inc, dist, m1, m2 */
+  int mapcubetophys[9] = {6, 7, 2, 4, 8, 5, 3, 0, 1};
+  int freecubeparams[9] = {1, 1, 1, 1, 1, 1, 1, 1, 1};
+  if (!isnan(priorParams->fix_lambda)) { *ndim--; freecubeparams[0] = 0; }
+  if (!isnan(priorParams->fix_beta))   { *ndim--; freecubeparams[1] = 0; }
+  if (!isnan(priorParams->fix_time))   { *ndim--; freecubeparams[2] = 0; }
+  if (!isnan(priorParams->fix_phase))  { *ndim--; freecubeparams[3] = 0; }
+  if (!isnan(priorParams->fix_pol))    { *ndim--; freecubeparams[4] = 0; }
+  if (!isnan(priorParams->fix_inc))    { *ndim--; freecubeparams[5] = 0; }
+  if (!isnan(priorParams->fix_dist))   { *ndim--; freecubeparams[6] = 0; }
+  if (!isnan(priorParams->fix_m1))     { *ndim--; freecubeparams[7] = 0; }
+  if (!isnan(priorParams->fix_m2))     { *ndim--; freecubeparams[8] = 0; }
+
+  int *freeparamsmap = malloc(*ndim*sizeof(int));
+
+  int counter = 0;
+  for(int i=0; i<*ndim; i++) {
+    while(freecubeparams[counter]==0) counter++;
+    freeparamsmap[i] = mapcubetophys[counter];
+    counter++;
+  }
+
+  if (*ndim == 0) {
+    LISAParams templateparams;
+    templateparams.m1 = priorParams->fix_m1;
+    templateparams.m2 = priorParams->fix_m2;
+    templateparams.tRef = priorParams->fix_time;
+    templateparams.distance = priorParams->fix_dist;
+    templateparams.phiRef = priorParams->fix_phase;
+    templateparams.inclination = priorParams->fix_inc;
+    templateparams.lambda = priorParams->fix_lambda;
+    templateparams.beta = priorParams->fix_beta;
+    templateparams.polarization = priorParams->fix_pol;
+    templateparams.nbmode = globalparams->nbmodetemp; /* Using the global parameter for the number of modes in templates */
+
+    double logL = 0.;
+    if(globalparams->tagint==0) {
+      logL = CalculateLogLCAmpPhase(&templateparams, injectedsignalCAmpPhase);
+    }
+    else if(globalparams->tagint==1) {
+      logL = CalculateLogLReIm(&templateparams, injectedsignalReIm);
+    }
+    printf("logL = %lf\n", logL);
+
+    free(injectedparams);
+    free(priorParams);
+
+#ifdef PARALLEL
+    MPI_Finalize();
+#endif
+
+    exit(0);
+  }
+
+
+  *freeparamsmapp = freeparamsmap;
+
+  return;
+}
+/********** End of addendum ****************/

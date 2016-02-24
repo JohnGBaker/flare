@@ -565,16 +565,19 @@ int EOBNRv2HMROM_Init_DATA(void) {
   }
   strncpy(path,envpath,sizeof(path));
 
-  for(word=strtok_r(path,":",&brkt); word; word=strtok_r(NULL,":",&brkt))
+#pragma omp critical      
   {
-    ret = EOBNRv2HMROM_Init(word);
-    if(ret == SUCCESS) break;
+    for(word=strtok_r(path,":",&brkt); word; word=strtok_r(NULL,":",&brkt))
+      {
+	ret = EOBNRv2HMROM_Init(word);
+	if(ret == SUCCESS) break;
+      }
+    if(ret!=SUCCESS) {
+      printf("Error: unable to find EOBNRv2HMROM data files in $ROM_DATA_PATH\n");
+      exit(FAILURE);
+    }
+    __EOBNRv2HMROM_setup = ret;
   }
-  if(ret!=SUCCESS) {
-    printf("Error: unable to find EOBNRv2HMROM data files in $ROM_DATA_PATH\n");
-    exit(FAILURE);
-  }
-  __EOBNRv2HMROM_setup = ret;
   return(ret);
 }
 

@@ -19,6 +19,13 @@
 #include "LISAFDresponse.h"
 #include "LISAnoise.h"
 
+#if defined(__cplusplus)
+extern "C" {
+#define complex _Complex
+#elif 0
+} /* so that editors will match preceding brace */
+#endif
+
 /***************** Structure definitions *****************/
 
 /* Parameters for the generation of a LISA waveform (in the form of a list of modes) */
@@ -121,6 +128,7 @@ typedef struct tagLISAPrior {
   double snr_target;
   int rescale_distprior;
   int flat_distprior;
+  int logflat_massprior;
 } LISAPrior;
 
 typedef struct tagLISARunParams {
@@ -222,5 +230,11 @@ extern LISAParams* injectedparams;
 extern LISAGlobalParams* globalparams;
 extern LISAPrior* priorParams;
 double logZdata;
+
+#if 0
+{ /* so that editors will match succeeding brace */
+#elif defined(__cplusplus)
+}
+#endif
 
 #endif

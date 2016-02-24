@@ -37,6 +37,12 @@
 #include "struct.h"
 
 
+#if defined(__cplusplus)
+extern "C" {
+#elif 0
+} /* so that editors will match preceding brace */
+#endif
+
 void BuildNotAKnotSpline(
   gsl_matrix* splinecoeffs,   /* Output: matrix containing all the spline coeffs (already allocated) */
   gsl_vector* vectx,          /* Input: vector x*/

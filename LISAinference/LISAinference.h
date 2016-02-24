@@ -14,6 +14,8 @@
 #include "LISAutils.h"
 #include "bambi.h"
 
+#include "LISAinference_common.h"
+
 #ifdef __INTEL_COMPILER 			/* if the MultiNest library was compiled with ifort */
        #define NESTRUN nested_mp_nestrun_
 #elif defined __GNUC__ 				/* if the MultiNest library was compiled with gfortran */
