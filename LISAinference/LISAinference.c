@@ -398,7 +398,7 @@ int main(int argc, char *argv[])
 	for(i = 0; i < ndim; i++) { /* If non-default limiting values have been set for lambda, phase, pol, do not treat them as periodic */
 	  if(freeparamsmap[i]==4 && priorParams->phase_min == 0. && priorParams->phase_max == 2.*PI) pWrap[i] = 1;
 	  else if(freeparamsmap[i]==6 && priorParams->lambda_min == 0. && priorParams->lambda_max == 2.*PI) pWrap[i] = 1;
-	  else if(freeparamsmap[i]==8 && priorParams->pol_min == 0. && priorParams->pol_max == 2.*PI) pWrap[i] = 1;
+	  else if(freeparamsmap[i]==8 && priorParams->pol_min == 0. && priorParams->pol_max == PI) pWrap[i] = 1;
 	  else pWrap[i] = 0;
 	}
 

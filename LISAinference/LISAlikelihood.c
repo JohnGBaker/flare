@@ -65,6 +65,7 @@ int main(int argc, char *argv[])
     printf("Comparing with injection parameters: \n   m1 = %g\n   m2 = %g\n   t0 = %g\n dist = %g\n phi0 = %g\n incl = %g\n  lam = %g\n beta = %g\n  pol = %g\n",
 	   injectedparams->m1,injectedparams->m2,injectedparams->tRef,injectedparams->distance,injectedparams->phiRef,injectedparams->inclination,injectedparams->lambda,injectedparams->beta,injectedparams->polarization);
     result = CalculateLogLCAmpPhase(&params, injection) - logZdata;
+    printf("likelihood:CalculateLogL=%g.\n",result);
   }
   else if(globalparams->tagint==1) {
     LISAInjectionReIm* injection = ((LISAInjectionReIm*) context);
@@ -75,7 +76,7 @@ int main(int argc, char *argv[])
     //cout<<"i="<<i<<endl;
     printf("%20.15g,",paramvals[i]);
   }
-  printf("%20.15g\n",paramvals[i]);
+  printf("%20.15g\n",paramvals[nPar-1]);
   printf("The result: likelihood = %g\n",result);
   free(injectedparams);
   //free(priorParams);

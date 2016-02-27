@@ -119,7 +119,7 @@ public:
   virtual void write(ostream &out,state &st){cout<<"flare_likelihood::write: No write routine defined!"<<endl;};
   virtual void writeFine(ostream &out,state &st,int ns=-1, double ts=0, double te=0){cout<<"flare_likelihood::writeFine: No write routine defined!"<<endl;};
   virtual void getFineGrid(int & nfine, double &tstart, double &tend)const{cout<<"flare_likelihood::getFineGrid: No routine defined!"<<endl;};
-  void print_info(){cout<<" mean = "<<total_eval_time/count<<" over "<<count<<" total evals"<<endl; };
+  void print_info(){cout<<" mean = "<<total_eval_time/count<<" through "<<count<<" total evals"<<endl; };
 
 };
 
@@ -207,6 +207,7 @@ int main(int argc, char*argv[]){
   double dist0=(priorParams->dist_min+priorParams->dist_max)/2,ddist=(priorParams->dist_max-priorParams->dist_min)/2;
   double m10=(priorParams->comp_max+priorParams->comp_min)/2,m20=m10,dm1=(priorParams->comp_max-priorParams->comp_min)/2,dm2=dm1;
   double pol0=(priorParams->pol_min+priorParams->pol_max)/2,dpol=(priorParams->pol_max-priorParams->pol_min)/2;
+
   //If the parameters are "fixed" then we approximately realize that by restricting the range by 1e-5.
   if (!isnan(priorParams->fix_lambda))cout<<" ** Parameter fixing not supported.  Ignoring request! **"<<endl;
   if (!isnan(priorParams->fix_beta))cout<<" ** Parameter fixing not supported.  Ignoring request! **"<<endl;
