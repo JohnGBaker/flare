@@ -8,3 +8,6 @@
 
 ./ComputeLISASNR --fromtditdfile --nlinesinfile 131072 --tagtdi TDIAETXYZ --indir "/Users/marsat/src/flare/test/testcompareSNRtoFFT" --infile "gentditd_AET.txt" --fLow 3.5e-4
 
+#LAL commandline (run in lalsimulation/test/) to generate TD EOBNRv2 waveform for quick comparison of the amplitude
+./GenerateSimulation --domain TD --approximant EOBNRv2 --sample-rate 0.2  --m1 1.5e6 --m2 0.5e6 --inclination 1.0471976 --f-min 3e-4 --distance 4.86472956023343024e05 --outname "simulation-TD-EOBNRv2.dat"
+
