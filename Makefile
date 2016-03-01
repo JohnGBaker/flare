@@ -5,15 +5,17 @@ ifeq ($(MACHINE),"sylvainsmac")
   MESSAGE="Compiling for Sylvain's Mac"
   GSLROOT = /opt/local
   BAMBIROOT = $(HOME)/build/bambi
-  CC = gcc
-  CPP = g++
-  LD = $(CPP)	
+  CC = gcc-mp-5
+  CPP = g++-mp-5
+  LD = $(CPP)
   LDFLAGS=
   #Uncomment this for MPI and specify your needed MPI libraries
+	CFLAGS += -I/usr/local/include
+	CPPFLAGS += -I/usr/local/include
   CC += -DPARALLEL
   CPP += -DPARALLEL
   MPILIBS = -lmpi -lmpi_cxx -lmpi_mpifh
-else ifeq ($(MACHINE),"discover") 
+else ifeq ($(MACHINE),"discover")
   #based on modules:
   #module load comp/intel-15.0.3.187 lib/mkl-15.0.3.187 mpi/impi-5.0.3.048
   MESSAGE="Compiling for Discover at NCCS"
@@ -26,7 +28,7 @@ else ifeq ($(MACHINE),"discover")
   MPILIBS += $(LAPACKLIB)
   LD = mpif90
   LDFLAGS = -cxxlib -nofor_main -g -traceback -C
-else ifeq ($(MACHINE),"datura") 
+else ifeq ($(MACHINE),"datura")
   #based on modules:
   #module add Compiler/intel/ips_xe_2015/ips_xe_2015_intel15 mpi/openmpi/1.10.0-intel15 hdf5/1.8.13-intel15 gsl/1.15
   #environment:
