@@ -310,7 +310,7 @@ ListmodesCAmpPhaseFrequencySeries* ListmodesCAmpPhaseFrequencySeries_AddModeNoCo
     return list;
 }
 /* Get the element of a ListmodesCAmpPhaseFrequencySeries with a given index */
-ListmodesCAmpPhaseFrequencySeries* ListmodesCAmpPhaseFrequencySeries_GetMode( 
+ListmodesCAmpPhaseFrequencySeries* ListmodesCAmpPhaseFrequencySeries_GetMode(
 	   ListmodesCAmpPhaseFrequencySeries* const list,  /* List structure to get a particular mode from */
 	   int l, /*< major mode number */
 	   int m  /*< minor mode number */ )
@@ -324,7 +324,7 @@ ListmodesCAmpPhaseFrequencySeries* ListmodesCAmpPhaseFrequencySeries_GetMode(
     }
     return itr; /* The element returned is itself a pointer to a ListmodesCAmpPhaseFrequencySeries */
 }
-void ListmodesCAmpPhaseFrequencySeries_Destroy( 
+void ListmodesCAmpPhaseFrequencySeries_Destroy(
 	   ListmodesCAmpPhaseFrequencySeries* list  /* List structure to destroy; notice that the data is destroyed too */
 )
 {
@@ -378,7 +378,7 @@ ListmodesCAmpPhaseSpline* ListmodesCAmpPhaseSpline_AddModeNoCopy(
     return list;
 }
 /* Get the element of a ListmodesCAmpPhaseSpline with a given index */
-ListmodesCAmpPhaseSpline* ListmodesCAmpPhaseSpline_GetMode( 
+ListmodesCAmpPhaseSpline* ListmodesCAmpPhaseSpline_GetMode(
 	   ListmodesCAmpPhaseSpline* const list,  /* List structure to get a particular mode from */
 	   int l, /*< major mode number */
 	   int m  /*< minor mode number */ )
@@ -392,7 +392,7 @@ ListmodesCAmpPhaseSpline* ListmodesCAmpPhaseSpline_GetMode(
     }
     return itr; /* The element returned is itself a pointer to a ListmodesCAmpPhaseSpline */
 }
-void ListmodesCAmpPhaseSpline_Destroy( 
+void ListmodesCAmpPhaseSpline_Destroy(
 	   ListmodesCAmpPhaseSpline* list  /* List structure to destroy; notice that the data is destroyed too */
 )
 {

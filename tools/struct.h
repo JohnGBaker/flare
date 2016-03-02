@@ -57,8 +57,8 @@ typedef struct tagCAmpPhaseGSLSpline
   gsl_spline* spline_amp_real; /* We authorize complex amplitudes - will be used for the LISA response */
   gsl_spline* spline_amp_imag; /* We authorize complex amplitudes - will be used for the LISA response */
   gsl_spline* spline_phase;
-  gsl_interp_accel* accel_amp_real; 
-  gsl_interp_accel* accel_amp_imag; 
+  gsl_interp_accel* accel_amp_real;
+  gsl_interp_accel* accel_amp_imag;
   gsl_interp_accel* accel_phase;
 } CAmpPhaseGSLSpline;
 /* Splines in matrix form for complex amplitude and phase representation (for one mode) */
@@ -131,12 +131,12 @@ ListmodesCAmpPhaseFrequencySeries* ListmodesCAmpPhaseFrequencySeries_AddModeNoCo
 	   int l, /*< major mode number */
 	   int m  /*< minor mode number */
 );
-ListmodesCAmpPhaseFrequencySeries* ListmodesCAmpPhaseFrequencySeries_GetMode( 
+ListmodesCAmpPhaseFrequencySeries* ListmodesCAmpPhaseFrequencySeries_GetMode(
 	   ListmodesCAmpPhaseFrequencySeries* const list,  /* List structure to get a particular mode from */
 	   int l, /*< major mode number */
-	   int m  /*< minor mode number */    
+	   int m  /*< minor mode number */
 );
-void ListmodesCAmpPhaseFrequencySeries_Destroy( 
+void ListmodesCAmpPhaseFrequencySeries_Destroy(
 	   ListmodesCAmpPhaseFrequencySeries* list  /* List structure to destroy; notice that the data is destroyed too */
 );
 ListmodesCAmpPhaseSpline* ListmodesCAmpPhaseSpline_AddModeNoCopy(
@@ -145,12 +145,12 @@ ListmodesCAmpPhaseSpline* ListmodesCAmpPhaseSpline_AddModeNoCopy(
 	   int l, /*< major mode number */
 	   int m  /*< minor mode number */
 );
-ListmodesCAmpPhaseSpline* ListmodesCAmpPhaseSpline_GetMode( 
+ListmodesCAmpPhaseSpline* ListmodesCAmpPhaseSpline_GetMode(
 	   ListmodesCAmpPhaseSpline* const list,  /* List structure to get a particular mode from */
 	   int l, /*< major mode number */
-	   int m  /*< minor mode number */    
+	   int m  /*< minor mode number */
 );
-void ListmodesCAmpPhaseSpline_Destroy( 
+void ListmodesCAmpPhaseSpline_Destroy(
 	   ListmodesCAmpPhaseSpline* list  /* List structure to destroy; notice that the data is destroyed too */
 );
 
