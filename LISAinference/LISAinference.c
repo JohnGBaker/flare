@@ -82,13 +82,13 @@ void getphysparams(double *Cube, int *ndim) /* Note: ndim not used here */
   } else {
     m1 = priorParams->fix_m1;
     if (isnan(priorParams->fix_m2)) {
-      m2 = CubeToFlatPrior(Cube[i++], priorParams->comp_min, fmin(m1,priorParams->comp_max));
+      m2 = CubeToFlatPrior(Cube[i++], priorParams->comp_min, fmin(m1, priorParams->comp_max));
     } else {
       m2 = priorParams->fix_m2;
     }
   }
 
-  /* Note: here we output physical values in the cube (overwriting), and we keep the original order for physical parameters */ 
+  /* Note: here we output physical values in the cube (overwriting), and we keep the original order for physical parameters */
   Cube[0] = m1;
   Cube[1] = m2;
   Cube[2] = tRef;
@@ -179,7 +179,7 @@ void getLogLike(double *Cube, int *ndim, int *npars, double *lnew, void *context
     //TESTING
     //clock_t tbeg, tend;
     //tbeg = clock();
-    *lnew = CalculateLogLCAmpPhase(&templateparams, injection) - logZdata;
+    *lnew = CalculateLogLCAmpPhase(&templateparams, injection);
     //tend = clock();
     //printf("time Likelihood: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
     //
@@ -190,7 +190,7 @@ void getLogLike(double *Cube, int *ndim, int *npars, double *lnew, void *context
     //TESTING
     //clock_t tbeg, tend;
     //tbeg = clock();
-    *lnew = CalculateLogLReIm(&templateparams, injection) - logZdata;
+    *lnew = CalculateLogLReIm(&templateparams, injection);
     //tend = clock();
     //printf("time Likelihood: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
     //
@@ -274,7 +274,7 @@ int main(int argc, char *argv[])
   memset(globalparams, 0, sizeof(LISAGlobalParams));
   priorParams = (LISAPrior*) malloc(sizeof(LISAPrior));
   memset(priorParams, 0, sizeof(LISAPrior));
-  
+
   /* Parse commandline to read parameters of injection - copy the number of modes demanded for the injection */
   parse_args_LISA(argc, argv, injectedparams, globalparams, priorParams, &runParams);
   injectedparams->nbmode = globalparams->nbmodeinj;
@@ -295,7 +295,7 @@ int main(int argc, char *argv[])
     LISAGenerateInjectionCAmpPhase(injectedparams, injectedsignalCAmpPhase);
   }
   else if(globalparams->tagint==1) {
-    LISAGenerateInjectionReIm(injectedparams, globalparams->fmin, globalparams->nbptsoverlap, 1, injectedsignalReIm); /* Use here logarithmic sampling as a default */
+    LISAGenerateInjectionReIm(injectedparams, globalparams->minf, globalparams->nbptsoverlap, 1, injectedsignalReIm); /* Use here logarithmic sampling as a default */
   }
 
   /* Define SNRs */
@@ -326,7 +326,7 @@ int main(int argc, char *argv[])
       SNR123 = sqrt(injectedsignalCAmpPhase->TDI123ss);
     }
     else if(globalparams->tagint==1) {
-      LISAGenerateInjectionReIm(injectedparams, globalparams->fmin, globalparams->nbptsoverlap, 1, injectedsignalReIm); /* tagsampling fixed to 1, i.e. logarithmic sampling - could be made another global parameter */
+      LISAGenerateInjectionReIm(injectedparams, globalparams->minf, globalparams->nbptsoverlap, 1, injectedsignalReIm); /* tagsampling fixed to 1, i.e. logarithmic sampling - could be made another global parameter */
       SNR1 = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDI1Signal, injectedsignalReIm->TDI1Signal, injectedsignalReIm->noisevalues1));
       SNR2 = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDI2Signal, injectedsignalReIm->TDI2Signal, injectedsignalReIm->noisevalues2));
       SNR3 = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDI3Signal, injectedsignalReIm->TDI3Signal, injectedsignalReIm->noisevalues3));
@@ -336,24 +336,18 @@ int main(int argc, char *argv[])
 
   /* Print SNR */
   if (myid == 0) {
-    printf("Total SNR: %g\n", SNR123);
+    printf("SNR 3 Channels:    %g\n", SNR123);
   }
 
-  /* Calculate logL of data */
-  /*double dist_store = injectedparams->distance;
-    injectedparams->distance = 1.0e9;
-    logZdata = CalculateLogL(injectedparams, injectedsignal);
-    printf("logZdata = %lf\n", logZdata);
-    injectedparams->distance = dist_store;*/
-  logZdata = 0.0;
-  double logZtrue = 0.;
+  /* Calculate logL of injection */
+  double logZinj = 0.;
   if(globalparams->tagint==0) {
-    logZtrue = CalculateLogLCAmpPhase(injectedparams, injectedsignalCAmpPhase);
+    logZinj = CalculateLogLCAmpPhase(injectedparams, injectedsignalCAmpPhase);
   }
   else if(globalparams->tagint==1) {
-    logZtrue = CalculateLogLReIm(injectedparams, injectedsignalReIm);
+    logZinj = CalculateLogLReIm(injectedparams, injectedsignalReIm);
   }
-  if (myid == 0) printf("logZtrue = %lf\n", logZtrue-logZdata);
+  if (myid == 0) printf("logZinj = %lf\n", logZinj);
 
   /* Set the context pointer */
   void *context = NULL;
@@ -365,7 +359,7 @@ int main(int argc, char *argv[])
   }
 
   int nPar = 9;	  /* Total no. of parameters including free & derived parameters */
-  int ndim = 9;  /* No. of free parameters - to be changed later if some parameters are fixed */
+  int ndim = 9;   /* No. of free parameters - to be changed later if some parameters are fixed */
 
   /* check for parameters pinned to injected values */
   if (priorParams->pin_m1)
@@ -497,13 +491,13 @@ int main(int argc, char *argv[])
       fprintf(fphyslivepoints, "    %.18E", injectedparams->lambda);
       fprintf(fphyslivepoints, "    %.18E", injectedparams->beta);
       fprintf(fphyslivepoints, "    %.18E", injectedparams->polarization);
-      fprintf(fphyslivepoints, "   %.18E", logZtrue);
+      fprintf(fphyslivepoints, "   %.18E", logZinj);
       fprintf(fphyslivepoints, "   %d\n", 1); /* We impose that the injection belongs to mode no. 1 */
       /* Live points - convert to values in the cube */
       double* cubevalues = malloc(ndim*sizeof(double));
       getcubeparams(cubevalues, ndim, injectedparams, freeparamsmap);
       for(int i=0; i<ndim; i++) fprintf(flivepoints, "    %.18E", cubevalues[i]);
-      fprintf(flivepoints, "   %.18E\n", logZtrue); 
+      fprintf(flivepoints, "   %.18E\n", logZinj);
       free(cubevalues);
 
       /* Also set the resume option to true */
@@ -582,7 +576,7 @@ int main(int argc, char *argv[])
 
 	logZero = -1E90;				/* points with loglike < logZero will be ignored by MultiNest */
 
-	int maxiter = 0;				/* max no. of iterations, a non-positive value means infinity. MultiNest will terminate if either it */
+	int maxiter = runParams.maxiter;				/* max no. of iterations, a non-positive value means infinity. MultiNest will terminate if either it */
 							/* has done max no. of iterations or convergence criterion (defined through tol) has been satisfied */
 
 	/* void *context = 0; */				/* not required by MultiNest, any additional information user wants to pass */

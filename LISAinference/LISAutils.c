@@ -100,11 +100,11 @@ void LISAInjectionReIm_Init(LISAInjectionReIm** signal) {
 /************ Parsing arguments function ************/
 
 /* Parse command line to initialize LISAParams, LISAPrior, and LISARunParams objects */
-void parse_args_LISA(ssize_t argc, char **argv, 
+void parse_args_LISA(ssize_t argc, char **argv,
   LISAParams* params,
-  LISAGlobalParams* globalparams, 
-  LISAPrior* prior, 
-  LISARunParams* run) 
+  LISAGlobalParams* globalparams,
+  LISAPrior* prior,
+  LISARunParams* run)
 {
     char help[] = "\
 LISAInference by Sylvain Marsat, John Baker, and Philip Graff\n\
@@ -134,7 +134,7 @@ Arguments are as follows:\n\
 -----------------------------------------------------------------\n\
  --fRef                Reference frequency where phiRef is set (Hz, default=0, interpreted as Mf=0.14)\n\
  --deltatobs           Observation time (years, default=2)\n\
- --fmin                Minimal frequency (Hz, default=0) - when set to 0, use the first frequency covered by the noise data of the detector\n\
+ --minf                Minimal frequency (Hz, default=0) - when set to 0, use the first frequency covered by the noise data of the detector\n\
  --nbmodeinj           Number of modes of radiation to use for the injection (1-5, default=5)\n\
  --nbmodetemp          Number of modes of radiation to use for the templates (1-5, default=5)\n\
  --tagint              Tag choosing the integrator: 0 for Fresnel (default), 1 for linear integration\n\
@@ -152,7 +152,7 @@ Arguments are as follows:\n\
  --q-max               Maximum mass ratio, m1/m2 (default=11.98, minimum is 1)\n\
  --dist-min            Minimum distance to source (Mpc, default=100)\n\
  --dist-max            Maximum distance to source (Mpc, default=40*1e3)\n\
- --rescale-distprior        In case a target SNR is given with --snr, rescale dist-min and dist-max accordingly\n\
+ --rescale-distprior   In case a target SNR is given with --snr, rescale dist-min and dist-max accordingly\n\
 Parameters lambda, beta, phase, pol, inc can also ge given min and max values (for testing)\n\
 Syntax: --PARAM-min\n\
 \n\
@@ -181,6 +181,7 @@ Syntax: --PARAM-min\n\
  --nlive               Number of live points for sampling (default=1000)\n\
  --bambi               Use BAMBI's neural network logL learning (no option, default off)\n\
  --resume              Resume from a previous run (no option, default off)\n\
+ --maxiter             Maximum number of iterations - if 0, use convergence criterion to stop (default 0)\n\
  --outroot             Root for output files (default='chains/LISAinference_')\n\
  --netfile             Neural network settings file if using --bambi (default='LISAinference.inp')\n\
  --mmodal              Use multimodal decomposition (no option, default off)\n\
@@ -207,7 +208,7 @@ Syntax: --PARAM-min\n\
     /* set default values for the global params */
     globalparams->fRef = 0.;
     globalparams->deltatobs = 2.;
-    globalparams->fmin = 0.;
+    globalparams->minf = 0.;
     globalparams->nbmodeinj = 5;
     globalparams->nbmodetemp = 5;
     globalparams->tagint = 0;
@@ -262,6 +263,7 @@ Syntax: --PARAM-min\n\
     strcpy(run->outroot, "chains/LISAinference_");
     run->bambi = 0;
     run->resume = 0;
+    run->maxiter = 0;
     strcpy(run->netfile, "LISAinference.inp");
     run->mmodal = 0;
     run->maxcls = 1;
@@ -296,8 +298,8 @@ Syntax: --PARAM-min\n\
             globalparams->fRef = atof(argv[++i]);
         } else if (strcmp(argv[i], "--deltatobs") == 0) {
             globalparams->deltatobs = atof(argv[++i]);
-        } else if (strcmp(argv[i], "--fmin") == 0) {
-            globalparams->fmin = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--minf") == 0) {
+            globalparams->minf = atof(argv[++i]);
         } else if (strcmp(argv[i], "--nbmodeinj") == 0) {
             globalparams->nbmodeinj = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--nbmodetemp") == 0) {
@@ -396,6 +398,8 @@ Syntax: --PARAM-min\n\
             run->bambi = 1;
         } else if (strcmp(argv[i], "--resume") == 0) {
             run->resume = 1;
+        } else if (strcmp(argv[i], "--maxiter") == 0) {
+            run->maxiter = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--outroot") == 0) {
             strcpy(run->outroot, argv[++i]);
         } else if (strcmp(argv[i], "--netfile") == 0) {
@@ -456,7 +460,7 @@ int print_parameters_to_file_LISA(
   fprintf(f, "-----------------------------------------------\n");
   fprintf(f, "fRef:         %.16e\n", globalparams->fRef);
   fprintf(f, "deltatobs:    %.16e\n", globalparams->deltatobs);
-  fprintf(f, "fmin:         %.16e\n", globalparams->fmin);
+  fprintf(f, "minf:         %.16e\n", globalparams->minf);
   fprintf(f, "nbmodeinj:    %d\n", globalparams->nbmodeinj);
   fprintf(f, "nbmodetemp:   %d\n", globalparams->nbmodetemp);
   fprintf(f, "tagint:       %d\n", globalparams->tagint);
@@ -520,6 +524,7 @@ int print_parameters_to_file_LISA(
   fprintf(f, "nlive:   %d\n", run->nlive);
   fprintf(f, "bambi:   %d\n", run->bambi);
   fprintf(f, "resume:  %d\n", run->resume);
+  fprintf(f, "maxiter:  %d\n", run->maxiter);
   fprintf(f, "mmodal:  %d\n", run->mmodal);
   fprintf(f, "maxcls:  %d\n", run->maxcls);
   fprintf(f, "nclspar: %d\n", run->nclspar);
@@ -559,7 +564,7 @@ int print_rescaleddist_to_file_LISA(
   return SUCCESS;
 }
 
-/***************************** Functions to generate signals and compute likelihoods ******************************/
+/************************* Functions to generate signals and compute likelihoods **************************/
 
 /* Function generating a LISA signal as a list of modes in CAmp/Phase form, from LISA parameters */
 int LISAGenerateSignalCAmpPhase(
@@ -582,9 +587,6 @@ int LISAGenerateSignalCAmpPhase(
   /* Note: SimEOBNRv2HMROM accepts masses and distances in SI units, whereas LISA params is in solar masses and Mpc */
   ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
 
-  //
-  //printf("%d|%g|%g|%g|%g|%g|%g\n", params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
-
   /* If the ROM waveform generation failed (e.g. parameters were out of bounds) return FAILURE */
   if(ret==FAILURE) return FAILURE;
 
@@ -598,32 +600,6 @@ int LISAGenerateSignalCAmpPhase(
   //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
 
-  //
-  //params->distance = 58667.9;
-  //params->tRef = 0;
-  //params->phiRef = 0;
-  //params->m1 = 1.5e6;
-  //params->m2 = 0.5e6;
-  //params->lambda = 1.7;
-  //params->beta = PI/3;
-  //params->inclination = PI/3;
-  //params->polarization = 1.2;
-  //ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
-  //LISASimFDResponseTDIAET(&listROM, &listTDIA, &listTDIE, &listTDIT, params->tRef, params->lambda, params->beta, params->inclination, params->polarization);
-  /* printf("Params in LISAGenerateSignalCAmpPhase:\n"); */
-  /* printf("params->nbmode: %d\n", params->nbmode); */
-  /* printf("params->deltatRef: %g\n", params->tRef - injectedparams->tRef); */
-  /* printf("params->phiRef: %g\n", params->phiRef); */
-  /* printf("globalparams->fRef: %g\n", globalparams->fRef); */
-  /* printf("params->m1: %g\n", params->m1); */
-  /* printf("params->m2: %g\n", params->m2); */
-  /* printf("params->distance: %g\n", params->distance); */
-  /* printf("params->tRef: %g\n", params->tRef); */
-  /* printf("params->lambda: %g\n", params->lambda); */
-  /* printf("params->beta: %g\n", params->beta); */
-  /* printf("params->inclination: %g\n", params->inclination); */
-  /* printf("params->polarization: %g\n", params->polarization); */
-
   /* Pre-interpolate the injection, building the spline matrices */
   ListmodesCAmpPhaseSpline* listsplinesgen1 = NULL;
   ListmodesCAmpPhaseSpline* listsplinesgen2 = NULL;
@@ -635,7 +611,7 @@ int LISAGenerateSignalCAmpPhase(
   /* Precompute the inner product (h|h) - takes into account the length of the observation with deltatobs */
   double Mfstartobs = NewtonianfoftGeom(params->m1 / params->m2, (globalparams->deltatobs * YRSID_SI) / ((params->m1 + params->m2) * MTSUN_SI));
   double fstartobs = Mfstartobs / ((params->m1 + params->m2) * MTSUN_SI);
-  double fLow = fmax(__LISASimFD_Noise_fLow, globalparams->fmin);
+  double fLow = fmax(__LISASimFD_Noise_fLow, globalparams->minf);
   double fHigh = __LISASimFD_Noise_fHigh;
   RealFunctionPtr NoiseSn1 = NoiseFunction(globalparams->tagtdi, 1);
   RealFunctionPtr NoiseSn2 = NoiseFunction(globalparams->tagtdi, 2);
@@ -645,14 +621,6 @@ int LISAGenerateSignalCAmpPhase(
   double TDI123hh = FDListmodesFresnelOverlap3Chan(listTDI1, listTDI2, listTDI3, listsplinesgen1, listsplinesgen2, listsplinesgen3, NoiseSn1, NoiseSn2, NoiseSn3, fLow, fHigh, fstartobs, fstartobs);
   //tend = clock();
   //printf("time SNRs: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
-
-  //
-  //printf("fstartobs inside LISAGenerateSignalCAmpPhase: %g\n", fstartobs);
-/*   Write_Text_Vector("/Users/marsat/src/flare/test/testfresnel/temp4", "signalAfreq.txt", ListmodesCAmpPhaseFrequencySeries_GetMode(listTDIA, 2, 2)->freqseries->freq); */
-/* Write_Text_Vector("/Users/marsat/src/flare/test/testlisaoverlap/temp4", "signalAampreal.txt", ListmodesCAmpPhaseFrequencySeries_GetMode(listTDIA, 2, 2)->freqseries->amp_real); */
-/* Write_Text_Vector("/Users/marsat/src/flare/test/testlisaoverlap/temp4", "signalAampimag.txt", ListmodesCAmpPhaseFrequencySeries_GetMode(listTDIA, 2, 2)->freqseries->amp_imag); */
-/* Write_Text_Vector("/Users/marsat/src/flare/test/testlisaoverlap/temp4", "signalAphase.txt", ListmodesCAmpPhaseFrequencySeries_GetMode(listTDIA, 2, 2)->freqseries->phase); */
-/*   printf("TDIAEThh inside LISAGenerateSignalCAmpPhase: %g\n", TDIAEThh); */
 
   /* Output and clean up */
   signal->TDI1Signal = listTDI1;
@@ -696,21 +664,6 @@ int LISAGenerateInjectionCAmpPhase(
   //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
 
-  //
-  /* printf("Params in LISAGenerateInjectionCAmpPhase:\n"); */
-  /* printf("params->nbmode: %d\n", params->nbmode); */
-  /* printf("params->deltatRef: %g\n", params->tRef - injectedparams->tRef); */
-  /* printf("params->phiRef: %g\n", params->phiRef); */
-  /* printf("globalparams->fRef: %g\n", globalparams->fRef); */
-  /* printf("params->m1: %g\n", params->m1); */
-  /* printf("params->m2: %g\n", params->m2); */
-  /* printf("params->distance: %g\n", params->distance); */
-  /* printf("params->tRef: %g\n", params->tRef); */
-  /* printf("params->lambda: %g\n", params->lambda); */
-  /* printf("params->beta: %g\n", params->beta); */
-  /* printf("params->inclination: %g\n", params->inclination); */
-  /* printf("params->polarization: %g\n", params->polarization); */
-
   /* Pre-interpolate the injection, building the spline matrices */
   ListmodesCAmpPhaseSpline* listsplinesinj1 = NULL;
   ListmodesCAmpPhaseSpline* listsplinesinj2 = NULL;
@@ -722,7 +675,7 @@ int LISAGenerateInjectionCAmpPhase(
   /* Precompute the inner product (h|h) - takes into account the length of the observation with deltatobs */
   double Mfstartobs = NewtonianfoftGeom(injectedparams->m1 / injectedparams->m2, (globalparams->deltatobs * YRSID_SI) / ((injectedparams->m1 + injectedparams->m2) * MTSUN_SI));
   double fstartobs = Mfstartobs / ((injectedparams->m1 + injectedparams->m2) * MTSUN_SI);
-  double fLow = fmax(__LISASimFD_Noise_fLow, globalparams->fmin);
+  double fLow = fmax(__LISASimFD_Noise_fLow, globalparams->minf);
   double fHigh = __LISASimFD_Noise_fHigh;
   RealFunctionPtr NoiseSn1 = NoiseFunction(globalparams->tagtdi, 1);
   RealFunctionPtr NoiseSn2 = NoiseFunction(globalparams->tagtdi, 2);
@@ -732,10 +685,6 @@ int LISAGenerateInjectionCAmpPhase(
   double TDI123ss = FDListmodesFresnelOverlap3Chan(listTDI1, listTDI2, listTDI3, listsplinesinj1, listsplinesinj2, listsplinesinj3, NoiseSn1, NoiseSn2, NoiseSn3, fLow, fHigh, fstartobs, fstartobs);
   //tend = clock();
   //printf("time SNRs: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
-
-  //
-  //printf("fstartobs inside LISAGenerateInjectionCAmpPhase: %g\n", fstartobs);
-  //printf("TDIAETss inside LISAGenerateInjectionCAmpPhase: %g\n", TDIAETss);
 
   /* Output and clean up */
   signal->TDI1Splines = listsplinesinj1;
@@ -822,7 +771,7 @@ int LISAGenerateSignalReIm(
 /* Function generating a LISA injection signal as a frequency series in Re/Im form where the modes have been summed, from LISA parameters - determines the frequencies */
 int LISAGenerateInjectionReIm(
   struct tagLISAParams* injectedparams,      /* Input: set of LISA parameters of the template */
-  double fLow,                               /* Input: additional lower frequency limit (argument fmin) */
+  double fLow,                               /* Input: additional lower frequency limit (argument minf) */
   int nbpts,                                 /* Input: number of frequency samples */
   int tagsampling,                           /* Input: tag for using linear (0) or logarithmic (1) sampling */
   struct tagLISAInjectionReIm* injection)    /* Output: structure for the generated signal */
@@ -932,7 +881,7 @@ double CalculateLogLCAmpPhase(LISAParams *params, LISAInjectionCAmpPhase* inject
     double Mfstartobsgenerated = NewtonianfoftGeom(params->m1 / params->m2, (globalparams->deltatobs * YRSID_SI) / ((params->m1 + params->m2) * MTSUN_SI));
     double fstartobsinjected = Mfstartobsinjected / ((injectedparams->m1 + injectedparams->m2) * MTSUN_SI);
     double fstartobsgenerated = Mfstartobsgenerated / ((params->m1 + params->m2) * MTSUN_SI);
-    double fLow = fmax(__LISASimFD_Noise_fLow, globalparams->fmin);
+    double fLow = fmax(__LISASimFD_Noise_fLow, globalparams->minf);
     double fHigh = __LISASimFD_Noise_fHigh;
     RealFunctionPtr NoiseSn1 = NoiseFunction(globalparams->tagtdi, 1);
     RealFunctionPtr NoiseSn2 = NoiseFunction(globalparams->tagtdi, 2);
@@ -940,31 +889,11 @@ double CalculateLogLCAmpPhase(LISAParams *params, LISAInjectionCAmpPhase* inject
     //TESTING
     //tbeg = clock();
     double overlapTDI123 = FDListmodesFresnelOverlap3Chan(generatedsignal->TDI1Signal, generatedsignal->TDI2Signal, generatedsignal->TDI3Signal, injection->TDI1Splines, injection->TDI2Splines, injection->TDI3Splines, NoiseSn1, NoiseSn2, NoiseSn3, fLow, fHigh, fstartobsinjected, fstartobsgenerated);
-    /* double loglikelihoodTDIA = FDLogLikelihood(injection->TDIASignal, generatedsignal->TDIASignal, NoiseSnA, fLow, fHigh, injection->TDIAhh, generatedsignal->TDIAhh, fstartobsinjected, fstartobsgenerated, globalparams->tagint); */
-    /* double loglikelihoodTDIE = FDLogLikelihood(injection->TDIESignal, generatedsignal->TDIESignal, NoiseSnE, fLow, fHigh, injection->TDIEhh, generatedsignal->TDIEhh, fstartobsinjected, fstartobsgenerated, globalparams->tagint); */
-    /* double loglikelihoodTDIT = FDLogLikelihood(injection->TDITSignal, generatedsignal->TDITSignal, NoiseSnT, fLow, fHigh, injection->TDIThh, generatedsignal->TDIThh, fstartobsinjected, fstartobsgenerated, globalparams->tagint); */
     //tend = clock();
     //printf("time Overlaps: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
     //
 
-    //
-    //printf("-----------------\n");
-    //printf("(s|h) overlap TDIAET: %g\n", overlapTDIAET);
-    //printf("-----------------\n");
-
     /* Output: value of the loglikelihood for the combined signals, assuming noise independence */
-
-    //
-  /* ListmodesCAmpPhaseSpline* listsplinesgenA = NULL; */
-  /* ListmodesCAmpPhaseSpline* listsplinesgenE = NULL; */
-  /* ListmodesCAmpPhaseSpline* listsplinesgenT = NULL; */
-  /* BuildListmodesCAmpPhaseSpline(&listsplinesgenA, generatedsignal->TDIASignal); */
-  /* BuildListmodesCAmpPhaseSpline(&listsplinesgenE, generatedsignal->TDIESignal); */
-  /* BuildListmodesCAmpPhaseSpline(&listsplinesgenT, generatedsignal->TDITSignal); */
-  /* double testhhoverlapTDIAET = FDListmodesFresnelOverlapAET(generatedsignal->TDIASignal, generatedsignal->TDIESignal, generatedsignal->TDITSignal, listsplinesgenA, listsplinesgenE, listsplinesgenT, NoiseSnA, NoiseSnE, NoiseSnT, fLow, fHigh, fstartobsgenerated, fstartobsinjected); */
-  /* printf("hh overlap TDIAET: %g\n", testhhoverlapTDIAET); */
-  /*   printf("(overlapTDIAET,1./2*(injection->TDIAETss), 1./2*(generatedsignal->TDIAEThh): (%g, %g, %g)\n", overlapTDIAET, 1./2*(injection->TDIAETss), 1./2*(generatedsignal->TDIAEThh)); */
-
     logL = overlapTDI123 - 1./2*(injection->TDI123ss) - 1./2*(generatedsignal->TDI123hh);
   }
 

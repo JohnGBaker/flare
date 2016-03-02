@@ -102,25 +102,6 @@ TDItag ParseTDItag(char* string) {
   }
   return tag;
 }
-/* Function returning the number of channels for a TDItag */
-int nbchanTDI(TDItag tditag) {
-  int nbchan;
-  switch(tditag) {
-  case TDIXYZ: nbchan = 3;
-  case TDIalphabetagamma: nbchan = 3;
-  case TDIAETXYZ: nbchan = 3;
-  case TDIAETalphabetagamma: nbchan = 3;
-  case TDIX: nbchan = 1;
-  case TDIalpha: nbchan = 1;
-  case TDIAXYZ: nbchan = 1;
-  case TDIEXYZ: nbchan = 1;
-  case TDITXYZ: nbchan = 1;
-  case TDIAalphabetagamma: nbchan = 1;
-  case TDIEalphabetagamma: nbchan = 1;
-  case TDITalphabetagamma: nbchan = 1;
-  }
-  return nbchan;
-}
 
 /* Function cardinal sine */
 double sinc(const double x) {
@@ -385,7 +366,7 @@ void SetCoeffsG(const double lambda, const double beta, const double psi) {
 
 /* Function evaluating G21, combining the two polarization with the spherical harmonics factors */
 double complex G21mode(const double f, const double t, const double complex Yfactorplus, const double complex Yfactorcross) {
-  
+
   for(int j=0; j<4; j++) {
     cosarray[j] = cos((j+1) * Omega_SI * t);
     sinarray[j] = sin((j+1) * Omega_SI * t);
@@ -402,11 +383,11 @@ double complex G21mode(const double f, const double t, const double complex Yfac
     kn3 += cosarray[j] * coeffkn3cos[j] + sinarray[j] * coeffkn3sin[j];
     kp1plusp2 += cosarray[j] * coeffkp1plusp2cos[j] + sinarray[j] * coeffkp1plusp2sin[j];
   }
-  return I*PI*f*L_SI/C_SI * (n3Pn3plus*Yfactorplus + n3Pn3cross*Yfactorcross) * sinc( PI*f*L_SI/C_SI * (1.+kn3)) * cexp( I*PI*f*L_SI/C_SI * (1.+kp1plusp2) ); 
+  return I*PI*f*L_SI/C_SI * (n3Pn3plus*Yfactorplus + n3Pn3cross*Yfactorcross) * sinc( PI*f*L_SI/C_SI * (1.+kn3)) * cexp( I*PI*f*L_SI/C_SI * (1.+kp1plusp2) );
 }
 /* Function evaluating G12, combining the two polarization with the spherical harmonics factors */
 double complex G12mode(const double f, const double t, const double complex Yfactorplus, const double complex Yfactorcross) {
-  
+
   for(int j=0; j<4; j++) {
     cosarray[j] = cos((j+1) * Omega_SI * t);
     sinarray[j] = sin((j+1) * Omega_SI * t);
@@ -424,11 +405,11 @@ double complex G12mode(const double f, const double t, const double complex Yfac
     kp1plusp2 += cosarray[j] * coeffkp1plusp2cos[j] + sinarray[j] * coeffkp1plusp2sin[j];
   }
 
-  return I*PI*f*L_SI/C_SI * (n3Pn3plus*Yfactorplus + n3Pn3cross*Yfactorcross) * sinc( PI*f*L_SI/C_SI * (1.-kn3)) * cexp( I*PI*f*L_SI/C_SI * (1.+kp1plusp2) ); 
+  return I*PI*f*L_SI/C_SI * (n3Pn3plus*Yfactorplus + n3Pn3cross*Yfactorcross) * sinc( PI*f*L_SI/C_SI * (1.-kn3)) * cexp( I*PI*f*L_SI/C_SI * (1.+kp1plusp2) );
 }
 /* Function evaluating G32, combining the two polarization with the spherical harmonics factors */
 double complex G32mode(const double f, const double t, const double complex Yfactorplus, const double complex Yfactorcross) {
-  
+
   for(int j=0; j<4; j++) {
     cosarray[j] = cos((j+1) * Omega_SI * t);
     sinarray[j] = sin((j+1) * Omega_SI * t);
@@ -446,11 +427,11 @@ double complex G32mode(const double f, const double t, const double complex Yfac
     kp2plusp3 += cosarray[j] * coeffkp2plusp3cos[j] + sinarray[j] * coeffkp2plusp3sin[j];
   }
 
-  return I*PI*f*L_SI/C_SI * (n1Pn1plus*Yfactorplus + n1Pn1cross*Yfactorcross) * sinc( PI*f*L_SI/C_SI * (1.+kn1)) * cexp( I*PI*f*L_SI/C_SI * (1.+kp2plusp3) ); 
+  return I*PI*f*L_SI/C_SI * (n1Pn1plus*Yfactorplus + n1Pn1cross*Yfactorcross) * sinc( PI*f*L_SI/C_SI * (1.+kn1)) * cexp( I*PI*f*L_SI/C_SI * (1.+kp2plusp3) );
 }
 /* Function evaluating G23, combining the two polarization with the spherical harmonics factors */
 double complex G23mode(const double f, const double t, const double complex Yfactorplus, const double complex Yfactorcross) {
-  
+
   for(int j=0; j<4; j++) {
     cosarray[j] = cos((j+1) * Omega_SI * t);
     sinarray[j] = sin((j+1) * Omega_SI * t);
@@ -468,11 +449,11 @@ double complex G23mode(const double f, const double t, const double complex Yfac
     kp2plusp3 += cosarray[j] * coeffkp2plusp3cos[j] + sinarray[j] * coeffkp2plusp3sin[j];
   }
 
-  return I*PI*f*L_SI/C_SI * (n1Pn1plus*Yfactorplus + n1Pn1cross*Yfactorcross) * sinc( PI*f*L_SI/C_SI * (1.-kn1)) * cexp( I*PI*f*L_SI/C_SI * (1.+kp2plusp3) ); 
+  return I*PI*f*L_SI/C_SI * (n1Pn1plus*Yfactorplus + n1Pn1cross*Yfactorcross) * sinc( PI*f*L_SI/C_SI * (1.-kn1)) * cexp( I*PI*f*L_SI/C_SI * (1.+kp2plusp3) );
 }
 /* Function evaluating G13, combining the two polarization with the spherical harmonics factors */
 double complex G13mode(const double f, const double t, const double complex Yfactorplus, const double complex Yfactorcross) {
-  
+
   for(int j=0; j<4; j++) {
     cosarray[j] = cos((j+1) * Omega_SI * t);
     sinarray[j] = sin((j+1) * Omega_SI * t);
@@ -490,11 +471,11 @@ double complex G13mode(const double f, const double t, const double complex Yfac
     kp3plusp1 += cosarray[j] * coeffkp3plusp1cos[j] + sinarray[j] * coeffkp3plusp1sin[j];
   }
 
-  return I*PI*f*L_SI/C_SI * (n2Pn2plus*Yfactorplus + n2Pn2cross*Yfactorcross) * sinc( PI*f*L_SI/C_SI * (1.+kn2)) * cexp( I*PI*f*L_SI/C_SI * (1.+kp3plusp1) ); 
+  return I*PI*f*L_SI/C_SI * (n2Pn2plus*Yfactorplus + n2Pn2cross*Yfactorcross) * sinc( PI*f*L_SI/C_SI * (1.+kn2)) * cexp( I*PI*f*L_SI/C_SI * (1.+kp3plusp1) );
 }
 /* Function evaluating G31, combining the two polarization with the spherical harmonics factors */
 double complex G31mode(const double f, const double t, const double complex Yfactorplus, const double complex Yfactorcross) {
-  
+
   for(int j=0; j<4; j++) {
     cosarray[j] = cos((j+1) * Omega_SI * t);
     sinarray[j] = sin((j+1) * Omega_SI * t);
@@ -512,7 +493,7 @@ double complex G31mode(const double f, const double t, const double complex Yfac
     kp3plusp1 += cosarray[j] * coeffkp3plusp1cos[j] + sinarray[j] * coeffkp3plusp1sin[j];
   }
 
-  return I*PI*f*L_SI/C_SI * (n2Pn2plus*Yfactorplus + n2Pn2cross*Yfactorcross) * sinc( PI*f*L_SI/C_SI * (1.-kn2)) * cexp( I*PI*f*L_SI/C_SI * (1.+kp3plusp1) ); 
+  return I*PI*f*L_SI/C_SI * (n2Pn2plus*Yfactorplus + n2Pn2cross*Yfactorcross) * sinc( PI*f*L_SI/C_SI * (1.-kn2)) * cexp( I*PI*f*L_SI/C_SI * (1.+kp3plusp1) );
 }
 
 /* Function evaluating all coefficients G12, G21, G23, G32, G31, G13, combining the two polarization with the spherical harmonics factors */
@@ -528,7 +509,7 @@ int EvaluateGABmode(
   const double t,                          /* Time */
   const double complex Yfactorplus,        /* Spin-weighted spherical harmonic factor for plus */
   const double complex Yfactorcross)       /* Spin-weighted spherical harmonic factor for cross */
-{  
+{
   /* Precompute array of sine/cosine */
   for(int j=0; j<4; j++) {
     cosarray[j] = cos((j+1) * Omega_SI * t);
@@ -882,7 +863,7 @@ double y12TD(
   gsl_interp_accel* accelhp,               /* Accelerator for hp spline */
   gsl_interp_accel* accelhc,               /* Accelerator for hc spline */
   const double t)                          /* Time */
-{  
+{
   /* Precompute array of sine/cosine */
   for(int j=0; j<4; j++) {
     cosarray[j] = cos((j+1) * Omega_SI * t);
@@ -922,7 +903,7 @@ double y21TD(
   gsl_interp_accel* accelhp,               /* Accelerator for hp spline */
   gsl_interp_accel* accelhc,               /* Accelerator for hc spline */
   const double t)                          /* Time */
-{  
+{
   /* Precompute array of sine/cosine */
   for(int j=0; j<4; j++) {
     cosarray[j] = cos((j+1) * Omega_SI * t);
@@ -962,7 +943,7 @@ double y23TD(
   gsl_interp_accel* accelhp,               /* Accelerator for hp spline */
   gsl_interp_accel* accelhc,               /* Accelerator for hc spline */
   const double t)                          /* Time */
-{  
+{
   /* Precompute array of sine/cosine */
   for(int j=0; j<4; j++) {
     cosarray[j] = cos((j+1) * Omega_SI * t);
@@ -1002,7 +983,7 @@ double y32TD(
   gsl_interp_accel* accelhp,               /* Accelerator for hp spline */
   gsl_interp_accel* accelhc,               /* Accelerator for hc spline */
   const double t)                          /* Time */
-{  
+{
   /* Precompute array of sine/cosine */
   for(int j=0; j<4; j++) {
     cosarray[j] = cos((j+1) * Omega_SI * t);
@@ -1042,7 +1023,7 @@ double y31TD(
   gsl_interp_accel* accelhp,               /* Accelerator for hp spline */
   gsl_interp_accel* accelhc,               /* Accelerator for hc spline */
   const double t)                          /* Time */
-{  
+{
   /* Precompute array of sine/cosine */
   for(int j=0; j<4; j++) {
     cosarray[j] = cos((j+1) * Omega_SI * t);
@@ -1082,7 +1063,7 @@ double y13TD(
   gsl_interp_accel* accelhp,               /* Accelerator for hp spline */
   gsl_interp_accel* accelhc,               /* Accelerator for hc spline */
   const double t)                          /* Time */
-{  
+{
   /* Precompute array of sine/cosine */
   for(int j=0; j<4; j++) {
     cosarray[j] = cos((j+1) * Omega_SI * t);
