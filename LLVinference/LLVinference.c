@@ -8,7 +8,64 @@ void getphysparams(double *Cube, int *ndim)
 	int i = 0;
   double m1=0., m2=0., tRef=0., dist=0., phase=0., inc=0., ra=0., dec=0., pol=0.;
 
-  // component masses
+	/* Note: we use here the order for the cube parameters */
+  /* Order of the 9 original parameters (fixed): m1, m2, tRef, dist, phase, inc, ra, dec, pol */
+  /* Order of the 9 cube parameters (modified for clustering): ra, dec, tRef, phase, pol, inc, dist, m1, m2 */
+
+	/* Sky location (ra then dec) */
+	if (isnan(priorParams->fix_ra)) {
+		ra = CubeToFlatPrior(Cube[i++], priorParams->ra_min, priorParams->ra_max);
+	} else {
+		ra = priorParams->fix_ra;
+  }
+  if (isnan(priorParams->fix_dec)) {
+    dec = CubeToCosPrior(Cube[i++], priorParams->dec_min, priorParams->dec_max);
+  } else {
+    dec = priorParams->fix_dec;
+  }
+
+	/* Time */
+  if (isnan(priorParams->fix_time)) {
+    tRef = CubeToFlatPrior(Cube[i++], injectedparams->tRef - priorParams->deltaT,
+           injectedparams->tRef + priorParams->deltaT);
+  } else {
+    tRef = priorParams->fix_time;
+  }
+
+  /* Orbital phase */
+  if (isnan(priorParams->fix_phase)) {
+    phase = CubeToFlatPrior(Cube[i++], priorParams->phase_min, priorParams->phase_max);
+  } else {
+    phase = priorParams->fix_phase;
+  }
+
+  /* Polarization */
+  if (isnan(priorParams->fix_pol)) {
+    pol = CubeToFlatPrior(Cube[i++], priorParams->pol_min, priorParams->pol_max);
+  } else {
+    pol = priorParams->fix_pol;
+  }
+
+  /* Inclination */
+  if (isnan(priorParams->fix_inc)) {
+    inc = CubeToSinPrior(Cube[i++], priorParams->inc_min, priorParams->inc_max);
+  } else {
+    inc = priorParams->fix_inc;
+  }
+
+  /* Distance - two priors allowed: r^2-weighted or flat */
+  if (isnan(priorParams->fix_dist)) {
+    if(priorParams->flat_distprior) {
+      dist = CubeToFlatPrior(Cube[i++], priorParams->dist_min, priorParams->dist_max);
+    }
+    else {
+      dist = CubeToPowerPrior(2.0, Cube[i++], priorParams->dist_min, priorParams->dist_max);
+    }
+  } else {
+    dist = priorParams->fix_dist;
+  }
+
+  /* Component masses */
   if (isnan(priorParams->fix_m1)) {
     if (isnan(priorParams->fix_m2)) {
       m1 = CubeToFlatPrior(Cube[i++], priorParams->comp_min, priorParams->comp_max);
@@ -17,7 +74,7 @@ void getphysparams(double *Cube, int *ndim)
         double tmp = m1;
         m1 = m2;
         m2 = tmp;
-	}*/
+      }*/
     } else {
       m2 = priorParams->fix_m2;
       m1 = CubeToFlatPrior(Cube[i++], fmax(priorParams->comp_min,m2), priorParams->comp_max);
@@ -31,54 +88,6 @@ void getphysparams(double *Cube, int *ndim)
     }
   }
 
-  // time
-  if (isnan(priorParams->fix_time)) {
-    tRef = CubeToFlatPrior(Cube[i++], injectedparams->tRef - priorParams->deltaT,
-           injectedparams->tRef + priorParams->deltaT);
-  } else {
-    tRef = priorParams->fix_time;
-  }
-
-  // distance
-  if (isnan(priorParams->fix_dist)) {
-    dist = CubeToPowerPrior(2.0, Cube[i++], priorParams->dist_min, priorParams->dist_max);
-  } else {
-    dist = priorParams->fix_dist;
-  }
-
-  // orbital phase
-  if (isnan(priorParams->fix_phase)) {
-    phase = CubeToFlatPrior(Cube[i++], 0.0, 2.0 * M_PI);
-  } else {
-    phase = priorParams->fix_phase;
-  }
-
-  // inclination
-  if (isnan(priorParams->fix_inc)) {
-    inc = CubeToSinPrior(Cube[i++], 0.0, M_PI);
-  } else {
-    inc = priorParams->fix_inc;
-  }
-
-  // sky location (RA then dec)
-  if (isnan(priorParams->fix_ra)) {
-    ra = CubeToFlatPrior(Cube[i++], 0.0, 2.0 * M_PI);
-  } else {
-    ra = priorParams->fix_ra;
-  }
-  if (isnan(priorParams->fix_dec)) {
-    dec = CubeToCosPrior(Cube[i++], -M_PI / 2.0, M_PI / 2.0);
-  } else {
-    dec = priorParams->fix_dec;
-  }
-
-  // polarization
-  if (isnan(priorParams->fix_pol)) {
-    pol = CubeToFlatPrior(Cube[i++], 0.0, M_PI);
-  } else {
-    pol = priorParams->fix_pol;
-  }
-
   Cube[0] = m1;
   Cube[1] = m2;
   Cube[2] = tRef;
@@ -90,16 +99,38 @@ void getphysparams(double *Cube, int *ndim)
   Cube[8] = pol;
 }
 
+void getcubeparams(double* Cube, int ndim, LLVParams* params, int* freeparamsmap)
+{
+  int i = 0;
+  double m1 = params->m1;
+  double m2 = params->m2;
+  double tRef = params->tRef;
+  double dist = params->distance;
+  double phase = params->phiRef;
+  double inc = params->inclination;
+  double ra = params->ra;
+  double dec = params->dec;
+  double pol = params->polarization;
+
+  /* Note: freeparamsmap has indices in the order of the (free) cube parameters, and values in the indices of physical parameters */
+  for(int i=0; i<ndim; i++) {
+    if(freeparamsmap[i]==0) Cube[i] = FlatPriorToCube(m1, priorParams->comp_min, priorParams->comp_max);
+    if(freeparamsmap[i]==1) Cube[i] = FlatPriorToCube(m2, priorParams->comp_min, priorParams->comp_max);
+    if(freeparamsmap[i]==2) Cube[i] = FlatPriorToCube(tRef, injectedparams->tRef - priorParams->deltaT, injectedparams->tRef + priorParams->deltaT);
+    if(freeparamsmap[i]==3) Cube[i] = PowerPriorToCube(2., dist, priorParams->dist_min, priorParams->dist_max);
+    if(freeparamsmap[i]==4) Cube[i] = FlatPriorToCube(phase, priorParams->phase_min, priorParams->phase_max);
+    if(freeparamsmap[i]==5) Cube[i] = SinPriorToCube(inc, priorParams->inc_min, priorParams->inc_max);
+    if(freeparamsmap[i]==6) Cube[i] = FlatPriorToCube(ra, priorParams->ra_min, priorParams->ra_max);
+    if(freeparamsmap[i]==7) Cube[i] = CosPriorToCube(dec, priorParams->dec_min, priorParams->dec_max);
+    if(freeparamsmap[i]==8) Cube[i] = FlatPriorToCube(pol, priorParams->pol_min, priorParams->pol_max);
+  }
+}
+
 /******************************************** getallparams routine ****************************************************/
 
 void getallparams(double *Cube, int *ndim)
 {
 	getphysparams(Cube,ndim);
-
-  Cube[9] = Cube[0] + Cube[1];
-  Cube[10] = Cube[0] / Cube[1];
-  Cube[11] = Cube[10] / pow(1.0 + Cube[10], 2.0);
-  Cube[12] = Cube[9] * pow(Cube[11], 0.6);
 }
 
 /******************************************** loglikelihood routine ****************************************************/
@@ -141,9 +172,9 @@ void getLogLike(double *Cube, int *ndim, int *npars, double *lnew, void *context
   templateparams.nbmode = globalparams->nbmodetemp;
 
   /* Note: context points to a LLVContext structure containing a LLVSignal* */
-  LLVSignal* injection = ((LLVSignal*) context);
+  LLVInjectionCAmpPhase* injection = ((LLVInjectionCAmpPhase*) context);
 
-  *lnew = CalculateLogL(&templateparams, injection) - logZdata;
+  *lnew = CalculateLogLCAmpPhase(&templateparams, injection) - logZdata;
 }
 
 
@@ -223,7 +254,7 @@ int main(int argc, char *argv[])
   memset(globalparams, 0, sizeof(LLVGlobalParams));
   priorParams = (LLVPrior*) malloc(sizeof(LLVPrior));
   memset(priorParams, 0, sizeof(LLVPrior));
-  
+
   /* Parse commandline to read parameters of injection - copy the number of modes demanded for the injection  */
   parse_args_LLV(argc, argv, injectedparams, globalparams, priorParams, &runParams);
   injectedparams->nbmode = globalparams->nbmodeinj;
@@ -232,26 +263,23 @@ int main(int argc, char *argv[])
   LLVSimFD_Noise_Init_ParsePath();
 
   /* Initialize the data structure for the injection */
-  LLVSignal* injectedsignal = NULL;
-  LLVSignal_Init(&injectedsignal);
+  LLVInjectionCAmpPhase* injectedsignal = NULL;
+  LLVInjectionCAmpPhase_Init(&injectedsignal);
 
   /* Generate the injection */
-  LLVGenerateSignal(injectedparams, injectedsignal);
+	LLVGenerateInjectionCAmpPhase(injectedparams, injectedsignal);
 
   /* Rescale distance to match SNR */
   if (!isnan(priorParams->snr_target)) {
     if (myid == 0) printf("Rescaling the distance to obtain a network SNR of %g\n", priorParams->snr_target);
-    injectedparams->distance *= sqrt(injectedsignal->LHOhh + injectedsignal->LLOhh + injectedsignal->VIRGOhh) / priorParams->snr_target;
+    injectedparams->distance *= sqrt(injectedsignal->LLVss) / priorParams->snr_target;
     if (myid == 0) printf("New distance = %g Mpc\n", injectedparams->distance);
-    LLVGenerateSignal(injectedparams, injectedsignal);
+    LLVGenerateInjectionCAmpPhase(injectedparams, injectedsignal);
   }
 
   /* print SNRs */
   if (myid == 0) {
-    printf("SNR LHO:     %g\n", sqrt(injectedsignal->LHOhh));
-    printf("SNR LLO:     %g\n", sqrt(injectedsignal->LLOhh));
-    printf("SNR VIRGO:   %g\n", sqrt(injectedsignal->VIRGOhh));
-    printf("SNR Network: %g\n", sqrt(injectedsignal->LHOhh + injectedsignal->LLOhh + injectedsignal->VIRGOhh));
+    printf("SNR Network: %g\n", injectedsignal->LLVss);
   }
 
   /* Calculate logL of data */
@@ -261,7 +289,7 @@ int main(int argc, char *argv[])
     printf("logZdata = %lf\n", logZdata);
     injectedparams->distance = dist_store;*/
   logZdata = 0.0;
-  double logZtrue = CalculateLogL(injectedparams, injectedsignal);
+  double logZtrue = CalculateLogLCAmpPhase(injectedparams, injectedsignal);
   if (myid == 0) printf("logZtrue = %lf\n", logZtrue-logZdata);
 
   /* Set the context pointer */
@@ -322,7 +350,7 @@ int main(int argc, char *argv[])
     templateparams.polarization = priorParams->fix_pol;
     templateparams.nbmode = globalparams->nbmodetemp;
 
-    double logL = CalculateLogL(&templateparams, injectedsignal);
+    double logL = CalculateLogLCAmpPhase(&templateparams, injectedsignal);
     if (myid == 0) printf("logL = %lf\n", logL);
 
     free(injectedparams);
