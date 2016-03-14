@@ -131,11 +131,6 @@ void getcubeparams(double* Cube, int ndim, LLVParams* params, int* freeparamsmap
 void getallparams(double *Cube, int *ndim)
 {
 	getphysparams(Cube,ndim);
-
-  Cube[9] = Cube[0] + Cube[1];
-  Cube[10] = Cube[0] / Cube[1];
-  Cube[11] = Cube[10] / pow(1.0 + Cube[10], 2.0);
-  Cube[12] = Cube[9] * pow(Cube[11], 0.6);
 }
 
 /******************************************** loglikelihood routine ****************************************************/
@@ -286,9 +281,6 @@ int main(int argc, char *argv[])
 
   /* Load and initialize the detector noise */
   LLVSimFD_Noise_Init_ParsePath();
-
-	//
-	printf("%p, %p\n", injectedparams, priorParams);
 
 	/* Initialize the data structure for the injection */
   LLVInjectionCAmpPhase* injectedsignalCAmpPhase = NULL;
@@ -589,9 +581,6 @@ int main(int argc, char *argv[])
 	/* calling MultiNest */
 
 	BAMBIrun(mmodal, ceff, nlive, tol, efr, ndim, nPar, nClsPar, maxModes, updInt, Ztol, root, seed, pWrap, fb, resume, outfile, initMPI, logZero, maxiter, LogLikeFctn, dumper, BAMBIfctn, context);
-
-	//
-	printf("%p, %p\n", injectedparams, priorParams);
 
   free(injectedparams);
   free(priorParams);

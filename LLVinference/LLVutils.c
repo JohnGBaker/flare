@@ -578,7 +578,7 @@ int LLVGenerateSignalCAmpPhase(
   struct tagLLVSignalCAmpPhase* signal)   /* Output: structure for the generated signal */
 {
 //
-printf("In LLVGenerateSignalCAmpPhase\n");
+//printf("In LLVGenerateSignalCAmpPhase\n");
 
   int ret;
   ListmodesCAmpPhaseFrequencySeries* listROM = NULL;
@@ -596,12 +596,12 @@ printf("In LLVGenerateSignalCAmpPhase\n");
   /* Note: SimEOBNRv2HMROM accepts masses and distances in SI units, whereas LLV params is in solar masses and Mpc */
 
 //
-printf("params: (%d, %16e, %16e, %16e, %16e, %16e, %16e)\n", params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1), (params->m2), (params->distance));
+//printf("params: (%d, %16e, %16e, %16e, %16e, %16e, %16e)\n", params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1), (params->m2), (params->distance));
 
   ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
 
   //
-  printf("after SimEOBNRv2HMROM\n");
+  //printf("after SimEOBNRv2HMROM\n");
 
   /* If the ROM waveform generation failed (e.g. parameters were out of bounds) return FAILURE */
   if(ret==FAILURE) return FAILURE;
@@ -617,7 +617,7 @@ printf("params: (%d, %16e, %16e, %16e, %16e, %16e, %16e)\n", params->nbmode, par
   //
 
   //
-  printf("after LLVSimFDResponse3Det\n");
+  //printf("after LLVSimFDResponse3Det\n");
 
   /* Pre-interpolate the injection, building the spline matrices */
   ListmodesCAmpPhaseSpline* listsplinesgen1 = NULL;
@@ -628,7 +628,7 @@ printf("params: (%d, %16e, %16e, %16e, %16e, %16e, %16e)\n", params->nbmode, par
   BuildListmodesCAmpPhaseSpline(&listsplinesgen3, listDet3);
 
   //
-  printf("after BuildListmodesCAmpPhaseSpline\n");
+  //printf("after BuildListmodesCAmpPhaseSpline\n");
 
   /* Precompute the inner product (h|h) */
   //TESTING
@@ -639,7 +639,7 @@ printf("params: (%d, %16e, %16e, %16e, %16e, %16e, %16e)\n", params->nbmode, par
   //printf("time SNRs: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
 
   //
-  printf("after FDListmodesFresnelOverlap3Chan\n");
+  //printf("after FDListmodesFresnelOverlap3Chan\n");
 
   /* Output and clean up */
   signal->LHOSignal = listDet1;
@@ -653,7 +653,7 @@ printf("params: (%d, %16e, %16e, %16e, %16e, %16e, %16e)\n", params->nbmode, par
   ListmodesCAmpPhaseSpline_Destroy(listsplinesgen3);
 
   //
-  printf("after cleanup\n");
+  //printf("after cleanup\n");
 
   return SUCCESS;
 }
