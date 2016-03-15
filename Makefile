@@ -15,6 +15,24 @@ ifeq ($(MACHINE),"sylvainsmac")
   CC += -DPARALLEL
   CPP += -DPARALLEL
   MPILIBS = -lmpi -lmpi_cxx -lmpi_mpifh
+else ifeq ($(MACHINE),"johnsmac")
+  MESSAGE="Compiling for John's Mac"
+  GSLROOT = /opt/local
+  BAMBIROOT = ../BAMBI
+  CC = gcc-mp-4.7 -g
+  CXX = g++-mp-4.7
+  CPP = g++-mp-4.7
+  LD = $(CPP)
+  #LD = gfortran-mp-4.7
+  LDFLAGS= -fopenmp -L/opt/local/lib -L/opt/local/lib/mpich-mp -lgfortran -llapack -latlas -lblas
+  #Uncomment this for MPI and specify your needed MPI libraries
+  #CC += -DPARALLEL
+  #CPP += -DPARALLEL
+  MPILIBS = -lmpi -lmpicxx -lmpifort
+  CFLAGS += -g -fopenmp -I/opt/local/include/mpich-mp
+  CPPFLAGS += -g -I/opt/local/include/mpich-mp
+  CXXFLAGS = -g -fopenmp
+  PTMCMC=$(PWD)/ptmcmc
 else ifeq ($(MACHINE),"discover")
   #based on modules:
   #module load comp/intel-15.0.3.187 lib/mkl-15.0.3.187 mpi/impi-5.0.3.048
@@ -57,13 +75,20 @@ endif
 GSLINC = $(GSLROOT)/include
 BAMBIINC = $(BAMBIROOT)/include
 BAMBILIB = $(BAMBIROOT)/lib
-CFLAGS += -O2 -std=c99 -I$(GSLINC)
+CFLAGS += -std=c99
 CPPFLAGS += -O2 -I$(GSLINC)
+CXXFLAGS += -std=c++11
 
-SUBDIRS = tools EOBNRv2HMROM LISAsim LLVsim integration LISAinference LLVinference
+SUBDIRS = tools EOBNRv2HMROM LISAsim LLVsim integration
+ifdef PTMCMC
+  SUBDIRS += ptmcmc
+  CXXFLAGS+= -I$(PTMCMC)/include
+endif
+SUBDIRS +=  LISAinference LLVinference
+
 SUBCLEAN = $(addsuffix .clean,$(SUBDIRS))
 
-export CC CPP GSLROOT GSLINC BAMBIROOT BAMBIINC BAMBILIB MPILIBS CFLAGS CPPFLAGS LD LDFLAGS
+export CC CPP CXX GSLROOT GSLINC BAMBIROOT BAMBIINC BAMBILIB MPILIBS CFLAGS CPPFLAGS LD LDFLAGS PTMCMC CXXFLAGS
 
 
 .PHONY: all clean message subdirs $(SUBDIRS)
@@ -86,13 +111,25 @@ LISAsim: tools integration EOBNRv2HMROM
 
 LLVsim: tools integration EOBNRv2HMROM
 
+ifdef PTMCMC
+LISAinference: tools integration EOBNRv2HMROM LISAsim ptmcmc
+else
 LISAinference: tools integration EOBNRv2HMROM LISAsim
+endif
 
 LLVinference: tools integration EOBNRv2HMROM LLVsim
 
 phaseSNR: tools integration EOBNRv2HMROM LLVsim
 	$(MAKE) -C LLVinference phaseSNR
 
+ifdef PTMCMC
+.ptmcmc-version: $(PTMCMC)/lib/libptmcmc.a $(PTMCMC)/lib/libprobdist.a
+	cd ptmcmc;git rev-parse HEAD > ../.ptmcmc-version;git status >> ../.ptmcmc-version;git diff >> ../.ptmcmc-version
+ptmcmc:
+	@echo "Do we need to check out ptmcmc from github?:";\
+	if [ \! -d ptmcmc ]; then git clone https://github.com/JohnGBaker/ptmcmc.git; fi;
+	$(MAKE) CFLAGS="$(CPPFLAGS) $(CXXFLAGS)" -C ptmcmc
+endif
 
 clean: $(SUBCLEAN)
 

@@ -33,6 +33,12 @@
 #include <gsl/gsl_min.h>
 #include <gsl/gsl_spline.h>
 
+#if defined(__cplusplus)
+extern "C" {
+#elif 0
+} /* so that editors will match preceding brace */
+#endif
+
 /***************************************************/
 /****** Boolean conventions for loading files ******/
 

@@ -78,6 +78,15 @@ static double coeffkRsin[2];
 static double cosarray[4];
 static double sinarray[4];
 
+#pragma omp threadprivate(coeffn1Hn1crossconst, coeffn1Hn1plusconst, coeffn2Hn2crossconst, coeffn2Hn2plusconst, coeffn3Hn3crossconst, coeffn3Hn3plusconst)
+#pragma omp threadprivate(coeffn1Hn1pluscos,coeffn1Hn1plussin,coeffn2Hn2pluscos,coeffn2Hn2plussin,coeffn3Hn3pluscos,coeffn3Hn3plussin)
+#pragma omp threadprivate(coeffn1Hn1crosscos,coeffn1Hn1crosssin,coeffn2Hn2crosscos,coeffn2Hn2crosssin,coeffn3Hn3crosscos,coeffn3Hn3crosssin)
+#pragma omp threadprivate(coeffkn1const, coeffkn2const, coeffkn3const, coeffkp1plusp2const, coeffkp2plusp3const, coeffkp3plusp1const, coeffkp1const, coeffkp2const, coeffkp3const, coeffkRconst)
+#pragma omp threadprivate(coeffkn1cos,coeffkn1sin,coeffkn2cos,coeffkn2sin,coeffkn3cos,coeffkn3sin)
+#pragma omp threadprivate(coeffkp1cos,coeffkp1sin,coeffkp2cos,coeffkp2sin,coeffkp3cos,coeffkp3sin)
+#pragma omp threadprivate(coeffkp1plusp2cos,coeffkp1plusp2sin,coeffkp2plusp3cos,coeffkp2plusp3sin,coeffkp3plusp1cos,coeffkp3plusp1sin)
+#pragma omp threadprivate(coeffkRcos,coeffkRsin,cosarray,sinarray)
+
 /*************************************************************/
 /********* Functions for the geometric response **************/
 

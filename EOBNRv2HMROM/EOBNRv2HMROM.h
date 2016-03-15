@@ -48,7 +48,13 @@
 #include "struct.h"
 #include "EOBNRv2HMROMstruct.h"
 
-/********General definitions********/
+#if defined(__cplusplus)
+extern "C" {
+#elif 0
+} /* so that editors will match preceding brace */
+#endif
+
+   /********General definitions********/
 
 #define nk_amp 10  /* number of SVD-modes == number of basis functions for amplitude */
 #define nk_phi 20  /* number of SVD-modes == number of basis functions for phase */

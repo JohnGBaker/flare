@@ -38,6 +38,13 @@
 #include "EOBNRv2HMROM.h"
 
 
+#if defined(__cplusplus)
+extern "C" {
+#define complex _Complex
+#elif 0
+} /* so that editors will match preceding brace */
+#endif
+
 /* NOTE: uses the list of modes of EOBNRv2HMROM (listmode), to be extended when more waveform models are added */
 
 /***************** Function estimating time to coalescence and min/max frequency ****************/

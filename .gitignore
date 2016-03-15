@@ -4,3 +4,17 @@ LISAsim/LISAexampleSNR
 LLVinference/LLVinference
 LLVsim/LLVexampleSNR
 integration/wiptest
+EOBNRv2HMROM/GenerateWaveform
+LISAinference/ComputeLISASNR
+LISAinference/LISAinference
+LISAinference/LISAinference_ptmcmc
+LISAinference/LISAlikelihood
+LISAsim/GenerateTDIFD
+LISAsim/GenerateTDITD
+docs/paper1.aux
+docs/paper1.log
+docs/paper1.pdf
+integration/_splinecspagh.so
+integration/spline_wrap.c
+integration/splinecspagh.py
+ptmcmc
