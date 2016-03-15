@@ -172,8 +172,6 @@ int print_rescaleddist_to_file_LLV(
   LLVRunParams* run);
 
 /* Initialization and clean-up for LLVSignal structures */
-void LLVSignal_Cleanup(LLVSignal* signal);
-void LLVSignal_Init(LLVSignal** signal);
 void LLVSignalCAmpPhase_Cleanup(LLVSignalCAmpPhase* signal);
 void LLVSignalCAmpPhase_Init(LLVSignalCAmpPhase** signal);
 void LLVInjectionCAmpPhase_Cleanup(LLVInjectionCAmpPhase* signal);
@@ -183,31 +181,27 @@ void LLVSignalReIm_Init(LLVSignalReIm** signal);
 void LLVInjectionReIm_Cleanup(LLVInjectionReIm* signal);
 void LLVInjectionReIm_Init(LLVInjectionReIm** signal);
 
-/* Function generating a LLV signal from LLV parameters */
-int LLVGenerateSignal(
-  struct tagLLVParams* params,   /* Input: set of LLV parameters of the signal */
-  struct tagLLVSignal* signal);  /* Output: structure for the generated signal */
-  /* Function generating a LLV signal as a list of modes in CAmp/Phase form, from LLV parameters */
-  int LLVGenerateSignalCAmpPhase(
-    struct tagLLVParams* params,                 /* Input: set of LLV parameters of the signal */
-    struct tagLLVSignalCAmpPhase* signal);  /* Output: structure for the generated signal */
-  /* Function generating a LLV injection as a list of modes, given as preinterpolated splines, from LLV parameters */
-  int LLVGenerateInjectionCAmpPhase(
-    struct tagLLVParams* injectedparams,    /* Input: set of LLV parameters of the signal */
-    struct tagLLVInjectionCAmpPhase* signal);  /* Output: structure for the generated signal */
-  /* Function generating a LLV signal as a frequency series in Re/Im form where the modes have been summed, from LLV parameters - takes as argument the frequencies on which to evaluate */
-  int LLVGenerateSignalReIm(
-    struct tagLLVParams* params,       /* Input: set of LLV parameters of the template */
-    gsl_vector* freq,                   /* Input: frequencies on which evaluating the waveform (from the injection) */
-    struct tagLLVSignalReIm* signal);  /* Output: structure for the generated signal */
-  /* Function generating a LLV injection as a frequency series in Re/Im form where the modes have been summed, from LLV parameters - frequencies on which to evaluate are to be determined internally */
-  int LLVGenerateInjectionReIm(
-    struct tagLLVParams* injectedparams,       /* Input: set of LLV parameters of the injection */
-    double fLow,                                /* Input: starting frequency (from argument minf) */
-    double fHigh,                               /* Input: upper frequency (from argument maxf) */
-    int nbpts,                                  /* Input: number of frequency samples */
-    int tagsampling,                            /* Input: tag for using linear (0) or logarithmic (1) sampling */
-    struct tagLLVInjectionReIm* signal);       /* Output: structure for the generated signal */
+/* Function generating a LLV signal as a list of modes in CAmp/Phase form, from LLV parameters */
+int LLVGenerateSignalCAmpPhase(
+  struct tagLLVParams* params,                 /* Input: set of LLV parameters of the signal */
+  struct tagLLVSignalCAmpPhase* signal);  /* Output: structure for the generated signal */
+/* Function generating a LLV injection as a list of modes, given as preinterpolated splines, from LLV parameters */
+int LLVGenerateInjectionCAmpPhase(
+  struct tagLLVParams* injectedparams,    /* Input: set of LLV parameters of the signal */
+  struct tagLLVInjectionCAmpPhase* signal);  /* Output: structure for the generated signal */
+/* Function generating a LLV signal as a frequency series in Re/Im form where the modes have been summed, from LLV parameters - takes as argument the frequencies on which to evaluate */
+int LLVGenerateSignalReIm(
+  struct tagLLVParams* params,       /* Input: set of LLV parameters of the template */
+  gsl_vector* freq,                   /* Input: frequencies on which evaluating the waveform (from the injection) */
+  struct tagLLVSignalReIm* signal);  /* Output: structure for the generated signal */
+/* Function generating a LLV injection as a frequency series in Re/Im form where the modes have been summed, from LLV parameters - frequencies on which to evaluate are to be determined internally */
+int LLVGenerateInjectionReIm(
+  struct tagLLVParams* injectedparams,       /* Input: set of LLV parameters of the injection */
+  double fLow,                                /* Input: starting frequency (from argument minf) */
+  double fHigh,                               /* Input: upper frequency (from argument maxf) */
+  int nbpts,                                  /* Input: number of frequency samples */
+  int tagsampling,                            /* Input: tag for using linear (0) or logarithmic (1) sampling */
+  struct tagLLVInjectionReIm* signal);       /* Output: structure for the generated signal */
 
 // checks prior boundaires
 int PriorBoundaryCheck(LLVPrior *prior, double *Cube);
@@ -232,7 +226,6 @@ double SinPriorToCube(double y, double x1, double x2);
 double CosPriorToCube(double y, double x1, double x2);
 
 /* log-Likelihood functions */
-double CalculateLogL(LLVParams *params, LLVInjectionCAmpPhase* injection);
 double CalculateLogLCAmpPhase(LLVParams *params, LLVInjectionCAmpPhase* injection);
 double CalculateLogLReIm(LLVParams *params, LLVInjectionReIm* injection);
 
