@@ -23,8 +23,9 @@ void addendum(int argc, char *argv[],LISARunParams *runParams, int *ndim, int *n
   /* Parse commandline to read parameters of injection - copy the number of modes demanded for the injection */
   parse_args_LISA(argc, argv, injectedparams, globalparams, priorParams, runParams);
   injectedparams->nbmode = globalparams->nbmodeinj;
-  if(myid == 0) print_parameters_to_file_LISA(injectedparams, globalparams, priorParams, runParams);
 
+  int notLISAlike=strstr(argv[0],"LISAlike")==0;
+  if(myid == 0 && notLISAlike) print_parameters_to_file_LISA(injectedparams, globalparams, priorParams, runParams);
   /* Initialize the data structure for the injection */
   LISAInjectionCAmpPhase* injectedsignalCAmpPhase = NULL;
   LISAInjectionReIm* injectedsignalReIm = NULL;
@@ -65,7 +66,7 @@ void addendum(int argc, char *argv[],LISARunParams *runParams, int *ndim, int *n
       priorParams->dist_max *= SNR123 / priorParams->snr_target;
       if (myid == 0) printf("Distance prior (dist_min, dist_max) = (%g, %g) Mpc\n", priorParams->dist_min, priorParams->dist_max);
     }
-    if (myid == 0) print_rescaleddist_to_file_LISA(injectedparams, globalparams, priorParams, runParams);
+    if (myid == 0 && notLISAlike) print_rescaleddist_to_file_LISA(injectedparams, globalparams, priorParams, runParams);
     if(globalparams->tagint==0) {
       LISAGenerateInjectionCAmpPhase(injectedparams, injectedsignalCAmpPhase);
       SNR123 = sqrt(injectedsignalCAmpPhase->TDI123ss);
