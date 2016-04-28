@@ -5,8 +5,8 @@
  *
  */
 
-#ifndef __GENERATEWAVEFORM_H__
-#define __GENERATEWAVEFORM_H__ 1
+#ifndef __GENERATELLVFD_H__
+#define __GENERATELLVFD_H__ 1
 
 #ifdef __GNUC__
 #define UNUSED __attribute__ ((unused))
@@ -36,20 +36,19 @@
 #include "constants.h"
 #include "struct.h"
 #include "waveform.h"
-#include "EOBNRv2HMROMstruct.h"
-#include "EOBNRv2HMROM.h"
 #include "fft.h"
+#include "LLVgeometry.h"
+#include "LLVFDresponse.h"
 
 /********************************** Structures ******************************************/
 
-typedef enum GenWavetag {
-  hphcTD,
-  hphcFD,
-  hlm
-} GenWavetag;
+typedef enum GenLLVFDtag {
+  LLVFD,
+  LLVhlm
+} GenLLVFDtag;
 
-/* Parameters for the generation of a LISA waveform (in the form of a list of modes) */
-typedef struct tagGenWaveParams {
+/* Parameters for the generation of a LLV waveform (in the form of a list of modes) */
+typedef struct tagGenLLVFDparams {
   double tRef;               /* reference time (s) - GPS time at the frequency representing coalescence */
   double phiRef;             /* reference phase (rad) - phase at the frequency representing coalescence (or at fRef if specified) */
   double fRef;               /* reference frequency at which phiRef is set (Hz, default 0 which is interpreted as Mf=0.14) */
@@ -57,13 +56,23 @@ typedef struct tagGenWaveParams {
   double m2;                 /* mass of companion 2 (solar masses, default 1e6) */
   double distance;           /* distance of source (Mpc, default 1e3) */
   double inclination;        /* inclination of source (rad, default pi/3) */
-  double minf;               /* Minimal frequency (Hz) - when set to 0 (default), use the first frequency covered by the ROM */
+  double ra;                 /* first angle for the position in the sky (rad, default 0) */
+  double dec;                /* second angle for the position in the sky (rad, default 0) */
+  double polarization;       /* polarization angle (rad, default 0) */
+
   int nbmode;                /* number of modes to generate (starting with 22) - defaults to 5 (all modes) */
+  double minf;               /* Minimal frequency (Hz) - when set to 0 (default), use the first frequency covered by the ROM */
+  int tagnetwork;            /* Tag selecting the desired output format */
   int taggenwave;            /* Tag selecting the desired output format */
-  int binaryout;             /* Tag for outputting the data in gsl binary form instead of text (default 0) */
+  int fromLLVtdfile;         /* Tag for loading time series for LLV detectors and FFTing */
+  int nsamplesinfile;        /* Number of lines of input file */
+  int binaryin;              /* Tag for loading the data in gsl binary form instead of text (default false) */
+  int binaryout;             /* Tag for outputting the data in gsl binary form instead of text (default false) */
+  char indir[256];           /* Path for the input directory */
+  char infile[256];          /* Path for the input file */
   char outdir[256];          /* Path for the output directory */
-  char outfile[256];         /* Path for the output file */
-} GenWaveParams;
+  char outfileprefix[256];   /* Path for the output file */
+} GenLLVFDparams;
 
 
 #if 0
@@ -72,4 +81,4 @@ typedef struct tagGenWaveParams {
 }
 #endif
 
-#endif /* _GENERATEWAVEFORM_H */
+#endif /* _GENERATELLVFD_H */

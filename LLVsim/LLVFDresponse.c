@@ -248,7 +248,6 @@ int LLVSimFDResponse(
   double delaylength;
   gsl_blas_ddot(Xd, Z, &delaylength);
   double twopidelay = 2*PI*delaylength/C_SI;
-  //printf("Delay: %g\n", twopidelay/(2*PI));
 
   /* Compute the value of pattern functions Fplus, Fcross */
   gsl_vector* DX = gsl_vector_calloc(3); /* Temporary vector D.X, initialized to 0 */
@@ -263,8 +262,6 @@ int LLVSimFDResponse(
   gsl_blas_ddot(Y, DY, &YDY);
   double Fplus = XDX - YDY;
   double Fcross = 2*XDY;
-  //printf("Fplus: %g\n", Fplus);
-  //printf("Fcross: %g\n", Fcross);
 
   /* Main loop over the modes - goes through all the modes present, stopping when encountering NULL */
   ListmodesCAmpPhaseFrequencySeries* listelement = *listhlm;
@@ -295,16 +292,6 @@ int LLVSimFDResponse(
       Yfactorplus = 1./2 * (SpinWeightedSphericalHarmonic(inclination, 0., -2, l, m) - conj(SpinWeightedSphericalHarmonic(inclination, 0., -2, l, -m)));
       Yfactorcross = I/2 * (SpinWeightedSphericalHarmonic(inclination, 0., -2, l, m) + conj(SpinWeightedSphericalHarmonic(inclination, 0., -2, l, -m)));
     }
-    //if(l==2 && m==2){
-    //  if (!(l%2)) {
-    //printf("even\n");
-    //}
-    //else {printf("odd\n");}
-    //printf("SpinWeightedSphericalHarmonic(inclination, 0., -2, l, m): %g+I*%g\n", creal(SpinWeightedSphericalHarmonic(inclination, 0., -2, l, m)), cimag(SpinWeightedSphericalHarmonic(inclination, 0., -2, l, m)));
-    //printf("SpinWeightedSphericalHarmonic(inclination, 0., -2, l, -m): %g+I*%g\n", creal(SpinWeightedSphericalHarmonic(inclination, 0., -2, l, -m)), cimag(SpinWeightedSphericalHarmonic(inclination, 0., -2, l, -m)));
-    //printf("Yfactorplus: %g + I*%g\n", creal(Yfactorplus), cimag(Yfactorplus));
-    //printf("Yfactorcross: %g + I*%g\n", creal(Yfactorcross), cimag(Yfactorcross));
-    //}
 
     /* Initializing frequency series structure for this mode, for the signal s = F+ h+ + Fx hx */
     CAmpPhaseFrequencySeries *modefreqseriess = NULL;
@@ -349,16 +336,16 @@ int LLVSimFDResponse(
 /* Core function processing a signal (in the form of a list of modes) through the Fourier-domain LLV response for a given detector network, for given values of the inclination, position in the sky and polarization angle */
 /* Note: as for now, asssumes the three detectors are L,H,V - amplitudes simply set to 0 in those that are not selected by networktag */
 int LLVSimFDResponse3Det(
-  struct tagListmodesCAmpPhaseFrequencySeries **listhlm,  /* Input: list of modes in Frequency-domain amplitude and phase form as produced by the ROM */
   struct tagListmodesCAmpPhaseFrequencySeries **list1,    /* Output: list of contributions of each mode in the signal of detector 1, in Frequency-domain amplitude and phase form */
   struct tagListmodesCAmpPhaseFrequencySeries **list2,    /* Output: list of contributions of each mode in the signal of detector 1, in Frequency-domain amplitude and phase form */
   struct tagListmodesCAmpPhaseFrequencySeries **list3,    /* Output: list of contributions of each mode in the signal of detector 1, in Frequency-domain amplitude and phase form */
+  struct tagListmodesCAmpPhaseFrequencySeries **listhlm,  /* Input: list of modes in Frequency-domain amplitude and phase form as produced by the ROM */
   const double gpstime,                                   /* GPS time (s) when the signal at coalescence reaches geocenter */
   const double ra,                                        /* Position in the sky: J2000.0 right ascension (rad) */
   const double dec,                                       /* Position in the sky: J2000.0 declination (rad) */
   const double inclination,                               /* Inclination of the source (rad) */
   const double psi,                                       /* Polarization angle (rad) */
-  const Networktag tag)                                  /* Tag identifying the detector */
+  const Networktag tag)                                   /* Tag identifying the network to use */
 {
   /* Read which detectors are to be included in the network */
   double factor1 = 0;
@@ -415,21 +402,24 @@ int LLVSimFDResponse3Det(
   gsl_blas_dgemv( CblasNoTrans, 1., D2, Y, 0, DY2);
   gsl_blas_dgemv( CblasNoTrans, 1., D3, X, 0, DX3);
   gsl_blas_dgemv( CblasNoTrans, 1., D3, Y, 0, DY3);
-  double XDX1 = 0;
-  double XDY1 = 0;
-  double YDY1 = 0;
-  double XDX2 = 0;
-  double XDY2 = 0;
-  double YDY2 = 0;
-  double XDX3 = 0;
-  double XDY3 = 0;
-  double YDY3 = 0;
+  double XDX1 = 0.;
+  double XDY1 = 0.;
+  double YDY1 = 0.;
+  double XDX2 = 0.;
+  double XDY2 = 0.;
+  double YDY2 = 0.;
+  double XDX3 = 0.;
+  double XDY3 = 0.;
+  double YDY3 = 0.;
   gsl_blas_ddot(X, DX1, &XDX1);
   gsl_blas_ddot(X, DY1, &XDY1);
+  gsl_blas_ddot(Y, DY1, &YDY1);
   gsl_blas_ddot(X, DX2, &XDX2);
   gsl_blas_ddot(X, DY2, &XDY2);
+  gsl_blas_ddot(Y, DY2, &YDY2);
   gsl_blas_ddot(X, DX3, &XDX3);
   gsl_blas_ddot(X, DY3, &XDY3);
+  gsl_blas_ddot(Y, DY3, &YDY3);
   double Fplus1 = XDX1 - YDY1;
   double Fcross1 = 2*XDY1;
   double Fplus2 = XDX2 - YDY2;

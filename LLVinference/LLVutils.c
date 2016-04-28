@@ -103,7 +103,8 @@ void parse_args_LLV(ssize_t argc, char **argv,
     LLVParams* params,
     LLVGlobalParams* globalparams,
     LLVPrior *prior,
-    LLVRunParams *run)
+    LLVRunParams *run,
+    LLVParams* addparams)
 {
     char help[] = "\
 **********************************************************************\n\
@@ -143,6 +144,7 @@ Arguments are as follows:\n\
  --tagint              Tag choosing the integrator: 0 for Fresnel (default), 1 for linear integration\n\
  --tagnetwork          Tag choosing the network of detectors to use (default LHV)\n\
  --nbptsoverlap        Number of points to use for linear integration (default 32768)\n\
+ --constL              Set all logLikelihood to 0 - allows to sample from the prior for testing (no option, default off)\n\
 \n\
 --------------------------------------------------\n\
 ----- Prior Boundary Settings --------------------\n\
@@ -192,6 +194,10 @@ Syntax: --PARAM-min\n\
  --nclspar             Number of parameters to use for multimodal decomposition - in the order of the cube (default 1)\n\
  --ztol                In multimodal decomposition, modes with lnZ lower than ztol are ignored (default -1e90)\n\
  --seed                Seed the inference by setting one of the live points to the injection (no option, default off)\n\
+ -----------------------------------------------------------------\n\
+ ----- Additional Parameters -------------------------------------\n\
+ -----------------------------------------------------------------\n\
+ --addparams    To be followed by the value of parameters: m1 m2 tRef distance phiRef inclination ra dec polarization. Used to compute a likelihood for these parameters in LLVlikelihood. Not used in LLVinference.\n\
 \n";
 
     ssize_t i;
@@ -217,6 +223,7 @@ Syntax: --PARAM-min\n\
     globalparams->tagint = 0;
     globalparams->tagnetwork = LHV;
     globalparams->nbptsoverlap = 32768;
+    globalparams->constL = 0;
 
     /* set default values for the prior limits */
     prior->deltaT = 0.1;
@@ -313,6 +320,8 @@ Syntax: --PARAM-min\n\
             globalparams->tagnetwork = ParseNetworktag(argv[++i]);
         } else if (strcmp(argv[i], "--nbptsoverlap") == 0) {
             globalparams->nbptsoverlap = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "--constL") == 0) {
+            globalparams->constL = 1;
         } else if (strcmp(argv[i], "--deltaT") == 0) {
             prior->deltaT = atof(argv[++i]);
         } else if (strcmp(argv[i], "--comp-min") == 0) {
@@ -417,12 +426,22 @@ Syntax: --PARAM-min\n\
             run->ztol = atof(argv[++i]);
         } else if (strcmp(argv[i], "--seed") == 0) {
             run->seed = 1;
+        } else if (strcmp(argv[i], "--addparams") == 0) {
+            /* Must be followed by the values of m1 m2 tRef distance phiRef inclination ra dec polarization */
+            addparams->m1 = atof(argv[++i]);
+            addparams->m2 = atof(argv[++i]);
+            addparams->tRef = atof(argv[++i]);
+            addparams->distance = atof(argv[++i]);
+            addparams->phiRef = atof(argv[++i]);
+            addparams->inclination = atof(argv[++i]);
+            addparams->ra = atof(argv[++i]);
+            addparams->dec = atof(argv[++i]);
+            addparams->polarization = atof(argv[++i]);
         } else {
             printf("Error: invalid option: %s\n", argv[i]);
             goto fail;
         }
     }
-
 
     return;
 
@@ -432,7 +451,7 @@ Syntax: --PARAM-min\n\
 
 /* Function printing all parameters of the run to an output file for future reference */
 int print_parameters_to_file_LLV(
-                     LLVParams* params,
+         LLVParams* params,
 		     LLVGlobalParams* globalparams,
 		     LLVPrior* prior,
 		     LLVRunParams* run)
@@ -470,6 +489,7 @@ int print_parameters_to_file_LLV(
   fprintf(f, "tagint:       %d\n", globalparams->tagint);
   fprintf(f, "tagnetwork:   %d\n", globalparams->tagnetwork); //Translation back from enum to string not implemented yet
   fprintf(f, "nbptsoverlap: %d\n", globalparams->nbptsoverlap);
+  fprintf(f, "constL:       %d\n", globalparams->constL);
   fprintf(f, "-----------------------------------------------\n");
   fprintf(f, "\n");
 
@@ -576,9 +596,6 @@ int LLVGenerateSignalCAmpPhase(
   struct tagLLVParams* params,            /* Input: set of LLV parameters of the signal */
   struct tagLLVSignalCAmpPhase* signal)   /* Output: structure for the generated signal */
 {
-//
-//printf("In LLVGenerateSignalCAmpPhase\n");
-
   int ret;
   ListmodesCAmpPhaseFrequencySeries* listROM = NULL;
   ListmodesCAmpPhaseFrequencySeries* listDet1 = NULL;
@@ -593,30 +610,19 @@ int LLVGenerateSignalCAmpPhase(
   /* Should add more error checking ? */
   /* Generate the waveform with the ROM */
   /* Note: SimEOBNRv2HMROM accepts masses and distances in SI units, whereas LLV params is in solar masses and Mpc */
-
-//
-//printf("params: (%d, %16e, %16e, %16e, %16e, %16e, %16e)\n", params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1), (params->m2), (params->distance));
-
   ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
-
-  //
-  //printf("after SimEOBNRv2HMROM\n");
 
   /* If the ROM waveform generation failed (e.g. parameters were out of bounds) return FAILURE */
   if(ret==FAILURE) return FAILURE;
 
   /* Process the waveform through the LLV response */
-  //WARNING: tRef is ignored for now, i.e. set to 0
   //TESTING
   //clock_t tbeg, tend;
   //tbeg = clock();
-  LLVSimFDResponse3Det(&listROM, &listDet1, &listDet2, &listDet3, params->tRef, params->ra, params->dec, params->inclination, params->polarization, globalparams->tagnetwork);
+  LLVSimFDResponse3Det(&listDet1, &listDet2, &listDet3, &listROM, params->tRef, params->ra, params->dec, params->inclination, params->polarization, globalparams->tagnetwork);
   //tend = clock();
   //printf("time LLVSimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
-
-  //
-  //printf("after LLVSimFDResponse3Det\n");
 
   /* Pre-interpolate the injection, building the spline matrices */
   ListmodesCAmpPhaseSpline* listsplinesgen1 = NULL;
@@ -626,19 +632,17 @@ int LLVGenerateSignalCAmpPhase(
   BuildListmodesCAmpPhaseSpline(&listsplinesgen2, listDet2);
   BuildListmodesCAmpPhaseSpline(&listsplinesgen3, listDet3);
 
-  //
-  //printf("after BuildListmodesCAmpPhaseSpline\n");
-
   /* Precompute the inner product (h|h) */
   //TESTING
   //tbeg = clock();
   /* Note: we ignore fstartobs and assume (for the noises) that the detectors are LHO, LLO and VIRGO */
-  double Det123hh = FDListmodesFresnelOverlap3Chan(listDet1, listDet2, listDet3, listsplinesgen1, listsplinesgen2, listsplinesgen3, NoiseSnLHO, NoiseSnLLO, NoiseSnVIRGO, globalparams->minf, globalparams->maxf, 0., 0.);
+  /* Note: beacause the response induces a difference in the phases (the time delay to each detector), we have to compute three separate overlaps - which is not optimal*/
+  double LHOhh =  FDListmodesFresnelOverlap(listDet1, listsplinesgen1, NoiseSnLHO, globalparams->minf, globalparams->maxf, 0., 0.);
+  double LLOhh =  FDListmodesFresnelOverlap(listDet2, listsplinesgen2, NoiseSnLLO, globalparams->minf, globalparams->maxf, 0., 0.);
+  double VIRGOhh =  FDListmodesFresnelOverlap(listDet3, listsplinesgen3, NoiseSnVIRGO, globalparams->minf, globalparams->maxf, 0., 0.);
+  double Det123hh = LHOhh + LLOhh + VIRGOhh;
   //tend = clock();
   //printf("time SNRs: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
-
-  //
-  //printf("after FDListmodesFresnelOverlap3Chan\n");
 
   /* Output and clean up */
   signal->LHOSignal = listDet1;
@@ -650,9 +654,6 @@ int LLVGenerateSignalCAmpPhase(
   ListmodesCAmpPhaseSpline_Destroy(listsplinesgen1);
   ListmodesCAmpPhaseSpline_Destroy(listsplinesgen2);
   ListmodesCAmpPhaseSpline_Destroy(listsplinesgen3);
-
-  //
-  //printf("after cleanup\n");
 
   return SUCCESS;
 }
@@ -677,11 +678,10 @@ int LLVGenerateInjectionCAmpPhase(
   if(ret==FAILURE) return FAILURE;
 
   /* Process the waveform through the LLV response */
-  //WARNING: tRef is ignored for now, i.e. set to 0
   //TESTING
   //clock_t tbeg, tend;
   //tbeg = clock();
-  LLVSimFDResponse3Det(&listROM, &listDet1, &listDet2, &listDet3, params->tRef, params->ra, params->dec, params->inclination, params->polarization, globalparams->tagnetwork);
+  LLVSimFDResponse3Det(&listDet1, &listDet2, &listDet3, &listROM, params->tRef, params->ra, params->dec, params->inclination, params->polarization, globalparams->tagnetwork);
   //tend = clock();
   //printf("time LLVSimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
@@ -698,7 +698,11 @@ int LLVGenerateInjectionCAmpPhase(
   /* Note: for the noise functions we assume the detectors are L,H,V */
   //TESTING
   //tbeg = clock();
-  double Det123ss = FDListmodesFresnelOverlap3Chan(listDet1, listDet2, listDet3, listsplinesinj1, listsplinesinj2, listsplinesinj3, NoiseSnLHO, NoiseSnLLO, NoiseSnVIRGO, globalparams->minf, globalparams->maxf, 0., 0.);
+  /* Note: beacause the response induces a difference in the phases (the time delay to each detector), we have to compute three separate overlaps - which is not optimal*/
+  double LHOss =  FDListmodesFresnelOverlap(listDet1, listsplinesinj1, NoiseSnLHO, globalparams->minf, globalparams->maxf, 0., 0.);
+  double LLOss =  FDListmodesFresnelOverlap(listDet2, listsplinesinj2, NoiseSnLLO, globalparams->minf, globalparams->maxf, 0., 0.);
+  double VIRGOss =  FDListmodesFresnelOverlap(listDet3, listsplinesinj3, NoiseSnVIRGO, globalparams->minf, globalparams->maxf, 0., 0.);
+  double Det123ss = LHOss + LLOss + VIRGOss;
   //tend = clock();
   //printf("time SNRs: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
 
@@ -742,11 +746,10 @@ int LLVGenerateSignalReIm(
   if(ret==FAILURE) return FAILURE;
 
   /* Process the waveform through the LLV response */
-  //WARNING: tRef is ignored for now, i.e. set to 0
   //TESTING
   //clock_t tbeg, tend;
   //tbeg = clock();
-  LLVSimFDResponse3Det(&listROM, &listDet1, &listDet2, &listDet3, params->tRef, params->ra, params->dec, params->inclination, params->polarization, globalparams->tagnetwork);
+  LLVSimFDResponse3Det(&listDet1, &listDet2, &listDet3, &listROM, params->tRef, params->ra, params->dec, params->inclination, params->polarization, globalparams->tagnetwork);
   //tend = clock();
   //printf("time LLVSimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
@@ -806,11 +809,10 @@ int LLVGenerateInjectionReIm(
   if(ret==FAILURE) return FAILURE;
 
   /* Process the waveform through the LLV response */
-  //WARNING: tRef is ignored for now, i.e. set to 0
   //TESTING
   //clock_t tbeg, tend;
   //tbeg = clock();
-  LLVSimFDResponse3Det(&listROM, &listDet1, &listDet2, &listDet3, injectedparams->tRef, injectedparams->ra, injectedparams->dec, injectedparams->inclination, injectedparams->polarization, globalparams->tagnetwork);
+  LLVSimFDResponse3Det(&listDet1, &listDet2, &listDet3, &listROM, injectedparams->tRef, injectedparams->ra, injectedparams->dec, injectedparams->inclination, injectedparams->polarization, globalparams->tagnetwork);
   //tend = clock();
   //printf("time LLVSimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
@@ -845,16 +847,6 @@ int LLVGenerateInjectionReIm(
   EvaluateNoise(noisevalues1, freq, NoiseSnLHO, __LLVSimFD_LHONoise_fLow, __LLVSimFD_LHONoise_fHigh);
   EvaluateNoise(noisevalues2, freq, NoiseSnLLO, __LLVSimFD_LLONoise_fLow, __LLVSimFD_LLONoise_fHigh);
   EvaluateNoise(noisevalues3, freq, NoiseSnVIRGO, __LLVSimFD_VIRGONoise_fLow, __LLVSimFD_VIRGONoise_fHigh);
-
-  //
-  /* Pre-interpolate the injection, building the spline matrices */
-  ListmodesCAmpPhaseSpline* listsplinesgen1 = NULL;
-  ListmodesCAmpPhaseSpline* listsplinesgen2 = NULL;
-  ListmodesCAmpPhaseSpline* listsplinesgen3 = NULL;
-  BuildListmodesCAmpPhaseSpline(&listsplinesgen1, listDet1);
-  BuildListmodesCAmpPhaseSpline(&listsplinesgen2, listDet2);
-  BuildListmodesCAmpPhaseSpline(&listsplinesgen3, listDet3);
-  double Det123hh = FDListmodesFresnelOverlap3Chan(listDet1, listDet2, listDet3, listsplinesgen1, listsplinesgen2, listsplinesgen3, NoiseSnLHO, NoiseSnLLO, NoiseSnVIRGO, globalparams->minf, globalparams->maxf, 0., 0.);
 
   /* Output and clean up */
   injection->LHOSignal = freqseriesDet1;
@@ -898,7 +890,11 @@ double CalculateLogLCAmpPhase(LLVParams *params, LLVInjectionCAmpPhase* injectio
     /* Computing the likelihood for each detector - fstartobs is ignored, and we assume for the noises that the detectors are LHO, LLO, VIRGO */
     //TESTING
     //tbeg = clock();
-    double overlapDet123 = FDListmodesFresnelOverlap3Chan(generatedsignal->LHOSignal, generatedsignal->LLOSignal, generatedsignal->VIRGOSignal, injection->LHOSplines, injection->LLOSplines, injection->VIRGOSplines, NoiseSnLHO, NoiseSnLLO, NoiseSnVIRGO, globalparams->minf, globalparams->maxf, 0., 0.);
+    /* Note: beacause the response induces a difference in the phases (the time delay to each detector), we have to compute three separate overlaps - which is not optimal*/
+    double overlapLHO =  FDListmodesFresnelOverlap(generatedsignal->LHOSignal, injection->LHOSplines, NoiseSnLHO, globalparams->minf, globalparams->maxf, 0., 0.);
+    double overlapLLO =  FDListmodesFresnelOverlap(generatedsignal->LLOSignal, injection->LLOSplines, NoiseSnLLO, globalparams->minf, globalparams->maxf, 0., 0.);
+    double overlapVIRGO =  FDListmodesFresnelOverlap(generatedsignal->VIRGOSignal, injection->VIRGOSplines, NoiseSnVIRGO, globalparams->minf, globalparams->maxf, 0., 0.);
+    double overlapDet123 = overlapLHO + overlapLLO + overlapVIRGO;
     //tend = clock();
     //printf("time Overlaps: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
     //

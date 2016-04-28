@@ -117,6 +117,41 @@ int Read_Text_Matrix(const char dir[], const char fname[], gsl_matrix *m) {
   free(path);
   return(0);
 }
+/* Functions to write data to files */
+int Write_Vector(const char dir[], const char fname[], gsl_vector *v) {
+  char *path=malloc(strlen(dir)+64);
+
+  sprintf(path,"%s/%s", dir, fname);
+  FILE *f = fopen(path, "w");
+  if (!f) {
+      return(FAILURE);
+  }
+  int ret = gsl_vector_fwrite(f, v);
+  if (ret != 0) {
+      fprintf(stderr, "Error writing data to %s.\n",path);
+      return(FAILURE);
+  }
+  fclose(f);
+  free(path);
+  return(SUCCESS);
+}
+int Write_Matrix(const char dir[], const char fname[], gsl_matrix *m) {
+  char *path=malloc(strlen(dir)+64);
+
+  sprintf(path,"%s/%s", dir, fname);
+  FILE *f = fopen(path, "w");
+  if (!f) {
+      return(FAILURE);
+  }
+  int ret = gsl_matrix_fwrite(f, m);
+  if (ret != 0) {
+      fprintf(stderr, "Error writing data to %s.\n", path);
+      return(FAILURE);
+  }
+  fclose(f);
+  free(path);
+  return(SUCCESS);
+}
 /* Functions to write text data to files */
 int Write_Text_Vector(const char dir[], const char fname[], gsl_vector *v) {
   char *path=malloc(strlen(dir)+64);

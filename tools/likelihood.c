@@ -732,7 +732,7 @@ void ComputeIntegrandValues3Chan(
   double minf = fmax(f1[imin1], f2min);
   double maxf = fmin(f1[imax1], f2max);
   if(fLow>0) {minf = fmax(fLow, minf);}
-  if(fHigh>0) {maxf = fmin(fHigh,maxf);}
+  if(fHigh>0) {maxf = fmin(fHigh, maxf);}
   while(f1[imin1+1]<=minf) imin1++;
   while(f1[imax1-1]>=maxf) imax1--;
   /* Estimate locally values for freqseries1 at the boundaries - phase vectors assumed to be the same for channels 1,2,3 */

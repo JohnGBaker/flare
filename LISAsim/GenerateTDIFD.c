@@ -14,9 +14,9 @@ static GenTDIFDtag ParseGenTDIFDtag(char* string) {
   return tag;
 }
 
-/* Parse command line to initialize GenTDITDparams object */
+/* Parse command line to initialize GenTDIFDparams object */
 /* Masses are input in solar masses and distances in Mpc - converted in SI for the internals */
-static void parse_args_GenerateTDIFD(ssize_t argc, char **argv, GenTDITDparams* params)
+static void parse_args_GenerateTDIFD(ssize_t argc, char **argv, GenTDIFDparams* params)
 {
     char help[] = "\
 GenerateWaveform by Sylvain Marsat, John Baker, and Philip Graff\n\
@@ -46,12 +46,15 @@ Arguments are as follows:\n\
 ----- Generation Parameters ----------------------\n\
 --------------------------------------------------\n\
  --nbmode              Number of modes of radiation to generate (1-5, default=5)\n\
- --fLow                Minimal frequency (Hz, default=0) - when too low, use first frequency covered by the ROM\n\
+ --minf                Minimal frequency (Hz, default=0) - when too low, use first frequency covered by the ROM\n\
+ --deltaf;             When generating frequency series from the mode contributions, deltaf for the output (0 to set automatically at 1/2*1/(2T))\n\
  --tagtdi              Tag choosing the set of TDI variables to use (default TDIAETXYZ)\n\
  --taggenwave          Tag choosing the wf format: TDIhlm (default: downsampled mode contributions to TDI in Amp/Phase form), TDIFD (hlm interpolated and summed accross modes)\n\
  --restorescaledfactor Option to restore the factors scaled out of TDI observables (default: false)\n	\
  --fromtditdfile       Option for loading time series for TDI observables and FFTing (default: false)\n\
- --nlinesinfile        Number of lines of inputs file when loading TDI time series from file\n\
+ --nsamplesinfile      Number of lines of input file when loading TDI time series from file\n\
+ --binaryin            Tag for loading the data in gsl binary form instead of text (default false)\n\
+ --binaryout           Tag for outputting the data in gsl binary form instead of text (default false)\n\
  --indir               Input directory when loading TDI time series from file\n\
  --infile              Input file name when loading TDI time series from file\n\
  --outdir              Output directory\n\
@@ -74,12 +77,13 @@ Arguments are as follows:\n\
 
     /* Set default values for the generation params */
     params->nbmode = 5;
-    params->fLow = 0.;
+    params->minf = 0.;
+    params->deltaf = 0.;
     params->tagtdi = TDIXYZ;
     params->taggenwave = TDIhlm;
     params->restorescaledfactor = 0;
     params->fromtditdfile = 0;
-    params->nlinesinfile = 0;    /* No default; has to be provided */
+    params->nsamplesinfile = 0;    /* No default; has to be provided */
     strcpy(params->indir, "");   /* No default; has to be provided */
     strcpy(params->infile, "");  /* No default; has to be provided */
     strcpy(params->outdir, ".");
@@ -112,8 +116,10 @@ Arguments are as follows:\n\
             params->polarization = atof(argv[++i]);
         } else if (strcmp(argv[i], "--nbmode") == 0) {
             params->nbmode = atoi(argv[++i]);
-        } else if (strcmp(argv[i], "--fLow") == 0) {
-            params->fLow = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--minf") == 0) {
+            params->minf = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--deltaf") == 0) {
+            params->deltaf = atof(argv[++i]);
         } else if (strcmp(argv[i], "--tagtdi") == 0) {
 	  params->tagtdi = ParseTDItag(argv[++i]);
         } else if (strcmp(argv[i], "--taggenwave") == 0) {
@@ -122,8 +128,12 @@ Arguments are as follows:\n\
             params->restorescaledfactor = 1;
         } else if (strcmp(argv[i], "--fromtditdfile") == 0) {
             params->fromtditdfile = 1;
-        } else if (strcmp(argv[i], "--nlinesinfile") == 0) {
-            params->nlinesinfile = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "--nsamplesinfile") == 0) {
+            params->nsamplesinfile = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "--binaryin") == 0) {
+          params->binaryin = 1;
+        } else if (strcmp(argv[i], "--binaryout") == 0) {
+          params->binaryout = 1;
         } else if (strcmp(argv[i], "--indir") == 0) {
             strcpy(params->indir, argv[++i]);
         } else if (strcmp(argv[i], "--infile") == 0) {
@@ -145,25 +155,47 @@ Arguments are as follows:\n\
 }
 
 /* Built-in postfix for output files for TDI channels */
-static char* TDIFilePostfix(TDItag tditag, int channel)
+static char* TDIFilePostfix(TDItag tditag, int channel, int binary)
 {
-  if(tditag==TDIXYZ) {
-    switch(channel) {
-    case 1: return "_TDIX.txt"; break;
-    case 2: return "_TDIY.txt"; break;
-    case 3: return "_TDIZ.txt"; break;
+  if(!binary) {
+    if(tditag==TDIXYZ) {
+      switch(channel) {
+        case 1: return "_TDIX.txt"; break;
+        case 2: return "_TDIY.txt"; break;
+        case 3: return "_TDIZ.txt"; break;
+      }
     }
-  }
-  else if(tditag==TDIAETXYZ) {
-    switch(channel) {
-    case 1: return "_TDIAXYZ.txt"; break;
-    case 2: return "_TDIEXYZ.txt"; break;
-    case 3: return "_TDITXYZ.txt"; break;
+    else if(tditag==TDIAETXYZ) {
+      switch(channel) {
+        case 1: return "_TDIAXYZ.txt"; break;
+        case 2: return "_TDIEXYZ.txt"; break;
+        case 3: return "_TDITXYZ.txt"; break;
+      }
+    }
+    else {
+      printf("Error: in TDIFilePostfix TDI tag not recognized.\n");
+      exit(1);
     }
   }
   else {
-    printf("Error: in TDIFilePostfix TDI tag not recognized.\n");
-    exit(1);
+    if(tditag==TDIXYZ) {
+      switch(channel) {
+        case 1: return "_TDIX.dat"; break;
+        case 2: return "_TDIY.dat"; break;
+        case 3: return "_TDIZ.dat"; break;
+      }
+    }
+    else if(tditag==TDIAETXYZ) {
+      switch(channel) {
+        case 1: return "_TDIAXYZ.dat"; break;
+        case 2: return "_TDIEXYZ.dat"; break;
+        case 3: return "_TDITXYZ.dat"; break;
+      }
+    }
+    else {
+      printf("Error: in TDIFilePostfix TDI tag not recognized.\n");
+      exit(1);
+    }
   }
 }
 
@@ -171,11 +203,12 @@ static char* TDIFilePostfix(TDItag tditag, int channel)
 
 /* Read waveform time series in Re/Im form for hpTD and hcTD a single file */
 /* NOTE: assumes the same number of points is used to represent each mode */
-static void Read_Text_TDITD3Chan( RealTimeSeries** TDI1, RealTimeSeries** TDI2, RealTimeSeries** TDI3, const char dir[], const char file[], const int nblines)
+static void Read_TDITD3Chan( RealTimeSeries** TDI1, RealTimeSeries** TDI2, RealTimeSeries** TDI3, const char dir[], const char file[], const int nblines, const int binary)
 {
   /* Initalize and read input */
   gsl_matrix* inmatrix =  gsl_matrix_alloc(nblines, 4);
-  Read_Text_Matrix(dir, file, inmatrix);
+  if(!binary) Read_Text_Matrix(dir, file, inmatrix);
+  else Read_Matrix(dir, file, inmatrix);
 
   /* Initialize structures */
   RealTimeSeries_Init(TDI1, nblines);
@@ -198,12 +231,12 @@ static void Read_Text_TDITD3Chan( RealTimeSeries** TDI1, RealTimeSeries** TDI2, 
   gsl_matrix_free(inmatrix);
 }
 /* Output waveform in frequency series form,Re/Im for hplus and hcross */
-static void Write_Text_FrequencySeries(const char dir[], const char file[], ReImFrequencySeries* freqseries)
+static void Write_FrequencySeries(const char dir[], const char file[], ReImFrequencySeries* freqseries, const int binary)
 {
   /* Initialize output */
   /* Note: assumes hplus, hcross have same length as expected */
   int nbfreq = freqseries->freq->size;
-  gsl_matrix* outmatrix = gsl_matrix_alloc(nbfreq, 3); 
+  gsl_matrix* outmatrix = gsl_matrix_alloc(nbfreq, 3);
 
   /* Set output matrix */
   gsl_matrix_set_col(outmatrix, 0, freqseries->freq);
@@ -211,16 +244,17 @@ static void Write_Text_FrequencySeries(const char dir[], const char file[], ReIm
   gsl_matrix_set_col(outmatrix, 2, freqseries->h_imag);
 
   /* Output */
-  Write_Text_Matrix(dir, file, outmatrix);
+  if (!binary) Write_Text_Matrix(dir, file, outmatrix);
+  else Write_Matrix(dir, file, outmatrix);
 }
 /* Output TDI mode contributions in downsampled form, FD AmpReal/AmpIm/Phase, all hlm modes in a single file */
 /* NOTE: assumes the same number of points is used to represent each mode */
-static void Write_Text_TDIhlm(const char dir[], const char file[], ListmodesCAmpPhaseFrequencySeries* listhlm, int nbmodes)
+static void Write_TDIhlm(const char dir[], const char file[], ListmodesCAmpPhaseFrequencySeries* listhlm, int nbmodes, const int binary)
 {
   /* Initialize output */
   /* get length from 22 mode - NOTE: assumes the same for all modes */
   int nbfreq = ListmodesCAmpPhaseFrequencySeries_GetMode(listhlm, 2, 2)->freqseries->freq->size;
-  gsl_matrix* outmatrix = gsl_matrix_alloc(nbfreq, 4*nbmodes); 
+  gsl_matrix* outmatrix = gsl_matrix_alloc(nbfreq, 4*nbmodes);
 
   /* Get data in the list of modes */
   CAmpPhaseFrequencySeries* mode;
@@ -233,7 +267,8 @@ static void Write_Text_TDIhlm(const char dir[], const char file[], ListmodesCAmp
   }
 
   /* Output */
-  Write_Text_Matrix(dir, file, outmatrix);
+  if (!binary) Write_Text_Matrix(dir, file, outmatrix);
+  else Write_Matrix(dir, file, outmatrix);
 }
 
 /***************** Main program *****************/
@@ -241,10 +276,10 @@ static void Write_Text_TDIhlm(const char dir[], const char file[], ListmodesCAmp
 int main(int argc, char *argv[])
 {
   /* Initialize structure for parameters */
-  GenTDITDparams* params;
-  params = (GenTDITDparams*) malloc(sizeof(GenTDITDparams));
-  memset(params, 0, sizeof(GenTDITDparams));
-  
+  GenTDIFDparams* params;
+  params = (GenTDIFDparams*) malloc(sizeof(GenTDIFDparams));
+  memset(params, 0, sizeof(GenTDIFDparams));
+
   /* Parse commandline to read parameters */
   parse_args_GenerateTDIFD(argc, argv, params);
 
@@ -253,7 +288,7 @@ int main(int argc, char *argv[])
     RealTimeSeries* TDI1 = NULL;
     RealTimeSeries* TDI2 = NULL;
     RealTimeSeries* TDI3 = NULL;
-    Read_Text_TDITD3Chan(&TDI1, &TDI2, &TDI3, params->indir, params->infile, params->nlinesinfile);
+    Read_TDITD3Chan(&TDI1, &TDI2, &TDI3, params->indir, params->infile, params->nsamplesinfile, params->binaryin);
 
     /* Compute FFT */
     ReImFrequencySeries* TDI1FFT = NULL;
@@ -270,12 +305,12 @@ int main(int argc, char *argv[])
     char *outfileTDI1 = malloc(256);
     char *outfileTDI2 = malloc(256);
     char *outfileTDI3 = malloc(256);
-    sprintf(outfileTDI1, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 1));
-    sprintf(outfileTDI2, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 2));
-    sprintf(outfileTDI3, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 3));
-    Write_Text_FrequencySeries(params->outdir, outfileTDI1, TDI1FFT);
-    Write_Text_FrequencySeries(params->outdir, outfileTDI2, TDI2FFT);
-    Write_Text_FrequencySeries(params->outdir, outfileTDI3, TDI3FFT);
+    sprintf(outfileTDI1, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 1, params->binaryout));
+    sprintf(outfileTDI2, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 2, params->binaryout));
+    sprintf(outfileTDI3, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 3, params->binaryout));
+    Write_FrequencySeries(params->outdir, outfileTDI1, TDI1FFT, params->binaryout);
+    Write_FrequencySeries(params->outdir, outfileTDI2, TDI2FFT, params->binaryout);
+    Write_FrequencySeries(params->outdir, outfileTDI3, TDI3FFT, params->binaryout);
     free(outfileTDI1);
     free(outfileTDI2);
     free(outfileTDI3);
@@ -305,17 +340,17 @@ int main(int argc, char *argv[])
     }
 
     if(params->taggenwave==TDIhlm) {
-      
+
       /* Output */
       char *outfileTDI1hlm = malloc(256);
       char *outfileTDI2hlm = malloc(256);
       char *outfileTDI3hlm = malloc(256);
-      sprintf(outfileTDI1hlm, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 1));
-      sprintf(outfileTDI2hlm, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 2));
-      sprintf(outfileTDI3hlm, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 3));
-      Write_Text_TDIhlm(params->outdir, outfileTDI1hlm, listTDI1, params->nbmode);
-      Write_Text_TDIhlm(params->outdir, outfileTDI2hlm, listTDI2, params->nbmode);
-      Write_Text_TDIhlm(params->outdir, outfileTDI3hlm, listTDI3, params->nbmode);
+      sprintf(outfileTDI1hlm, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 1, params->binaryout));
+      sprintf(outfileTDI2hlm, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 2, params->binaryout));
+      sprintf(outfileTDI3hlm, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 3, params->binaryout));
+      Write_TDIhlm(params->outdir, outfileTDI1hlm, listTDI1, params->nbmode, params->binaryout);
+      Write_TDIhlm(params->outdir, outfileTDI2hlm, listTDI2, params->nbmode, params->binaryout);
+      Write_TDIhlm(params->outdir, outfileTDI3hlm, listTDI3, params->nbmode, params->binaryout);
       free(outfileTDI1hlm);
       free(outfileTDI2hlm);
       free(outfileTDI3hlm);
@@ -325,30 +360,34 @@ int main(int argc, char *argv[])
 
     else {
 
-      /* Determine deltaf so that N deltat = 1/deltaf > 2*tc where tc is the time to coalescence estimated from Psi22 */
-      /* Assumes the TD waveform ends around t=0 */
-      /* Note: the phase is untouched by the response processing, so the phase in the 22 TDI contribution is still Psi22 and the same for all channels */
-      double tc = EstimateInitialTime(listTDI1, params->fLow);
-      double deltaf = 0.5 * 1./(2*(-tc)); /* Extra factor of 1/2 corresponding to 0-padding in TD by factor of 2 */
-      
+      double deltaf = 0.;
+      if(params->deltaf==0.) {
+        /* Determine deltaf so that N deltat = 1/deltaf > 2*tc where tc is the time to coalescence estimated from Psi22 */
+        /* Assumes the TD waveform ends around t=0 */
+        /* Note: the phase is untouched by the response processing, so the phase in the 22 TDI contribution is still Psi22 and the same for all channels */
+        double tc = EstimateInitialTime(listTDI1, params->minf);
+        deltaf = 0.5 * 1./(2*(-tc)); /* Extra factor of 1/2 corresponding to 0-padding in TD by factor of 2 */
+      }
+      else deltaf = params->deltaf;
+
       /* Generate FD frequency series by summing mode contributions */
       ReImFrequencySeries* TDI1FD = NULL;
       ReImFrequencySeries* TDI2FD = NULL;
       ReImFrequencySeries* TDI3FD = NULL;
-      GenerateFDReImFrequencySeries(&TDI1FD, listTDI1, params->fLow, deltaf, 0, params->nbmode); /* Here determines the number of points from deltaf and max frequency in input list of modes */
-      GenerateFDReImFrequencySeries(&TDI2FD, listTDI2, params->fLow, deltaf, 0, params->nbmode); /* Here determines the number of points from deltaf and max frequency in input list of modes */
-      GenerateFDReImFrequencySeries(&TDI3FD, listTDI3, params->fLow, deltaf, 0, params->nbmode); /* Here determines the number of points from deltaf and max frequency in input list of modes */
+      GenerateFDReImFrequencySeries(&TDI1FD, listTDI1, params->minf, deltaf, 0, params->nbmode); /* Here determines the number of points from deltaf and max frequency in input list of modes */
+      GenerateFDReImFrequencySeries(&TDI2FD, listTDI2, params->minf, deltaf, 0, params->nbmode); /* Here determines the number of points from deltaf and max frequency in input list of modes */
+      GenerateFDReImFrequencySeries(&TDI3FD, listTDI3, params->minf, deltaf, 0, params->nbmode); /* Here determines the number of points from deltaf and max frequency in input list of modes */
 
       /* Output */
       char *outfileTDI1FD = malloc(256);
       char *outfileTDI2FD = malloc(256);
       char *outfileTDI3FD = malloc(256);
-      sprintf(outfileTDI1FD, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 1));
-      sprintf(outfileTDI2FD, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 2));
-      sprintf(outfileTDI3FD, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 3));
-      Write_Text_FrequencySeries(params->outdir, outfileTDI1FD, TDI1FD);
-      Write_Text_FrequencySeries(params->outdir, outfileTDI2FD, TDI2FD);
-      Write_Text_FrequencySeries(params->outdir, outfileTDI3FD, TDI3FD);
+      sprintf(outfileTDI1FD, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 1, params->binaryout));
+      sprintf(outfileTDI2FD, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 2, params->binaryout));
+      sprintf(outfileTDI3FD, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 3, params->binaryout));
+      Write_FrequencySeries(params->outdir, outfileTDI1FD, TDI1FD, params->binaryout);
+      Write_FrequencySeries(params->outdir, outfileTDI2FD, TDI2FD, params->binaryout);
+      Write_FrequencySeries(params->outdir, outfileTDI3FD, TDI3FD, params->binaryout);
       free(outfileTDI1FD);
       free(outfileTDI2FD);
       free(outfileTDI3FD);

@@ -234,8 +234,6 @@ int GeneratehphcFDReImFrequencySeries(
       hlm = ListmodesCAmpPhaseFrequencySeries_GetMode(listhlm, l, m);
       fHigh = fmax(fHigh, gsl_vector_get(hlm->freqseries->freq, hlm->freqseries->freq->size - 1));
     }
-    printf("fHigh: %g\n", fHigh);
-    printf("deltaf: %g\n", deltaf);
     nbpts = (int) ceil(fHigh/deltaf);
   }
   else nbpts = nbpt;
@@ -261,7 +259,7 @@ int GeneratehphcFDReImFrequencySeries(
   for(int i=0; i<nbmode; i++) {
     int l = listmode[i][0];
     int m = listmode[i][1];
-    
+
     /* Initialize the complex series for the mode */
     ReImFrequencySeries* mode = NULL;
     ReImFrequencySeries_Init(&mode, nbpts);
@@ -432,7 +430,7 @@ double complex SpinWeightedSphericalHarmonic(double theta, double phi, int s, in
   static const char *func = "SpinWeightedSphericalHarmonic";
   double fac;
   double complex ans;
- 
+
   /* sanity checks ... */
   if ( l < abs(s) ) {
     printf("Error - %s: Invalid mode s=%d, l=%d, m=%d - require |s| <= l\n", func, s, l, m );
@@ -442,7 +440,7 @@ double complex SpinWeightedSphericalHarmonic(double theta, double phi, int s, in
     printf("Error - %s: Invalid mode s=%d, l=%d, m=%d - require |m| <= l\n", func, s, l, m );
     exit(1);
   }
- 
+
   if ( s == -2 ) {
     if ( l == 2 ) {
       switch ( m ) {
@@ -452,18 +450,18 @@ double complex SpinWeightedSphericalHarmonic(double theta, double phi, int s, in
       case -1:
 	fac = sqrt( 5.0 / ( 16.0 * PI ) ) * sin( theta )*( 1.0 - cos( theta ));
 	break;
-         
+
       case 0:
 	fac = sqrt( 15.0 / ( 32.0 * PI ) ) * sin( theta )*sin( theta );
 	break;
-         
+
       case 1:
 	fac = sqrt( 5.0 / ( 16.0 * PI ) ) * sin( theta )*( 1.0 + cos( theta ));
 	break;
-         
+
       case 2:
 	fac = sqrt( 5.0 / ( 64.0 * PI ) ) * ( 1.0 + cos( theta ))*( 1.0 + cos( theta ));
-	break;     
+	break;
       default:
 	printf("Error - %s: Invalid mode s=%d, l=%d, m=%d - require |m| <= l\n", func, s, l, m );
 	exit(1);
@@ -487,21 +485,21 @@ double complex SpinWeightedSphericalHarmonic(double theta, double phi, int s, in
       case 1:
 	fac = -sqrt(35.0/(2.0*PI))*(sin(theta) - 4.0*sin(2.0*theta) - 3.0*sin(3.0*theta))/32.0;
 	break;
-           
+
       case 2:
 	fac = sqrt(7.0/PI)*pow(cos(theta/2.0),4.0)*(-2.0 + 3.0*cos(theta))/2.0;
-	break;     
-           
+	break;
+
       case 3:
 	fac = -sqrt(21.0/(2.0*PI))*pow(cos(theta/2.0),5.0)*sin(theta/2.0);
-	break;     
-           
+	break;
+
       default:
 	printf("Error - %s: Invalid mode s=%d, l=%d, m=%d - require |m| <= l\n", func, s, l, m );
 	exit(1);
 	break;
-      } 
-    }   /* l==3 */ 
+      }
+    }   /* l==3 */
     else if ( l == 4 ) {
       switch ( m ) {
       case -4:
@@ -510,7 +508,7 @@ double complex SpinWeightedSphericalHarmonic(double theta, double phi, int s, in
       case -3:
 	fac = 3.0*sqrt(7.0/(2.0*PI))*cos(theta/2.0)*(1.0 + 2.0*cos(theta))*pow(sin(theta/2.0),5.0);
 	break;
-         
+
       case -2:
 	fac = (3.0*(9.0 + 14.0*cos(theta) + 7.0*cos(2.0*theta))*pow(sin(theta/2.0),4.0))/(4.0*sqrt(PI));
 	break;
@@ -525,13 +523,13 @@ double complex SpinWeightedSphericalHarmonic(double theta, double phi, int s, in
 	break;
       case 2:
 	fac = (3.0*pow(cos(theta/2.0),4.0)*(9.0 - 14.0*cos(theta) + 7.0*cos(2.0*theta)))/(4.0*sqrt(PI));
-	break;     
+	break;
       case 3:
 	fac = -3.0*sqrt(7.0/(2.0*PI))*pow(cos(theta/2.0),5.0)*(-1.0 + 2.0*cos(theta))*sin(theta/2.0);
-	break;     
+	break;
       case 4:
 	fac = 3.0*sqrt(7.0/PI)*pow(cos(theta/2.0),6.0)*pow(sin(theta/2.0),2.0);
-	break;     
+	break;
       default:
 	printf("Error - %s: Invalid mode s=%d, l=%d, m=%d - require |m| <= l\n", func, s, l, m );
 	exit(1);
@@ -563,16 +561,16 @@ double complex SpinWeightedSphericalHarmonic(double theta, double phi, int s, in
 	break;
       case 2:
 	fac = sqrt(11.0/PI)*pow(cos(theta/2.0),4.0)*(-32.0 + 57.0*cos(theta) - 36.0*cos(2.0*theta) + 15.0*cos(3.0*theta))/8.0;
-	break;     
+	break;
       case 3:
 	fac = -sqrt(33.0/(2.0*PI))*pow(cos(theta/2.0),5.0)*(17.0 - 24.0*cos(theta) + 15.0*cos(2.0*theta))*sin(theta/2.0)/4.0;
-	break;     
+	break;
       case 4:
 	fac = sqrt(33.0/PI)*pow(cos(theta/2.0),6.0)*(-2.0 + 5.0*cos(theta))*pow(sin(theta/2.0),2.0);
-	break;     
+	break;
       case 5:
 	fac = -sqrt(330.0/PI)*pow(cos(theta/2.0),7.0)*pow(sin(theta/2.0),3.0);
-	break;     
+	break;
       default:
 	printf("Error - %s: Invalid mode s=%d, l=%d, m=%d - require |m| <= l\n", func, s, l, m );
 	exit(1);

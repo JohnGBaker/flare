@@ -43,6 +43,7 @@ typedef struct tagLLVGlobalParams {
   int tagint;                /* Tag choosing the integrator: 0 for wip (default), 1 for linear integration */
   int tagnetwork;            /* Tag choosing the network of detectors to use */
   int nbptsoverlap;          /* Number of points to use in loglinear overlaps (default 32768) */
+  int constL;                /* set all logLikelihood to 0 - allows to sample from the prior for testing */
 } LLVGlobalParams;
 
 typedef struct tagLLVPrior {
@@ -105,15 +106,15 @@ typedef struct tagLLVRunParams {
 
 /************ Structures for signals and injections ************/
 
-typedef struct tagLLVSignal
-{
-  struct tagListmodesCAmpPhaseFrequencySeries* LHOSignal;   /* Signal in LHO, in the form of a list of the contribution of each mode */
-  struct tagListmodesCAmpPhaseFrequencySeries* LLOSignal;   /* Signal in LLO, in the form of a list of the contribution of each mode */
-  struct tagListmodesCAmpPhaseFrequencySeries* VIRGOSignal; /* Signal in VIRGO, in the form of a list of the contribution of each mode */
-  double LHOhh;                                             /* Inner product (h|h) for LHO */
-  double LLOhh;                                             /* Inner product (h|h) for LLO */
-  double VIRGOhh;                                           /* Inner product (h|h) for VIRGO */
-} LLVSignal;
+// typedef struct tagLLVSignal
+// {
+//   struct tagListmodesCAmpPhaseFrequencySeries* LHOSignal;   /* Signal in LHO, in the form of a list of the contribution of each mode */
+//   struct tagListmodesCAmpPhaseFrequencySeries* LLOSignal;   /* Signal in LLO, in the form of a list of the contribution of each mode */
+//   struct tagListmodesCAmpPhaseFrequencySeries* VIRGOSignal; /* Signal in VIRGO, in the form of a list of the contribution of each mode */
+//   double LHOhh;                                             /* Inner product (h|h) for LHO */
+//   double LLOhh;                                             /* Inner product (h|h) for LLO */
+//   double VIRGOhh;                                           /* Inner product (h|h) for VIRGO */
+// } LLVSignal;
 
 typedef struct tagLLVSignalCAmpPhase
 {
@@ -157,7 +158,8 @@ void parse_args_LLV(ssize_t argc, char **argv,
     LLVParams* params,
     LLVGlobalParams* globalparams,
     LLVPrior* prior,
-    LLVRunParams* run);
+    LLVRunParams* run,
+    LLVParams* addparams);
 
 /* Functions to print the parameters of the run in files for reference */
 int print_parameters_to_file_LLV(

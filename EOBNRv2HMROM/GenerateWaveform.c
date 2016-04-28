@@ -42,8 +42,9 @@ Arguments are as follows:\n\
 ----- Generation Parameters ----------------------\n\
 --------------------------------------------------\n\
  --nbmode              Number of modes of radiation to generate (1-5, default=5)\n\
- --fLow                Minimal frequency (Hz, default=0) - when too low, use first frequency covered by the ROM\n\
+ --minf                Minimal frequency (Hz, default=0) - when too low, use first frequency covered by the ROM\n\
  --taggenwave          Tag choosing the wf format: hlm (default: downsampled modes in Amp/Phase form), hphcFD (hlm interpolated and summed), hphcTD (IFFT of hphcFD),\n\
+ --binaryout           Tag for outputting the data in gsl binary form instead of text (default false)\n\
  --outdir              Output directory\n\
  --outfile             Output file name\n\
 \n";
@@ -61,8 +62,9 @@ Arguments are as follows:\n\
 
     /* set default values for the generation params */
     params->nbmode = 5;
-    params->fLow = 0.;
+    params->minf = 0.;
     params->taggenwave = hlm;
+    params->binaryout = 0;
     strcpy(params->outdir, ".");
     strcpy(params->outfile, "generated_waveform.txt");
 
@@ -80,17 +82,19 @@ Arguments are as follows:\n\
         } else if (strcmp(argv[i], "--m1") == 0) {
             params->m1 = atof(argv[++i]);
         } else if (strcmp(argv[i], "--m2") == 0) {
-            params->m2 = atof(argv[++i]);
+          params->m2 = atof(argv[++i]);
         } else if (strcmp(argv[i], "--distance") == 0) {
-            params->distance = atof(argv[++i]);
+          params->distance = atof(argv[++i]);
         } else if (strcmp(argv[i], "--inclination") == 0) {
-            params->inclination = atof(argv[++i]);
+          params->inclination = atof(argv[++i]);
         } else if (strcmp(argv[i], "--nbmode") == 0) {
-            params->nbmode = atoi(argv[++i]);
-        } else if (strcmp(argv[i], "--fLow") == 0) {
-            params->fLow = atof(argv[++i]);
+          params->nbmode = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "--minf") == 0) {
+          params->minf = atof(argv[++i]);
         } else if (strcmp(argv[i], "--taggenwave") == 0) {
-	  params->taggenwave = ParseGenWavetag(argv[++i]);
+          params->taggenwave = ParseGenWavetag(argv[++i]);
+        } else if (strcmp(argv[i], "--binaryout") == 0) {
+          params->binaryout = 1;
         } else if (strcmp(argv[i], "--outdir") == 0) {
             strcpy(params->outdir, argv[++i]);
         } else if (strcmp(argv[i], "--outfile") == 0) {
@@ -107,16 +111,16 @@ Arguments are as follows:\n\
     exit(1);
 }
 
-/************ Functions to write waveforms to file ************/
+/************ Functions to write waveforms to file - text or binary ************/
 
 /* Output waveform in downsampled form, FD Amp/Pase, all hlm modes in a single file */
 /* NOTE: assumes the same number of points is used to represent each mode */
-static void Write_Text_Wave_hlm(const char dir[], const char file[], ListmodesCAmpPhaseFrequencySeries* listhlm, int nbmodes)
+static void Write_Wave_hlm(const char dir[], const char file[], ListmodesCAmpPhaseFrequencySeries* listhlm, int nbmodes, int binary)
 {
   /* Initialize output */
   /* get length from 22 mode - NOTE: assumes the same for all modes */
   int nbfreq = ListmodesCAmpPhaseFrequencySeries_GetMode(listhlm, 2, 2)->freqseries->freq->size;
-  gsl_matrix* outmatrix = gsl_matrix_alloc(nbfreq, 3*nbmodes); 
+  gsl_matrix* outmatrix = gsl_matrix_alloc(nbfreq, 3*nbmodes);
 
   /* Get data in the list of modes */
   CAmpPhaseFrequencySeries* mode;
@@ -128,15 +132,16 @@ static void Write_Text_Wave_hlm(const char dir[], const char file[], ListmodesCA
   }
 
   /* Output */
-  Write_Text_Matrix(dir, file, outmatrix);
+  if (!binary) Write_Text_Matrix(dir, file, outmatrix);
+  else Write_Matrix(dir, file, outmatrix);
 }
 /* Output waveform in frequency series form,Re/Im for hplus and hcross */
-static void Write_Text_Wave_hphcFD(const char dir[], const char file[], ReImFrequencySeries* hptilde, ReImFrequencySeries* hctilde)
+static void Write_Wave_hphcFD(const char dir[], const char file[], ReImFrequencySeries* hptilde, ReImFrequencySeries* hctilde, int binary)
 {
   /* Initialize output */
   /* Note: assumes hplus, hcross have same length as expected */
   int nbfreq = hptilde->freq->size;
-  gsl_matrix* outmatrix = gsl_matrix_alloc(nbfreq, 5); 
+  gsl_matrix* outmatrix = gsl_matrix_alloc(nbfreq, 5);
 
   /* Set output matrix */
   gsl_matrix_set_col(outmatrix, 0, hptilde->freq);
@@ -146,15 +151,16 @@ static void Write_Text_Wave_hphcFD(const char dir[], const char file[], ReImFreq
   gsl_matrix_set_col(outmatrix, 4, hctilde->h_imag);
 
   /* Output */
-  Write_Text_Matrix(dir, file, outmatrix);
+  if (!binary) Write_Text_Matrix(dir, file, outmatrix);
+  else Write_Matrix(dir, file, outmatrix);
 }
 /* Output waveform in freqeucny sreies form,Re/Im for hplus and hcross */
-static void Write_Text_Wave_hphcTD(const char dir[], const char file[], RealTimeSeries* hp, RealTimeSeries* hc)
+static void Write_Wave_hphcTD(const char dir[], const char file[], RealTimeSeries* hp, RealTimeSeries* hc, int binary)
 {
   /* Initialize output */
   /* Note: assumes hplus, hcross have same length as expected */
   int nbtimes = hp->times->size;
-  gsl_matrix* outmatrix = gsl_matrix_alloc(nbtimes, 3); 
+  gsl_matrix* outmatrix = gsl_matrix_alloc(nbtimes, 3);
 
   /* Set output matrix */
   gsl_matrix_set_col(outmatrix, 0, hp->times);
@@ -162,7 +168,8 @@ static void Write_Text_Wave_hphcTD(const char dir[], const char file[], RealTime
   gsl_matrix_set_col(outmatrix, 2, hc->h);
 
   /* Output */
-  Write_Text_Matrix(dir, file, outmatrix);
+  if (!binary) Write_Text_Matrix(dir, file, outmatrix);
+  else Write_Matrix(dir, file, outmatrix);
 }
 
 /***************** Main program *****************/
@@ -173,7 +180,7 @@ int main(int argc, char *argv[])
   GenWaveParams* params;
   params = (GenWaveParams*) malloc(sizeof(GenWaveParams));
   memset(params, 0, sizeof(GenWaveParams));
-  
+
   /* Parse commandline to read parameters */
   parse_args_GenerateWaveform(argc, argv, params);
 
@@ -182,7 +189,7 @@ int main(int argc, char *argv[])
   SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef, params->phiRef, params->fRef, params->m1*MSUN_SI, params->m2*MSUN_SI, params->distance*1e6*PC_SI);
 
   if(params->taggenwave==hlm) {
-    Write_Text_Wave_hlm(params->outdir, params->outfile, listROM, params->nbmode);
+    Write_Wave_hlm(params->outdir, params->outfile, listROM, params->nbmode, params->binaryout);
     exit(0);
   }
 
@@ -190,18 +197,18 @@ int main(int argc, char *argv[])
 
     /* Determine deltaf so that N deltat = 1/deltaf > 2*tc where tc is the time to coalescence estimated from Psi22 */
     /* Assumes the TD waveform ends around t=0 */
-    double tc = EstimateInitialTime(listROM, params->fLow);
+    double tc = EstimateInitialTime(listROM, params->minf);
     double deltaf = 0.5 * 1./(2*(-tc)); /* Extra factor of 1/2 corresponding to 0-padding in TD by factor of 2 */
 
     /* Compute hplus, hcross FD */
     ReImFrequencySeries* hptilde = NULL;
     ReImFrequencySeries* hctilde = NULL;
-    GeneratehphcFDReImFrequencySeries(&hptilde, &hctilde, listROM, params->fLow, deltaf, 0, params->nbmode, params->inclination, 0., 1);
+    GeneratehphcFDReImFrequencySeries(&hptilde, &hctilde, listROM, params->minf, deltaf, 0, params->nbmode, params->inclination, 0., 1);
 
     /* Output */
     if(params->taggenwave==hphcFD) {
 
-      Write_Text_Wave_hphcFD(params->outdir, params->outfile, hptilde, hctilde);
+      Write_Wave_hphcFD(params->outdir, params->outfile, hptilde, hctilde, params->binaryout);
       exit(0);
     }
 
@@ -210,11 +217,11 @@ int main(int argc, char *argv[])
       /* Determine frequency windows - min,max frequencies determined directly from the Amp/Phase hlm's */
       double fLowROM = ListmodesCAmpPhaseFrequencySeries_minf(listROM);
       double fHighROM = ListmodesCAmpPhaseFrequencySeries_maxf(listROM);
-      double f1windowbeg = fmax(params->fLow, fLowROM);
+      double f1windowbeg = fmax(params->minf, fLowROM);
       double f2windowbeg = 1.1 * f1windowbeg; /* Here hardcoded relative width of the window */
       double f2windowend = fHighROM;
       double f1windowend = 0.995 * f2windowend; /* Here hardcoded relative width of the window */
-    
+
       /* Compute hplus, hcross TD */
       RealTimeSeries* hp = NULL;
       RealTimeSeries* hc = NULL;
@@ -223,9 +230,9 @@ int main(int argc, char *argv[])
 
       /* Output */
       if(params->taggenwave==hphcTD) {
-	Write_Text_Wave_hphcTD(params->outdir, params->outfile, hp, hc);
-	exit(0);
+        Write_Wave_hphcTD(params->outdir, params->outfile, hp, hc, params->binaryout);
+        exit(0);
       }
-    }   
+    }
   }
 }

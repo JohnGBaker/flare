@@ -150,14 +150,19 @@ void getallparams(double *Cube, int *ndim)
 
 /* Note: context must point to the LLVSignal structure representing the injected signals */
 void getLogLike(double *Cube, int *ndim, int *npars, double *lnew, void *context)
-//void getLogLike(LLVParams *params, double *lnew, void *context)
 {
+//
+//printf(" a |");
+
   /* Convert Cube to physical parameters and check prior boundary */
   getallparams(Cube,ndim);
   if (PriorBoundaryCheck(priorParams, Cube)) {
     *lnew = -DBL_MAX;
     return;
   }
+
+  /* constL option that sets all logLikelihoods to 0 - for testing: allows to sample from prior */
+	if(globalparams->constL) *lnew = 0.;
 
   LLVParams templateparams;
   templateparams.m1 = Cube[0];
@@ -194,6 +199,9 @@ void getLogLike(double *Cube, int *ndim, int *npars, double *lnew, void *context
     //printf("time Likelihood: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
     //
   }
+	//
+	//printf(" %.16e ", *lnew);
+	//printf("| b\n");
 }
 
 
@@ -273,9 +281,11 @@ int main(int argc, char *argv[])
   memset(globalparams, 0, sizeof(LLVGlobalParams));
   priorParams = (LLVPrior*) malloc(sizeof(LLVPrior));
   memset(priorParams, 0, sizeof(LLVPrior));
+	LLVParams* addparams = (LLVParams*) malloc(sizeof(LLVParams));
+  memset(addparams, 0, sizeof(LLVParams));
 
   /* Parse commandline to read parameters of injection - copy the number of modes demanded for the injection  */
-  parse_args_LLV(argc, argv, injectedparams, globalparams, priorParams, &runParams);
+  parse_args_LLV(argc, argv, injectedparams, globalparams, priorParams, &runParams, addparams);
   injectedparams->nbmode = globalparams->nbmodeinj;
 	if(myid == 0) print_parameters_to_file_LLV(injectedparams, globalparams, priorParams, &runParams);
 
@@ -546,7 +556,7 @@ int main(int argc, char *argv[])
 	int maxModes = runParams.maxcls;				/* expected max no. of modes (used only for memory allocation) */
 
 	int pWrap[ndim];				/* which parameters to have periodic boundary conditions? */
-	for(i = 0; i < ndim; i++) { /* If non-default limiting values have been set for ra,, phase, pol, do not treat them as periodic */
+	for(i = 0; i < ndim; i++) { /* If non-default limiting values have been set for ra, phase, pol, do not treat them as periodic */
 	  if(freeparamsmap[i]==4 && priorParams->phase_min == 0. && priorParams->phase_max == 2.*PI) pWrap[i] = 1;
 	  else if(freeparamsmap[i]==6 && priorParams->ra_min == 0. && priorParams->ra_max == 2.*PI) pWrap[i] = 1;
 	  else if(freeparamsmap[i]==8 && priorParams->pol_min == 0. && priorParams->pol_max == 2.*PI) pWrap[i] = 1;
