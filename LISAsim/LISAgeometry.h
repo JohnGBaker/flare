@@ -65,8 +65,6 @@ typedef enum TDItag {
 
 /* Function to convert string input TDI string to TDItag */
 TDItag ParseTDItag(char* string);
-/* Function returning the number of channels for a TDItag */
-int nbchanTDI(TDItag tditag);
 
 /* Function cardinal sine */
 double sinc(const double x);

@@ -70,7 +70,7 @@ void getphysparams(double *Cube, int *ndim) /* Note: ndim not used here */
   double (*mass_prior)(double r, double x1, double x2);
   mass_prior=&CubeToFlatPrior;
   if(priorParams->logflat_massprior)mass_prior=&CubeToLogFlatPrior;
-    
+
   /* Component masses */
   if (isnan(priorParams->fix_m1)) {
     if (isnan(priorParams->fix_m2)) {
@@ -94,7 +94,7 @@ void getphysparams(double *Cube, int *ndim) /* Note: ndim not used here */
     }
   }
 
-  /* Note: here we output physical values in the cube (overwriting), and we keep the original order for physical parameters */ 
+  /* Note: here we output physical values in the cube (overwriting), and we keep the original order for physical parameters */
   Cube[0] = m1;
   Cube[1] = m2;
   Cube[2] = tRef;
@@ -185,7 +185,7 @@ void getLogLike(double *Cube, int *ndim, int *npars, double *lnew, void *context
     //TESTING
     //clock_t tbeg, tend;
     //tbeg = clock();
-    *lnew = CalculateLogLCAmpPhase(&templateparams, injection) - logZdata;
+    *lnew = CalculateLogLCAmpPhase(&templateparams, injection);
     //tend = clock();
     //printf("time Likelihood: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
     //
@@ -196,7 +196,7 @@ void getLogLike(double *Cube, int *ndim, int *npars, double *lnew, void *context
     //TESTING
     //clock_t tbeg, tend;
     //tbeg = clock();
-    *lnew = CalculateLogLReIm(&templateparams, injection) - logZdata;
+    *lnew = CalculateLogLReIm(&templateparams, injection);
     //tend = clock();
     //printf("time Likelihood: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
     //
@@ -313,7 +313,7 @@ int main(int argc, char *argv[])
 	    }
 	  }
 	  else tagseed = 1; /* If the resume option is false, create the seed anyway (possibly overwriting) */
-	  
+
 	  if(tagseed) { /* Create the seeding files */
 	    printf("Seeding the inference with one point at the injection.\n");
 	    fresume = fopen(pathresume, "w");
@@ -338,27 +338,26 @@ int main(int argc, char *argv[])
 	    /* Live points - convert to values in the cube */
 	    double* cubevalues = malloc(ndim*sizeof(double));
 	    getcubeparams(cubevalues, ndim, injectedparams, freeparamsmap);
-	    
+
 	    for(int i=0; i<ndim; i++) fprintf(flivepoints, "    %.18E", cubevalues[i]);
-	    fprintf(flivepoints, "   %.18E\n", logZtrue); 
+	    fprintf(flivepoints, "   %.18E\n", logZtrue);
 	    free(cubevalues);
-	    
+
 	    /* Also set the resume option to true */
 	    runParams.resume = 1;
-	    
+
 	    fclose(fresume);
 	    fclose(fev);
 	    fclose(flivepoints);
 	    fclose(fphyslivepoints);
 	  }
-	  
+
 	  free(pathresume);
 	  free(pathev);
 	  free(pathlivepoints);
 	  free(pathphyslivepoints);
 	}
-  
-	
+
 	/********** Test ****************/
 	/* double l; */
 	/* l = CalculateLogLReIm(injectedparams, injectedsignalReIm); */
@@ -418,7 +417,7 @@ int main(int argc, char *argv[])
 
 	logZero = -1E90;				/* points with loglike < logZero will be ignored by MultiNest */
 
-	int maxiter = 0;				/* max no. of iterations, a non-positive value means infinity. MultiNest will terminate if either it */
+	int maxiter = runParams.maxiter;				/* max no. of iterations, a non-positive value means infinity. MultiNest will terminate if either it */
 							/* has done max no. of iterations or convergence criterion (defined through tol) has been satisfied */
 
 	/* void *context = 0; */				/* not required by MultiNest, any additional information user wants to pass */
@@ -438,4 +437,3 @@ int main(int argc, char *argv[])
  	MPI_Finalize();
 #endif
 }
-

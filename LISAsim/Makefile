@@ -21,7 +21,7 @@ GenerateTDIFD.o: LISAgeometry.h ../tools/constants.h ../tools/struct.h ../EOBNRv
 	$(CC) -c $(CFLAGS) GenerateTDIFD.c
 
 GenerateTDITD: GenerateTDITD.o LISAgeometry.h LISAgeometry.o ../tools/constants.h ../tools/struct.h ../EOBNRv2HMROM/EOBNRv2HMROM.h ../EOBNRv2HMROM/EOBNRv2HMROMstruct.h ../tools/waveform.h ../tools/struct.o ../EOBNRv2HMROM/EOBNRv2HMROM.o ../EOBNRv2HMROM/EOBNRv2HMROMstruct.o ../tools/waveform.o
-	$(LD) $(LDFLAGS) -o GenerateTDITD GenerateTDITD.o LISAgeometry.o ../tools/struct.o ../EOBNRv2HMROM/EOBNRv2HMROM.o ../EOBNRv2HMROM/EOBNRv2HMROMstruct.o ../tools/waveform.o -lgsl -lgslcblas -lm
+	$(LD) $(LDFLAGS) -o GenerateTDITD GenerateTDITD.o LISAgeometry.o ../tools/struct.o ../EOBNRv2HMROM/EOBNRv2HMROM.o ../EOBNRv2HMROM/EOBNRv2HMROMstruct.o ../tools/waveform.o -lgsl -lgslcblas -lm  -L$(GSLROOT)/lib
 
 GenerateTDIFD: GenerateTDIFD.o LISAgeometry.h LISAgeometry.o LISAFDresponse.h LISAFDresponse.o ../tools/constants.h ../tools/struct.h ../EOBNRv2HMROM/EOBNRv2HMROM.h ../EOBNRv2HMROM/EOBNRv2HMROMstruct.h ../tools/waveform.h ../tools/fft.h ../tools/struct.o ../EOBNRv2HMROM/EOBNRv2HMROM.o ../EOBNRv2HMROM/EOBNRv2HMROMstruct.o ../tools/waveform.o ../tools/fft.o
 	$(LD) $(LDFLAGS) -o GenerateTDIFD GenerateTDIFD.o LISAgeometry.o LISAFDresponse.o ../tools/struct.o ../EOBNRv2HMROM/EOBNRv2HMROM.o ../EOBNRv2HMROM/EOBNRv2HMROMstruct.o ../tools/waveform.o ../tools/fft.o -lgsl -lgslcblas -lm -lfftw3

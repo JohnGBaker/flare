@@ -49,7 +49,7 @@ extern "C" {
 /****** Global variables storing min and max f for the noise PSD  *******/
 
 #define __LISASimFD_Noise_fLow 1.e-5
-#define __LISASimFD_Noise_fHigh 1. 
+#define __LISASimFD_Noise_fHigh 1.
 
 /**************************************************************/
 /****** Prototypes: functions evaluating the noise PSD  *******/
@@ -73,7 +73,7 @@ double SnEXYZNoRescaling(double f);
 double SnTXYZNoRescaling(double f);
 
 /* Function returning the relevant noise function, given a set of TDI observables and a channel */
-double (*NoiseFunction(const TDItag tditag, const int chan))(double);
+/* double (*NoiseFunction(const TDItag tditag, const int chan))(double); */
 
 /* The noise functions themselves */
 /* double NoiseSnA(const double f); */

@@ -46,7 +46,7 @@ typedef struct tagLISAParams {
 typedef struct tagLISAGlobalParams {
   double fRef;               /* reference frequency (Hz, default 0 which is interpreted as Mf=0.14) */
   double deltatobs;          /* max duration of observation (years, default 2) - the start of the signals might be cut in time instead of cut in frequency */
-  double fmin;               /* Minimal frequency (Hz) - when set to 0 (default), use the first frequency covered by the noise data of the detector */
+  double minf;               /* Minimal frequency (Hz) - when set to 0 (default), use the first frequency covered by the noise data of the detector */
   double mfmatch;            /* Minimum matching frequency (1/mtot); if less than ROM model supports then will extrapolate ROM, if <=0, then no extension. */
   int nbmodeinj;             /* number of modes to include in the injection (starting with 22) - defaults to 5 (all modes) */
   int nbmodetemp;            /* number of modes to include in the templates (starting with 22) - defaults to 5 (all modes) */
@@ -100,8 +100,8 @@ typedef struct tagLISAPrior {
   double dist_max;           /* maximum distance of source (Mpc) (default 40*1e3) */
   double lambda_min;         /* minimum lambda (rad, default 0) - for testing */
   double lambda_max;         /* maximum lambda (rad, default 2pi) - for testing */
-  double beta_min;           /* minimum lambda (rad, default 0) - for testing */
-  double beta_max;           /* maximum lambda (rad, default pi) - for testing */
+  double beta_min;           /* minimum beta (rad, default 0) - for testing */
+  double beta_max;           /* maximum beta (rad, default pi) - for testing */
   double phase_min;          /* minimum phase (rad, default 0) - for testing */
   double phase_max;          /* maximum phase (rad, default 2pi) - for testing */
   double pol_min;            /* minimum polarization (rad, default 0) - for testing */
@@ -133,28 +133,29 @@ typedef struct tagLISAPrior {
 } LISAPrior;
 
 typedef struct tagLISARunParams {
-	double eff;                /* target efficiency (default 0.1) */
-	double tol;                /* logZ tolerance (default 0.5) */
-	int    nlive;              /* number of live points (default 1000) */
-	char   outroot[200];       /* output root (default "chains/LISAinference_") */
-	int    bambi;              /* run BAMBI? (default 0) */
-	int    resume;             /* resume form previous run? (default 0) */
-	char   netfile[200];       /* NN settings file (default "LISAinference.inp") */
-        int    mmodal;             /* use multimodal decomposition ? */
-        int    maxcls;             /* max number of modes in multimodal decomposition */
-        int    nclspar;            /* number of parameters to use for multimodal decomposition - in the order of the cube */
-        double ztol;               /* in multimodal decomposition, modes with lnZ lower than Ztol are ignored */
-        int    seed;               /* seed the inference by setting one of the live points to the injection ? */
+  double eff;                /* target efficiency (default 0.1) */
+  double tol;                /* logZ tolerance (default 0.5) */
+  int    nlive;              /* number of live points (default 1000) */
+  char   outroot[200];       /* output root (default "chains/LISAinference_") */
+  int    bambi;              /* run BAMBI? (default 0) */
+  int    resume;             /* resume form previous run? (default 0) */
+  int    maxiter;            /* max number of iterations (default 0 - ignore) */
+  char   netfile[200];       /* NN settings file (default "LISAinference.inp") */
+  int    mmodal;             /* use multimodal decomposition ? */
+  int    maxcls;             /* max number of modes in multimodal decomposition */
+  int    nclspar;            /* number of parameters to use for multimodal decomposition - in the order of the cube */
+  double ztol;               /* in multimodal decomposition, modes with lnZ lower than Ztol are ignored */
+  int    seed;               /* seed the inference by setting one of the live points to the injection ? */
 } LISARunParams;
 
 /************ Functions for LISA parameters, injection, likelihood, prior ************/
 
 /* Parse command line to initialize LISAParams, LISAGlobalParams, LISAPrior, and LISARunParams objects */
 /* Masses are input in solar masses and distances in Mpc - converted in SI for the internals */
-void parse_args_LISA(ssize_t argc, char **argv, 
+void parse_args_LISA(ssize_t argc, char **argv,
   LISAParams* params,
-  LISAGlobalParams* globalparams, 
-  LISAPrior* prior, 
+  LISAGlobalParams* globalparams,
+  LISAPrior* prior,
   LISARunParams* run);
 
 /* Functions to print the parameters of the run in files for reference */
@@ -197,7 +198,7 @@ int LISAGenerateInjectionReIm(
   struct tagLISAParams* injectedparams,       /* Input: set of LISA parameters of the injection */
   double fLow,                                /* Input: starting frequency */
   int nbpts,                                  /* Input: number of frequency samples */
-  int tagsampling,                            /* Input: tag for using linear (0) or logarithmic (1) sampling */ 
+  int tagsampling,                            /* Input: tag for using linear (0) or logarithmic (1) sampling */
   struct tagLISAInjectionReIm* signal);       /* Output: structure for the generated signal */
 
 /*Wrapper for waveform generation with possibly a combination of EOBNRv2HMROM and TaylorF2*/

@@ -1,15 +1,18 @@
 MESSAGE="Specify which machine to compile for in the Makefile."
+#MACHINE="sylvainsmac"
 MACHINE="johnsmac"
 
 ifeq ($(MACHINE),"sylvainsmac")
   MESSAGE="Compiling for Sylvain's Mac"
   GSLROOT = /opt/local
   BAMBIROOT = $(HOME)/build/bambi
-  CC = gcc
-  CPP = g++
-  LD = $(CPP)	
-  LDFLAGS=
+  CC = gcc-mp-5
+  CPP = g++-mp-5
+  LD = $(CPP)
+  LDFLAGS=  -L$(GSLROOT)/lib
   #Uncomment this for MPI and specify your needed MPI libraries
+	CFLAGS += -I/usr/local/include
+	CPPFLAGS += -I/usr/local/include
   CC += -DPARALLEL
   CPP += -DPARALLEL
   MPILIBS = -lmpi -lmpi_cxx -lmpi_mpifh
@@ -21,7 +24,7 @@ else ifeq ($(MACHINE),"johnsmac")
   CXX = g++-mp-4.7
   CPP = g++-mp-4.7
   LD = $(CPP)
-  #LD = gfortran-mp-4.7	
+  #LD = gfortran-mp-4.7
   LDFLAGS= -fopenmp -L/opt/local/lib -L/opt/local/lib/mpich-mp -lgfortran -llapack -latlas -lblas
   #Uncomment this for MPI and specify your needed MPI libraries
   #CC += -DPARALLEL
@@ -31,7 +34,7 @@ else ifeq ($(MACHINE),"johnsmac")
   CPPFLAGS += -g -I/opt/local/include/mpich-mp
   CXXFLAGS = -g -fopenmp
   PTMCMC=$(PWD)/ptmcmc
-else ifeq ($(MACHINE),"discover") 
+else ifeq ($(MACHINE),"discover")
   #based on modules:
   #module load comp/intel-15.0.3.187 lib/mkl-15.0.3.187 mpi/impi-5.0.3.048
   MESSAGE="Compiling for Discover at NCCS"
@@ -44,7 +47,7 @@ else ifeq ($(MACHINE),"discover")
   MPILIBS += $(LAPACKLIB)
   LD = mpif90
   LDFLAGS = -cxxlib -nofor_main -g -traceback -C
-else ifeq ($(MACHINE),"datura") 
+else ifeq ($(MACHINE),"datura")
   #based on modules:
   #module add Compiler/intel/ips_xe_2015/ips_xe_2015_intel15 mpi/openmpi/1.10.0-intel15 hdf5/1.8.13-intel15 gsl/1.15
   #environment:
@@ -109,7 +112,11 @@ LISAsim: tools integration EOBNRv2HMROM
 
 LLVsim: tools integration EOBNRv2HMROM
 
+ifdef PTMCMC
 LISAinference: tools integration EOBNRv2HMROM LISAsim ptmcmc
+else
+LISAinference: tools integration EOBNRv2HMROM LISAsim
+endif
 
 LLVinference: tools integration EOBNRv2HMROM LLVsim
 

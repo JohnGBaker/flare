@@ -167,7 +167,7 @@ int main(int argc, char *argv[])
   ComputeLISASNRparams* params;
   params = (ComputeLISASNRparams*) malloc(sizeof(ComputeLISASNRparams));
   memset(params, 0, sizeof(ComputeLISASNRparams));
-  
+
   /* Parse commandline to read parameters */
   parse_args_ComputeLISASNR(argc, argv, params);
 
@@ -248,7 +248,7 @@ int main(int argc, char *argv[])
       memset(globalparams, 0, sizeof(LISAGlobalParams));
       globalparams->fRef = params->fRef;
       globalparams->deltatobs = 1.; /* Default value */
-      globalparams->fmin = params->fLow;
+      globalparams->minf = params->fLow;
       globalparams->nbmodeinj = params->nbmode;
       globalparams->nbmodetemp = params->nbmode;
       globalparams->tagint = params->tagint;

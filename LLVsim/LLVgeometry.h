@@ -39,8 +39,9 @@
 /********************************************************/
 /**************** Type definitions **********************/
 
-/* Enumerator for the detector selector */
-typedef enum {LHO, LLO, VIRGO} detectortag;
+/* Enumerator for the detector selector and network selector */
+typedef enum {LHO, LLO, VIRGO} Detectortag;
+typedef enum {L, H, V, LH, LV, HV, LHV} Networktag;
 
 /*************************************************************/
 /**************** Geometrical constants **********************/

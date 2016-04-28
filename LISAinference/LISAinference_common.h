@@ -1,6 +1,9 @@
 #ifndef __LISAINFERENCE_COMMON_H__
 #define __LISAINFERENCE_COMMON_H__ 1
 
+#ifdef PARALLEL
+#include "mpi.h"
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>

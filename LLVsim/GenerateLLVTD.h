@@ -5,8 +5,8 @@
  *
  */
 
-#ifndef __GENERATETDITD_H__
-#define __GENERATETDITD_H__ 1
+#ifndef __GENERATELLVTD_H__
+#define __GENERATELLVTD_H__ 1
 
 #ifdef __GNUC__
 #define UNUSED __attribute__ ((unused))
@@ -47,19 +47,19 @@ typedef enum GenWavetag {
 } GenWavetag;
 
 /* Parameters for the generation of a LISA waveform (in the form of a list of modes) */
-typedef struct tagGenTDITDparams {
+typedef struct tagGenLLVTDparams {
   double lambda;             /* first angle for the position in the sky (rad, default 0) */
   double beta;               /* second angle for the position in the sky (rad, default 0) */
   double polarization;       /* polarization angle (rad, default 0) */
-  int tagtdi;                /* Tag selecting the desired output format */
+  int tagnetwork;            /* Tag selecting the desired detector network */
   int nsamplesinfile;        /* Number of lines of input file */
   int binaryin;              /* Tag for loading the data in gsl binary form instead of text (default false) */
-  int binaryout;             /* Tag for outputting the data in gsl binary form instead of text (default false) */  
+  int binaryout;             /* Tag for outputting the data in gsl binary form instead of text (default false) */
   char indir[256];           /* Path for the input directory */
   char infile[256];          /* Path for the input file */
   char outdir[256];          /* Path for the output directory */
   char outfile[256];         /* Path for the output file */
-} GenTDITDparams;
+} GenLLVTDparams;
 
 
 #if 0
@@ -68,4 +68,4 @@ typedef struct tagGenTDITDparams {
 }
 #endif
 
-#endif /* _GENERATETDITD_H */
+#endif /* _GENERATELLVTD_H */
