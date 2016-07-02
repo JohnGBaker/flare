@@ -406,15 +406,15 @@ where we recall that $\epsilon = -\mathrm{sgn}(\ud ^{2} \Psi/\ud f^{2})$. The re
 %
 \begin{subequations}
 \begin{align}\label{eq:resultFresnel}
-	\tilde{s}(f) &= \tilde{h}(f) \calF_{\Tf}[F](\tf)^{*} \quad \text{if } \epsilon = 1 \,,\\
-	\tilde{s}(f) &= \tilde{h}(f) \calF_{\Tf}[F](\tf) \quad \text{if } \epsilon = -1 \,,
+	\tilde{s}(f) &= \tilde{h}(f) \calF_{\Tf}[F](\tf) \quad \text{if } \epsilon = 1 \,,\\
+	\tilde{s}(f) &= \tilde{h}(f) \calF_{\Tf}[F](\tf)^{*} \quad \text{if } \epsilon = -1 \,,
 \end{align}
 \end{subequations}
 %
 where we introduced the Fresnel transform~\cite{} of $F$, defined as follows:
 %
 \be\label{eq:defFresnel}
-	\calF_{\tau}[F](t_{0}) \equiv \frac{e^{-i\frac{\pi}{4}}}{\sqrt{2\pi} \tau} \int \ud t \, \exp\left[ \frac{i}{2} \left( \frac{t-t_{0}}{\tau} \right)^{2}\right] F(t) \,.
+	\calF_{\tau}[F](t_{0}) \equiv \frac{e^{i\frac{\pi}{4}}}{\sqrt{2\pi} \tau} \int \ud t \, \exp\left[ - \frac{i}{2} \left( \frac{t-t_{0}}{\tau} \right)^{2}\right] F(t) \,.
 \ee
 %
 The Fresnel transform applies to a large class of functions [be more precise] and intervenes in the theory of diffraction [give references and examples]. Although it is interesting to be able to relate our results to a known transformation used in signal processing, whether this opens avenues for efficient computation methods remains to be investigated (for instance by performing a linear decomposition of the modulation $F$ in wavelets, or chirplets, which have analytically computable Fresnel transforms). 
@@ -431,7 +431,7 @@ The authors of~\cite{} did not reformulate their result as in~\eqref{eq:resultFr
 \begin{align}\label{eq:resum}
 	\tilde{s}(f) &\simeq \tilde{h}(f) \sum\limits_{p = 0}^{N} \frac{(-i\epsilon\Tf^{2})^{p}}{2^{p}p!} \partial_{t}^{2p}F(\tf) \nn\\
 	&\simeq \tilde{h}(f) \sum\limits_{p= 0}^{N} \sum\limits_{k=0}^{N} a_{N,k}\frac{(k\Tf)^{2p}}{(2p)!}  \partial_{t}^{2p}F(\tf) \nn\\
-	&\simeq \tilde{h}(f) \frac{1}{2}\sum\limits_{k=0}^{N} a_{N,k} \left( F(\tf + k\Tf) + F(t-k\Tf) \right)\,,
+	&\simeq \tilde{h}(f) \frac{1}{2}\sum\limits_{k=0}^{N} a_{N,k} \left( F(\tf + k\Tf) + F(\tf-k\Tf) \right)\,,
 \end{align}
 %
 where we applied a truncation approximation at the first and last stage. The second equality holds provided that the complex coefficients $a_{N,k}$ are a solution of the $N+1$-dimensional linear system
@@ -446,7 +446,7 @@ An immediate advantage of this reformulation is its improved numerical stability
 
 Note, interestingly, that, if the validity of the comb approach was generic, and if the coefficients $a_{N,k}$ were to converge for $N\rightarrow +\infty$ to a well-defined sequence admitting an appropriate fall-off with $k$, then one would have found a magical way of computing the Fresnel transform of a signal by simply evaluating it on a comb made of at most a few dozen equally spaced times.
 
-This seems to good to be true. In general, one could have made any ansatz for the series expansion to be matched on, and one therefore cannot expect in general nice properties to emerge from a resummation. However, the transformation~\eqref{} between the two series above has a special structure. Namely, written in matrix form, the linear system is a Vandermonde system. Defining the Vandermonde matrix $V(x_{0},\dots,x_{N})$ as $V_{ij} = (x_{j})^{i}$ (with the convention $0^{0} = 1$), setting $x_{j} = j^{2}$, the linear system is simply
+This seems to good to be true. In general, one could have made any ansatz for the series expansion to be matched on, and one therefore cannot expect in general nice properties to emerge from a resummation. However, the transformation~\eqref{} between the two series above has a special structure. Namely, written in matrix form, the linear system is a Vandermonde system. Defining the Vandermonde matrix $V(x_{0},\dots,x_{N})$ as $V_{ij} = (x_{j})^{i}$ (with the convention $0^{0} = 1$), setting $x_{j} = j^{2}$, and $b_{p} \equiv (-i\epsilon)^{p}(2p-1)!!$, the linear system is simply
 %
 \be
 	b_{p} = V_{p,k} a_{N,k} \,.
@@ -467,7 +467,7 @@ we obtain for the inverse of the matrix $V$
 This allows us to write an ``analytical'' expression for the $a_{N,k}$ for every finite order $N$:
 %
 \be
-	a_{N,k} = \sum\limits_{p=0}^{N} (-i\epsilon)^{p}(2p-1)!! \frac{(-1)^{N-p}}{\prod_{k\neq p} (p^{2}-k^{2})} \sum\limits_{\substack{ 0 \leq i_{1} < \dots < i_{N-p} \leq N \\ i_{1}, \dots, i_{N-p} \neq p}} i_{1}^{2}\dots i_{N-p}^{2}
+	a_{N,k} = \sum\limits_{p=0}^{N} (-i\epsilon)^{p}(2p-1)!! \frac{(-1)^{N-p}}{\prod_{j\neq k} (j^{2}-k^{2})} \sum\limits_{\substack{ 0 \leq i_{1} < \dots < i_{N-p} \leq N \\ i_{1}, \dots, i_{N-p} \neq k}} i_{1}^{2}\dots i_{N-p}^{2}
 \ee
 %
 The combinatorial explosion of the number of terms in the symmetric polynomials, however, makes this expression impractical to evaluate for $N$ beyond a few dozen. It could allow, however, one to control the asymptotics and maybe prove the convergence or non-convergence of the sequence of $a_{N,k}$ for $N\rightarrow +\infty$. [wishful thinking]

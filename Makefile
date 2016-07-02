@@ -10,8 +10,8 @@ ifeq ($(MACHINE),"sylvainsmac")
   LD = $(CPP)
   LDFLAGS=
   #Uncomment this for MPI and specify your needed MPI libraries
-	CFLAGS += -I/usr/local/include
-	CPPFLAGS += -I/usr/local/include
+	CFLAGS += -I/usr/local/include -I/opt/local/include
+	CPPFLAGS += -I/usr/local/include -I/opt/local/include
   CC += -DPARALLEL
   CPP += -DPARALLEL
   MPILIBS = -lmpi -lmpi_cxx -lmpi_mpifh
@@ -51,11 +51,14 @@ else ifeq ($(MACHINE),"datura")
   #module add Compiler/intel/ips_xe_2015/ips_xe_2015_intel15 mpi/openmpi/1.10.0-intel15 hdf5/1.8.13-intel15 gsl/1.15
   #environment:
   #AEI_GSL_HOME=/cluster/gsl/SL6/1.15 AEI_MKLROOT=/cluster/Compiler/Intel/ips_xe_2015/composer_xe_2015.1.133/mkl
+	#AEI_FFTW_HOME=/cluster/fftw/3.3
   #export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$AEI_MKLROOT/lib/intel64
   MESSAGE="Compiling for Datura at AEI"
   GSLROOT = $(AEI_GSL_HOME)
+	FFTWROOT = $(AEI_FFTW_HOME)
   MKLROOT = $(AEI_MKLROOT)
   MKLINC = $(MKLROOT)/include/
+	FFTWINC = $(FFTWROOT)/include
   #GSLINC = 3D -I$(GSLROOT)/include -DHAVE_INLINE -DGSL_C99_INLINE -DGSL_RANGE_CHECK_OFF
   BAMBIROOT = $(HOME)/build/bambi
   FC = mpif90 -DPARALLEL
@@ -68,11 +71,12 @@ else ifeq ($(MACHINE),"datura")
   MPILIBS += $(LAPACKLIB)
   LD = mpif90
   LDFLAGS += -cxxlib -nofor_main -g -traceback -C
-  CFLAGS += -I$(MKLINC)
-  CPPFLAGS += -I$(MKLINC)
+  CFLAGS += -I$(MKLINC) -I$(FFTWINC)
+  CPPFLAGS += -I$(MKLINC) -I$(FFTWINC)
 endif
 
 GSLINC = $(GSLROOT)/include
+#FFTWINC = $(FFTWROOT)/include
 BAMBIINC = $(BAMBIROOT)/include
 BAMBILIB = $(BAMBIROOT)/lib
 CFLAGS += -std=c99
