@@ -1,5 +1,6 @@
 MESSAGE="Specify which machine to compile for in the Makefile."
-MACHINE="sylvainsmac"
+#MACHINE="sylvainsmac"
+MACHINE="johnsmac"
 
 ifeq ($(MACHINE),"sylvainsmac")
   MESSAGE="Compiling for Sylvain's Mac"
@@ -8,7 +9,7 @@ ifeq ($(MACHINE),"sylvainsmac")
   CC = gcc-mp-5
   CPP = g++-mp-5
   LD = $(CPP)
-  LDFLAGS=
+  LDFLAGS=  -L$(GSLROOT)/lib
   #Uncomment this for MPI and specify your needed MPI libraries
 	CFLAGS += -I/usr/local/include -I/opt/local/include
 	CPPFLAGS += -I/usr/local/include -I/opt/local/include

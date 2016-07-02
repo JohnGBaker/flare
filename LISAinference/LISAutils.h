@@ -47,6 +47,7 @@ typedef struct tagLISAGlobalParams {
   double fRef;               /* reference frequency (Hz, default 0 which is interpreted as Mf=0.14) */
   double deltatobs;          /* max duration of observation (years, default 2) - the start of the signals might be cut in time instead of cut in frequency */
   double minf;               /* Minimal frequency (Hz) - when set to 0 (default), use the first frequency covered by the noise data of the detector */
+  double mfmatch;            /* Minimum matching frequency (1/mtot); if less than ROM model supports then will extrapolate ROM, if <=0, then no extension. */
   int nbmodeinj;             /* number of modes to include in the injection (starting with 22) - defaults to 5 (all modes) */
   int nbmodetemp;            /* number of modes to include in the templates (starting with 22) - defaults to 5 (all modes) */
   int tagint;                /* Tag choosing the integrator: 0 for wip (default), 1 for linear integration */
@@ -199,6 +200,35 @@ int LISAGenerateInjectionReIm(
   int nbpts,                                  /* Input: number of frequency samples */
   int tagsampling,                            /* Input: tag for using linear (0) or logarithmic (1) sampling */
   struct tagLISAInjectionReIm* signal);       /* Output: structure for the generated signal */
+
+/*Wrapper for waveform generation with possibly a combination of EOBNRv2HMROM and TaylorF2*/
+/* Note: GenerateWaveform accepts masses and distances in SI units, whereas LISA params is in solar masses and Mpc */
+int GenerateWaveform(
+  struct tagListmodesCAmpPhaseFrequencySeries **listhlm,  /* Output: list of modes in Frequency-domain amplitude and phase form */
+  int nbmode,                                    /* Number of modes to generate (starting with the 22) */
+  double f_match,                                /* Minimum frequency using EOBNRv2HMROM */
+  double f_min,                                  /* Minimum frequency required */
+  double deltatRef,                              /* Time shift so that the peak of the 22 mode occurs at deltatRef */
+  double phiRef,                                 /* Phase at reference frequency */
+  double fRef,                                   /* Reference frequency (Hz); 0 defaults to fLow */
+  double m1SI,                                   /* Mass of companion 1 (kg) */
+  double m2SI,                                   /* Mass of companion 2 (kg) */
+  double distance                               /* Distance of source (m) */
+		     );
+
+/* Non-spinning merger TaylorF2 waveform, copied and condensed from LAL */
+void TaylorF2nonspin(
+		double *amp,                            /**< FD waveform amplitude (modulus)*/
+		double *phase,                          /**< FD waveform phase */
+		const double *freqs,                    /**< frequency points at which to evaluate the waveform (Hz) */
+		const int size,                         /** number of freq samples */
+		const double m1_SI,                     /**< mass of companion 1 (kg) */
+		const double m2_SI,                     /**< mass of companion 2 (kg) */
+		const double distance,                  /** distance (m) */   
+		const double imatch                     /**< index at which to match phase; 
+							   assumes arrays are preloaded at imatch and imatch+1
+							   with the required result */ 
+		     );
 
 /* checks prior boundaires */
 int PriorBoundaryCheck(LISAPrior *prior, double *Cube);
