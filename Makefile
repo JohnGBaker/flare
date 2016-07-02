@@ -1,6 +1,6 @@
 MESSAGE="Specify which machine to compile for in the Makefile."
 #MACHINE="sylvainsmac"
-MACHINE="johnsmac"
+MACHINE="sylvainsmac"
 
 ifeq ($(MACHINE),"sylvainsmac")
   MESSAGE="Compiling for Sylvain's Mac"
@@ -56,10 +56,11 @@ else ifeq ($(MACHINE),"datura")
   #export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$AEI_MKLROOT/lib/intel64
   MESSAGE="Compiling for Datura at AEI"
   GSLROOT = $(AEI_GSL_HOME)
-	FFTWROOT = $(AEI_FFTW_HOME)
   MKLROOT = $(AEI_MKLROOT)
   MKLINC = $(MKLROOT)/include/
+	FFTWROOT = $(AEI_FFTW_HOME)
 	FFTWINC = $(FFTWROOT)/include
+	FFTWLIB = $(FFTWROOT)/lib
   #GSLINC = 3D -I$(GSLROOT)/include -DHAVE_INLINE -DGSL_C99_INLINE -DGSL_RANGE_CHECK_OFF
   BAMBIROOT = $(HOME)/build/bambi
   FC = mpif90 -DPARALLEL
@@ -71,6 +72,7 @@ else ifeq ($(MACHINE),"datura")
   MPILIBS += $(IFORTLIB)
   MPILIBS += $(LAPACKLIB)
   LD = mpif90
+	LDFLAGS += -L$(FFTWLIB)
   LDFLAGS += -cxxlib -nofor_main -g -traceback -C
   CFLAGS += -I$(MKLINC) -I$(FFTWINC)
   CPPFLAGS += -I$(MKLINC) -I$(FFTWINC)
