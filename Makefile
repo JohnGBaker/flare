@@ -5,11 +5,13 @@ ifeq ($(MACHINE),"sylvainsmac")
   MESSAGE="Compiling for Sylvain's Mac"
   GSLROOT = /opt/local
   BAMBIROOT = $(HOME)/build/bambi
-  CC = gcc
-  CPP = g++
-  LD = $(CPP)	
-  LDFLAGS=
+  CC = gcc-mp-5
+  CPP = g++-mp-5
+  LD = $(CPP)
+  LDFLAGS=  -L$(GSLROOT)/lib
   #Uncomment this for MPI and specify your needed MPI libraries
+	CFLAGS += -I/usr/local/include -I/opt/local/include
+	CPPFLAGS += -I/usr/local/include -I/opt/local/include
   CC += -DPARALLEL
   CPP += -DPARALLEL
   MPILIBS = -lmpi -lmpi_cxx -lmpi_mpifh
@@ -21,7 +23,7 @@ else ifeq ($(MACHINE),"johnsmac")
   CXX = g++-mp-4.7
   CPP = g++-mp-4.7
   LD = $(CPP)
-  #LD = gfortran-mp-4.7	
+  #LD = gfortran-mp-4.7
   LDFLAGS= -fopenmp -L/opt/local/lib -L/opt/local/lib/mpich-mp -lgfortran -llapack -latlas -lblas
   #Uncomment this for MPI and specify your needed MPI libraries
   MPILIBS = -lmpi -lmpicxx -lmpifort
@@ -32,7 +34,7 @@ else ifeq ($(MACHINE),"johnsmac")
   CFLAGS += -DPARALLEL
   CXXFLAGS += -DPARALLEL
   PTMCMC=$(PWD)/ptmcmc
-else ifeq ($(MACHINE),"discover") 
+else ifeq ($(MACHINE),"discover")
   #based on modules:
   #module load comp/intel-15.0.3.187 lib/mkl-15.0.3.187 mpi/impi-5.0.3.048
   MESSAGE="Compiling for Discover at NCCS"
@@ -51,16 +53,22 @@ else ifeq ($(MACHINE),"discover")
   #LDFLAGS += -nofor_main
   LDFLAGS += -lifcore
   PTMCMC=$(PWD)/ptmcmc
-else ifeq ($(MACHINE),"datura") 
+  #LD = mpif90
+  #LDFLAGS = -cxxlib -nofor_main -g -traceback -C
+else ifeq ($(MACHINE),"datura")
   #based on modules:
   #module add Compiler/intel/ips_xe_2015/ips_xe_2015_intel15 mpi/openmpi/1.10.0-intel15 hdf5/1.8.13-intel15 gsl/1.15
   #environment:
   #AEI_GSL_HOME=/cluster/gsl/SL6/1.15 AEI_MKLROOT=/cluster/Compiler/Intel/ips_xe_2015/composer_xe_2015.1.133/mkl
+  #AEI_FFTW_HOME=/cluster/fftw/3.3
   #export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$AEI_MKLROOT/lib/intel64
   MESSAGE="Compiling for Datura at AEI"
   GSLROOT = $(AEI_GSL_HOME)
   MKLROOT = $(AEI_MKLROOT)
   MKLINC = $(MKLROOT)/include/
+	FFTWROOT = $(AEI_FFTW_HOME)
+	FFTWINC = $(FFTWROOT)/include
+	FFTWLIB = $(FFTWROOT)/lib
   #GSLINC = 3D -I$(GSLROOT)/include -DHAVE_INLINE -DGSL_C99_INLINE -DGSL_RANGE_CHECK_OFF
   BAMBIROOT = $(HOME)/build/bambi
   FC = mpif90 -DPARALLEL
@@ -72,12 +80,14 @@ else ifeq ($(MACHINE),"datura")
   MPILIBS += $(IFORTLIB)
   MPILIBS += $(LAPACKLIB)
   LD = mpif90
+	LDFLAGS += -L$(FFTWLIB)
   LDFLAGS += -cxxlib -nofor_main -g -traceback -C
-  CFLAGS += -I$(MKLINC)
-  CPPFLAGS += -I$(MKLINC)
+  CFLAGS += -I$(MKLINC) -I$(FFTWINC)
+  CPPFLAGS += -I$(MKLINC) -I$(FFTWINC)
 endif
 
 GSLINC = $(GSLROOT)/include
+#FFTWINC = $(FFTWROOT)/include
 BAMBIINC = $(BAMBIROOT)/include
 BAMBILIB = $(BAMBIROOT)/lib
 CFLAGS += -std=c99
@@ -116,7 +126,11 @@ LISAsim: tools integration EOBNRv2HMROM
 
 LLVsim: tools integration EOBNRv2HMROM
 
+ifdef PTMCMC
 LISAinference: tools integration EOBNRv2HMROM LISAsim ptmcmc
+else
+LISAinference: tools integration EOBNRv2HMROM LISAsim
+endif
 
 LLVinference: tools integration EOBNRv2HMROM LLVsim
 

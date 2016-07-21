@@ -48,7 +48,7 @@ typedef enum GenTDIFDtag {
 } GenTDIFDtag;
 
 /* Parameters for the generation of a LISA waveform (in the form of a list of modes) */
-typedef struct tagGenTDITDparams {
+typedef struct tagGenTDIFDparams {
   double tRef;               /* reference time (s) - GPS time at the frequency representing coalescence */
   double phiRef;             /* reference phase (rad) - phase at the frequency representing coalescence (or at fRef if specified) */
   double fRef;               /* reference frequency at which phiRef is set (Hz, default 0 which is interpreted as Mf=0.14) */
@@ -61,17 +61,20 @@ typedef struct tagGenTDITDparams {
   double polarization;       /* polarization angle (rad, default 0) */
 
   int nbmode;                /* number of modes to generate (starting with 22) - defaults to 5 (all modes) */
-  double fLow;               /* Minimal frequency (Hz) - when set to 0 (default), use the first frequency covered by the ROM */
+  double minf;               /* Minimal frequency (Hz) - when set to 0 (default), use the first frequency covered by the ROM */
+  double deltaf;             /* When generating frequency series from the mode contributions, deltaf for the output (0 to set automatically at 1/2*1/(2T)) */
   int tagtdi;                /* Tag selecting the desired output format */
-  int taggenwave;            /* Tag selecting the desired output format */ 
+  int taggenwave;            /* Tag selecting the desired output format */
   int restorescaledfactor;   /* If 1, restore the factors that were scaled out of TDI observables */
   int fromtditdfile;         /* Tag for loading time series for TDI observables and FFTing */
-  int nlinesinfile;          /* Number of lines of input file */
+  int nsamplesinfile;        /* Number of lines of input file */
+  int binaryin;              /* Tag for loading the data in gsl binary form instead of text (default false) */
+  int binaryout;             /* Tag for outputting the data in gsl binary form instead of text (default false) */
   char indir[256];           /* Path for the input directory */
   char infile[256];          /* Path for the input file */
   char outdir[256];          /* Path for the output directory */
   char outfileprefix[256];   /* Path for the output file */
-} GenTDITDparams;
+} GenTDIFDparams;
 
 
 #if 0

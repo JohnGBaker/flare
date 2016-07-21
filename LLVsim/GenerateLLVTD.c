@@ -1,16 +1,16 @@
-#include "GenerateTDITD.h"
+#include "GenerateLLVTD.h"
 
 /************ Parsing arguments function ************/
 
-/* Parse command line to initialize GenTDITDparams object */
+/* Parse command line to initialize GenLLVTDparams object */
 /* Masses are input in solar masses and distances in Mpc - converted in SI for the internals */
-static void parse_args_GenerateTDITD(ssize_t argc, char **argv, GenTDITDparams* params)
+static void parse_args_GenerateLLVTD(ssize_t argc, char **argv, GenLLVTDparams* params)
 {
     char help[] = "\
 GenerateWaveform by Sylvain Marsat, John Baker, and Philip Graff\n\
 Copyright July 2015\n\
 \n\
-This program takes as input time series for hplus, hcross, generates and outputs a TDI signal in time domain.\n\
+This program takes as input time series for hplus, hcross, generates and outputs a LLV signal in time domain.\n\
 Arguments are as follows:\n\
 \n\
 --------------------------------------------------\n\
@@ -23,7 +23,7 @@ Arguments are as follows:\n\
 --------------------------------------------------\n\
 ----- Generation Parameters ----------------------\n\
 --------------------------------------------------\n\
- --tagtdi              Tag choosing the set of TDI variables to use (default TDIAETXYZ)\n\
+ --tagnetwork          Tag choosing the detector network to use (default LLV)\n\
  --nsamplesinfile      Number of lines of inputs file\n\
  --binaryin            Tag for loading the data in gsl binary form instead of text (default false)\n\
  --binaryout           Tag for outputting the data in gsl binary form instead of text (default false)\n\
@@ -41,12 +41,12 @@ Arguments are as follows:\n\
     params->polarization = 0;
 
     /* Set default values for the generation params */
-    params->tagtdi = TDIXYZ;
+    params->tagnetwork = LHV;
     params->nsamplesinfile = 0;    /* No default; has to be provided */
     strcpy(params->indir, "");   /* No default; has to be provided */
     strcpy(params->infile, "");  /* No default; has to be provided */
     strcpy(params->outdir, ".");
-    strcpy(params->outfile, "generated_tdiTD.txt");
+    strcpy(params->outfile, "generated_LLVTD.txt");
 
     /* Consume command line */
     for (i = 1; i < argc; ++i) {
@@ -59,8 +59,8 @@ Arguments are as follows:\n\
             params->beta = atof(argv[++i]);
         } else if (strcmp(argv[i], "--polarization") == 0) {
             params->polarization = atof(argv[++i]);
-        } else if (strcmp(argv[i], "--tagtdi") == 0) {
-	  params->tagtdi = ParseTDItag(argv[++i]);
+        } else if (strcmp(argv[i], "--tagnetwork") == 0) {
+	  params->tagtdi = ParseNetworktag(argv[++i]); //
         } else if (strcmp(argv[i], "--nsamplesinfile") == 0) {
             params->nsamplesinfile = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--binaryin") == 0) {
@@ -116,18 +116,18 @@ static void Read_Wave_hphcTD( RealTimeSeries** hptd, RealTimeSeries** hctd, cons
 }
 /* Output waveform in downsampled form, FD Amp/Pase, all hlm modes in a single file */
 /* NOTE: assumes 3 channels with same times */
-static void Write_TDITD(const char dir[], const char file[], RealTimeSeries* TDI1, RealTimeSeries* TDI2, RealTimeSeries* TDI3, int binary)
+static void Write_LLVTD(const char dir[], const char file[], RealTimeSeries* LLV1, RealTimeSeries* LLV2, RealTimeSeries* LLV3, int binary)
 {
   /* Initialize output */
-  /* NOTE: assumes identical times for all 3 TDI observables */
-  int nbtimes = TDI1->times->size;
+  /* NOTE: assumes identical times for all 3 LLV observables */
+  int nbtimes = LLV1->times->size;
   gsl_matrix* outmatrix = gsl_matrix_alloc(nbtimes, 4);
 
   /* Set data */
-  gsl_matrix_set_col(outmatrix, 0, TDI1->times);
-  gsl_matrix_set_col(outmatrix, 1, TDI1->h);
-  gsl_matrix_set_col(outmatrix, 2, TDI2->h);
-  gsl_matrix_set_col(outmatrix, 3, TDI3->h);
+  gsl_matrix_set_col(outmatrix, 0, LLV1->times);
+  gsl_matrix_set_col(outmatrix, 1, LLV1->h);
+  gsl_matrix_set_col(outmatrix, 2, LLV2->h);
+  gsl_matrix_set_col(outmatrix, 3, LLV3->h);
 
   /* Output */
   if(!binary) Write_Text_Matrix(dir, file, outmatrix);
@@ -141,15 +141,12 @@ int main(int argc, char *argv[])
   int ret;
 
   /* Initialize structure for parameters */
-  GenTDITDparams* params;
-  params = (GenTDITDparams*) malloc(sizeof(GenTDITDparams));
-  memset(params, 0, sizeof(GenTDITDparams));
+  GenLLVTDparams* params;
+  params = (GenLLVTDparams*) malloc(sizeof(GenLLVTDparams));
+  memset(params, 0, sizeof(GenLLVTDparams));
 
   /* Parse commandline to read parameters */
-  parse_args_GenerateTDITD(argc, argv, params);
-
-  /* Set geometric coefficients */
-  SetCoeffsG(params->lambda, params->beta, params->polarization);
+  parse_args_GenerateLLVTD(argc, argv, params);
 
   /* Load TD hp, hc from file */
   RealTimeSeries* hptd = NULL;
@@ -167,13 +164,15 @@ int main(int argc, char *argv[])
   gsl_spline_init(spline_hp, gsl_vector_const_ptr(hptd->times,0), gsl_vector_const_ptr(hptd->h,0), nbtimes);
   gsl_spline_init(spline_hc, gsl_vector_const_ptr(hctd->times,0), gsl_vector_const_ptr(hctd->h,0), nbtimes);
 
-  /* Evaluate TDI */
-  RealTimeSeries* TDI1 = NULL;
-  RealTimeSeries* TDI2 = NULL;
-  RealTimeSeries* TDI3 = NULL;
+  /* Evaluate LLV */
+  RealTimeSeries* LLV1 = NULL;
+  RealTimeSeries* LLV2 = NULL;
+  RealTimeSeries* LLV3 = NULL;
   int nptmargin = 200; /* Here, hardcoded margin that we will set to 0 on both sides, to avoid problems with delays extending past the input values */
-  GenerateTDITD3Chan(&TDI1, &TDI2, &TDI3, spline_hp, spline_hc, accel_hp, accel_hc, times, nptmargin, params->tagtdi);
+  GenerateTDITD3Chan(&TDI1, &TDI2, &TDI3, spline_hp, spline_hc, accel_hp, accel_hc, times, nptmargin, params->tagtdi);//
+
+
 
   /* Output */
-  Write_TDITD(params->outdir, params->outfile, TDI1, TDI2, TDI3, params->binaryout);
+  Write_TDITD(params->outdir, params->outfile, TDI1, TDI2, TDI3, params->binaryout);//
 }

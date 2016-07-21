@@ -20,7 +20,7 @@
 #include "struct.h"
 
 
-/* Window functions */ 
+/* Window functions */
 double WindowFunction(double x, double xi, double xf, double deltaxi, double deltaxf)
 {
   double di =  deltaxi/(20*log(10));
@@ -140,9 +140,6 @@ int IFFTFrequencySeries(RealTimeSeries** timeseries, ReImFrequencySeries* freqse
   /* Initialize vector for windowed, 0-padded FFT input */
   int n = (int) freqseries->freq->size;
   while(freq[n-1] > f2windowend) n--;
-  //
-  printf("%d\n", n);
-  printf("%d\n", (int) pow(2, ((int) ceil(log(n)/log(2))) + nzeropad));
   int nzeros = (int) pow(2, ((int) ceil(log(n)/log(2))) + nzeropad) - n; /* Here defined with floor, but with ceil in FFT */
   gsl_vector* hrealvalues = gsl_vector_alloc(n + nzeros);
   gsl_vector* himagvalues = gsl_vector_alloc(n + nzeros);

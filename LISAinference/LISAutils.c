@@ -101,11 +101,11 @@ void LISAInjectionReIm_Init(LISAInjectionReIm** signal) {
 /************ Parsing arguments function ************/
 
 /* Parse command line to initialize LISAParams, LISAPrior, and LISARunParams objects */
-void parse_args_LISA(ssize_t argc, char **argv, 
+void parse_args_LISA(ssize_t argc, char **argv,
   LISAParams* params,
-  LISAGlobalParams* globalparams, 
-  LISAPrior* prior, 
-  LISARunParams* run) 
+  LISAGlobalParams* globalparams,
+  LISAPrior* prior,
+  LISARunParams* run)
 {
     char help[] = "\
 LISAInference by Sylvain Marsat, John Baker, and Philip Graff\n\
@@ -135,7 +135,8 @@ Arguments are as follows:\n\
 -----------------------------------------------------------------\n\
  --fRef                Reference frequency where phiRef is set (Hz, default=0, interpreted as Mf=0.14)\n\
  --deltatobs           Observation time (years, default=2)\n\
- --fmin                Minimal frequency (Hz, default=0) - when set to 0, use the first frequency covered by the noise data of the detector\n\
+ --minf                Minimal frequency (Hz, default=0) - when set to 0, use the first frequency covered by the noise data of the detector\n\
+ --mfmatch             Minimum matching frequency (1/mtot); if low, will use limit of ROM support., if <=0, then no extension.\n\
  --nbmodeinj           Number of modes of radiation to use for the injection (1-5, default=5)\n\
  --nbmodetemp          Number of modes of radiation to use for the templates (1-5, default=5)\n\
  --tagint              Tag choosing the integrator: 0 for Fresnel (default), 1 for linear integration\n\
@@ -153,7 +154,7 @@ Arguments are as follows:\n\
  --q-max               Maximum mass ratio, m1/m2 (default=11.98, minimum is 1)\n\
  --dist-min            Minimum distance to source (Mpc, default=100)\n\
  --dist-max            Maximum distance to source (Mpc, default=40*1e3)\n\
- --rescale-distprior        In case a target SNR is given with --snr, rescale dist-min and dist-max accordingly\n\
+ --rescale-distprior   In case a target SNR is given with --snr, rescale dist-min and dist-max accordingly\n\
 Parameters lambda, beta, phase, pol, inc can also ge given min and max values (for testing)\n\
 Syntax: --PARAM-min\n\
 \n\
@@ -182,6 +183,7 @@ Syntax: --PARAM-min\n\
  --nlive               Number of live points for sampling (default=1000)\n\
  --bambi               Use BAMBI's neural network logL learning (no option, default off)\n\
  --resume              Resume from a previous run (no option, default off)\n\
+ --maxiter             Maximum number of iterations - if 0, use convergence criterion to stop (default 0)\n\
  --outroot             Root for output files (default='chains/LISAinference_')\n\
  --netfile             Neural network settings file if using --bambi (default='LISAinference.inp')\n\
  --mmodal              Use multimodal decomposition (no option, default off)\n\
@@ -208,7 +210,8 @@ Syntax: --PARAM-min\n\
     /* set default values for the global params */
     globalparams->fRef = 0.;
     globalparams->deltatobs = 2.;
-    globalparams->fmin = 0.;
+    globalparams->minf = 0.;
+    globalparams->mfmatch = -1;
     globalparams->nbmodeinj = 5;
     globalparams->nbmodetemp = 5;
     globalparams->tagint = 0;
@@ -264,6 +267,7 @@ Syntax: --PARAM-min\n\
     strcpy(run->outroot, "chains/LISAinference_");
     run->bambi = 0;
     run->resume = 0;
+    run->maxiter = 0;
     strcpy(run->netfile, "LISAinference.inp");
     run->mmodal = 0;
     run->maxcls = 1;
@@ -298,8 +302,10 @@ Syntax: --PARAM-min\n\
             globalparams->fRef = atof(argv[++i]);
         } else if (strcmp(argv[i], "--deltatobs") == 0) {
             globalparams->deltatobs = atof(argv[++i]);
-        } else if (strcmp(argv[i], "--fmin") == 0) {
-            globalparams->fmin = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--minf") == 0) {
+            globalparams->minf = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--mfmatch") == 0) {
+            globalparams->mfmatch = atof(argv[++i]);
         } else if (strcmp(argv[i], "--nbmodeinj") == 0) {
             globalparams->nbmodeinj = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--nbmodetemp") == 0) {
@@ -400,6 +406,8 @@ Syntax: --PARAM-min\n\
             run->bambi = 1;
         } else if (strcmp(argv[i], "--resume") == 0) {
             run->resume = 1;
+        } else if (strcmp(argv[i], "--maxiter") == 0) {
+            run->maxiter = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--outroot") == 0) {
             strcpy(run->outroot, argv[++i]);
         } else if (strcmp(argv[i], "--netfile") == 0) {
@@ -438,8 +446,8 @@ int print_parameters_to_file_LISA(
   sprintf(path,"%sparams.txt", run->outroot);
   FILE *f = fopen(path, "w");
   if(f==NULL){printf("Failed to open file:%s\n",path);}
-  
-  
+
+
   /* Print injection parameters (before possible rescaling of the distances to match the target snr) */
   fprintf(f, "-----------------------------------------------\n");
   fprintf(f, "Injection parameters:\n");
@@ -462,7 +470,8 @@ int print_parameters_to_file_LISA(
   fprintf(f, "-----------------------------------------------\n");
   fprintf(f, "fRef:         %.16e\n", globalparams->fRef);
   fprintf(f, "deltatobs:    %.16e\n", globalparams->deltatobs);
-  fprintf(f, "fmin:         %.16e\n", globalparams->fmin);
+  fprintf(f, "minf:         %.16e\n", globalparams->minf);
+  fprintf(f, "mfmatch:      %.16e\n", globalparams->mfmatch);
   fprintf(f, "nbmodeinj:    %d\n", globalparams->nbmodeinj);
   fprintf(f, "nbmodetemp:   %d\n", globalparams->nbmodetemp);
   fprintf(f, "tagint:       %d\n", globalparams->tagint);
@@ -526,6 +535,7 @@ int print_parameters_to_file_LISA(
   fprintf(f, "nlive:   %d\n", run->nlive);
   fprintf(f, "bambi:   %d\n", run->bambi);
   fprintf(f, "resume:  %d\n", run->resume);
+  fprintf(f, "maxiter:  %d\n", run->maxiter);
   fprintf(f, "mmodal:  %d\n", run->mmodal);
   fprintf(f, "maxcls:  %d\n", run->maxcls);
   fprintf(f, "nclspar: %d\n", run->nclspar);
@@ -545,10 +555,13 @@ int print_rescaleddist_to_file_LISA(
 		     LISAPrior* prior,
 		     LISARunParams* run)
 {
+  printf("Saving distance rescaling info to file.\n"); 
   /* Output file */
   char *path=malloc(strlen(run->outroot)+64);
   sprintf(path,"%sparams.txt", run->outroot);
   FILE *f = fopen(path, "a");
+  if (f == NULL) printf("Error. Failed to open file '%s'\n",path);
+  
 
   /* Print rescaled distance and dist prior */
   fprintf(f, "\n");
@@ -565,7 +578,7 @@ int print_rescaleddist_to_file_LISA(
   return SUCCESS;
 }
 
-/***************************** Functions to generate signals and compute likelihoods ******************************/
+/************************* Functions to generate signals and compute likelihoods **************************/
 
 /* Function generating a LISA signal as a list of modes in CAmp/Phase form, from LISA parameters */
 int LISAGenerateSignalCAmpPhase(
@@ -586,8 +599,36 @@ int LISAGenerateSignalCAmpPhase(
   /* Should add more error checking ? */
   /* Generate the waveform with the ROM */
   /* Note: SimEOBNRv2HMROM accepts masses and distances in SI units, whereas LISA params is in solar masses and Mpc */
-  ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
-
+  if(globalparams->mfmatch<=0){
+    //printf("Not Extending signal waveform.  mfmatch=%g\n",globalparams->mfmatch);
+    ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+  } else {
+    //printf("Extending signal waveform.  mfmatch=%g\n",globalparams->mfmatch);
+    ret = GenerateWaveform(&listROM, params->nbmode, globalparams->mfmatch, globalparams->minf, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+  }
+  int i;
+  ListmodesCAmpPhaseFrequencySeries* listelem = listROM;
+  while(listelem){
+    /*
+    printf("Result....\n");
+    printf("listelem: %i %i %i\n",listelem->freqseries->amp_real->size,listelem->l,listelem->m);
+    for(i=0;i<listelem->freqseries->freq->size;i++){
+      double f=listelem->freqseries->freq->data[i];
+      if(((int)(log(f)*40))%10==0)printf("%g:\n",f);
+      printf(" %g  %g  %g  %g\n",f,listelem->freqseries->amp_real->data[i],listelem->freqseries->amp_imag->data[i],listelem->freqseries->phase->data[i]);
+      if(i>0&&i<listelem->freqseries->freq->size-1){
+	double yp=listelem->freqseries->phase->data[i+1];
+	double y0=listelem->freqseries->phase->data[i];
+	double ym=listelem->freqseries->phase->data[i-1];
+	double fp=listelem->freqseries->freq->data[i+1];
+	double f0=listelem->freqseries->freq->data[i];
+	double fm=listelem->freqseries->freq->data[i-1];
+	printf("   fdot: %g\n", ( (yp-y0)/(fp-f0)-(ym-y0)/(fm-f0) ) * 2 / (fp-f0) * f0 *f0);
+      }
+    }
+    */
+    listelem=listelem->next;
+  }
   //
   //printf("%d|%g|%g|%g|%g|%g|%g\n", params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
 
@@ -599,38 +640,12 @@ int LISAGenerateSignalCAmpPhase(
   //TESTING
   //clock_t tbeg, tend;
   //tbeg = clock();
-  
+
   //#pragma omp critical(LISAgensig)
   LISASimFDResponseTDI3Chan(&listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, globalparams->tagtdi);
   //tend = clock();
   //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
-
-  //
-  //params->distance = 58667.9;
-  //params->tRef = 0;
-  //params->phiRef = 0;
-  //params->m1 = 1.5e6;
-  //params->m2 = 0.5e6;
-  //params->lambda = 1.7;
-  //params->beta = PI/3;
-  //params->inclination = PI/3;
-  //params->polarization = 1.2;
-  //ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
-  //LISASimFDResponseTDIAET(&listROM, &listTDIA, &listTDIE, &listTDIT, params->tRef, params->lambda, params->beta, params->inclination, params->polarization);
-  /* printf("Params in LISAGenerateSignalCAmpPhase:\n"); */
-  /* printf("params->nbmode: %d\n", params->nbmode); */
-  /* printf("params->deltatRef: %g\n", params->tRef - injectedparams->tRef); */
-  /* printf("params->phiRef: %g\n", params->phiRef); */
-  /* printf("globalparams->fRef: %g\n", globalparams->fRef); */
-  /* printf("params->m1: %g\n", params->m1); */
-  /* printf("params->m2: %g\n", params->m2); */
-  /* printf("params->distance: %g\n", params->distance); */
-  /* printf("params->tRef: %g\n", params->tRef); */
-  /* printf("params->lambda: %g\n", params->lambda); */
-  /* printf("params->beta: %g\n", params->beta); */
-  /* printf("params->inclination: %g\n", params->inclination); */
-  /* printf("params->polarization: %g\n", params->polarization); */
 
   /* Pre-interpolate the injection, building the spline matrices */
   ListmodesCAmpPhaseSpline* listsplinesgen1 = NULL;
@@ -643,7 +658,7 @@ int LISAGenerateSignalCAmpPhase(
   /* Precompute the inner product (h|h) - takes into account the length of the observation with deltatobs */
   double Mfstartobs = NewtonianfoftGeom(params->m1 / params->m2, (globalparams->deltatobs * YRSID_SI) / ((params->m1 + params->m2) * MTSUN_SI));
   double fstartobs = Mfstartobs / ((params->m1 + params->m2) * MTSUN_SI);
-  double fLow = fmax(__LISASimFD_Noise_fLow, globalparams->fmin);
+  double fLow = fmax(__LISASimFD_Noise_fLow, globalparams->minf);
   double fHigh = __LISASimFD_Noise_fHigh;
   RealFunctionPtr NoiseSn1 = NoiseFunction(globalparams->tagtdi, 1);
   RealFunctionPtr NoiseSn2 = NoiseFunction(globalparams->tagtdi, 2);
@@ -653,14 +668,6 @@ int LISAGenerateSignalCAmpPhase(
   double TDI123hh = FDListmodesFresnelOverlap3Chan(listTDI1, listTDI2, listTDI3, listsplinesgen1, listsplinesgen2, listsplinesgen3, NoiseSn1, NoiseSn2, NoiseSn3, fLow, fHigh, fstartobs, fstartobs);
   //tend = clock();
   //printf("time SNRs: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
-
-  //
-  //printf("fstartobs inside LISAGenerateSignalCAmpPhase: %g\n", fstartobs);
-/*   Write_Text_Vector("/Users/marsat/src/flare/test/testfresnel/temp4", "signalAfreq.txt", ListmodesCAmpPhaseFrequencySeries_GetMode(listTDIA, 2, 2)->freqseries->freq); */
-/* Write_Text_Vector("/Users/marsat/src/flare/test/testlisaoverlap/temp4", "signalAampreal.txt", ListmodesCAmpPhaseFrequencySeries_GetMode(listTDIA, 2, 2)->freqseries->amp_real); */
-/* Write_Text_Vector("/Users/marsat/src/flare/test/testlisaoverlap/temp4", "signalAampimag.txt", ListmodesCAmpPhaseFrequencySeries_GetMode(listTDIA, 2, 2)->freqseries->amp_imag); */
-/* Write_Text_Vector("/Users/marsat/src/flare/test/testlisaoverlap/temp4", "signalAphase.txt", ListmodesCAmpPhaseFrequencySeries_GetMode(listTDIA, 2, 2)->freqseries->phase); */
-/*   printf("TDIAEThh inside LISAGenerateSignalCAmpPhase: %g\n", TDIAEThh); */
 
   /* Output and clean up */
   signal->TDI1Signal = listTDI1;
@@ -689,10 +696,31 @@ int LISAGenerateInjectionCAmpPhase(
   /* Should add more error checking ? */
   /* Generate the waveform with the ROM */
   /* Note: SimEOBNRv2HMROM accepts masses and distances in SI units, whereas LISA params is in solar masses and Mpc */
-  ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
-
+  if(globalparams->mfmatch<=0){
+    //printf("Not Extending injection waveform.  mfmatch=%g\n",globalparams->mfmatch);
+    ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+  } else {
+    //printf("Extending injection waveform.  mfmatch=%g\n",globalparams->mfmatch);
+    ret = GenerateWaveform(&listROM, params->nbmode, globalparams->mfmatch, globalparams->minf, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+  }
   /* If the ROM waveform generation failed (e.g. parameters were out of bounds) return FAILURE */
   if(ret==FAILURE) return FAILURE;
+  /*
+  printf("Result....\n");
+  printf("listROM: %i %i %i\n",listROM->freqseries->amp_real->size,listROM->l,listROM->m);
+  int i;
+  ListmodesCAmpPhaseFrequencySeries* listelem = listROM;
+  while(listelem){
+    printf("Result....\n");
+    printf("listelem: %i %i %i\n",listelem->freqseries->amp_real->size,listelem->l,listelem->m);
+    for(i=0;i<listelem->freqseries->freq->size;i++){
+      double f=listelem->freqseries->freq->data[i];
+      if(((int)(log(f)*40))%10==0)printf("%g:\n",f);
+      printf("  %g  %g  %g  %g\n",listelem->freqseries->freq->data[i],listelem->freqseries->amp_real->data[i],listelem->freqseries->amp_imag->data[i],listelem->freqseries->phase->data[i]);
+    }
+  listelem=listelem->next;
+  }
+  */
 
   /* Process the waveform through the LISA response */
   //WARNING: tRef is ignored for now, i.e. set to 0
@@ -703,21 +731,6 @@ int LISAGenerateInjectionCAmpPhase(
   //tend = clock();
   //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
-
-  //
-  /* printf("Params in LISAGenerateInjectionCAmpPhase:\n"); */
-  /* printf("params->nbmode: %d\n", params->nbmode); */
-  /* printf("params->deltatRef: %g\n", params->tRef - injectedparams->tRef); */
-  /* printf("params->phiRef: %g\n", params->phiRef); */
-  /* printf("globalparams->fRef: %g\n", globalparams->fRef); */
-  /* printf("params->m1: %g\n", params->m1); */
-  /* printf("params->m2: %g\n", params->m2); */
-  /* printf("params->distance: %g\n", params->distance); */
-  /* printf("params->tRef: %g\n", params->tRef); */
-  /* printf("params->lambda: %g\n", params->lambda); */
-  /* printf("params->beta: %g\n", params->beta); */
-  /* printf("params->inclination: %g\n", params->inclination); */
-  /* printf("params->polarization: %g\n", params->polarization); */
 
   /* Pre-interpolate the injection, building the spline matrices */
   ListmodesCAmpPhaseSpline* listsplinesinj1 = NULL;
@@ -730,7 +743,7 @@ int LISAGenerateInjectionCAmpPhase(
   /* Precompute the inner product (h|h) - takes into account the length of the observation with deltatobs */
   double Mfstartobs = NewtonianfoftGeom(injectedparams->m1 / injectedparams->m2, (globalparams->deltatobs * YRSID_SI) / ((injectedparams->m1 + injectedparams->m2) * MTSUN_SI));
   double fstartobs = Mfstartobs / ((injectedparams->m1 + injectedparams->m2) * MTSUN_SI);
-  double fLow = fmax(__LISASimFD_Noise_fLow, globalparams->fmin);
+  double fLow = fmax(__LISASimFD_Noise_fLow, globalparams->minf);
   double fHigh = __LISASimFD_Noise_fHigh;
   RealFunctionPtr NoiseSn1 = NoiseFunction(globalparams->tagtdi, 1);
   RealFunctionPtr NoiseSn2 = NoiseFunction(globalparams->tagtdi, 2);
@@ -740,10 +753,6 @@ int LISAGenerateInjectionCAmpPhase(
   double TDI123ss = FDListmodesFresnelOverlap3Chan(listTDI1, listTDI2, listTDI3, listsplinesinj1, listsplinesinj2, listsplinesinj3, NoiseSn1, NoiseSn2, NoiseSn3, fLow, fHigh, fstartobs, fstartobs);
   //tend = clock();
   //printf("time SNRs: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
-
-  //
-  //printf("fstartobs inside LISAGenerateInjectionCAmpPhase: %g\n", fstartobs);
-  //printf("TDIAETss inside LISAGenerateInjectionCAmpPhase: %g\n", TDIAETss);
 
   /* Output and clean up */
   signal->TDI1Splines = listsplinesinj1;
@@ -830,7 +839,7 @@ int LISAGenerateSignalReIm(
 /* Function generating a LISA injection signal as a frequency series in Re/Im form where the modes have been summed, from LISA parameters - determines the frequencies */
 int LISAGenerateInjectionReIm(
   struct tagLISAParams* injectedparams,      /* Input: set of LISA parameters of the template */
-  double fLow,                               /* Input: additional lower frequency limit (argument fmin) */
+  double fLow,                               /* Input: additional lower frequency limit (argument minf) */
   int nbpts,                                 /* Input: number of frequency samples */
   int tagsampling,                           /* Input: tag for using linear (0) or logarithmic (1) sampling */
   struct tagLISAInjectionReIm* injection)    /* Output: structure for the generated signal */
@@ -844,7 +853,7 @@ int LISAGenerateInjectionReIm(
   /* Should add more error checking ? */
   /* Generate the waveform with the ROM */
   /* Note: SimEOBNRv2HMROM accepts masses and distances in SI units, whereas LISA params is in solar masses and Mpc */
-  ret = SimEOBNRv2HMROM(&listROM, injectedparams->nbmode, 0., injectedparams->phiRef, globalparams->fRef, (injectedparams->m1)*MSUN_SI, (injectedparams->m2)*MSUN_SI, (injectedparams->distance)*1e6*PC_SI);
+  ret = SimEOBNRv2HMROM(&listROM, injectedparams->nbmode, globalparams->mfmatch, injectedparams->phiRef, globalparams->fRef, (injectedparams->m1)*MSUN_SI, (injectedparams->m2)*MSUN_SI, (injectedparams->distance)*1e6*PC_SI);
 
   /* If the ROM waveform generation failed (e.g. parameters were out of bounds) return FAILURE */
   if(ret==FAILURE) return FAILURE;
@@ -929,6 +938,7 @@ double CalculateLogLCAmpPhase(LISAParams *params, LISAInjectionCAmpPhase* inject
   //printf("time GenerateSignal: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
 
+  
   /* If LISAGenerateSignal failed (e.g. parameters out of bound), silently return -Infinity logL */
   if(ret==FAILURE) {
     logL = -DBL_MAX;
@@ -939,40 +949,20 @@ double CalculateLogLCAmpPhase(LISAParams *params, LISAInjectionCAmpPhase* inject
     double Mfstartobsgenerated = NewtonianfoftGeom(params->m1 / params->m2, (globalparams->deltatobs * YRSID_SI) / ((params->m1 + params->m2) * MTSUN_SI));
     double fstartobsinjected = Mfstartobsinjected / ((injectedparams->m1 + injectedparams->m2) * MTSUN_SI);
     double fstartobsgenerated = Mfstartobsgenerated / ((params->m1 + params->m2) * MTSUN_SI);
-    double fLow = fmax(__LISASimFD_Noise_fLow, globalparams->fmin);
+    double fLow = fmax(__LISASimFD_Noise_fLow, globalparams->minf);
     double fHigh = __LISASimFD_Noise_fHigh;
     RealFunctionPtr NoiseSn1 = NoiseFunction(globalparams->tagtdi, 1);
     RealFunctionPtr NoiseSn2 = NoiseFunction(globalparams->tagtdi, 2);
     RealFunctionPtr NoiseSn3 = NoiseFunction(globalparams->tagtdi, 3);
     //TESTING
     //tbeg = clock();
-    double overlapTDI123;
-      overlapTDI123= FDListmodesFresnelOverlap3Chan(generatedsignal->TDI1Signal, generatedsignal->TDI2Signal, generatedsignal->TDI3Signal, injection->TDI1Splines, injection->TDI2Splines, injection->TDI3Splines, NoiseSn1, NoiseSn2, NoiseSn3, fLow, fHigh, fstartobsinjected, fstartobsgenerated);
-    /* double loglikelihoodTDIA = FDLogLikelihood(injection->TDIASignal, generatedsignal->TDIASignal, NoiseSnA, fLow, fHigh, injection->TDIAhh, generatedsignal->TDIAhh, fstartobsinjected, fstartobsgenerated, globalparams->tagint); */
-    /* double loglikelihoodTDIE = FDLogLikelihood(injection->TDIESignal, generatedsignal->TDIESignal, NoiseSnE, fLow, fHigh, injection->TDIEhh, generatedsignal->TDIEhh, fstartobsinjected, fstartobsgenerated, globalparams->tagint); */
-    /* double loglikelihoodTDIT = FDLogLikelihood(injection->TDITSignal, generatedsignal->TDITSignal, NoiseSnT, fLow, fHigh, injection->TDIThh, generatedsignal->TDIThh, fstartobsinjected, fstartobsgenerated, globalparams->tagint); */
+
+    double overlapTDI123 = FDListmodesFresnelOverlap3Chan(generatedsignal->TDI1Signal, generatedsignal->TDI2Signal, generatedsignal->TDI3Signal, injection->TDI1Splines, injection->TDI2Splines, injection->TDI3Splines, NoiseSn1, NoiseSn2, NoiseSn3, fLow, fHigh, fstartobsinjected, fstartobsgenerated);
     //tend = clock();
     //printf("time Overlaps: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
     //
 
-    //
-    //printf("-----------------\n");
-    //printf("(s|h) overlap TDIAET: %g\n", overlapTDIAET);
-    //printf("-----------------\n");
-
     /* Output: value of the loglikelihood for the combined signals, assuming noise independence */
-
-    //
-  /* ListmodesCAmpPhaseSpline* listsplinesgenA = NULL; */
-  /* ListmodesCAmpPhaseSpline* listsplinesgenE = NULL; */
-  /* ListmodesCAmpPhaseSpline* listsplinesgenT = NULL; */
-  /* BuildListmodesCAmpPhaseSpline(&listsplinesgenA, generatedsignal->TDIASignal); */
-  /* BuildListmodesCAmpPhaseSpline(&listsplinesgenE, generatedsignal->TDIESignal); */
-  /* BuildListmodesCAmpPhaseSpline(&listsplinesgenT, generatedsignal->TDITSignal); */
-  /* double testhhoverlapTDIAET = FDListmodesFresnelOverlapAET(generatedsignal->TDIASignal, generatedsignal->TDIESignal, generatedsignal->TDITSignal, listsplinesgenA, listsplinesgenE, listsplinesgenT, NoiseSnA, NoiseSnE, NoiseSnT, fLow, fHigh, fstartobsgenerated, fstartobsinjected); */
-  /* printf("hh overlap TDIAET: %g\n", testhhoverlapTDIAET); */
-  /*   printf("(overlapTDIAET,1./2*(injection->TDIAETss), 1./2*(generatedsignal->TDIAEThh): (%g, %g, %g)\n", overlapTDIAET, 1./2*(injection->TDIAETss), 1./2*(generatedsignal->TDIAEThh)); */
-
     logL = overlapTDI123 - 1./2*(injection->TDI123ss) - 1./2*(generatedsignal->TDI123hh);
   }
   /* Clean up */
@@ -1025,6 +1015,291 @@ double CalculateLogLReIm(LISAParams *params, LISAInjectionReIm* injection)
   return logL;
 }
 
+/*Wrapper for waveform generation with possibly a combination of EOBNRv2HMROM and TaylorF2*/
+/* Note: GenerateWaveform accepts masses and distances in SI units, whereas LISA params is in solar masses and Mpc */
+int GenerateWaveform(
+  ListmodesCAmpPhaseFrequencySeries **listhlm,   /* Output: list of modes in Frequency-domain amplitude and phase form */
+  int nbmode,                                    /* Number of modes to generate (starting with the 22) */
+  double mf_match,                               /* Minimum frequency using EOBNRv2HMROM in inverse total mass units*/
+  double f_min,                                  /* Minimum frequency required */
+  double deltatRef,                              /* Time shift so that the peak of the 22 mode occurs at deltatRef */
+  double phiRef,                                 /* Phase at reference frequency */
+  double fRef,                                   /* Reference frequency (Hz); 0 defaults to fLow */
+  double m1SI,                                   /* Mass of companion 1 (kg) */
+  double m2SI,                                   /* Mass of companion 2 (kg) */
+  double distance                                /* Distance of source (m) */
+		     )
+{
+  int ret,i;
+  ListmodesCAmpPhaseFrequencySeries* listROM = NULL;
+
+  /* Generate the waveform with the ROM */
+  ret = SimEOBNRv2HMROM(&listROM, nbmode, deltatRef, phiRef, fRef, m1SI, m2SI, distance);
+  
+  /* If the ROM waveform generation failed (e.g. parameters were out of bounds) return FAILURE */
+  if(ret==FAILURE) return FAILURE;
+
+  /* Main loop over the modes (as linked list) to perform the extension */
+  /* The 2-2 mode will be extended by TaylorF2 model with the phase and time offset 
+     determined by matching conditions. All other modes will be extended as some 
+     sort of power-law fall-off in amplitude and power-law growth in phase.          */
+  ListmodesCAmpPhaseFrequencySeries* listelement = listROM;
+  while(listelement) {    // For each l-m (ie each listelement)
+
+
+    /* Definitions: l,m, frequency series and length */
+    int l = listelement->l;
+    int m = listelement->m;
+    /* First we must compute a new frequency grid including a possible extension to lower frequencies*/
+    gsl_vector *freq_new;
+    gsl_vector* freq = listelement->freqseries->freq;
+    int len = (int) freq->size;    
+    // Construct frequency grid extension on the geometric mean of the lowest few ROM frequencies after the matching point
+    const int Navg=3;
+    int imatch=-1;
+    double f_match=mf_match/(m1SI+m2SI)*MSUN_SI/MTSUN_SI;
+    f_match=f_match*m/2; //Shift the matching frequency for non-22 modes to correspond to a comparable orbital freq.
+    //printf("f_match=%g\n",f_match);
+    for(i=0;i<len-Navg;i++){
+      if(gsl_vector_get(freq,i)>f_match){
+	imatch=i;
+	break;
+      }
+    }
+    if(imatch<0){
+      printf("WARNING: f_match exceeds high-freq range of the ROM model\n");
+      imatch=len-Navg-1;
+    }
+    double lnfmatch=log(gsl_vector_get(freq,imatch));
+    double lnfmin=log(f_min);
+    double dlnf=(log(gsl_vector_get(freq,imatch+Navg))-lnfmatch)/Navg;
+    double dffac=exp(dlnf);
+    //The new grid will include the old grid, from imatch and after, plus adequate lower-freq
+    int len_add = (lnfmatch-lnfmin)/dlnf;
+    if(len_add<0) len_add=0;
+    int len_new = len - imatch + len_add;
+    //printf("extending waveform: len_add + len - imatch = len_new: %i + %i - %i = %i\n",len_add,len,imatch,len_new);
+    /* construct the extended freq grid */
+    freq_new=gsl_vector_alloc(len_new);
+    for(i=len_add;i<len_new;i++)gsl_vector_set(freq_new,i,gsl_vector_get(freq,len-len_new+i));
+    for(i=len_add;i>0;i--)gsl_vector_set(freq_new,i-1,gsl_vector_get(freq_new,i)/dffac);
+    //for(i=0;i<len_new;i++)printf("%i: %g %g\n",i,(i>=len_new-len?freq->data[i-len_new+len]:0),freq_new->data[i]);
+    
+  
+    //copy the old freqseries data to a new one and extend with power-law
+    CAmpPhaseFrequencySeries* freqseries = listelement->freqseries;
+    CAmpPhaseFrequencySeries* freqseries_new=0;     //New result will be assembled here
+    CAmpPhaseFrequencySeries_Init(&freqseries_new,len_new);
+    //set the new freqs
+    for(i=0;i<len_new;i++){
+      gsl_vector_set(freqseries_new->freq,i,gsl_vector_get(freq_new,i));
+    }
+    //copy in the high-freq ROM-model data
+    //printf("l,m = %i,%i;  lenghts=%i,%i\n",l,m,freqseries->freq->size, freqseries_new->freq->size);
+    for(i=len_add;i<len_new;i++){ 
+      //printf("i, len-len_new+i: %i, %i\n",i,len-len_new+i);
+      gsl_vector_set(freqseries_new->amp_real,i,gsl_vector_get(freqseries->amp_real,len-len_new+i));
+      gsl_vector_set(freqseries_new->amp_imag,i,gsl_vector_get(freqseries->amp_imag,len-len_new+i));
+      gsl_vector_set(freqseries_new->phase,i,gsl_vector_get(freqseries->phase,len-len_new+i));
+      //printf("%i: copying %g  %g  %g  %g\n",i,freqseries_new->freq->data[i],freqseries_new->amp_real->data[i],freqseries_new->amp_imag->data[i],freqseries_new->phase->data[i]);
+    }
+    //extend
+    if(l==2&&m==2&&len_add>0){//extend 2-2 with TaylorF2   
+      //Assemble data for matching
+      double f0=freq_new->data[len_add],f1=freq_new->data[len_add+1];
+      double ph0=freqseries_new->phase->data[len_add],ph1=freqseries_new->phase->data[len_add+1];
+      double amp=sqrt(freqseries_new->amp_real->data[len_add]*freqseries_new->amp_real->data[len_add]
+		      +freqseries_new->amp_imag->data[len_add]*freqseries_new->amp_imag->data[len_add]);
+      double amp1=sqrt(freqseries_new->amp_real->data[len_add+1]*freqseries_new->amp_real->data[len_add+1]
+		      +freqseries_new->amp_imag->data[len_add+1]*freqseries_new->amp_imag->data[len_add+1]);
+      double amprfac=freqseries_new->amp_real->data[len_add]/amp,ampifac=freqseries_new->amp_imag->data[len_add]/amp;
+      //Compute raw TaylorF2
+      TaylorF2nonspin(freqseries_new->amp_real->data,freqseries_new->phase->data,freq_new->data,len_add+2,m1SI,m2SI,distance,imatch);
+      //Compute offsets in phase, first phase derivative, and amplitude argument
+      double dphase0tf2=(freqseries_new->phase->data[len_add+1]-freqseries_new->phase->data[len_add])/(f1-f0);
+      double phase0tf2=freqseries_new->phase->data[len_add];
+      double dphase0eob=(ph1-ph0)/(f1-f0);
+      double dphase0=dphase0eob-dphase0tf2;
+      double phase0=ph0 - phase0tf2 - f0*dphase0;
+      double amp0bcoeff = amp / freqseries_new->amp_real->data[len_add] - 1.0; //Compute correction for continuity matching.
+      double amp0ccoeff = ((amp1/freqseries_new->amp_real->data[len_add+1]-1.0)/amp0bcoeff/(f1*f1/f0/f0)-1.0)/(f1/f0-1.0); //Compute correction for continuity matching.
+      /*
+      printf("ph0eob,dph0eob= %g,  %g\n",ph0,dphase0eob);
+      printf("ph0tf2,dph0tf2= %g,  %g\n",phase0tf2,dphase0tf2);
+      printf("ph0,dph0= %g,  %g\n",phase0,dphase0);
+      printf("f0,f0*dph0= %g,  %g\n",f0,dphase0*f0);
+      printf("imatch=%i\n",imatch);
+      */
+      //Apply offsets
+      for (i = 0; i < len_add+2; i++){
+	double f=freqseries_new->freq->data[i];
+	//printf("%i<%i,%g\n",i,len_add,len_add-i);
+	//printf("f,ph0+f*dph0= %g, %g\n",freqseries_new->freq->data[i],phase0 + dphase0*f);
+	freqseries_new->phase->data[i] += phase0 + dphase0*f;
+	//First apply continuity matching
+	// amp -> amp * ( 1 + b*f^2/f0^2 * ( 1 + c*(f/f0 -1) )
+	//(starts at order f^2 since we only keep 2PN order ampl corrections in TaylorF2 code below; could change to f^3 if higher order terms are used)	
+	freqseries_new->amp_real->data[i] *= 1.0 + amp0bcoeff*f*f/f0/f0*(1+amp0ccoeff*(f/f0-1));
+	freqseries_new->amp_imag->data[i] = freqseries_new->amp_real->data[i]*ampifac;
+	freqseries_new->amp_real->data[i] *= amprfac;
+	//printf("%i: extending TF2 %g  %g  %g  %g\n",i,freqseries_new->freq->data[i],freqseries_new->amp_real->data[i],freqseries_new->amp_imag->data[i],freqseries_new->phase->data[i]);
+      }
+    } else { //extend other modes with power-law
+      //The results are many cycles out of phase almost immediately, so this definitely is not an accurate
+      //waveform, but the results are reasonably smooth and of plausible structure.
+      //Alternatively, we could also extend these with TaylorF2, btu we are mostly assuming this part of the WF is small
+      double phmax=freqseries->phase->data[len-1];//For phase we extend by a power-law referenced to zero phase at end of ROM
+      double dArfac = exp(-log( gsl_vector_get(freqseries->amp_real,imatch+Navg)
+				     /gsl_vector_get(freqseries->amp_real,imatch) ) / Navg);
+      //double dAifac = exp(-log( gsl_vector_get(freqseries->amp_imag,imatch+Navg)
+      //				/gsl_vector_get(freqseries->amp_imag,imatch+Navg) ) / Navg);
+      double dAifac=dArfac;
+      double dphfac = exp(-log( (gsl_vector_get(freqseries->phase,imatch+Navg)-phmax)
+				/(gsl_vector_get(freqseries->phase,imatch) -phmax)) / Navg);
+      for(i=len_add;i>0;i--){
+	gsl_vector_set(freqseries_new->amp_real,i-1,gsl_vector_get(freqseries_new->amp_real,i)*dArfac);
+	gsl_vector_set(freqseries_new->amp_imag,i-1,gsl_vector_get(freqseries_new->amp_imag,i)*dAifac);
+	gsl_vector_set(freqseries_new->phase,i-1,(gsl_vector_get(freqseries_new->phase,i)-phmax)*dphfac+phmax);
+	//printf("%i: extending %g  %g  %g  %g\n",i,freqseries_new->freq->data[i-1],freqseries_new->amp_real->data[i-1],freqseries_new->amp_imag->data[i-1],freqseries_new->phase->data[i-1]);
+      }
+    }
+    /*
+    for(i=0;i<len_new;i++){
+      printf("%i %i: %g  %g : %g  %g : %g  %g :  %g  %g \n",i-len_new+len,i,
+	     (i>=len_new-len?freqseries->freq->data[i-len_new+len]:0),freqseries_new->freq->data[i],
+	     (i>=len_new-len?freqseries->amp_real->data[i-len_new+len]:0),freqseries_new->amp_real->data[i],
+	     (i>=len_new-len?freqseries->amp_imag->data[i-len_new+len]:0),freqseries_new->amp_imag->data[i],
+	     (i>=len_new-len?freqseries->phase->data[i-len_new+len]:0),freqseries_new->phase->data[i]);
+	     }*/
+    //delete the old content data and replace with the new
+    CAmpPhaseFrequencySeries_Cleanup(freqseries);
+    listelement->freqseries=freqseries_new;
+    listelement=listelement->next;
+    gsl_vector_free(freq_new);
+  }
+  *listhlm=listROM;
+  /*
+  printf("generated listROM: n=%i l=%i m=%i\n",(*listhlm)->freqseries->amp_real->size,listROM->l,listROM->m);
+  for(i=0;i<(*listhlm)->freqseries->freq->size;i++){
+    printf("%i:  %g  %g  %g  %g\n",i,(*listhlm)->freqseries->freq->data[i],(*listhlm)->freqseries->amp_real->data[i],(*listhlm)->freqseries->amp_imag->data[i],(*listhlm)->freqseries->phase->data[i]);
+  }
+  printf("listlhm=%x\n",listhlm);
+  printf("*listlhm=%x\n",*listhlm);
+  */
+  return SUCCESS;
+}
+
+
+/* Non-spinning merger TaylorF2 waveform, copied and condensed from LAL */
+
+void TaylorF2nonspin(
+		double *amp,                            /**< FD waveform amplitude (modulus)*/
+		double *phase,                          /**< FD waveform phase */
+		const double *freqs,                    /**< frequency points at which to evaluate the waveform (Hz) */
+		const int size,                         /** number of freq samples */
+		const double m1_SI,                     /**< mass of companion 1 (kg) */
+		const double m2_SI,                     /**< mass of companion 2 (kg) */
+		const double distance,                  /** distance (m) */
+		const double imatch                     /**< index at which to match phase; 
+							   assumes arrays are preloaded at imatch and imatch+1
+							   with the required result */ 
+		     )
+{
+  //The meat of this computation is copied from LAL: XLALSimInspiralPNPhasing_F2
+  //We dont need the spin terms
+  double m1 = m1_SI / MSUN_SI;
+  double m2 = m2_SI / MSUN_SI;
+  double mtot = m1 + m2;
+  double d = (m1 - m2) / (m1 + m2);
+  double eta = m1*m2/mtot/mtot;
+  double m1M = m1/mtot;
+  double m2M = m2/mtot;
+  double m_sec = mtot * MTSUN_SI;
+  double piM = PI * m_sec;
+
+  double pfaN = 3.L/(128.L * eta);
+  
+  /* Non-spin phasing terms - see arXiv:0907.0700, Eq. 3.18 */
+  double pfav0 = 1.L;
+  double pfav2 = 5.L*(743.L/84.L + 11.L * eta)/9.L; 
+  double pfav3 = -16.L*PI;
+  double pfav4 = 5.L*(3058.673L/7.056L + 5429.L/7.L * eta
+		+ 617.L * eta*eta)/72.L;
+  double pfav5 = 5.L/9.L * (7729.L/84.L - 13.L * eta) * PI;
+  double pfalogv5 = 5.L/3.L * (7729.L/84.L - 13.L * eta) * PI;
+  double pfav6 = (11583.231236531L/4.694215680L
+	    - 640.L/3.L * PI * PI - 6848.L/21.L*GAMMA)
+    + eta * (-15737.765635L/3.048192L
+	     + 2255./12. * PI * PI)
+    + eta*eta * 76055.L/1728.L
+    - eta*eta*eta * 127825.L/1296.L;
+  pfav6 += (-6848.L/21.L)*log(4.);
+  double pfalogv6 = -6848.L/21.L;
+  double pfav7 = PI * ( 77096675.L/254016.L
+		      + 378515.L/1512.L * eta - 74045.L/756.L * eta*eta);
+
+  /* Non-spin 2-2 amplitude terms (Blanchet LRR)*/
+  double a2 = ( -107 + 55*eta ) / 42.;
+  double a3 = 2*PI;
+  double a4 = ( ( 2047.*eta - 7483. ) * eta - 2173. ) / 1512.;
+  /* Blanchet has more terms, but there should diminishing returns:
+     expect v^5 ~ 1e-5 and the higher terms are more complicated and, indeed, complex */
+  
+  
+  //Lead coefficients
+  //double amp0 = -4. * m1 * m2 / distance * C_SI * MTSUN_SI * MTSUN_SI * sqrt(PI/12.L); //(from LAL)
+  double amp0B = 2. * m1 * m2 / distance * C_SI * MTSUN_SI * MTSUN_SI * sqrt(16*PI/5.L); //Based on Blanchet-LRR (327)
+  //Note: amp0B = -4 * sqrt( 3/5) * amp0;
+  double FTaN =  32.0 * eta*eta / 5.0;
+  //printf("eta=%g\n",eta);
+  //Compute raw TaylorF2
+  int i;
+  for (i = 0; i < size; i++) {
+    double f = freqs[i];
+    double v = cbrt(piM*f);
+    double logv = log(v);
+    double v2 = v*v;
+    double v5 = v2*v2*v;
+    double v10 = v5*v5;
+
+    //printf("taylorf2: f=%g  v=%g\n",f,v);
+    double phasing=0;
+    phasing = pfav7 * v;
+    phasing = (phasing + pfav6 + pfalogv6 * logv) * v;
+    phasing = (phasing + pfav5 + pfalogv5 * logv) * v;
+    phasing = (phasing + pfav4) * v;
+    phasing = (phasing + pfav3) * v;
+    phasing = (phasing + pfav2) * v2;
+    phasing += 1;
+    phasing *=pfaN;
+
+    double amp22fac;
+    amp22fac = a4*v;
+    amp22fac = ( amp22fac + a3 ) * v;
+    amp22fac = ( amp22fac + a2 ) * v2;
+    amp22fac += 1.0;
+      
+    phasing /= v5;
+    double flux = FTaN * v10;
+    double dEnergy = -eta * v;
+    /* mf=x^(3/2); fdot=3/2/m x^(1/2) xdot ~ 3/2/m x^(1/2) * (-1/16)*(4x)^5(-eta/5/m) = 96/5*eta/m^2 * x^(11/2) */
+    /*-flux/dEnergy = 32.0 * eta*eta / 5.0 / eta *v^9 */
+    /*--> -flux/dEnergy =  fdot / (3*v^2) [using x=v^2]*/ 
+    phase[i]=phasing;
+    //phase[i]=-phasing;//Seem to need overall sign (ie complex conj) for consistency with EOB-ROM
+    //amp[i] = amp0 * sqrt(-dEnergy/flux) * v;  (Based on LAL)
+    amp[i] = amp0B * amp22fac * v2 / sqrt(-flux/dEnergy * 3 * v2 );
+    //printf("v=%g: a=%g ph=%g;  amp22fac=%g sqrt(v^-9)=%g\n",v,amp[i],phase[i],amp22fac,sqrt(v/v10));
+    //Note ampB = - amp * 4*sqrt(3/5) * / sqrt(3) + higher-order = -4/sqrt(5)*( 1 + higher-order )
+    //  ...possibly related to sph-harm normalization
+    // HACK: Strangely it seems that an additional factor of 4/sqrt(5) is just right to nearly match the EOB wf FT
+    amp[i] *= 4/sqrt(5);   //HACK
+    
+    //Here we depart from LAL, referencing phase and time-shift to two neighboring freq points
+    //First we match the freq derivative
+  }
+}
+  
 /***************************** Functions handling the prior ******************************/
 
 /* Function to check that returned parameter values fit in prior boundaries */

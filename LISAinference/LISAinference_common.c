@@ -6,9 +6,9 @@
 void addendum(int argc, char *argv[],LISARunParams *runParams, int *ndim, int *nPar,int **freeparamsmapp,void **contextp, double *logZtrue){
   /* Initialize structs for holding various options */
   //LISARunParams runParams;
-    int myid = 0;
+   int myid = 0;
 #ifdef PARALLEL
- 	MPI_Init(&argc,&argv);
+ 	//MPI_Init(&argc,&argv);
 	MPI_Comm_rank(MPI_COMM_WORLD,&myid);
 #endif
 
@@ -19,12 +19,13 @@ void addendum(int argc, char *argv[],LISARunParams *runParams, int *ndim, int *n
   memset(globalparams, 0, sizeof(LISAGlobalParams));
   priorParams = (LISAPrior*) malloc(sizeof(LISAPrior));
   memset(priorParams, 0, sizeof(LISAPrior));
-  
+
   /* Parse commandline to read parameters of injection - copy the number of modes demanded for the injection */
   parse_args_LISA(argc, argv, injectedparams, globalparams, priorParams, runParams);
   injectedparams->nbmode = globalparams->nbmodeinj;
-  if(myid == 0) print_parameters_to_file_LISA(injectedparams, globalparams, priorParams, runParams);
 
+  int notLISAlike=strstr(argv[0],"LISAlike")==0;
+  if(myid == 0 && notLISAlike) print_parameters_to_file_LISA(injectedparams, globalparams, priorParams, runParams);
   /* Initialize the data structure for the injection */
   LISAInjectionCAmpPhase* injectedsignalCAmpPhase = NULL;
   LISAInjectionReIm* injectedsignalReIm = NULL;
@@ -40,7 +41,7 @@ void addendum(int argc, char *argv[],LISARunParams *runParams, int *ndim, int *n
     LISAGenerateInjectionCAmpPhase(injectedparams, injectedsignalCAmpPhase);
   }
   else if(globalparams->tagint==1) {
-    LISAGenerateInjectionReIm(injectedparams, globalparams->fmin, globalparams->nbptsoverlap, 1, injectedsignalReIm); /* Use here logarithmic sampling as a default */
+    LISAGenerateInjectionReIm(injectedparams, globalparams->minf, globalparams->nbptsoverlap, 1, injectedsignalReIm); /* Use here logarithmic sampling as a default */
   }
 
   /* Define SNRs */
@@ -65,13 +66,13 @@ void addendum(int argc, char *argv[],LISARunParams *runParams, int *ndim, int *n
       priorParams->dist_max *= SNR123 / priorParams->snr_target;
       if (myid == 0) printf("Distance prior (dist_min, dist_max) = (%g, %g) Mpc\n", priorParams->dist_min, priorParams->dist_max);
     }
-    if (myid == 0) print_rescaleddist_to_file_LISA(injectedparams, globalparams, priorParams, runParams);
+    if (myid == 0 && notLISAlike) print_rescaleddist_to_file_LISA(injectedparams, globalparams, priorParams, runParams);
     if(globalparams->tagint==0) {
       LISAGenerateInjectionCAmpPhase(injectedparams, injectedsignalCAmpPhase);
       SNR123 = sqrt(injectedsignalCAmpPhase->TDI123ss);
     }
     else if(globalparams->tagint==1) {
-      LISAGenerateInjectionReIm(injectedparams, globalparams->fmin, globalparams->nbptsoverlap, 1, injectedsignalReIm); /* tagsampling fixed to 1, i.e. logarithmic sampling - could be made another global parameter */
+      LISAGenerateInjectionReIm(injectedparams, globalparams->minf, globalparams->nbptsoverlap, 1, injectedsignalReIm); /* tagsampling fixed to 1, i.e. logarithmic sampling - could be made another global parameter */
       SNR1 = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDI1Signal, injectedsignalReIm->TDI1Signal, injectedsignalReIm->noisevalues1));
       SNR2 = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDI2Signal, injectedsignalReIm->TDI2Signal, injectedsignalReIm->noisevalues2));
       SNR3 = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDI3Signal, injectedsignalReIm->TDI3Signal, injectedsignalReIm->noisevalues3));
@@ -99,7 +100,7 @@ void addendum(int argc, char *argv[],LISARunParams *runParams, int *ndim, int *n
     *logZtrue = CalculateLogLReIm(injectedparams, injectedsignalReIm);
   }
   if (myid == 0) printf("logZtrue = %lf\n", *logZtrue-logZdata);
-  
+
   /* Set the context pointer */
   if(globalparams->tagint==0) {
     *contextp = injectedsignalCAmpPhase;

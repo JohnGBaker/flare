@@ -44,6 +44,9 @@
 /**************************************************/
 /**************** Prototypes **********************/
 
+/* Function to convert string input network string to Networktag */
+Networktag ParseNetworktag(char* string);
+
 /* Core function processing a signal (in the form of a list of modes) through the Fourier-domain LLV response (for a given detector), for given values of the inclination, position in the sky and polarization angle */
 int LLVSimFDResponse(
   struct tagListmodesCAmpPhaseFrequencySeries **listhlm,  /* Input: list of modes in Frequency-domain amplitude and phase form as produced by the ROM */
@@ -53,16 +56,29 @@ int LLVSimFDResponse(
   const double dec,                                       /* Position in the sky: J2000.0 declination (rad) */
   const double inclination,                               /* Inclination of the source (rad) */
   const double psi,                                       /* Polarization angle (rad) */
-  const detectortag tag);                                 /* Tag identifying the detector */
+  const Detectortag tag);                                 /* Tag identifying the detector */
+
+  /* Core function processing a signal (in the form of a list of modes) through the Fourier-domain LLV response, for given values of the inclination, position in the sky and polarization angle */
+  int LLVSimFDResponse3Det(
+    struct tagListmodesCAmpPhaseFrequencySeries **listDet1,  /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the detector 1 */
+    struct tagListmodesCAmpPhaseFrequencySeries **listDet2,  /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the detector 2 */
+    struct tagListmodesCAmpPhaseFrequencySeries **listDet3,  /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the detector 3 */
+    struct tagListmodesCAmpPhaseFrequencySeries **list,      /* Input: list of modes in Frequency-domain amplitude and phase form as produced by the ROM */
+    const double gpstime,                                    /* GPS time (s) when the signal at coalescence reaches geocenter */
+    const double ra,                                            /* First angle for the position in the sky */
+    const double dec,                                           /* Second angle for the position in the sky */
+    const double inclination,                                   /* Inclination of the source */
+    const double psi,                                           /* Polarization angle */
+    const Networktag tag);                               /* Selector for the detector network */
 
 /* Function setting the response matrix of a given detector, in cartesian coordinates */
 void SetMatrixD(
   gsl_matrix* D,                       /* Output: matrix of the detector response Dij */
-  const detectortag tag);              /* Tag identifying the detector */
+  const Detectortag tag);              /* Tag identifying the detector */
 /* Function setting the position of a detector, in cartesian coordinates */
 void SetVectorXd(
   gsl_vector* Xd,                      /* Output: position vector of the detector */
-  const detectortag tag);              /* Tag identifying the detector */
+  const Detectortag tag);              /* Tag identifying the detector */
 
 /* Function setting the cartesian coordinates of the wave frame vectors (X,Y,Z), given the position in the sky and polarization */
 void SetVectorsXYZ(
