@@ -1,5 +1,5 @@
 MESSAGE="Specify which machine to compile for in the Makefile."
-MACHINE="johnsmac"
+MACHINE="discover"
 
 ifeq ($(MACHINE),"sylvainsmac")
   MESSAGE="Compiling for Sylvain's Mac"
@@ -24,12 +24,13 @@ else ifeq ($(MACHINE),"johnsmac")
   #LD = gfortran-mp-4.7	
   LDFLAGS= -fopenmp -L/opt/local/lib -L/opt/local/lib/mpich-mp -lgfortran -llapack -latlas -lblas
   #Uncomment this for MPI and specify your needed MPI libraries
-  #CC += -DPARALLEL
-  #CPP += -DPARALLEL
   MPILIBS = -lmpi -lmpicxx -lmpifort
   CFLAGS += -g -fopenmp -I/opt/local/include/mpich-mp
   CPPFLAGS += -g -I/opt/local/include/mpich-mp
   CXXFLAGS = -g -fopenmp
+  #Uncomment this for MPI and specify your needed MPI libraries
+  CFLAGS += -DPARALLEL
+  CXXFLAGS += -DPARALLEL
   PTMCMC=$(PWD)/ptmcmc
 else ifeq ($(MACHINE),"discover") 
   #based on modules:
@@ -37,13 +38,19 @@ else ifeq ($(MACHINE),"discover")
   MESSAGE="Compiling for Discover at NCCS"
   GSLROOT = /usr/local/other/SLES11.1/gsl/1.16/intel-13.0.1.117
   BAMBIROOT = /discover/nobackup/jgbaker/sw/bambi/
+  FFTWROOT = /usr/local/other/SLES11.1/fftw/3.3.3/intel-12.1.0.233/
   FC = mpif90 -DPARALLEL
   CC = mpicc -DPARALLEL
-  CPP = mpiicpc -DPARALLEL
+  CXX = mpiicpc -DPARALLEL
   LAPACKLIB = -lmkl_intel_lp64 -lmkl_intel_thread -liomp5 -lpthread -lm -lmkl_core -lmkl_lapack95_lp64
+  CFLAGS += -g -O3 -fopenmp -I $(GSLROOT)/include -I $(FFTWROOT)/include -L$(FFTWROOT)/lib -L$(GSLROOT)/lib
+  CXXFLAGS = -g -O3 -fopenmp
   MPILIBS += $(LAPACKLIB)
-  LD = mpif90
-  LDFLAGS = -cxxlib -nofor_main -g -traceback -C
+  LD = mpiicpc
+  LDFLAGS = -cxxlib -g -traceback -C -fopenmp -L$(FFTWROOT)/lib -L$(GSLROOT)/lib
+  #LDFLAGS += -nofor_main
+  LDFLAGS += -lifcore
+  PTMCMC=$(PWD)/ptmcmc
 else ifeq ($(MACHINE),"datura") 
   #based on modules:
   #module add Compiler/intel/ips_xe_2015/ips_xe_2015_intel15 mpi/openmpi/1.10.0-intel15 hdf5/1.8.13-intel15 gsl/1.15
@@ -122,7 +129,8 @@ ifdef PTMCMC
 ptmcmc:
 	@echo "Do we need to check out ptmcmc from github?:";\
 	if [ \! -d ptmcmc ]; then git clone https://github.com/JohnGBaker/ptmcmc.git; fi;
-	$(MAKE) CFLAGS="$(CPPFLAGS) $(CXXFLAGS)" -C ptmcmc
+	@echo "INCLUDE="$(INCLUDE)
+	$(MAKE) CFLAGS="$(CPPFLAGS) $(CXXFLAGS)" INCLUDE="$(PTMCMC)/include" -C ptmcmc 
 endif
 
 clean: $(SUBCLEAN)

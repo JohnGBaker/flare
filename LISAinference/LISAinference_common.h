@@ -10,6 +10,10 @@
 
 #include "LISAutils.h"
 
+#ifdef PARALLEL
+#include "mpi.h"
+#endif
+
 #if defined(__cplusplus)
 extern "C" {
 #define complex _Complex
