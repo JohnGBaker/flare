@@ -1282,11 +1282,11 @@ void TaylorF2nonspin(
     phasing /= v5;
     double flux = FTaN * v10;
     double dEnergy = -eta * v;
+    phase[i]=phasing;
+    //Notes for amplitude: Blanchet at leading order:
     /* mf=x^(3/2); fdot=3/2/m x^(1/2) xdot ~ 3/2/m x^(1/2) * (-1/16)*(4x)^5(-eta/5/m) = 96/5*eta/m^2 * x^(11/2) */
     /*-flux/dEnergy = 32.0 * eta*eta / 5.0 / eta *v^9 */
     /*--> -flux/dEnergy =  fdot / (3*v^2) [using x=v^2]*/ 
-    phase[i]=phasing;
-    //phase[i]=-phasing;//Seem to need overall sign (ie complex conj) for consistency with EOB-ROM
     //amp[i] = amp0 * sqrt(-dEnergy/flux) * v;  (Based on LAL)
     amp[i] = amp0B * amp22fac * v2 / sqrt(-flux/dEnergy * 3 * v2 );
     //printf("v=%g: a=%g ph=%g;  amp22fac=%g sqrt(v^-9)=%g\n",v,amp[i],phase[i],amp22fac,sqrt(v/v10));
