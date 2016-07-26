@@ -37,6 +37,7 @@
 #include "struct.h"
 
 #if defined(__cplusplus)
+#define complex _Complex
 extern "C" {
 #elif 0
 } /* so that editors will match preceding brace */

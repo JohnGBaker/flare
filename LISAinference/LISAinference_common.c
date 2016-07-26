@@ -6,9 +6,9 @@
 void addendum(int argc, char *argv[],LISARunParams *runParams, int *ndim, int *nPar,int **freeparamsmapp,void **contextp, double *logZtrue){
   /* Initialize structs for holding various options */
   //LISARunParams runParams;
-    int myid = 0;
+   int myid = 0;
 #ifdef PARALLEL
- 	MPI_Init(&argc,&argv);
+ 	//MPI_Init(&argc,&argv);
 	MPI_Comm_rank(MPI_COMM_WORLD,&myid);
 #endif
 

@@ -2,6 +2,9 @@
 //This is jointly based on the gleam.cc ptmcmc-based gravitational-lens code
 //and the bambi-based LISAinterface.c 
 
+#ifdef PARALLEL
+#include "mpi.h"
+#endif
 #include <valarray>
 #include <vector>
 #include <iostream>
@@ -209,15 +212,15 @@ int main(int argc, char*argv[]){
   double pol0=(priorParams->pol_min+priorParams->pol_max)/2,dpol=(priorParams->pol_max-priorParams->pol_min)/2;
 
   //If the parameters are "fixed" then we approximately realize that by restricting the range by 1e-5.
-  if (!isnan(priorParams->fix_lambda))cout<<" ** Parameter fixing not supported.  Ignoring request! **"<<endl;
-  if (!isnan(priorParams->fix_beta))cout<<" ** Parameter fixing not supported.  Ignoring request! **"<<endl;
-  if (!isnan(priorParams->fix_time))cout<<" ** Parameter fixing not supported.  Ignoring request! **"<<endl;
-  if (!isnan(priorParams->fix_phase))cout<<" ** Parameter fixing not supported.  Ignoring request! **"<<endl;
-  if (!isnan(priorParams->fix_inc))cout<<" ** Parameter fixing not supported.  Ignoring request! **"<<endl;
-  if (!isnan(priorParams->fix_pol))cout<<" ** Parameter fixing not supported.  Ignoring request! **"<<endl;
-  if (!isnan(priorParams->fix_dist))cout<<" ** Parameter fixing not supported.  Ignoring request! **"<<endl;
-  if (!isnan(priorParams->fix_m1))cout<<" ** Parameter fixing not supported.  Ignoring request! **"<<endl;
-  if (!isnan(priorParams->fix_m2))cout<<" ** Parameter fixing not supported.  Ignoring request! **"<<endl;
+  if (!std::isnan(priorParams->fix_lambda))cout<<" ** Parameter fixing not supported.  Ignoring request! **"<<endl;
+  if (!std::isnan(priorParams->fix_beta))cout<<" ** Parameter fixing not supported.  Ignoring request! **"<<endl;
+  if (!std::isnan(priorParams->fix_time))cout<<" ** Parameter fixing not supported.  Ignoring request! **"<<endl;
+  if (!std::isnan(priorParams->fix_phase))cout<<" ** Parameter fixing not supported.  Ignoring request! **"<<endl;
+  if (!std::isnan(priorParams->fix_inc))cout<<" ** Parameter fixing not supported.  Ignoring request! **"<<endl;
+  if (!std::isnan(priorParams->fix_pol))cout<<" ** Parameter fixing not supported.  Ignoring request! **"<<endl;
+  if (!std::isnan(priorParams->fix_dist))cout<<" ** Parameter fixing not supported.  Ignoring request! **"<<endl;
+  if (!std::isnan(priorParams->fix_m1))cout<<" ** Parameter fixing not supported.  Ignoring request! **"<<endl;
+  if (!std::isnan(priorParams->fix_m2))cout<<" ** Parameter fixing not supported.  Ignoring request! **"<<endl;
   if(priorParams->logflat_massprior){
     dm1=sqrt((m10+dm1)/(m10-dm1));
     dm2=sqrt((m20+dm2)/(m20-dm2));
@@ -237,9 +240,10 @@ int main(int argc, char*argv[]){
   //                                     m1      m2     tRef     dist   phase    inc    lambda    beta     pol  
   valarray<double>    centers((dlist){  m10,    m20,   tref0,  dist0,  phase0,  inc0, lambda0,  beta0,   pol0  });
   valarray<double> halfwidths((dlist){  dm1,    dm2,   dtref,  ddist,  dphase,  dinc, dlambda,  dbeta,   dpol  });
-  valarray<int>         types((ilist){  uni,    uni,     uni,     uni,    uni, polar,     uni,  copol,    uni  });
-  if (!isnan(priorParams->fix_beta))types[7]=uni;//"fixed" parameter set to narrow uniform range
-  if (!isnan(priorParams->fix_inc)) types[5]=uni;//"fixed" parameter set to narrow uniform range
+  //valarray<int>         types((ilist){  uni,    uni,     uni,     uni,    uni, polar,     uni,  copol,    uni  });
+  valarray<int>         types{  uni,    uni,     uni,     uni,    uni, polar,     uni,  copol,    uni  };
+  if (!std::isnan(priorParams->fix_beta))types[7]=uni;//"fixed" parameter set to narrow uniform range
+  if (!std::isnan(priorParams->fix_inc)) types[5]=uni;//"fixed" parameter set to narrow uniform range
   if(priorParams->logflat_massprior)types[0]=types[1]=mixed_dist_product::log;
   sampleable_probability_function *prior;  
   prior=new mixed_dist_product(&space,types,centers,halfwidths);
