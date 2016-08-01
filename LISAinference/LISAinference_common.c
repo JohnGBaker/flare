@@ -8,8 +8,11 @@ void addendum(int argc, char *argv[],LISARunParams *runParams, int *ndim, int *n
   //LISARunParams runParams;
    int myid = 0;
 #ifdef PARALLEL
- 	//MPI_Init(&argc,&argv);
-	MPI_Comm_rank(MPI_COMM_WORLD,&myid);
+   if(noMPI==0){
+     printf("noMPI=%i\n",noMPI);
+     //MPI_Init(&argc,&argv);
+     MPI_Comm_rank(MPI_COMM_WORLD,&myid);
+   }
 #endif
 
 
@@ -43,8 +46,10 @@ void addendum(int argc, char *argv[],LISARunParams *runParams, int *ndim, int *n
   else if(globalparams->tagint==1) {
     LISAGenerateInjectionReIm(injectedparams, globalparams->minf, globalparams->nbptsoverlap, 1, injectedsignalReIm); /* Use here logarithmic sampling as a default */
   }
-
-  /* Define SNRs */
+  printf("Injected params\n");
+  report_LISAParams(injectedparams);
+  
+  /* Define SNR */
   double SNR123, SNR1, SNR2, SNR3;
   if(globalparams->tagint==0) {
     SNR123 = sqrt(injectedsignalCAmpPhase->TDI123ss);
@@ -78,6 +83,8 @@ void addendum(int argc, char *argv[],LISARunParams *runParams, int *ndim, int *n
       SNR3 = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDI3Signal, injectedsignalReIm->TDI3Signal, injectedsignalReIm->noisevalues3));
       SNR123 = sqrt(SNR1*SNR1 + SNR2*SNR2 + SNR3*SNR3);
     }
+    printf("Rescaled injected params\n");
+    report_LISAParams(injectedparams);
   }
 
   /* Print SNR */
@@ -99,6 +106,8 @@ void addendum(int argc, char *argv[],LISARunParams *runParams, int *ndim, int *n
   else if(globalparams->tagint==1) {
     *logZtrue = CalculateLogLReIm(injectedparams, injectedsignalReIm);
   }
+  printf("Compared params\n");
+  report_LISAParams(injectedparams);
   if (myid == 0) printf("logZtrue = %lf\n", *logZtrue-logZdata);
 
   /* Set the context pointer */

@@ -1,5 +1,5 @@
 MESSAGE="Specify which machine to compile for in the Makefile."
-MACHINE="discover"
+MACHINE="johnsmac"
 
 ifeq ($(MACHINE),"sylvainsmac")
   MESSAGE="Compiling for Sylvain's Mac"
@@ -24,12 +24,15 @@ else ifeq ($(MACHINE),"johnsmac")
   CPP = g++-mp-4.7
   LD = $(CPP)
   #LD = gfortran-mp-4.7
-  LDFLAGS= -fopenmp -L/opt/local/lib -L/opt/local/lib/mpich-mp -lgfortran -llapack -latlas -lblas
+  LDFLAGS= -fopenmp -L/opt/local/lib -L/opt/local/lib/mpich-gcc47 -lgfortran -llapack -latlas -lblas
+  #LDFLAGS= -fopenmp -L/opt/local/lib -L/opt/local/lib/mpich-mp -lgfortran -llapack -latlas -lblas
   #Uncomment this for MPI and specify your needed MPI libraries
   MPILIBS = -lmpi -lmpicxx -lmpifort
-  CFLAGS += -g -fopenmp -I/opt/local/include/mpich-mp
-  CPPFLAGS += -g -I/opt/local/include/mpich-mp
-  CXXFLAGS = -g -fopenmp
+  #CFLAGS += -g -fopenmp -I/opt/local/include/mpich-mp
+  #CPPFLAGS += -g -I/opt/local/include/mpich-mp
+  CFLAGS += -g -O3 -fopenmp -I/opt/local/include/mpich-gcc47
+  CPPFLAGS += -g -O3 -I/opt/local/include/mpich-gcc47
+  CXXFLAGS = -g -O3 -fopenmp
   #Uncomment this for MPI and specify your needed MPI libraries
   CFLAGS += -DPARALLEL
   CXXFLAGS += -DPARALLEL
@@ -91,8 +94,8 @@ GSLINC = $(GSLROOT)/include
 BAMBIINC = $(BAMBIROOT)/include
 BAMBILIB = $(BAMBIROOT)/lib
 CFLAGS += -std=c99
-CPPFLAGS += -O2 -I$(GSLINC)
-CXXFLAGS += -std=c++11
+CPPFLAGS += -O3 -I$(GSLINC)
+CXXFLAGS += -g -std=c++11 -O3 -I$(GSLINC)
 
 SUBDIRS = tools EOBNRv2HMROM LISAsim LLVsim integration
 ifdef PTMCMC

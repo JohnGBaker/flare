@@ -24,6 +24,9 @@ extern "C" {
 } /* so that editors will match preceding brace */
 #endif
 
+//global flag for indicating whether we are using MPI
+int noMPI;
+
 void addendum(int argc, char *argv[],LISARunParams *runParams, int *ndim, int *nPar,int **freeparamsmapp,void **contextp, double *logZtrue);
 
 #if 0
