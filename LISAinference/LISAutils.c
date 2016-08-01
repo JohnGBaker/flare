@@ -434,6 +434,25 @@ Syntax: --PARAM-min\n\
     exit(1);
 }
 
+/* Function printing injection/signal parameters to stdout */
+void report_LISAParams(
+                     LISAParams* params)		      
+{
+  /* Print injection parameters (before possible rescaling of the distances to match the target snr) */
+  printf( "-----------------------------------------------\n");
+  printf( "m1:           %.16e\n", params->m1);
+  printf( "m2:           %.16e\n", params->m2);
+  printf( "tRef:         %.16e\n", params->tRef);
+  printf( "phiRef:       %.16e\n", params->phiRef);
+  printf( "distance:     %.16e\n", params->distance);
+  printf( "lambda:       %.16e\n", params->lambda);
+  printf( "beta:         %.16e\n", params->beta);
+  printf( "inclination:  %.16e\n", params->inclination);
+  printf( "polarization: %.16e\n", params->polarization);
+  printf( "-----------------------------------------------\n");
+  printf( "\n");
+}
+
 /* Function printing all parameters of the run to an output file for future reference */
 int print_parameters_to_file_LISA(
                      LISAParams* params,
@@ -788,7 +807,13 @@ int LISAGenerateSignalReIm(
   /* Should add more error checking ? */
   /* Generate the waveform with the ROM */
   /* Note: SimEOBNRv2HMROM accepts masses and distances in SI units, whereas LISA params is in solar masses and Mpc */
-  ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+  if(globalparams->mfmatch<=0){
+    //printf("Not Extending signal waveform.  mfmatch=%g\n",globalparams->mfmatch);
+    ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+ } else {
+    //printf("Extending signal waveform.  mfmatch=%g\n",globalparams->mfmatch);
+    ret = GenerateWaveform(&listROM, params->nbmode, globalparams->mfmatch, globalparams->minf, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+  }
 
   /* If the ROM waveform generation failed (e.g. parameters were out of bounds) return FAILURE */
   if(ret==FAILURE) return FAILURE;
@@ -838,7 +863,7 @@ int LISAGenerateSignalReIm(
 
 /* Function generating a LISA injection signal as a frequency series in Re/Im form where the modes have been summed, from LISA parameters - determines the frequencies */
 int LISAGenerateInjectionReIm(
-  struct tagLISAParams* injectedparams,      /* Input: set of LISA parameters of the template */
+  struct tagLISAParams* params,      /* Input: set of LISA parameters of the template */
   double fLow,                               /* Input: additional lower frequency limit (argument minf) */
   int nbpts,                                 /* Input: number of frequency samples */
   int tagsampling,                           /* Input: tag for using linear (0) or logarithmic (1) sampling */
@@ -853,7 +878,13 @@ int LISAGenerateInjectionReIm(
   /* Should add more error checking ? */
   /* Generate the waveform with the ROM */
   /* Note: SimEOBNRv2HMROM accepts masses and distances in SI units, whereas LISA params is in solar masses and Mpc */
-  ret = SimEOBNRv2HMROM(&listROM, injectedparams->nbmode, globalparams->mfmatch, injectedparams->phiRef, globalparams->fRef, (injectedparams->m1)*MSUN_SI, (injectedparams->m2)*MSUN_SI, (injectedparams->distance)*1e6*PC_SI);
+  if(globalparams->mfmatch<=0){
+    //printf("Not Extending signal waveform.  mfmatch=%g\n",globalparams->mfmatch);
+    ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - params->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+ } else {
+    //printf("Extending signal waveform.  mfmatch=%g\n",globalparams->mfmatch);
+    ret = GenerateWaveform(&listROM, params->nbmode, globalparams->mfmatch, globalparams->minf, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+  }
 
   /* If the ROM waveform generation failed (e.g. parameters were out of bounds) return FAILURE */
   if(ret==FAILURE) return FAILURE;
@@ -863,7 +894,7 @@ int LISAGenerateInjectionReIm(
   //TESTING
   //clock_t tbeg, tend;
   //tbeg = clock();
-  LISASimFDResponseTDI3Chan(&listROM, &listTDI1, &listTDI2, &listTDI3, injectedparams->tRef, injectedparams->lambda, injectedparams->beta, injectedparams->inclination, injectedparams->polarization, globalparams->tagtdi);
+  LISASimFDResponseTDI3Chan(&listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, globalparams->tagtdi);
   //tend = clock();
   //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
