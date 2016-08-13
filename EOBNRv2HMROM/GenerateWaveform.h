@@ -58,6 +58,9 @@ typedef struct tagGenWaveParams {
   double distance;           /* distance of source (Mpc, default 1e3) */
   double inclination;        /* inclination of source (rad, default pi/3) */
   double minf;               /* Minimal frequency (Hz) - when set to 0 (default), use the first frequency covered by the ROM */
+  double deltatobs;          /* Observation duration (years, default=2) */
+  int tagextpn;              /* Tag to allow PN extension of the waveform at low frequencies */
+  double Mfmatch;            /* When PN extension allowed, geometric matching frequency: will use ROM above this value. If <=0, use ROM down to the lowest covered frequency */
   int nbmode;                /* number of modes to generate (starting with 22) - defaults to 5 (all modes) */
   int taggenwave;            /* Tag selecting the desired output format */
   int binaryout;             /* Tag for outputting the data in gsl binary form instead of text (default 0) */

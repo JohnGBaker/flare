@@ -1,5 +1,5 @@
 MESSAGE="Specify which machine to compile for in the Makefile."
-MACHINE="johnsmac"
+MACHINE="sylvainsmac"
 
 ifeq ($(MACHINE),"sylvainsmac")
   MESSAGE="Compiling for Sylvain's Mac"

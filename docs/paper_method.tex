@@ -233,7 +233,7 @@ This rather cumbersome expression is easy to simplify for special cases. For ins
 %
 which interestingly looks like a Taylor expansion of $g$, but with joint derivatives in frequency and time. Similarly, the expansion~\eqref{eq:expandA} gives
 %
-\be
+\be\label{eq:resultdfA}
 	\tilde{s}(f) = \tilde{h}(f) \sum\limits_{q\geq 0} \frac{1}{(2i\pi)^{q}q!} \frac{1}{A} \frac{\ud^{q} A}{\ud f ^{q}}  \left( \frac{\partial^{q} }{\partial t^{q}} g \right)(f,\tf)
 \ee
 %
@@ -334,6 +334,40 @@ Notice that, for the amplitude derivatives in~\eqref{eq:expandA} and the higher 
 \end{align}
 \end{subequations}
 %
+
+\subsubsection{Delays in the LLP approximation for LISA-type detectors}
+\label{subsubsec:LISAorbitaldelay}
+
+In the case of a LISA-type detector response, it is interesting to consider the case where the . The following will be mostly relevant for the delay induced by the motion of the constellation around the sun. Indeed, the analysis of the magnitude of the corrections beyond the LLP shows that it is the only one where the figure of merit of the approximation can exceed $10^{-1}$, due to the large baseline of the delay.
+
+If one can neglect the signal related amplitude and phase corrections as given in~\eqref{eq:resultdfA} and~\eqref{eq:resultdffPsiTf}, but one keeps the frequency-dependence in the convolution kernel in~\eqref{}, the general form of the response reads
+\begin{equation}
+	\tilde{s}(f) = \tilde{h}(f) \int \ud t \, F(t) e^{-2i\pi f d(t)} \int \ud f' \, e^{2i\pi f' (t+d(t) - t_{f})} \,,
+\end{equation}
+where we recall that we defined $t_{f} \equiv -1/(2\pi)\ud \Psi/\ud f$. If we introduce a new time, defined implicitly by
+\be
+	\left. (t + d(t) - t_{f})\right|_{t=t_{f}^{d}} = 0 \,,
+\ee
+The above integral can be formally computed as
+\begin{align}
+	\tilde{s}(f) &= \tilde{h}(f) \int \ud t \, F(t) e^{-2i\pi f d(t)} \delta(t + d(t) - t_{f}) \nn \\
+	&= \tilde{h}(f) F(t_{f}^{d}) \frac{e^{-2i\pi f d(t_{f}^{d})}}{1+\dot{d}(t_{f}^{d})}
+\end{align}
+In the case of the delay associated with the motion of the constellation around the Sun, the delay takes here a simple form (restoring factors $c$),
+\be
+	d(t) = \frac{R}{c} \cos(\beta) \cos(\Omega_{0} t -\lambda) \,,
+\ee
+with $R/c \simeq 500 \mathrm{s}$ and $\Omega_{0}R/c \simeq []$. In the case of the delays between spacecrafts of the constellation, the delays have a more complicated time dependence and scale instead as $L/c \simeq [] \mathrm{s}$ and $\Omega_{0} L/c \simeq []$.
+
+Since the propagation delays are small compared to the characteristic timescale of the orbital motion $T_{0} = 1\mathrm{yr}$, we will be able to treat $d$ as a perturbation in the equations above~\eqref{}. By doing so, we obtain for the delayed time at first order
+\begin{align}
+	t_{f}^{d} &= t_{f} - d(t_{f}) ( 1 - \dot{d}(t_{f})) + \calO(\Omega_{0}d) \,, \nn\\
+	d(t_{f}^{d}) &= d(t_{f}) ( 1 - \dot{d}(t_{f})) + \calO(\Omega_{0}d) \,.
+\end{align}
+Now, since $\dot{d} \ll 1$, we can consider that the only relevant correction in~\eqref{} comes from the phase factor, where the factor $2\pi f d$ gives an additional magnification by a factor $3.10^{3}$. We thus arrive in this case at the approximate form
+\be
+	\tilde{s}(f) \simeq \tilde{h}(f) F(t_{f})\exp\left[ -2i\pi f d(t_{f}) (1-\dot{d}(t_{f})) \right] \,.
+\ee   
 
 \subsubsection{The case of a LISA-type detector [TO BE UPDATED]}
 \label{subsubsec:sizecorrLISA}

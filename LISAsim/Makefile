@@ -5,19 +5,19 @@ OBJ = LISAFDresponse.o LISAgeometry.o LISAnoise.o GenerateTDITD.o GenerateTDITD 
 
 all: $(OBJ) #LISAexampleSNR
 
-LISAgeometry.o: LISAgeometry.c LISAgeometry.h ../tools/constants.h 
+LISAgeometry.o: LISAgeometry.c LISAgeometry.h ../tools/constants.h
 	$(CC) -c $(CFLAGS) LISAgeometry.c
 
-LISAFDresponse.o: LISAFDresponse.c  LISAFDresponse.h LISAgeometry.h ../tools/constants.h ../tools/struct.h ../tools/waveform.h 
+LISAFDresponse.o: LISAFDresponse.c  LISAFDresponse.h LISAgeometry.h ../tools/constants.h ../tools/struct.h ../tools/waveform.h
 	$(CC) -c $(CFLAGS) LISAFDresponse.c
 
-LISANoise.o: LISANoise.c LISANoise.h ../tools/constants.h ../tools/struct.h 
+LISANoise.o: LISANoise.c LISANoise.h ../tools/constants.h ../tools/struct.h
 	$(CC) -c $(CFLAGS) LISANoise.c
 
-GenerateTDITD.o: LISAgeometry.h ../tools/constants.h ../tools/struct.h ../EOBNRv2HMROM/EOBNRv2HMROM.h ../EOBNRv2HMROM/EOBNRv2HMROMstruct.h ../tools/waveform.h
+GenerateTDITD.o: LISAgeometry.h GenerateTDITD.h GenerateTDITD.c ../tools/constants.h ../tools/struct.h ../EOBNRv2HMROM/EOBNRv2HMROM.h ../EOBNRv2HMROM/EOBNRv2HMROMstruct.h ../tools/waveform.h
 	$(CC) -c $(CFLAGS) GenerateTDITD.c
 
-GenerateTDIFD.o: LISAgeometry.h ../tools/constants.h ../tools/struct.h ../EOBNRv2HMROM/EOBNRv2HMROM.h ../EOBNRv2HMROM/EOBNRv2HMROMstruct.h ../tools/waveform.h ../tools/fft.h
+GenerateTDIFD.o: LISAgeometry.h GenerateTDIFD.h GenerateTDIFD.c ../tools/constants.h ../tools/struct.h ../EOBNRv2HMROM/EOBNRv2HMROM.h ../EOBNRv2HMROM/EOBNRv2HMROMstruct.h ../tools/waveform.h ../tools/fft.h
 	$(CC) -c $(CFLAGS) GenerateTDIFD.c
 
 GenerateTDITD: GenerateTDITD.o LISAgeometry.h LISAgeometry.o ../tools/constants.h ../tools/struct.h ../EOBNRv2HMROM/EOBNRv2HMROM.h ../EOBNRv2HMROM/EOBNRv2HMROMstruct.h ../tools/waveform.h ../tools/struct.o ../EOBNRv2HMROM/EOBNRv2HMROM.o ../EOBNRv2HMROM/EOBNRv2HMROMstruct.o ../tools/waveform.o

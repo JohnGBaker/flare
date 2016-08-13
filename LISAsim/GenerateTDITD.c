@@ -167,11 +167,19 @@ int main(int argc, char *argv[])
   gsl_spline_init(spline_hp, gsl_vector_const_ptr(hptd->times,0), gsl_vector_const_ptr(hptd->h,0), nbtimes);
   gsl_spline_init(spline_hc, gsl_vector_const_ptr(hctd->times,0), gsl_vector_const_ptr(hctd->h,0), nbtimes);
 
+  //
+  //printf("(%g, %g)\n", gsl_vector_get(times, 0), gsl_vector_get(times, 200));
+  //printf("(%g, %g)\n", gsl_vector_get(times, times->size-1), gsl_vector_get(times, times->size-1-200));
+
   /* Evaluate TDI */
   RealTimeSeries* TDI1 = NULL;
   RealTimeSeries* TDI2 = NULL;
   RealTimeSeries* TDI3 = NULL;
-  int nptmargin = 200; /* Here, hardcoded margin that we will set to 0 on both sides, to avoid problems with delays extending past the input values */
+  /* Here, hardcoded margin that we will set to 0 on both sides, to avoid problems with delays extending past the input values */
+  /* We take R/c as the maximum delay that can occur in the response, and adjust the margin accordingly */
+  double maxdelay = R_SI/C_SI;
+  double deltat = gsl_vector_get(times, 1) - gsl_vector_get(times, 0);
+  int nptmargin = 2 * (int)(maxdelay/deltat);
   GenerateTDITD3Chan(&TDI1, &TDI2, &TDI3, spline_hp, spline_hc, accel_hp, accel_hc, times, nptmargin, params->tagtdi);
 
   /* Output */

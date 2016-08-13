@@ -47,6 +47,7 @@ extern "C" {
 /**************** TDI variables **********************/
 
 typedef enum TDItag {
+  y12,
   TDIXYZ,
   TDIalphabetagamma,
   TDIAETXYZ,
@@ -90,7 +91,8 @@ int EvaluateGABmode(
   const double f,                          /* Frequency */
   const double t,                          /* Time */
   const double complex Yfactorplus,        /* Spin-weighted spherical harmonic factor for plus */
-  const double complex Yfactorcross);      /* Spin-weighted spherical harmonic factor for cross */
+  const double complex Yfactorcross,       /* Spin-weighted spherical harmonic factor for cross */
+  int tagdelayR);                          /* Tag: when 1, include the phase term of the R-delay */
 
 /* Functions evaluating the Fourier-domain factors (combinations of the GAB's) for TDI observables */
 /* NOTE: factors have been scaled out, in parallel of what is done for the noise function */

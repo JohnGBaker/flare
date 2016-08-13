@@ -103,7 +103,7 @@ int LISASimFDResponse21(
       gsl_vector_set(amp_imag, j, cimag(camp));
       gsl_vector_set(besselphi, j, bphi);
     }
-    
+
     /* Second step of the processing: constellation delay/modulation */
     /* Initializing spline for the bessel phase */
     gsl_spline* spline_besselphi = gsl_spline_alloc(gsl_interp_cspline, len);
@@ -117,7 +117,7 @@ int LISASimFDResponse21(
       /**/
       gsl_vector_set(amp_real, j, creal(camp));
       gsl_vector_set(amp_imag, j, cimag(camp));
-    } 
+    }
 
     listelement = listelement->next;
 
@@ -188,7 +188,7 @@ int LISASimFDResponsey12(
     gsl_spline* spline_phi = gsl_spline_alloc(gsl_interp_cspline, len);
     gsl_interp_accel* accel_phi = gsl_interp_accel_alloc();
     gsl_spline_init(spline_phi, gsl_vector_const_ptr(freq, 0), gsl_vector_const_ptr(phase, 0), len);
-    
+
     /* Orbital delay, constellation delay/modulation */
     /* Initializing frequency series structure for this mode, for each of the TDI observables */
     CAmpPhaseFrequencySeries *modefreqseries = NULL;
@@ -204,7 +204,7 @@ int LISASimFDResponsey12(
       f = gsl_vector_get(freq, j);
       tf = (gsl_spline_eval_deriv(spline_phi, f, accel_phi))/(2*PI);
       //clock_t tbegGAB = clock();
-      EvaluateGABmode(&g12mode, &g21mode, &g23mode, &g32mode, &g31mode, &g13mode, f, tf, Yfactorplus, Yfactorcross);
+      EvaluateGABmode(&g12mode, &g21mode, &g23mode, &g32mode, &g31mode, &g13mode, f, tf, Yfactorplus, Yfactorcross, 1);
       //clock_t tendGAB = clock();
       //timingcumulativeGABmode += (double) (tendGAB-tbegGAB) /CLOCKS_PER_SEC;
       /**/
@@ -220,7 +220,7 @@ int LISASimFDResponsey12(
     /* Copying the vectors of frequencies and phases */
     gsl_vector_memcpy(freq_y, freq);
     gsl_vector_memcpy(phase_y, phase);
-    
+
     /* Append the modes to the ouput list-of-modes structures */
     *listy12 = ListmodesCAmpPhaseFrequencySeries_AddModeNoCopy(*listy12, modefreqseries, l, m);
 
@@ -296,20 +296,91 @@ int LISASimFDResponseTDI3Chan(
       Yfactorcross = I/2 * (SpinWeightedSphericalHarmonic(inclination, 0., -2, l, m) + conj(SpinWeightedSphericalHarmonic(inclination, 0., -2, l, -m)));
     }
 
-    /* First step of the processing: orbital delay */
+    /* Orbital delay, constellation delay/modulation */
+
     /* Initializing spline for the phase */
     gsl_spline* spline_phi = gsl_spline_alloc(gsl_interp_cspline, len);
     gsl_interp_accel* accel_phi = gsl_interp_accel_alloc();
     gsl_spline_init(spline_phi, gsl_vector_const_ptr(freq, 0), gsl_vector_const_ptr(phase, 0), len);
-    
-    /* Orbital delay, constellation delay/modulation */
+
+    /* Determine frequencies to use */
+    /* Because we will need the interpolation on the Re/Im amplitude to resolve the structure of the L-response at high fequencies, we add points beyond 0.01 Hz, with a linear sampling */
+    /* WARNING : It seemed 600 points between 0.1 and 3 Hz (deltaf=0.005) should give interpolation errors below 1e-4 - considering a simple sin(2 pi f L) */
+    /* But first test with TDIA show the sampling should be reduced 10-fold - possibly large increase in cost */
+    /* We use here deltaf=0.0005 until the cause is better understood */
+    /* NOTE: the structure in the response due to the R-delay gives much larger interpolation errors - here we assume the R-delay term is now treated as a phase */
+    int resampled = 0; /* Keep tracks of wether or not we resampled and allocated new resources we need to free */
+    double maxf = gsl_vector_get(freq, len-1);
+    double deltaflineartarget = 0.0005;
+    int imaxlogsampling = len-1; /* last index to be covered wth original sampling */
+    while((gsl_vector_get(freq, imaxlogsampling)>0.1) && imaxlogsampling>0) imaxlogsampling--;
+    gsl_vector* freq_resample = NULL; /*  */
+    gsl_vector* amp_real_resample = NULL;
+    gsl_vector* amp_imag_resample = NULL;
+    gsl_vector* phase_resample = NULL;
+    int len_resample;
+    /* We keep original logarithmic sampling below 0.1Hz */
+    if((maxf>0.1) && ((maxf - gsl_vector_get(freq, imaxlogsampling))/deltaflineartarget)>len-1-imaxlogsampling ) { /* condition to check if the linear sampling will add points - if not, do nothing */
+      resampled = 1;
+      /* Number of pts in resampled part */
+      int nbfreqlinear = ceil((maxf - gsl_vector_get(freq, imaxlogsampling))/deltaflineartarget);
+      double deltaflinear = (maxf - gsl_vector_get(freq, imaxlogsampling))/(nbfreqlinear + 1);
+      /* Initialize new vectors */
+      len_resample = imaxlogsampling + 1 + nbfreqlinear;
+      freq_resample = gsl_vector_alloc(len_resample);
+      amp_real_resample = gsl_vector_alloc(len_resample);
+      amp_imag_resample = gsl_vector_alloc(len_resample);
+      phase_resample = gsl_vector_alloc(len_resample);
+      /* Build interpolation for original amp_real, amp_imag and phase */
+      /* NOTE: we could use spline_phi here, written this way for clarity */
+      gsl_spline* spline_amp_real = gsl_spline_alloc(gsl_interp_cspline, len);
+      gsl_spline* spline_amp_imag = gsl_spline_alloc(gsl_interp_cspline, len);
+      gsl_spline* spline_phase = gsl_spline_alloc(gsl_interp_cspline, len);
+      gsl_interp_accel* accel_amp_real = gsl_interp_accel_alloc();
+      gsl_interp_accel* accel_amp_imag = gsl_interp_accel_alloc();
+      gsl_interp_accel* accel_phase = gsl_interp_accel_alloc();
+      gsl_spline_init(spline_amp_real, gsl_vector_const_ptr(freq, 0), gsl_vector_const_ptr(amp_real, 0), len);
+      gsl_spline_init(spline_amp_imag, gsl_vector_const_ptr(freq, 0), gsl_vector_const_ptr(amp_imag, 0), len);
+      gsl_spline_init(spline_phase, gsl_vector_const_ptr(freq, 0), gsl_vector_const_ptr(phase, 0), len);
+      /* Set resampled frequencies and values */
+      for(int j=0; j<=imaxlogsampling; j++) {
+        gsl_vector_set(freq_resample, j, gsl_vector_get(freq, j));
+        gsl_vector_set(amp_real_resample, j, gsl_vector_get(amp_real, j));
+        gsl_vector_set(amp_imag_resample, j, gsl_vector_get(amp_imag, j));
+        gsl_vector_set(phase_resample, j, gsl_vector_get(phase, j));
+      }
+      double fimax = gsl_vector_get(freq, imaxlogsampling);
+      for(int j=imaxlogsampling+1; j<len_resample; j++) {
+        f = fimax + (j-imaxlogsampling) * deltaflinear;
+        gsl_vector_set(freq_resample, j, f);
+        gsl_vector_set(amp_real_resample, j, gsl_spline_eval(spline_amp_real, f, accel_amp_real));
+        gsl_vector_set(amp_imag_resample, j, gsl_spline_eval(spline_amp_imag, f, accel_amp_imag));
+        gsl_vector_set(phase_resample, j, gsl_spline_eval(spline_phase, f, accel_phase));
+      }
+      /* Free interpolation functions */
+      gsl_spline_free(spline_amp_real);
+      gsl_spline_free(spline_amp_imag);
+      gsl_spline_free(spline_phase);
+      gsl_interp_accel_free(accel_amp_real);
+      gsl_interp_accel_free(accel_amp_imag);
+      gsl_interp_accel_free(accel_phase);
+    }
+    else { /* If no resampling, use the values we had as input */
+      resampled = 0;
+      len_resample = len;
+      freq_resample = freq;
+      amp_real_resample = amp_real;
+      amp_imag_resample = amp_imag;
+      phase_resample = phase;
+    }
+
     /* Initializing frequency series structure for this mode, for each of the TDI observables */
     CAmpPhaseFrequencySeries *modefreqseries1 = NULL;
     CAmpPhaseFrequencySeries *modefreqseries2 = NULL;
     CAmpPhaseFrequencySeries *modefreqseries3 = NULL;
-    CAmpPhaseFrequencySeries_Init(&modefreqseries1, len);
-    CAmpPhaseFrequencySeries_Init(&modefreqseries2, len);
-    CAmpPhaseFrequencySeries_Init(&modefreqseries3, len);
+    CAmpPhaseFrequencySeries_Init(&modefreqseries1, len_resample);
+    CAmpPhaseFrequencySeries_Init(&modefreqseries2, len_resample);
+    CAmpPhaseFrequencySeries_Init(&modefreqseries3, len_resample);
     gsl_vector* freq1 = modefreqseries1->freq;
     gsl_vector* amp_real1 = modefreqseries1->amp_real;
     gsl_vector* amp_imag1 = modefreqseries1->amp_imag;
@@ -326,19 +397,28 @@ int LISASimFDResponseTDI3Chan(
     /* Loop over the frequencies */
     //clock_t tbegcontesllation = clock();
     //double timingcumulativeGABmode = 0;
-    for(int j=0; j<len; j++) {
-      f = gsl_vector_get(freq, j);
+    //
+    printf("loop\n");
+      //
+      printf("len_resample: %d\n", len_resample);
+    for(int j=0; j<len_resample; j++) {
+
+        //
+        printf("j: %d\n", j);
+      f = gsl_vector_get(freq_resample, j);
       tf = (gsl_spline_eval_deriv(spline_phi, f, accel_phi))/(2*PI);
       //clock_t tbegGAB = clock();
-      EvaluateGABmode(&g12mode, &g21mode, &g23mode, &g32mode, &g31mode, &g13mode, f, tf, Yfactorplus, Yfactorcross);
+      EvaluateGABmode(&g12mode, &g21mode, &g23mode, &g32mode, &g31mode, &g13mode, f, tf, Yfactorplus, Yfactorcross, 0); /* does not include the R-delay term */
       //clock_t tendGAB = clock();
       //timingcumulativeGABmode += (double) (tendGAB-tbegGAB) /CLOCKS_PER_SEC;
       /**/
       EvaluateTDIfactor3Chan(&factor1, &factor2, &factor3, g12mode, g21mode, g23mode, g32mode, g31mode, g13mode, f, tditag);
-      double complex amphtilde = gsl_vector_get(amp_real, j) + I * gsl_vector_get(amp_imag, j);
+      double complex amphtilde = gsl_vector_get(amp_real_resample, j) + I * gsl_vector_get(amp_imag_resample, j);
       camp1 = factor1 * amphtilde;
       camp2 = factor2 * amphtilde;
       camp3 = factor3 * amphtilde;
+      /* Phase term due to the R-delay, including correction to first order */
+      double phaseRdelay = -2*PI*R_SI/C_SI*f*cos(beta)*cos(Omega_SI*tf - lambda) * (1 + R_SI/C_SI*Omega_SI*sin(Omega_SI*tf - lambda));
       /**/
       gsl_vector_set(amp_real1, j, creal(camp1));
       gsl_vector_set(amp_imag1, j, cimag(camp1));
@@ -346,19 +426,19 @@ int LISASimFDResponseTDI3Chan(
       gsl_vector_set(amp_imag2, j, cimag(camp2));
       gsl_vector_set(amp_real3, j, creal(camp3));
       gsl_vector_set(amp_imag3, j, cimag(camp3));
+      gsl_vector_set(phase1, j, gsl_vector_get(phase_resample, j) + phaseRdelay);
+      gsl_vector_set(phase2, j, gsl_vector_get(phase_resample, j) + phaseRdelay);
+      gsl_vector_set(phase3, j, gsl_vector_get(phase_resample, j) + phaseRdelay);
     }
     //clock_t tendcontesllation = clock();
   //printf("Set constellation time: %g s\n", (double)(tendcontesllation - tbegcontesllation) / CLOCKS_PER_SEC);
   //printf("GAB cumulated time: %g s\n", timingcumulativeGABmode);
 
-    /* Copying the vectors of frequencies and phases */
-    gsl_vector_memcpy(freq1, freq);
-    gsl_vector_memcpy(freq2, freq);
-    gsl_vector_memcpy(freq3, freq);
-    gsl_vector_memcpy(phase1, phase);
-    gsl_vector_memcpy(phase2, phase);
-    gsl_vector_memcpy(phase3, phase);
-    
+    /* Copying the vectors of frequencies */
+    gsl_vector_memcpy(freq1, freq_resample);
+    gsl_vector_memcpy(freq2, freq_resample);
+    gsl_vector_memcpy(freq3, freq_resample);
+
     /* Append the modes to the ouput list-of-modes structures */
     *listTDI1 = ListmodesCAmpPhaseFrequencySeries_AddModeNoCopy(*listTDI1, modefreqseries1, l, m);
     *listTDI2 = ListmodesCAmpPhaseFrequencySeries_AddModeNoCopy(*listTDI2, modefreqseries2, l, m);
@@ -370,6 +450,13 @@ int LISASimFDResponseTDI3Chan(
     /* Clean up */
     gsl_spline_free(spline_phi);
     gsl_interp_accel_free(accel_phi);
+    /* If we used resampling, then we need to free the additional resources that were allocated */
+    if(resampled) {
+      gsl_vector_free(freq_resample);
+      gsl_vector_free(amp_real_resample);
+      gsl_vector_free(amp_imag_resample);
+      gsl_vector_free(phase_resample);
+    }
   }
 
   return SUCCESS;

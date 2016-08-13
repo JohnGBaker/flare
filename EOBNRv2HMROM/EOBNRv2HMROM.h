@@ -4,7 +4,7 @@
  * \brief C header for EOBNRv2HM reduced order model (non-spinning version).
  * See CQG 31 195010, 2014, arXiv:1402.4146 for details on the reduced order method.
  * See arXiv:1106.1021 for the EOBNRv2HM model.
- *  
+ *
  * Borrows from the SEOBNR ROM LAL code written by Michael Puerrer and John Veitch.
  *
  * Put the untared data in the directory designated by the environment variable ROM_DATA_PATH.
@@ -107,9 +107,21 @@ int EOBNRv2HMROMCore(
   double distance);
 
 int SimEOBNRv2HMROM(
-  struct tagListmodesCAmpPhaseFrequencySeries **listhlm,  /* Output: list of modes in Frequency-domain amplitude and phase form */
+  ListmodesCAmpPhaseFrequencySeries **listhlm,  /* Output: list of modes in Frequency-domain amplitude and phase form */
   int nbmode,                                    /* Number of modes to generate (starting with the 22) */
   double tRef,                                   /* Time shift with respect to the 22-fit removed waveform (s) */
+  double phiRef,                                 /* Phase at reference frequency */
+  double fRef,                                   /* Reference frequency (Hz); 0 defaults to fLow */
+  double m1SI,                                   /* Mass of companion 1 (kg) */
+  double m2SI,                                   /* Mass of companion 2 (kg) */
+  double distance);                              /* Distance of source (m) */
+
+int SimEOBNRv2HMROMExtTF2(
+  ListmodesCAmpPhaseFrequencySeries **listhlm,   /* Output: list of modes in Frequency-domain amplitude and phase form */
+  int nbmode,                                    /* Number of modes to generate (starting with the 22) */
+  double Mf_match,                               /* Minimum frequency using EOBNRv2HMROM in inverse total mass units*/
+  double minf,                                   /* Minimum frequency required */
+  double deltatRef,                              /* Time shift so that the peak of the 22 mode occurs at deltatRef */
   double phiRef,                                 /* Phase at reference frequency */
   double fRef,                                   /* Reference frequency (Hz); 0 defaults to fLow */
   double m1SI,                                   /* Mass of companion 1 (kg) */

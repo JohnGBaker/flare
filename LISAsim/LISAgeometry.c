@@ -93,7 +93,8 @@ static double sinarray[4];
 /* Function to convert string input TDI string to TDItag */
 TDItag ParseTDItag(char* string) {
   TDItag tag;
-  if(strcmp(string, "TDIXYZ")==0) tag = TDIXYZ;
+  if(strcmp(string, "y12")==0) tag = y12;
+  else if(strcmp(string, "TDIXYZ")==0) tag = TDIXYZ;
   else if(strcmp(string, "TDIalphabetagamma")==0) tag = TDIalphabetagamma;
   else if(strcmp(string, "TDIAETXYZ")==0) tag = TDIAETXYZ;
   else if(strcmp(string, "TDIAETalphabetagamma")==0) tag = TDIAETalphabetagamma;
@@ -517,7 +518,8 @@ int EvaluateGABmode(
   const double f,                          /* Frequency */
   const double t,                          /* Time */
   const double complex Yfactorplus,        /* Spin-weighted spherical harmonic factor for plus */
-  const double complex Yfactorcross)       /* Spin-weighted spherical harmonic factor for cross */
+  const double complex Yfactorcross,       /* Spin-weighted spherical harmonic factor for cross */
+  int tagdelayR)                           /* Tag: when 1, include the phase term of the R-delay */
 {
   /* Precompute array of sine/cosine */
   for(int j=0; j<4; j++) {
@@ -565,7 +567,10 @@ int EvaluateGABmode(
   double complex factorcexp12 = cexp(I*prefactor * (1.+kp1plusp2));
   double complex factorcexp23 = cexp(I*prefactor * (1.+kp2plusp3));
   double complex factorcexp31 = cexp(I*prefactor * (1.+kp3plusp1));
-  double complex factorcexpkR = cexp(I*prefactorR * kR);
+  /* The tag tagdelayR aloows choose to include or not the R-delay phase term (here leading order) */
+  double complex factorcexpkR;
+  if(tagdelayR) factorcexpkR = cexp(I*prefactorR * kR);
+  else factorcexpkR = 1.;
   /* Output result */
   *G12 = I*prefactor * factorcexpkR * factn3Pn3 * sinc( prefactor * (1.-kn3)) * factorcexp12;
   *G21 = I*prefactor * factorcexpkR * factn3Pn3 * sinc( prefactor * (1.+kn3)) * factorcexp12;
@@ -601,6 +606,13 @@ int EvaluateTDIfactor3Chan(
   double complex z = cexp(2*I*x);
   double sin2x = sin(2*x);
   switch(tditag) {
+    /* For testing purposes: basic yAB observable */
+    /* With x=pifL, factors scaled out: A,E I*sqrt2*sin2x*e2ix - T 2*sqrt2*sin2x*sinx*e3ix */
+  case y12:
+    *factor1 = G12;
+    *factor2 = 0.;
+    *factor3 = 0.;
+    break;
     /* First-generation rescaled TDI aet from X,Y,Z */
     /* With x=pifL, factors scaled out: A,E I*sqrt2*sin2x*e2ix - T 2*sqrt2*sin2x*sinx*e3ix */
   case TDIAETXYZ:
@@ -1194,7 +1206,16 @@ int GenerateTDITD3Chan(
   /* printf("%g | %g | %g \n", tdi1val, tdi2val, tdi3val); */
   /* exit(0); */
 
-  if(tditag==TDIXYZ) {
+  /* For testing purposes: basic observable yAB */
+  if(tditag==y12) {
+    for(int i=nbptmargin; i<nbpt-nbptmargin; i++) {
+      t = tval[i];
+      tdi1[i] = y12TD(splinehp, splinehc, accelhp, accelhc, t);
+      tdi2[i] = 0.;
+      tdi3[i] = 0.;
+    }
+  }
+  else if(tditag==TDIXYZ) {
     for(int i=nbptmargin; i<nbpt-nbptmargin; i++) {
       t = tval[i];
       EvaluateTDIXYZTD(&tdi1val, &tdi2val, &tdi3val, splinehp, splinehc, accelhp, accelhc, t);

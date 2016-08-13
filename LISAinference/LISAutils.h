@@ -47,7 +47,8 @@ typedef struct tagLISAGlobalParams {
   double fRef;               /* reference frequency (Hz, default 0 which is interpreted as Mf=0.14) */
   double deltatobs;          /* max duration of observation (years, default 2) - the start of the signals might be cut in time instead of cut in frequency */
   double minf;               /* Minimal frequency (Hz) - when set to 0 (default), use the first frequency covered by the noise data of the detector */
-  double mfmatch;            /* Minimum matching frequency (1/mtot); if less than ROM model supports then will extrapolate ROM, if <=0, then no extension. */
+  int tagextpn;              /* Tag to allow PN extension of the waveform at low frequencies */
+  double Mfmatch;            /* When PN extension allowed, geometric matching frequency: will use ROM above this value. If <=0, use ROM down to the lowest covered frequency */
   int nbmodeinj;             /* number of modes to include in the injection (starting with 22) - defaults to 5 (all modes) */
   int nbmodetemp;            /* number of modes to include in the templates (starting with 22) - defaults to 5 (all modes) */
   int tagint;                /* Tag choosing the integrator: 0 for wip (default), 1 for linear integration */
@@ -169,6 +170,9 @@ int print_rescaleddist_to_file_LISA(
   LISAGlobalParams* globalparams,
   LISAPrior* prior,
   LISARunParams* run);
+/* Function printing injection/signal parameters to stdout */
+void report_LISAParams(
+  LISAParams* params);
 
 /* Initialization and clean-up for LISASignal structures */
 void LISASignalCAmpPhase_Cleanup(LISASignalCAmpPhase* signal);
@@ -224,10 +228,10 @@ void TaylorF2nonspin(
 		const int size,                         /** number of freq samples */
 		const double m1_SI,                     /**< mass of companion 1 (kg) */
 		const double m2_SI,                     /**< mass of companion 2 (kg) */
-		const double distance,                  /** distance (m) */   
-		const double imatch                     /**< index at which to match phase; 
+		const double distance,                  /** distance (m) */
+		const double imatch                     /**< index at which to match phase;
 							   assumes arrays are preloaded at imatch and imatch+1
-							   with the required result */ 
+							   with the required result */
 		     );
 
 /* checks prior boundaires */

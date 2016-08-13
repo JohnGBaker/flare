@@ -11,7 +11,7 @@ EOBNRv2HMROMstruct.o: EOBNRv2HMROMstruct.c ../tools/constants.h ../tools/struct.
 EOBNRv2HMROM.o: EOBNRv2HMROM.c ../tools/constants.h ../tools/struct.h EOBNRv2HMROM.h EOBNRv2HMROMstruct.h
 	$(CC) -c $(CFLAGS) EOBNRv2HMROM.c
 
-GenerateWaveform.o: EOBNRv2HMROM.h EOBNRv2HMROMstruct.h ../tools/constants.h ../tools/struct.h ../tools/waveform.h ../tools/fft.h
+GenerateWaveform.o: EOBNRv2HMROM.h EOBNRv2HMROMstruct.h GenerateWaveform.h GenerateWaveform.c ../tools/constants.h ../tools/struct.h ../tools/waveform.h ../tools/fft.h
 	$(CC) -c $(CFLAGS) GenerateWaveform.c
 
 GenerateWaveform: GenerateWaveform.o EOBNRv2HMROM.h EOBNRv2HMROMstruct.h ../tools/constants.h ../tools/struct.h ../tools/waveform.h ../tools/fft.h EOBNRv2HMROM.o EOBNRv2HMROMstruct.o ../tools/struct.o ../tools/waveform.o ../tools/fft.o

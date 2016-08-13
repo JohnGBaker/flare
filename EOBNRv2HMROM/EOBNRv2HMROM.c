@@ -4,7 +4,7 @@
  * \brief C code for EOBNRv2HM reduced order model (non-spinning version).
  * See CQG 31 195010, 2014, arXiv:1402.4146 for details on the reduced order method.
  * See arXiv:1106.1021 for the EOBNRv2HM model.
- *  
+ *
  * Borrows from the SEOBNR ROM LAL code written by Michael Puerrer and John Veitch.
  *
  * Put the untared data in the directory designated by the environment variable ROM_DATA_PATH.
@@ -55,11 +55,11 @@
 /* nbmodemax = 5 has been defined in the header */
 const int listmode[nbmodemax][2] = { {2,2}, {2,1}, {3,3}, {4,4}, {5,5} };
 
-/* Maximal mass ratio covered by the model - q=12 (almost) for now */ 
+/* Maximal mass ratio covered by the model - q=12 (almost) for now */
 static const double q_max = 11.9894197212;
-/* Minimal geometric frequency covered by the model - f=8Hz for M=10Msol for now */ 
+/* Minimal geometric frequency covered by the model - f=8Hz for M=10Msol for now */
 static const double Mf_ROM_min = 0.0003940393857519091;
-/* Maximal geometric frequency covered by the model - Mf=0.285 for the 55 mode - used as default */ 
+/* Maximal geometric frequency covered by the model - Mf=0.285 for the 55 mode - used as default */
 static const double Mf_ROM_max = 0.285;
 /* Total mass (in units of solar mass) used to generate the ROM - used to restore the correct amplitude (global factor M) when coming back to physical units */
 static const double M_ROM = 10.;
@@ -196,7 +196,7 @@ void EOBNRHMROMdata_interp_Cleanup(EOBNRHMROMdata_interp *data_interp) {
   free(data_interp);
 }
 
-/* Read binary ROM data for frequency vectors, coefficients matrices, basis functions matrices, and shiftvectors in time and phase */ 
+/* Read binary ROM data for frequency vectors, coefficients matrices, basis functions matrices, and shiftvectors in time and phase */
 int Read_Data_Mode(const char dir[], const int mode[2], EOBNRHMROMdata *data) {
   /* Load binary data for amplitude and phase spline coefficients as computed in Mathematica */
   int ret = SUCCESS;
@@ -209,7 +209,7 @@ int Read_Data_Mode(const char dir[], const int mode[2], EOBNRHMROMdata *data) {
   char* file_shifttime = malloc(strlen(dir)+64);
   char* file_shiftphase = malloc(strlen(dir)+64);
   sprintf(file_q, "%s", "EOBNRv2HMROM_q.dat"); /* The q vector is the same for all modes */
-  sprintf(file_freq, "%s%d%d%s", "EOBNRv2HMROM_freq_", mode[0], mode[1], ".dat"); 
+  sprintf(file_freq, "%s%d%d%s", "EOBNRv2HMROM_freq_", mode[0], mode[1], ".dat");
   sprintf(file_Camp, "%s%d%d%s", "EOBNRv2HMROM_Camp_", mode[0], mode[1], ".dat");
   sprintf(file_Cphi, "%s%d%d%s", "EOBNRv2HMROM_Cphi_", mode[0], mode[1], ".dat");
   sprintf(file_Bamp, "%s%d%d%s", "EOBNRv2HMROM_Bamp_", mode[0], mode[1], ".dat");
@@ -397,7 +397,7 @@ int EOBNRv2HMROMCore(
 
   /* The phase change imposed by phiref, from the phase of the first mode in the list - to be set in the first step of the loop on the modes */
   double phase_change_ref = 0;
-  
+
   /* Main loop over the modes */
   for(int i=0; i<nbmode; i++ ){
     int l = listmode[i][0];
@@ -420,7 +420,7 @@ int EOBNRv2HMROMCore(
     gsl_blas_dgemv(CblasNoTrans, 1.0, listdata_mode->data->Bamp, data_coeff->Camp_coeff, 0.0, amp_f);
     gsl_blas_dgemv(CblasNoTrans, 1.0, listdata_mode->data->Bphi, data_coeff->Cphi_coeff, 0.0, phi_f);
     //clock_t endblas = clock();
-    //printf("Mode (%d,%d) Blas time: %g s\n", l, m, (double)(endblas - begblas) / CLOCKS_PER_SEC);   
+    //printf("Mode (%d,%d) Blas time: %g s\n", l, m, (double)(endblas - begblas) / CLOCKS_PER_SEC);
 
      /* The downsampled frequencies for the mode - we undo the rescaling of the frequency for the 44 and 55 modes */
     gsl_vector* freq_ds = gsl_vector_alloc(nbfreq);
@@ -541,7 +541,7 @@ int SimEOBNRv2HMROM(
   EOBNRv2HMROM_Init_DATA();
   //clock_t end = clock();
   //printf("Initialization time: %g s\n", (double)(end - beg) / CLOCKS_PER_SEC);
-  
+
   //beg = clock();
   int retcode = EOBNRv2HMROMCore(listhlm, nbmode, deltatRef, phiRef, fRef, Mtot_sec, q, distance);
   //end = clock();
@@ -565,7 +565,7 @@ int EOBNRv2HMROM_Init_DATA(void) {
   }
   strncpy(path,envpath,sizeof(path));
 
-#pragma omp critical      
+#pragma omp critical
   {
     for(word=strtok_r(path,":",&brkt); word; word=strtok_r(NULL,":",&brkt))
       {
@@ -613,4 +613,298 @@ int EOBNRv2HMROM_Init(const char dir[]) {
     *__EOBNRv2HMROM_interp = listdata_interp;
   }
   return(ret);
+}
+
+/* Non-spinning merger TaylorF2 waveform, copied and condensed from LAL */
+/* Used by SimEOBNRv2HMROMExtTF2 to extend the signal to arbitrarily low frequencies */
+static void TaylorF2nonspin(
+		double *amp,                            /**< FD waveform amplitude (modulus)*/
+		double *phase,                          /**< FD waveform phase */
+		const double *freqs,                    /**< frequency points at which to evaluate the waveform (Hz) */
+		const int size,                         /** number of freq samples */
+		const double m1_SI,                     /**< mass of companion 1 (kg) */
+		const double m2_SI,                     /**< mass of companion 2 (kg) */
+		const double distance,                  /** distance (m) */
+		const double imatch                     /**< index at which to match phase;
+							   assumes arrays are preloaded at imatch and imatch+1
+							   with the required result */
+		     )
+{
+  //The meat of this computation is copied from LAL: XLALSimInspiralPNPhasing_F2
+  //We dont need the spin terms
+  double m1 = m1_SI / MSUN_SI;
+  double m2 = m2_SI / MSUN_SI;
+  double mtot = m1 + m2;
+  double d = (m1 - m2) / (m1 + m2);
+  double eta = m1*m2/mtot/mtot;
+  double m1M = m1/mtot;
+  double m2M = m2/mtot;
+  double m_sec = mtot * MTSUN_SI;
+  double piM = PI * m_sec;
+
+  double pfaN = 3.L/(128.L * eta);
+
+  /* Non-spin phasing terms - see arXiv:0907.0700, Eq. 3.18 */
+  double pfav0 = 1.L;
+  double pfav2 = 5.L*(743.L/84.L + 11.L * eta)/9.L;
+  double pfav3 = -16.L*PI;
+  double pfav4 = 5.L*(3058.673L/7.056L + 5429.L/7.L * eta
+		+ 617.L * eta*eta)/72.L;
+  double pfav5 = 5.L/9.L * (7729.L/84.L - 13.L * eta) * PI;
+  double pfalogv5 = 5.L/3.L * (7729.L/84.L - 13.L * eta) * PI;
+  double pfav6 = (11583.231236531L/4.694215680L
+	    - 640.L/3.L * PI * PI - 6848.L/21.L*GAMMA)
+    + eta * (-15737.765635L/3.048192L
+	     + 2255./12. * PI * PI)
+    + eta*eta * 76055.L/1728.L
+    - eta*eta*eta * 127825.L/1296.L;
+  pfav6 += (-6848.L/21.L)*log(4.);
+  double pfalogv6 = -6848.L/21.L;
+  double pfav7 = PI * ( 77096675.L/254016.L
+		      + 378515.L/1512.L * eta - 74045.L/756.L * eta*eta);
+
+  /* Non-spin 2-2 amplitude terms (Blanchet LRR)*/
+  double a2 = ( -107 + 55*eta ) / 42.;
+  double a3 = 2*PI;
+  double a4 = ( ( 2047.*eta - 7483. ) * eta - 2173. ) / 1512.;
+  /* Blanchet has more terms, but there should diminishing returns:
+     expect v^5 ~ 1e-5 and the higher terms are more complicated and, indeed, complex */
+
+
+  //Lead coefficients
+  //double amp0 = -4. * m1 * m2 / distance * C_SI * MTSUN_SI * MTSUN_SI * sqrt(PI/12.L); //(from LAL)
+  double amp0B = 2. * m1 * m2 / distance * C_SI * MTSUN_SI * MTSUN_SI * sqrt(16*PI/5.L); //Based on Blanchet-LRR (327)
+  //Note: amp0B = -4 * sqrt( 3/5) * amp0;
+  double FTaN =  32.0 * eta*eta / 5.0;
+  //printf("eta=%g\n",eta);
+  //Compute raw TaylorF2
+  int i;
+  for (i = 0; i < size; i++) {
+    double f = freqs[i];
+    double v = cbrt(piM*f);
+    double logv = log(v);
+    double v2 = v*v;
+    double v5 = v2*v2*v;
+    double v10 = v5*v5;
+
+    //printf("taylorf2: f=%g  v=%g\n",f,v);
+    double phasing=0;
+    phasing = pfav7 * v;
+    phasing = (phasing + pfav6 + pfalogv6 * logv) * v;
+    phasing = (phasing + pfav5 + pfalogv5 * logv) * v;
+    phasing = (phasing + pfav4) * v;
+    phasing = (phasing + pfav3) * v;
+    phasing = (phasing + pfav2) * v2;
+    phasing += 1;
+    phasing *=pfaN;
+
+    double amp22fac;
+    amp22fac = a4*v;
+    amp22fac = ( amp22fac + a3 ) * v;
+    amp22fac = ( amp22fac + a2 ) * v2;
+    amp22fac += 1.0;
+
+    phasing /= v5;
+    double flux = FTaN * v10;
+    double dEnergy = -eta * v;
+    phase[i]=phasing;
+    //Notes for amplitude: Blanchet at leading order:
+    /* mf=x^(3/2); fdot=3/2/m x^(1/2) xdot ~ 3/2/m x^(1/2) * (-1/16)*(4x)^5(-eta/5/m) = 96/5*eta/m^2 * x^(11/2) */
+    /*-flux/dEnergy = 32.0 * eta*eta / 5.0 / eta *v^9 */
+    /*--> -flux/dEnergy =  fdot / (3*v^2) [using x=v^2]*/
+    //amp[i] = amp0 * sqrt(-dEnergy/flux) * v;  (Based on LAL)
+    amp[i] = amp0B * amp22fac * v2 / sqrt(-flux/dEnergy * 3 * v2 );
+    //printf("v=%g: a=%g ph=%g;  amp22fac=%g sqrt(v^-9)=%g\n",v,amp[i],phase[i],amp22fac,sqrt(v/v10));
+    //Note ampB = - amp * 4*sqrt(3/5) * / sqrt(3) + higher-order = -4/sqrt(5)*( 1 + higher-order )
+    //  ...possibly related to sph-harm normalization
+    // HACK: Strangely it seems that an additional factor of 4/sqrt(5) is just right to nearly match the EOB wf FT
+    amp[i] *= 4/sqrt(5);   //HACK
+
+    //Here we depart from LAL, referencing phase and time-shift to two neighboring freq points
+    //First we match the freq derivative
+  }
+}
+
+/*Wrapper for waveform generation with possibly a combination of EOBNRv2HMROM and TaylorF2*/
+/* Note: GenerateWaveform accepts masses and distances in SI units, whereas LISA params is in solar masses and Mpc */
+/* Note: the extended waveform will now a different number of frequency points for each mode */
+int SimEOBNRv2HMROMExtTF2(
+  ListmodesCAmpPhaseFrequencySeries **listhlm,   /* Output: list of modes in Frequency-domain amplitude and phase form */
+  int nbmode,                                    /* Number of modes to generate (starting with the 22) */
+  double Mf_match,                               /* Minimum frequency using EOBNRv2HMROM in inverse total mass units*/
+  double minf,                                   /* Minimum frequency required */
+  double deltatRef,                              /* Time shift so that the peak of the 22 mode occurs at deltatRef */
+  double phiRef,                                 /* Phase at reference frequency */
+  double fRef,                                   /* Reference frequency (Hz); 0 defaults to fLow */
+  double m1SI,                                   /* Mass of companion 1 (kg) */
+  double m2SI,                                   /* Mass of companion 2 (kg) */
+  double distance)                               /* Distance of source (m) */
+{
+  int ret,i;
+  ListmodesCAmpPhaseFrequencySeries* listROM = NULL;
+
+  /* Generate the waveform with the ROM */
+  ret = SimEOBNRv2HMROM(&listROM, nbmode, deltatRef, phiRef, fRef, m1SI, m2SI, distance);
+
+  /* If the ROM waveform generation failed (e.g. parameters were out of bounds) return FAILURE */
+  if(ret==FAILURE) return FAILURE;
+
+  /* Main loop over the modes (as linked list) to perform the extension */
+  /* The 2-2 mode will be extended by TaylorF2 model with the phase and time offset
+     determined by matching conditions. All other modes will be extended as some
+     sort of power-law fall-off in amplitude and power-law growth in phase.          */
+  ListmodesCAmpPhaseFrequencySeries* listelement = listROM;
+  while(listelement) {    // For each l-m (ie each listelement)
+
+
+    /* Definitions: l,m, frequency series and length */
+    int l = listelement->l;
+    int m = listelement->m;
+    /* First we must compute a new frequency grid including a possible extension to lower frequencies*/
+    gsl_vector *freq_new;
+    gsl_vector* freq = listelement->freqseries->freq;
+    int len = (int) freq->size;
+    // Construct frequency grid extension on the geometric mean of the lowest few ROM frequencies after the matching point
+    const int Navg=3;
+    int imatch=-1;
+    double f_match;
+    if(Mf_match<=0) {
+      f_match = Mf_ROM_min/(m1SI+m2SI)*MSUN_SI/MTSUN_SI;
+    }
+    else if(Mf_match>Mf_ROM_min) {
+      f_match = Mf_match/(m1SI+m2SI)*MSUN_SI/MTSUN_SI;
+    }
+    else {
+      printf("WARNING: Mf_match lower than the lowest geometric frequency of the ROM model - used instead\n");
+      f_match = Mf_ROM_min/(m1SI+m2SI)*MSUN_SI/MTSUN_SI;
+    }
+    f_match = f_match*m/2; //Shift the matching frequency for non-22 modes to correspond to a comparable orbital freq.
+    //printf("f_match=%g\n",f_match);
+    for(i=0;i<len-Navg;i++){
+      if(gsl_vector_get(freq,i)>f_match){
+	imatch=i;
+	break;
+      }
+    }
+    if(imatch<0){
+      printf("WARNING: f_match exceeds high-freq range of the ROM model\n");
+      imatch=len-Navg-1;
+    }
+    double lnfmatch=log(gsl_vector_get(freq,imatch));
+    double lnfmin=log(minf);
+    double dlnf=(log(gsl_vector_get(freq,imatch+Navg))-lnfmatch)/Navg;
+    double dffac=exp(dlnf);
+    //The new grid will include the old grid, from imatch and after, plus adequate lower-freq
+    int len_add = (lnfmatch-lnfmin)/dlnf;
+    if(len_add<0) len_add=0;
+    int len_new = len - imatch + len_add;
+    //printf("extending waveform: len_add + len - imatch = len_new: %i + %i - %i = %i\n",len_add,len,imatch,len_new);
+    /* construct the extended freq grid */
+    freq_new=gsl_vector_alloc(len_new);
+    for(i=len_add;i<len_new;i++)gsl_vector_set(freq_new,i,gsl_vector_get(freq,len-len_new+i));
+    for(i=len_add;i>0;i--)gsl_vector_set(freq_new,i-1,gsl_vector_get(freq_new,i)/dffac);
+    //for(i=0;i<len_new;i++)printf("%i: %g %g\n",i,(i>=len_new-len?freq->data[i-len_new+len]:0),freq_new->data[i]);
+
+
+    //copy the old freqseries data to a new one and extend with power-law
+    CAmpPhaseFrequencySeries* freqseries = listelement->freqseries;
+    CAmpPhaseFrequencySeries* freqseries_new=0;     //New result will be assembled here
+    CAmpPhaseFrequencySeries_Init(&freqseries_new,len_new);
+    //set the new freqs
+    for(i=0;i<len_new;i++){
+      gsl_vector_set(freqseries_new->freq,i,gsl_vector_get(freq_new,i));
+    }
+    //copy in the high-freq ROM-model data
+    //printf("l,m = %i,%i;  lenghts=%i,%i\n",l,m,freqseries->freq->size, freqseries_new->freq->size);
+    for(i=len_add;i<len_new;i++){
+      //printf("i, len-len_new+i: %i, %i\n",i,len-len_new+i);
+      gsl_vector_set(freqseries_new->amp_real,i,gsl_vector_get(freqseries->amp_real,len-len_new+i));
+      gsl_vector_set(freqseries_new->amp_imag,i,gsl_vector_get(freqseries->amp_imag,len-len_new+i));
+      gsl_vector_set(freqseries_new->phase,i,gsl_vector_get(freqseries->phase,len-len_new+i));
+      //printf("%i: copying %g  %g  %g  %g\n",i,freqseries_new->freq->data[i],freqseries_new->amp_real->data[i],freqseries_new->amp_imag->data[i],freqseries_new->phase->data[i]);
+    }
+    //extend
+    if(l==2&&m==2&&len_add>0){//extend 2-2 with TaylorF2
+      //Assemble data for matching
+      double f0=freq_new->data[len_add],f1=freq_new->data[len_add+1];
+      double ph0=freqseries_new->phase->data[len_add],ph1=freqseries_new->phase->data[len_add+1];
+      double amp=sqrt(freqseries_new->amp_real->data[len_add]*freqseries_new->amp_real->data[len_add]
+		      +freqseries_new->amp_imag->data[len_add]*freqseries_new->amp_imag->data[len_add]);
+      double amp1=sqrt(freqseries_new->amp_real->data[len_add+1]*freqseries_new->amp_real->data[len_add+1]
+		      +freqseries_new->amp_imag->data[len_add+1]*freqseries_new->amp_imag->data[len_add+1]);
+      double amprfac=freqseries_new->amp_real->data[len_add]/amp,ampifac=freqseries_new->amp_imag->data[len_add]/amp;
+      //Compute raw TaylorF2
+      TaylorF2nonspin(freqseries_new->amp_real->data,freqseries_new->phase->data,freq_new->data,len_add+2,m1SI,m2SI,distance,imatch);
+      //Compute offsets in phase, first phase derivative, and amplitude argument
+      double dphase0tf2=(freqseries_new->phase->data[len_add+1]-freqseries_new->phase->data[len_add])/(f1-f0);
+      double phase0tf2=freqseries_new->phase->data[len_add];
+      double dphase0eob=(ph1-ph0)/(f1-f0);
+      double dphase0=dphase0eob-dphase0tf2;
+      double phase0=ph0 - phase0tf2 - f0*dphase0;
+      double amp0bcoeff = amp / freqseries_new->amp_real->data[len_add] - 1.0; //Compute correction for continuity matching.
+      double amp0ccoeff = ((amp1/freqseries_new->amp_real->data[len_add+1]-1.0)/amp0bcoeff/(f1*f1/f0/f0)-1.0)/(f1/f0-1.0); //Compute correction for continuity matching.
+      /*
+      printf("ph0eob,dph0eob= %g,  %g\n",ph0,dphase0eob);
+      printf("ph0tf2,dph0tf2= %g,  %g\n",phase0tf2,dphase0tf2);
+      printf("ph0,dph0= %g,  %g\n",phase0,dphase0);
+      printf("f0,f0*dph0= %g,  %g\n",f0,dphase0*f0);
+      printf("imatch=%i\n",imatch);
+      */
+      //Apply offsets
+      for (i = 0; i < len_add+2; i++){
+	double f=freqseries_new->freq->data[i];
+	//printf("%i<%i,%g\n",i,len_add,len_add-i);
+	//printf("f,ph0+f*dph0= %g, %g\n",freqseries_new->freq->data[i],phase0 + dphase0*f);
+	freqseries_new->phase->data[i] += phase0 + dphase0*f;
+	//First apply continuity matching
+	// amp -> amp * ( 1 + b*f^2/f0^2 * ( 1 + c*(f/f0 -1) )
+	//(starts at order f^2 since we only keep 2PN order ampl corrections in TaylorF2 code below; could change to f^3 if higher order terms are used)
+	freqseries_new->amp_real->data[i] *= 1.0 + amp0bcoeff*f*f/f0/f0*(1+amp0ccoeff*(f/f0-1));
+	freqseries_new->amp_imag->data[i] = freqseries_new->amp_real->data[i]*ampifac;
+	freqseries_new->amp_real->data[i] *= amprfac;
+	//printf("%i: extending TF2 %g  %g  %g  %g\n",i,freqseries_new->freq->data[i],freqseries_new->amp_real->data[i],freqseries_new->amp_imag->data[i],freqseries_new->phase->data[i]);
+      }
+    } else { //extend other modes with power-law
+      //The results are many cycles out of phase almost immediately, so this definitely is not an accurate
+      //waveform, but the results are reasonably smooth and of plausible structure.
+      //Alternatively, we could also extend these with TaylorF2, btu we are mostly assuming this part of the WF is small
+      double phmax=freqseries->phase->data[len-1];//For phase we extend by a power-law referenced to zero phase at end of ROM
+      double dArfac = exp(-log( gsl_vector_get(freqseries->amp_real,imatch+Navg)
+				     /gsl_vector_get(freqseries->amp_real,imatch) ) / Navg);
+      //double dAifac = exp(-log( gsl_vector_get(freqseries->amp_imag,imatch+Navg)
+      //				/gsl_vector_get(freqseries->amp_imag,imatch+Navg) ) / Navg);
+      double dAifac=dArfac;
+      double dphfac = exp(-log( (gsl_vector_get(freqseries->phase,imatch+Navg)-phmax)
+				/(gsl_vector_get(freqseries->phase,imatch) -phmax)) / Navg);
+      for(i=len_add;i>0;i--){
+	gsl_vector_set(freqseries_new->amp_real,i-1,gsl_vector_get(freqseries_new->amp_real,i)*dArfac);
+	gsl_vector_set(freqseries_new->amp_imag,i-1,gsl_vector_get(freqseries_new->amp_imag,i)*dAifac);
+	gsl_vector_set(freqseries_new->phase,i-1,(gsl_vector_get(freqseries_new->phase,i)-phmax)*dphfac+phmax);
+	//printf("%i: extending %g  %g  %g  %g\n",i,freqseries_new->freq->data[i-1],freqseries_new->amp_real->data[i-1],freqseries_new->amp_imag->data[i-1],freqseries_new->phase->data[i-1]);
+      }
+    }
+    /*
+    for(i=0;i<len_new;i++){
+      printf("%i %i: %g  %g : %g  %g : %g  %g :  %g  %g \n",i-len_new+len,i,
+	     (i>=len_new-len?freqseries->freq->data[i-len_new+len]:0),freqseries_new->freq->data[i],
+	     (i>=len_new-len?freqseries->amp_real->data[i-len_new+len]:0),freqseries_new->amp_real->data[i],
+	     (i>=len_new-len?freqseries->amp_imag->data[i-len_new+len]:0),freqseries_new->amp_imag->data[i],
+	     (i>=len_new-len?freqseries->phase->data[i-len_new+len]:0),freqseries_new->phase->data[i]);
+	     }*/
+    //delete the old content data and replace with the new
+    CAmpPhaseFrequencySeries_Cleanup(freqseries);
+    listelement->freqseries=freqseries_new;
+    listelement=listelement->next;
+    gsl_vector_free(freq_new);
+  }
+  *listhlm=listROM;
+  /*
+  printf("generated listROM: n=%i l=%i m=%i\n",(*listhlm)->freqseries->amp_real->size,listROM->l,listROM->m);
+  for(i=0;i<(*listhlm)->freqseries->freq->size;i++){
+    printf("%i:  %g  %g  %g  %g\n",i,(*listhlm)->freqseries->freq->data[i],(*listhlm)->freqseries->amp_real->data[i],(*listhlm)->freqseries->amp_imag->data[i],(*listhlm)->freqseries->phase->data[i]);
+  }
+  printf("listlhm=%x\n",listhlm);
+  printf("*listlhm=%x\n",*listhlm);
+  */
+  return SUCCESS;
 }

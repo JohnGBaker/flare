@@ -62,6 +62,9 @@ typedef struct tagGenTDIFDparams {
 
   int nbmode;                /* number of modes to generate (starting with 22) - defaults to 5 (all modes) */
   double minf;               /* Minimal frequency (Hz) - when set to 0 (default), use the first frequency covered by the ROM */
+  double deltatobs;          /* Observation duration (years, default=2) */
+  int tagextpn;              /* Tag to allow PN extension of the waveform at low frequencies (default=1) */
+  double Mfmatch;            /* When PN extension allowed, geometric matching frequency: will use ROM above this value. If <=0, use ROM down to the lowest covered frequency (default=0.) */
   double deltaf;             /* When generating frequency series from the mode contributions, deltaf for the output (0 to set automatically at 1/2*1/(2T)) */
   int tagtdi;                /* Tag selecting the desired output format */
   int taggenwave;            /* Tag selecting the desired output format */

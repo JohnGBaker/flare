@@ -47,6 +47,14 @@ extern "C" {
 
 /* NOTE: uses the list of modes of EOBNRv2HMROM (listmode), to be extended when more waveform models are added */
 
+/***************** Function estimating frequency corresponding to a given time to coalescence ****************/
+
+/* Newtonian estimate of the relation Mf(deltat/M) (for the 22 mode) - gives the starting geometric frequency for a given mass ratio and a given geometric duration of the observations */
+double NewtonianfoftGeom(const double q, const double t); /* t here is t/M */
+
+/* Newtonian estimate of the relation f(deltat) (for the 22 mode) - gives the starting frequency in Hz for a given mass ratio and a given geometric duration of the observations */
+double Newtonianfoft(const double m1, const double m2, const double t); /* t here is in years, m1-m2 in solar masses */
+
 /***************** Function estimating time to coalescence and min/max frequency ****************/
 
 /* Functions reading from a list of modes the minimal and maximal frequencies */

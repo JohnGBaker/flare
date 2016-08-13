@@ -17,6 +17,30 @@
 
 /* NOTE: uses the list of modes of EOBNRv2HMROM (listmode), to be extended when more waveform models are added */
 
+/***************** Function estimating frequency corresponding to a given time to coalescence ****************/
+
+/* Newtonian estimate of the relation Mf(deltat/M) (for the 22 mode) - gives the starting geometric frequency for a given mass ratio and a given geometric duration of the observations */
+double NewtonianfoftGeom(
+  const double q,                      /* Mass ratio m1/m2 */
+  const double t)                      /* Duration of the observations in geometric units (t/M) */
+{
+  if(t<=0.) return 0.;
+  double nu = q/(1.+q)/(1.+q);
+  return 1./PI * pow(256*nu/5. * t, -3./8);
+}
+
+/* Newtonian estimate of the relation f(deltat) (for the 22 mode) - gives the starting geometric frequency for a given mass ratio and a given geometric duration of the observations - output in Hz */
+double Newtonianfoft(
+  const double m1,                     /* Mass 1 (solar masses) */
+  const double m2,                     /* Mass 2 (solar masses) */
+  const double t)                      /* Duration of the observations in years */
+{
+  if(t<=0.) return 0.;
+  double mtot = m1 + m2;
+  double q = m1/m2;
+  return NewtonianfoftGeom(q, t*YRSID_SI / (mtot*MTSUN_SI)) / (mtot*MTSUN_SI);
+}
+
 /***************** Function estimating time to coalescence ****************/
 
 /* Functions reading from a list of modes the minimal and maximal frequencies */
@@ -367,6 +391,9 @@ int GenerateFDReImFrequencySeries(
     nbpts = (int) ceil(fHigh/deltaf);
   }
   else nbpts = nbpt;
+
+  //
+  printf("nbpt in GenerateFDReImFrequencySeries: %d\n", nbpts);
 
   /* Initialize frequency series */
   ReImFrequencySeries_Init(freqseries, nbpts);

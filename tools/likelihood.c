@@ -48,15 +48,6 @@
 
 /********************************* Utilities ****************************************/
 
-/* Newtonian estimate of the relation Mf(deltat/M) (for the 22 mode) - gives the starting geometric frequency for a given mass ratio and a given geometric duration of the observations */
-double NewtonianfoftGeom(
-  const double q,                      /* Mass ratio m1/m2 */
-  const double t)                      /* Duration of the observations in geometric units (t/M) */
-{
-  double nu = q/(1.+q)/(1.+q);
-  return 1./PI * pow(256*nu/5. * t, -3./8);
-}
-
 /* Function to evaluate a Noise function  */
 void EvaluateNoise(
   gsl_vector* noisevalues,                         /* Output: vector of the noise values */

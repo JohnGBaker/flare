@@ -43,6 +43,9 @@ Arguments are as follows:\n\
 --------------------------------------------------\n\
  --nbmode              Number of modes of radiation to generate (1-5, default=5)\n\
  --minf                Minimal frequency (Hz, default=0) - when too low, use first frequency covered by the ROM\n\
+ --deltatobs           Observation duration (years, default=2)\n\
+ --tagextpn            Tag to allow PN extension of the waveform at low frequencies (default=1)\n\
+ --Mfmatch             When PN extension allowed, geometric matching frequency: will use ROM above this value. If <=0, use ROM down to the lowest covered frequency (default=0.)\n\
  --taggenwave          Tag choosing the wf format: hlm (default: downsampled modes in Amp/Phase form), hphcFD (hlm interpolated and summed), hphcTD (IFFT of hphcFD),\n\
  --binaryout           Tag for outputting the data in gsl binary form instead of text (default false)\n\
  --outdir              Output directory\n\
@@ -63,6 +66,9 @@ Arguments are as follows:\n\
     /* set default values for the generation params */
     params->nbmode = 5;
     params->minf = 0.;
+    params->deltatobs = 2.;
+    params->tagextpn = 1;
+    params->Mfmatch = 0.;
     params->taggenwave = hlm;
     params->binaryout = 0;
     strcpy(params->outdir, ".");
@@ -91,6 +97,12 @@ Arguments are as follows:\n\
           params->nbmode = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--minf") == 0) {
           params->minf = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--deltatobs") == 0) {
+          params->deltatobs = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--tagextpn") == 0) {
+          params->tagextpn = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "--Mfmatch") == 0) {
+          params->Mfmatch = atof(argv[++i]);
         } else if (strcmp(argv[i], "--taggenwave") == 0) {
           params->taggenwave = ParseGenWavetag(argv[++i]);
         } else if (strcmp(argv[i], "--binaryout") == 0) {
@@ -114,21 +126,37 @@ Arguments are as follows:\n\
 /************ Functions to write waveforms to file - text or binary ************/
 
 /* Output waveform in downsampled form, FD Amp/Pase, all hlm modes in a single file */
-/* NOTE: assumes the same number of points is used to represent each mode */
+/* NOTE: first version assumed the same number of points is used to represent each mode */
+/* HACK: if not same number of freqs for the modes (due to PN extension), 0-pad at the end */
 static void Write_Wave_hlm(const char dir[], const char file[], ListmodesCAmpPhaseFrequencySeries* listhlm, int nbmodes, int binary)
 {
   /* Initialize output */
   /* get length from 22 mode - NOTE: assumes the same for all modes */
   int nbfreq = ListmodesCAmpPhaseFrequencySeries_GetMode(listhlm, 2, 2)->freqseries->freq->size;
+  /* HACK: get the maximal length */
+  for(int i=0; i<nbmodes; i++) {
+    nbfreq = max(nbfreq, ListmodesCAmpPhaseFrequencySeries_GetMode(listhlm, listmode[i][0], listmode[i][1])->freqseries->freq->size);
+  }
   gsl_matrix* outmatrix = gsl_matrix_alloc(nbfreq, 3*nbmodes);
 
   /* Get data in the list of modes */
   CAmpPhaseFrequencySeries* mode;
   for(int i=0; i<nbmodes; i++) {
     mode = ListmodesCAmpPhaseFrequencySeries_GetMode(listhlm, listmode[i][0], listmode[i][1])->freqseries;
-    gsl_matrix_set_col(outmatrix, 0+3*i, mode->freq);
-    gsl_matrix_set_col(outmatrix, 1+3*i, mode->amp_real); /* amp_imag is 0 at this stage, we ignore it */
-    gsl_matrix_set_col(outmatrix, 2+3*i, mode->phase);
+    int nbfreqmode = mode->freq->size;
+    for(int j=0; j<nbfreqmode; j++) {
+      gsl_matrix_set(outmatrix, j, 0+3*i, gsl_vector_get(mode->freq, j));
+      gsl_matrix_set(outmatrix, j, 1+3*i, gsl_vector_get(mode->amp_real, j)); /* amp_imag is 0 at this stage, we ignore it */
+      gsl_matrix_set(outmatrix, j, 2+3*i, gsl_vector_get(mode->phase, j));
+    }
+    for(int j=nbfreqmode; j<nbfreq; j++) {
+      gsl_matrix_set(outmatrix, j, 0+3*i, 0);
+      gsl_matrix_set(outmatrix, j, 1+3*i, 0);
+      gsl_matrix_set(outmatrix, j, 2+3*i, 0);
+    }
+    //gsl_matrix_set_col(outmatrix, 0+3*i, mode->freq);
+    //gsl_matrix_set_col(outmatrix, 1+3*i, mode->amp_real); /* amp_imag is 0 at this stage, we ignore it */
+    //gsl_matrix_set_col(outmatrix, 2+3*i, mode->phase);
   }
 
   /* Output */
@@ -176,6 +204,7 @@ static void Write_Wave_hphcTD(const char dir[], const char file[], RealTimeSerie
 
 int main(int argc, char *argv[])
 {
+  int ret;
   /* Initialize structure for parameters */
   GenWaveParams* params;
   params = (GenWaveParams*) malloc(sizeof(GenWaveParams));
@@ -184,9 +213,23 @@ int main(int argc, char *argv[])
   /* Parse commandline to read parameters */
   parse_args_GenerateWaveform(argc, argv, params);
 
+  /* Starting frequency - takes into account the duration of observation deltatobs and the arg minf */
+  double fstartobs = Newtonianfoft(params->m1, params->m2, params->deltatobs);
+  double flow = fmax(params->minf, fstartobs);
+  //TEST
+  //printf("fstartobs: %g\n", fstartobs);
+
   /* Generate Fourier-domain waveform as a list of hlm modes */
+  /* Use TF2 extension, if required to, to arbitrarily low frequencies */
+  /* NOTE: at this stage, if no extension is performed, deltatobs and minf are ignored - will start at MfROM*/
   ListmodesCAmpPhaseFrequencySeries* listROM = NULL;
-  SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef, params->phiRef, params->fRef, params->m1*MSUN_SI, params->m2*MSUN_SI, params->distance*1e6*PC_SI);
+  if(!(params->tagextpn)){
+    //printf("Not Extending signal waveform.  mfmatch=%g\n",globalparams->mfmatch);
+    ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef, params->phiRef, params->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+  } else {
+    //printf("Extending signal waveform.  mfmatch=%g\n",globalparams->mfmatch);
+    ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, params->Mfmatch, flow, params->tRef, params->phiRef, params->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+  }
 
   if(params->taggenwave==hlm) {
     Write_Wave_hlm(params->outdir, params->outfile, listROM, params->nbmode, params->binaryout);
@@ -197,8 +240,11 @@ int main(int argc, char *argv[])
 
     /* Determine deltaf so that N deltat = 1/deltaf > 2*tc where tc is the time to coalescence estimated from Psi22 */
     /* Assumes the TD waveform ends around t=0 */
-    double tc = EstimateInitialTime(listROM, params->minf);
+    double tc = EstimateInitialTime(listROM, flow);
     double deltaf = 0.5 * 1./(2*(-tc)); /* Extra factor of 1/2 corresponding to 0-padding in TD by factor of 2 */
+    //TEST
+    //printf("tc: %g\n", tc);
+    //exit(0);
 
     /* Compute hplus, hcross FD */
     ReImFrequencySeries* hptilde = NULL;
@@ -215,9 +261,10 @@ int main(int argc, char *argv[])
     else {
 
       /* Determine frequency windows - min,max frequencies determined directly from the Amp/Phase hlm's */
+      /* The ROM output has possibly been PN-extended */
       double fLowROM = ListmodesCAmpPhaseFrequencySeries_minf(listROM);
       double fHighROM = ListmodesCAmpPhaseFrequencySeries_maxf(listROM);
-      double f1windowbeg = fmax(params->minf, fLowROM);
+      double f1windowbeg = fmax(flow, fLowROM);
       double f2windowbeg = 1.1 * f1windowbeg; /* Here hardcoded relative width of the window */
       double f2windowend = fHighROM;
       double f1windowend = 0.995 * f2windowend; /* Here hardcoded relative width of the window */

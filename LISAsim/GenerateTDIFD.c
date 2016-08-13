@@ -47,6 +47,9 @@ Arguments are as follows:\n\
 --------------------------------------------------\n\
  --nbmode              Number of modes of radiation to generate (1-5, default=5)\n\
  --minf                Minimal frequency (Hz, default=0) - when too low, use first frequency covered by the ROM\n\
+ --deltatobs           Observation duration (years, default=2)\n\
+ --tagextpn            Tag to allow PN extension of the waveform at low frequencies (default=1)\n\
+ --Mfmatch             When PN extension allowed, geometric matching frequency: will use ROM above this value. If <=0, use ROM down to the lowest covered frequency (default=0.)\n\
  --deltaf;             When generating frequency series from the mode contributions, deltaf for the output (0 to set automatically at 1/2*1/(2T))\n\
  --tagtdi              Tag choosing the set of TDI variables to use (default TDIAETXYZ)\n\
  --taggenwave          Tag choosing the wf format: TDIhlm (default: downsampled mode contributions to TDI in Amp/Phase form), TDIFD (hlm interpolated and summed accross modes)\n\
@@ -78,6 +81,9 @@ Arguments are as follows:\n\
     /* Set default values for the generation params */
     params->nbmode = 5;
     params->minf = 0.;
+    params->deltatobs = 2.;
+    params->tagextpn = 1;
+    params->Mfmatch = 0.;
     params->deltaf = 0.;
     params->tagtdi = TDIXYZ;
     params->taggenwave = TDIhlm;
@@ -118,6 +124,12 @@ Arguments are as follows:\n\
             params->nbmode = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--minf") == 0) {
             params->minf = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--deltatobs") == 0) {
+            params->deltatobs = atof(argv[++i]);
+        }  else if (strcmp(argv[i], "--tagextpn") == 0) {
+            params->tagextpn = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "--Mfmatch") == 0) {
+            params->Mfmatch = atof(argv[++i]);
         } else if (strcmp(argv[i], "--deltaf") == 0) {
             params->deltaf = atof(argv[++i]);
         } else if (strcmp(argv[i], "--tagtdi") == 0) {
@@ -158,7 +170,14 @@ Arguments are as follows:\n\
 static char* TDIFilePostfix(TDItag tditag, int channel, int binary)
 {
   if(!binary) {
-    if(tditag==TDIXYZ) {
+    if(tditag==y12) {
+      switch(channel) {
+        case 1: return "_y12.txt"; break;
+        case 2: return "_null2.txt"; break;
+        case 3: return "_null3.txt"; break;
+      }
+    }
+    else if(tditag==TDIXYZ) {
       switch(channel) {
         case 1: return "_TDIX.txt"; break;
         case 2: return "_TDIY.txt"; break;
@@ -178,7 +197,14 @@ static char* TDIFilePostfix(TDItag tditag, int channel, int binary)
     }
   }
   else {
-    if(tditag==TDIXYZ) {
+    if(tditag==y12) {
+      switch(channel) {
+        case 1: return "_y12.dat"; break;
+        case 2: return "_null2.dat"; break;
+        case 3: return "_null3.dat"; break;
+      }
+    }
+    else if(tditag==TDIXYZ) {
       switch(channel) {
         case 1: return "_TDIX.dat"; break;
         case 2: return "_TDIY.dat"; break;
@@ -306,11 +332,13 @@ int main(int argc, char *argv[])
     char *outfileTDI2 = malloc(256);
     char *outfileTDI3 = malloc(256);
     sprintf(outfileTDI1, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 1, params->binaryout));
-    sprintf(outfileTDI2, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 2, params->binaryout));
-    sprintf(outfileTDI3, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 3, params->binaryout));
     Write_FrequencySeries(params->outdir, outfileTDI1, TDI1FFT, params->binaryout);
-    Write_FrequencySeries(params->outdir, outfileTDI2, TDI2FFT, params->binaryout);
-    Write_FrequencySeries(params->outdir, outfileTDI3, TDI3FFT, params->binaryout);
+    if(!(params->tagtdi==y12)) {
+      sprintf(outfileTDI2, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 2, params->binaryout));
+      sprintf(outfileTDI3, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 3, params->binaryout));
+      Write_FrequencySeries(params->outdir, outfileTDI2, TDI2FFT, params->binaryout);
+      Write_FrequencySeries(params->outdir, outfileTDI3, TDI3FFT, params->binaryout);
+    }
     free(outfileTDI1);
     free(outfileTDI2);
     free(outfileTDI3);
@@ -322,9 +350,21 @@ int main(int argc, char *argv[])
     /* Set geometric coefficients */
     SetCoeffsG(params->lambda, params->beta, params->polarization);
 
+    /* Starting frequency - takes into account the duration of observation deltatobs and the arg minf */
+    double fstartobs = Newtonianfoft(params->m1, params->m2, params->deltatobs);
+    double flow = fmax(params->minf, fstartobs);
+
     /* Generate Fourier-domain waveform as a list of hlm modes */
+    /* Use TF2 extension, if required to, to arbitrarily low frequencies */
+    /* NOTE: at this stage, if no extension is performed, deltatobs and minf are ignored - will start at MfROM*/
     ListmodesCAmpPhaseFrequencySeries* listROM = NULL;
-    SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef, params->phiRef, params->fRef, params->m1*MSUN_SI, params->m2*MSUN_SI, params->distance*1e6*PC_SI);
+    if(!(params->tagextpn)){
+      //printf("Not Extending signal waveform.  mfmatch=%g\n",globalparams->mfmatch);
+      SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef, params->phiRef, params->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+    } else {
+      //printf("Extending signal waveform.  mfmatch=%g\n",globalparams->mfmatch);
+      SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, params->Mfmatch, flow, params->tRef, params->phiRef, params->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+    }
 
     /* Process through the Fourier-domain response for TDI observables */
     ListmodesCAmpPhaseFrequencySeries* listTDI1= NULL;
@@ -346,11 +386,13 @@ int main(int argc, char *argv[])
       char *outfileTDI2hlm = malloc(256);
       char *outfileTDI3hlm = malloc(256);
       sprintf(outfileTDI1hlm, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 1, params->binaryout));
-      sprintf(outfileTDI2hlm, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 2, params->binaryout));
-      sprintf(outfileTDI3hlm, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 3, params->binaryout));
       Write_TDIhlm(params->outdir, outfileTDI1hlm, listTDI1, params->nbmode, params->binaryout);
-      Write_TDIhlm(params->outdir, outfileTDI2hlm, listTDI2, params->nbmode, params->binaryout);
-      Write_TDIhlm(params->outdir, outfileTDI3hlm, listTDI3, params->nbmode, params->binaryout);
+      if(!(params->tagtdi==y12)) {
+        sprintf(outfileTDI2hlm, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 2, params->binaryout));
+        sprintf(outfileTDI3hlm, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 3, params->binaryout));
+        Write_TDIhlm(params->outdir, outfileTDI2hlm, listTDI2, params->nbmode, params->binaryout);
+        Write_TDIhlm(params->outdir, outfileTDI3hlm, listTDI3, params->nbmode, params->binaryout);
+      }
       free(outfileTDI1hlm);
       free(outfileTDI2hlm);
       free(outfileTDI3hlm);
@@ -365,29 +407,38 @@ int main(int argc, char *argv[])
         /* Determine deltaf so that N deltat = 1/deltaf > 2*tc where tc is the time to coalescence estimated from Psi22 */
         /* Assumes the TD waveform ends around t=0 */
         /* Note: the phase is untouched by the response processing, so the phase in the 22 TDI contribution is still Psi22 and the same for all channels */
-        double tc = EstimateInitialTime(listTDI1, params->minf);
+        double tc = EstimateInitialTime(listTDI1, flow);
         deltaf = 0.5 * 1./(2*(-tc)); /* Extra factor of 1/2 corresponding to 0-padding in TD by factor of 2 */
+        //
+        printf("(tc,deltaf): (%g,%g)\n", tc,deltaf);
       }
       else deltaf = params->deltaf;
+
+      //
+      ListmodesCAmpPhaseFrequencySeries* TDIAh22 = ListmodesCAmpPhaseFrequencySeries_GetMode(listTDI1, 2, 2);
+      double fHigh22 = gsl_vector_get(TDIAh22->freqseries->freq, TDIAh22->freqseries->freq->size - 1);
+      printf("fHigh22: %g\n", fHigh22);
 
       /* Generate FD frequency series by summing mode contributions */
       ReImFrequencySeries* TDI1FD = NULL;
       ReImFrequencySeries* TDI2FD = NULL;
       ReImFrequencySeries* TDI3FD = NULL;
-      GenerateFDReImFrequencySeries(&TDI1FD, listTDI1, params->minf, deltaf, 0, params->nbmode); /* Here determines the number of points from deltaf and max frequency in input list of modes */
-      GenerateFDReImFrequencySeries(&TDI2FD, listTDI2, params->minf, deltaf, 0, params->nbmode); /* Here determines the number of points from deltaf and max frequency in input list of modes */
-      GenerateFDReImFrequencySeries(&TDI3FD, listTDI3, params->minf, deltaf, 0, params->nbmode); /* Here determines the number of points from deltaf and max frequency in input list of modes */
+      GenerateFDReImFrequencySeries(&TDI1FD, listTDI1, flow, deltaf, 0, params->nbmode); /* Here determines the number of points from deltaf and max frequency in input list of modes */
+      GenerateFDReImFrequencySeries(&TDI2FD, listTDI2, flow, deltaf, 0, params->nbmode); /* Here determines the number of points from deltaf and max frequency in input list of modes */
+      GenerateFDReImFrequencySeries(&TDI3FD, listTDI3, flow, deltaf, 0, params->nbmode); /* Here determines the number of points from deltaf and max frequency in input list of modes */
 
       /* Output */
       char *outfileTDI1FD = malloc(256);
       char *outfileTDI2FD = malloc(256);
       char *outfileTDI3FD = malloc(256);
       sprintf(outfileTDI1FD, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 1, params->binaryout));
-      sprintf(outfileTDI2FD, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 2, params->binaryout));
-      sprintf(outfileTDI3FD, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 3, params->binaryout));
       Write_FrequencySeries(params->outdir, outfileTDI1FD, TDI1FD, params->binaryout);
-      Write_FrequencySeries(params->outdir, outfileTDI2FD, TDI2FD, params->binaryout);
-      Write_FrequencySeries(params->outdir, outfileTDI3FD, TDI3FD, params->binaryout);
+      if(!(params->tagtdi==y12)) {
+        sprintf(outfileTDI2FD, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 2, params->binaryout));
+        sprintf(outfileTDI3FD, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 3, params->binaryout));
+        Write_FrequencySeries(params->outdir, outfileTDI2FD, TDI2FD, params->binaryout);
+        Write_FrequencySeries(params->outdir, outfileTDI3FD, TDI3FD, params->binaryout);
+      }
       free(outfileTDI1FD);
       free(outfileTDI2FD);
       free(outfileTDI3FD);
