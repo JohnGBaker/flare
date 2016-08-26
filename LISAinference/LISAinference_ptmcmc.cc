@@ -273,6 +273,7 @@ int main(int argc, char*argv[]){
   opt.add(Option("info_every","How often to dump likehood eval info to stdout. Default never","10000"));
   opt.add(Option("rng_seed","Pseudo random number grenerator seed in [0,1). (Default=-1, use clock to seed.)","-1"));
   opt.add(Option("precision","Set output precision digits. (Default 13).","13"));
+  opt.add(Option("noFisher","Skip Fisher computation."));
   opt.add(Option("Fisher_err_target","Set target for Fisher error measure. (Default 0.001).","0.001"));
   opt.add(Option("help","Print help message."));
   //First we parse the ptmcmc-related parameters like un gleam. 
@@ -306,6 +307,7 @@ int main(int argc, char*argv[]){
   istringstream(opt.value("rng_seed"))>>seed;
   istringstream(opt.value("info_every"))>>info_every;
   istringstream(opt.value("Fisher_err_target"))>>fisher_err_target;
+  bool doFisher=not opt.set("noFisher");
   
   //if seed<0 set seed from clock
   if(seed<0)seed=fmod(time(NULL)/3.0e7,1);
@@ -416,84 +418,87 @@ int main(int argc, char*argv[]){
   like->reset();
   if(info_every>0)fl.info_every(info_every);
   
-  //Next compute the Fisher matrix at the injected state.
-  ss.str("");ss<<base<<"_fishcov.dat";
-  ofstream outfish(ss.str().c_str());
-  vector< vector<double> > fim(Npar,vector<double>(Npar));
-  double err=like->getFisher(injected_state,fim);
-  cout<<"Fisher err ~"<<err<<endl;
-  cout<<"At pars:\n"<<endl;
-  for(int i=0;i<Npar;i++)cout<<names[i]<<"\t";
-  cout<<endl;
-  cout<<"\nFisher at injection:"<<endl;
-  outfish<<"#At pars:\n#";
-  for(int i=0;i<Npar;i++)outfish<<names[i]<<"\t";
-  outfish<<endl;
-  for(int i=0;i<Npar;i++)outfish<<injected_state.get_param(i)<<"\t";
-  outfish<<endl;
-  outfish<<"\n#Fisher:"<<endl;
-  for(int i=0;i<Npar;i++){
-    cout<<names[i]<<"\t";
-    for(int j=0;j<=i;j++)cout<<"\t"<<fim[i][j];
+  if(doFisher){
+    //Next compute the Fisher matrix at the injected state.
+    ss.str("");ss<<base<<"_fishcov.dat";
+    ofstream outfish(ss.str().c_str());
+    vector< vector<double> > fim(Npar,vector<double>(Npar));
+    double err=like->getFisher(injected_state,fim);
+    cout<<"Fisher err ~"<<err<<endl;
+    cout<<"At pars:\n"<<endl;
+    for(int i=0;i<Npar;i++)cout<<names[i]<<"\t";
     cout<<endl;
-    for(int j=0;j<=i;j++)outfish<<"\t"<<fim[i][j];
-    for(int j=i+1;j<Npar;j++)outfish<<"\t"<<fim[i][j];
+    cout<<"\nFisher at injection:"<<endl;
+    outfish<<"#At pars:\n#";
+    for(int i=0;i<Npar;i++)outfish<<names[i]<<"\t";
     outfish<<endl;
-  }
-  //Next dump Fisher scaled by diagonals;
-  cout<<"Fisher scales:"<<endl;
-  for(int i=0;i<Npar;i++)cout<<sqrt(fim[i][i])<<"\t";
-  cout<<endl;
-  outfish<<"\n#Fisher scales:"<<endl;
-  for(int i=0;i<Npar;i++)outfish<<sqrt(fim[i][i])<<"\t";
-  outfish<<endl;
-  cout<<"\nScaled Fisher:"<<endl;
-  outfish<<"\n#Scaled Fisher:"<<endl;
-  for(int i=0;i<Npar;i++){
-    cout<<names[i]<<"\t";
-    for(int j=0;j<=i;j++)cout<<"\t"<<fim[i][j]/sqrt(fim[i][i]*fim[j][j]);
-    cout<<endl;
-    for(int j=0;j<=i;j++)outfish<<"\t"<<fim[i][j]/sqrt(fim[i][i]*fim[j][j]);
-    for(int j=i+1;j<Npar;j++)outfish<<"\t"<<fim[i][j]/sqrt(fim[i][i]*fim[j][j]);
+    for(int i=0;i<Npar;i++)outfish<<injected_state.get_param(i)<<"\t";
     outfish<<endl;
-  }
-  //Now invert it to get the covariance matrix
-  //We use GSLs Cholesky decomposition for this.
-  gsl_set_error_handler_off();
-  gsl_matrix * fishcov=gsl_matrix_alloc(Npar,Npar);
-  for(int i=0;i<Npar;i++)for(int j=0;j<=i;j++)gsl_matrix_set(fishcov,i,j,fim[i][j]);//Don't need upper triangle for GSLs routine
-  if(gsl_linalg_cholesky_decomp(fishcov))cout<<"Fisher matrix Cholesky decomposition failed."<<endl;
-  else if(gsl_linalg_cholesky_invert(fishcov))cout<<"Fisher matrix Cholesky inverse failed."<<endl;
-  else {
-    cout<<"\nCovariance:"<<endl;
-    outfish<<"\n#Covariance:"<<endl;
+    outfish<<"\n#Fisher:"<<endl;
     for(int i=0;i<Npar;i++){
       cout<<names[i]<<"\t";
-      for(int j=0;j<=i;j++)cout<<"\t"<<gsl_matrix_get(fishcov,i,j);
+      for(int j=0;j<=i;j++)cout<<"\t"<<fim[i][j];
       cout<<endl;
-      for(int j=0;j<=i;j++)outfish<<"\t"<<gsl_matrix_get(fishcov,i,j);
-      for(int j=i+1;j<Npar;j++)outfish<<"\t"<<gsl_matrix_get(fishcov,i,j);
+      for(int j=0;j<=i;j++)outfish<<"\t"<<fim[i][j];
+      for(int j=i+1;j<Npar;j++)outfish<<"\t"<<fim[i][j];
       outfish<<endl;
     }
-    //Now the correlation matrix:
-    cout<<"\nCovar scales:"<<endl;
-    for(int i=0;i<Npar;i++)cout<<sqrt(gsl_matrix_get(fishcov,i,i))<<"\t";
-    outfish<<"\n#Covar scales:"<<endl;
-    for(int i=0;i<Npar;i++)outfish<<sqrt(gsl_matrix_get(fishcov,i,i))<<"\t";
-    cout<<"\n\nCorrelation:"<<endl;
-    outfish<<"\n\n#Coorrelation:"<<endl;
+    //Next dump Fisher scaled by diagonals;
+    cout<<"Fisher scales:"<<endl;
+    for(int i=0;i<Npar;i++)cout<<sqrt(fim[i][i])<<"\t";
+    cout<<endl;
+    outfish<<"\n#Fisher scales:"<<endl;
+    for(int i=0;i<Npar;i++)outfish<<sqrt(fim[i][i])<<"\t";
+    outfish<<endl;
+    cout<<"\nScaled Fisher:"<<endl;
+    outfish<<"\n#Scaled Fisher:"<<endl;
     for(int i=0;i<Npar;i++){
       cout<<names[i]<<"\t";
-      for(int j=0;j<=i;j++)cout<<"\t"<<gsl_matrix_get(fishcov,i,j)/sqrt(gsl_matrix_get(fishcov,i,i)*gsl_matrix_get(fishcov,j,j));
+      for(int j=0;j<=i;j++)cout<<"\t"<<fim[i][j]/sqrt(fim[i][i]*fim[j][j]);
       cout<<endl;
-      for(int j=0;j<=i;j++)outfish<<"\t"<<gsl_matrix_get(fishcov,i,j)/sqrt(gsl_matrix_get(fishcov,i,i)*gsl_matrix_get(fishcov,j,j));
-  for(int j=i+1;j<Npar;j++)outfish<<"\t"<<gsl_matrix_get(fishcov,i,j)/sqrt(gsl_matrix_get(fishcov,i,i)*gsl_matrix_get(fishcov,j,j));
+      for(int j=0;j<=i;j++)outfish<<"\t"<<fim[i][j]/sqrt(fim[i][i]*fim[j][j]);
+      for(int j=i+1;j<Npar;j++)outfish<<"\t"<<fim[i][j]/sqrt(fim[i][i]*fim[j][j]);
       outfish<<endl;
     }
+    //Now invert it to get the covariance matrix
+    //We use GSLs Cholesky decomposition for this.
+    gsl_set_error_handler_off();
+    gsl_matrix * fishcov=gsl_matrix_alloc(Npar,Npar);
+    for(int i=0;i<Npar;i++)for(int j=0;j<=i;j++)gsl_matrix_set(fishcov,i,j,fim[i][j]);//Don't need upper triangle for GSLs routine
+    if(gsl_linalg_cholesky_decomp(fishcov))cout<<"Fisher matrix Cholesky decomposition failed."<<endl;
+    else if(gsl_linalg_cholesky_invert(fishcov))cout<<"Fisher matrix Cholesky inverse failed."<<endl;
+    else {
+      cout<<"\nCovariance:"<<endl;
+      outfish<<"\n#Covariance:"<<endl;
+      for(int i=0;i<Npar;i++){
+	cout<<names[i]<<"\t";
+	for(int j=0;j<=i;j++)cout<<"\t"<<gsl_matrix_get(fishcov,i,j);
+	cout<<endl;
+	for(int j=0;j<=i;j++)outfish<<"\t"<<gsl_matrix_get(fishcov,i,j);
+	for(int j=i+1;j<Npar;j++)outfish<<"\t"<<gsl_matrix_get(fishcov,i,j);
+	outfish<<endl;
+      }
+      //Now the correlation matrix:
+      cout<<"\nCovar scales:"<<endl;
+      for(int i=0;i<Npar;i++)cout<<sqrt(gsl_matrix_get(fishcov,i,i))<<"\t";
+      outfish<<"\n#Covar scales:"<<endl;
+      for(int i=0;i<Npar;i++)outfish<<sqrt(gsl_matrix_get(fishcov,i,i))<<"\t";
+      cout<<"\n\nCorrelation:"<<endl;
+      outfish<<"\n\n#Coorrelation:"<<endl;
+      for(int i=0;i<Npar;i++){
+	cout<<names[i]<<"\t";
+	for(int j=0;j<=i;j++)cout<<"\t"<<gsl_matrix_get(fishcov,i,j)/sqrt(gsl_matrix_get(fishcov,i,i)*gsl_matrix_get(fishcov,j,j));
+	cout<<endl;
+	for(int j=0;j<=i;j++)outfish<<"\t"<<gsl_matrix_get(fishcov,i,j)/sqrt(gsl_matrix_get(fishcov,i,i)*gsl_matrix_get(fishcov,j,j));
+	for(int j=i+1;j<Npar;j++)outfish<<"\t"<<gsl_matrix_get(fishcov,i,j)/sqrt(gsl_matrix_get(fishcov,i,i)*gsl_matrix_get(fishcov,j,j));
+	outfish<<endl;
+      }
+    }
+    //Close-out Fisher/Covar
+    gsl_matrix_free(fishcov);
+    outfish.close();
   }
-  //Close-out Fisher/Covar
-  gsl_matrix_free(fishcov);
-  outfish.close();
+  
   if(stoi(opt.value("nsteps"))<=0){
     cout<<"No MCMC steps requested"<<endl;
     exit(0);
