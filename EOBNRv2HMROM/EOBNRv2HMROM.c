@@ -869,8 +869,10 @@ int SimEOBNRv2HMROMExtTF2(
       //waveform, but the results are reasonably smooth and of plausible structure.
       //Alternatively, we could also extend these with TaylorF2, btu we are mostly assuming this part of the WF is small
       double phmax=freqseries->phase->data[len-1];//For phase we extend by a power-law referenced to zero phase at end of ROM
-      double dArfac = exp(-log( gsl_vector_get(freqseries->amp_real,imatch+Navg)
-				     /gsl_vector_get(freqseries->amp_real,imatch) ) / Navg);
+      double dArfac = 0;
+      if(gsl_vector_get(freqseries->amp_real,imatch)>0) //avoid div0 in trivial cases
+	dArfac=exp(-log( gsl_vector_get(freqseries->amp_real,imatch+Navg)
+			 /gsl_vector_get(freqseries->amp_real,imatch) ) / Navg);
       //double dAifac = exp(-log( gsl_vector_get(freqseries->amp_imag,imatch+Navg)
       //				/gsl_vector_get(freqseries->amp_imag,imatch+Navg) ) / Navg);
       double dAifac=dArfac;
@@ -885,12 +887,12 @@ int SimEOBNRv2HMROMExtTF2(
     }
     /*
     for(i=0;i<len_new;i++){
-      printf("%i %i: %g  %g : %g  %g : %g  %g :  %g  %g \n",i-len_new+len,i,
+      printf("(%i, %i): %i %i: %g  %g : %g  %g : %g  %g :  %g  %g \n",l,m,i-len_new+len,i,
 	     (i>=len_new-len?freqseries->freq->data[i-len_new+len]:0),freqseries_new->freq->data[i],
 	     (i>=len_new-len?freqseries->amp_real->data[i-len_new+len]:0),freqseries_new->amp_real->data[i],
 	     (i>=len_new-len?freqseries->amp_imag->data[i-len_new+len]:0),freqseries_new->amp_imag->data[i],
 	     (i>=len_new-len?freqseries->phase->data[i-len_new+len]:0),freqseries_new->phase->data[i]);
-	     }*/
+    }*/
     //delete the old content data and replace with the new
     CAmpPhaseFrequencySeries_Cleanup(freqseries);
     listelement->freqseries=freqseries_new;
