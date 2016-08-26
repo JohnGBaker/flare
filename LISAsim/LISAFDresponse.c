@@ -398,13 +398,13 @@ int LISASimFDResponseTDI3Chan(
     //clock_t tbegcontesllation = clock();
     //double timingcumulativeGABmode = 0;
     //
-    printf("loop\n");
+    //printf("loop\n");
       //
-      printf("len_resample: %d\n", len_resample);
+      //printf("len_resample: %d\n", len_resample);
     for(int j=0; j<len_resample; j++) {
 
         //
-        printf("j: %d\n", j);
+        //printf("j: %d\n", j);
       f = gsl_vector_get(freq_resample, j);
       tf = (gsl_spline_eval_deriv(spline_phi, f, accel_phi))/(2*PI);
       //clock_t tbegGAB = clock();

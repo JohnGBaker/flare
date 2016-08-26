@@ -65,8 +65,11 @@ void EvaluateNoise(
   }
 
   /* Checking the boundary frequencies */
-  if( gsl_vector_get(freq, 0) < fLow || gsl_vector_get(freq, nbpts-1) > fHigh ) {
+  if( gsl_vector_get(freq, 0) - fLow < -1e-15 || gsl_vector_get(freq, nbpts-1) > fHigh ) {
     printf("Error: incompatible frequency range in EvaluateNoise.\n");
+    printf("freq[0]=%g vs fLow=%g, freq[max]=%g vs fHigh=%g\n",gsl_vector_get(freq, 0), fLow, gsl_vector_get(freq, nbpts-1), fHigh);
+    printf(" %i, %i\n",gsl_vector_get(freq, 0) < fLow , gsl_vector_get(freq, nbpts-1) > fHigh);
+    printf("%g\n",gsl_vector_get(freq, 0) - fLow);
     exit(1);
   }
 
@@ -614,6 +617,7 @@ gsl_set_error_handler(&Err_Handler);
   double f2max = gsl_matrix_get(splines2->quadspline_phase, splines2->quadspline_phase->size1 - 1, 0);
   if((fLow>0 && (f1[imax1]<=fLow || f2max<=fLow)) || (fHigh>0 && (f1[imin1]>=fHigh || f2min>=fHigh))) {
     printf("Error: range of frequencies incompatible with fLow, fHigh in IntegrandValues.\n");
+    printf("need one of {%g, %g} <= %g and one of {%g, %g}>=%g\n",f1[imax1],f2max,fLow,f1[imin1],f2min,fHigh);
     exit(1);
   }
   /* If starting outside, move the ends of the frequency series to be just outside the final minf and maxf */
@@ -631,6 +635,7 @@ gsl_set_error_handler(&Err_Handler);
   double aimag1maxf = EstimateBoundaryLegendreQuad(freq1, freqseries1->amp_imag, imax1-2, maxf); /* Note the imax1-2 */
   double phi1maxf = EstimateBoundaryLegendreQuad(freq1, freqseries1->phase, imax1-2, maxf); /* Note the imax1-2 */
 
+  
   /* Initializing output structure */
   int nbpts = imax1 + 1 - imin1;
   CAmpPhaseFrequencySeries_Init(integrand, nbpts);
@@ -717,6 +722,7 @@ void ComputeIntegrandValues3Chan(
   double f2max = gsl_matrix_get(splines2chan1->quadspline_phase, splines2chan1->quadspline_phase->size1 - 1, 0);
   if((fLow>0 && (f1[imax1]<=fLow || f2max<=fLow)) || (fHigh>0 && (f1[imin1]>=fHigh || f2min>=fHigh))) {
     printf("Error: range of frequencies incompatible with fLow, fHigh in IntegrandValues.\n");
+    printf("need both {%g, %g} > %g and both {%g, %g} < %g\n",f1[imax1],f2max,fLow,f1[imin1],f2min,fHigh);
     exit(1);
   }
   /* If starting outside, move the ends of the frequency series to be just outside the final minf and maxf */

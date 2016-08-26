@@ -744,7 +744,7 @@ int LISAGenerateInjectionCAmpPhase(
   listelem=listelem->next;
   }
   */
-
+  
   /* Process the waveform through the LISA response */
   //WARNING: tRef is ignored for now, i.e. set to 0
   //TESTING
@@ -776,6 +776,7 @@ int LISAGenerateInjectionCAmpPhase(
   //tend = clock();
   //printf("time SNRs: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
 
+  
   /* Output and clean up */
   signal->TDI1Splines = listsplinesinj1;
   signal->TDI2Splines = listsplinesinj2;
@@ -907,7 +908,7 @@ int LISAGenerateInjectionReIm(
   double fLowCut = fmax(fmax(__LISASimFD_Noise_fLow, fLow), fstartobs);
   double fHigh = __LISASimFD_Noise_fHigh;
   ListmodesSetFrequencies(listROM, fLowCut, fHigh, nbpts, tagsampling, freq);
-
+  
   /* Initialize structures for the ReIm frequency series */
   ReImFrequencySeries* TDI1 = NULL;
   ReImFrequencySeries* TDI2 = NULL;
@@ -933,6 +934,7 @@ int LISAGenerateInjectionReIm(
   gsl_vector* noisevalues1 = gsl_vector_alloc(nbpts);
   gsl_vector* noisevalues2 = gsl_vector_alloc(nbpts);
   gsl_vector* noisevalues3 = gsl_vector_alloc(nbpts);
+
   EvaluateNoise(noisevalues1, freq, NoiseSn1, __LISASimFD_Noise_fLow, __LISASimFD_Noise_fHigh);
   EvaluateNoise(noisevalues2, freq, NoiseSn2, __LISASimFD_Noise_fLow, __LISASimFD_Noise_fHigh);
   EvaluateNoise(noisevalues3, freq, NoiseSn3, __LISASimFD_Noise_fLow, __LISASimFD_Noise_fHigh);

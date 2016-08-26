@@ -63,6 +63,7 @@ void addendum(int argc, char *argv[],LISARunParams *runParams, int *ndim, int *n
 
   /* Rescale distance to match SNR */
   if (!isnan(priorParams->snr_target)) {
+    printf("SNR=%g\n",SNR123);
     if (myid == 0) printf("Rescaling the distance to obtain a network SNR of %g\n", priorParams->snr_target);
     injectedparams->distance *= SNR123 / priorParams->snr_target;
     if (myid == 0) printf("New distance = %g Mpc\n", injectedparams->distance);
