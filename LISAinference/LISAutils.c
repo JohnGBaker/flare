@@ -156,6 +156,8 @@ Arguments are as follows:\n\
  --dist-min            Minimum distance to source (Mpc, default=100)\n\
  --dist-max            Maximum distance to source (Mpc, default=40*1e3)\n\
  --rescale-distprior   In case a target SNR is given with --snr, rescale dist-min and dist-max accordingly\n\
+ --logflat-massprior   Uses uniform (natural) log M, rather than uniform M\n\
+ --flat-distprior      Uses uniform linear scaled dist, rather than ~ R^2\n\
 Parameters lambda, beta, phase, pol, inc can also ge given min and max values (for testing)\n\
 Syntax: --PARAM-min\n\
 \n\
@@ -546,7 +548,8 @@ int print_parameters_to_file_LISA(
   fprintf(f, "pin_inc:           %d\n", prior->pin_inc);
   fprintf(f, "snr_target:        %.16e\n", prior->snr_target);
   fprintf(f, "rescale_distprior: %d\n", prior->rescale_distprior);
-  fprintf(f, "flat_distprior:    %d\n", prior->flat_distprior);
+  fprintf(f, "flat-distprior:    %d\n", prior->flat_distprior);
+  fprintf(f, "logflat-massprior:    %d\n", prior->logflat_massprior);
   fprintf(f, "-----------------------------------------------\n");
   fprintf(f, "\n");
 
