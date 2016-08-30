@@ -206,7 +206,6 @@ def FisherRunByParams(snr,params,delta,label,extrapoints=1.0):
             time.sleep(1)#pause to make sure file is ready to read.
             cov=readCovarFile(name+"_fishcov.dat")
             #v=math.sqrt(np.random.rand()-0.1)#to test behavior under occasional failures
-        done=True
     except (ValueError,ArithmeticError):
         print "Exception",sys.exc_info()[0]," occurred in run"+name+" for params ",params
         FisherRunFailCount+=1
@@ -214,23 +213,21 @@ def FisherRunByParams(snr,params,delta,label,extrapoints=1.0):
         subprocess.call("echo '\n\n***********************\nFailure "+str(FisherRunFailCount)+"\n***********************\n"+cmd+"' |cat - "+name+".out "+name+"_fishcov.out >> fisher_fails.out",shell=True)
     return [float(dist)]+cov
 
-def FisherRun(Mtot,q,snr,delta,label,datum):
+def FisherRun(Mtot,q,snr,delta,label,data):
     global FisherRunFailCount
-    done=False
-    while not done:
-        params=draw_params(Mtot,q)
-        if(not getattr(all_params_file,"write",None)==None):
-            threadLock.acquire()
-            all_params_file.write(str(snr)+"\t")
-            for pval in params:
-                all_params_file.write(str(pval)+"\t")
-            all_params_file.write("\n")
-            threadLock.release()
-        datum=FisherRunByParams(snr,params,delta,label)
-    data.append( [float(dist)]+cov )
+    params=draw_params(Mtot,q)
+    if(not getattr(all_params_file,"write",None)==None):
+        threadLock.acquire()
+        all_params_file.write(str(snr)+"\t")
+        for pval in params:
+            all_params_file.write(str(pval)+"\t")
+        all_params_file.write("\n")
+        threadLock.release()
+    datum=FisherRunByParams(snr,params,delta,label)
+    data.append( datum )
     return
 
-def threadedFisherRun(Mtot,q,snr,delta,label,Nruns,Nthreads,dists):
+def threadedFisherRun(Mtot,q,snr,delta,label,Nruns,Nthreads,data):
     irun=0
     if(FisherRunFailCount==0):subprocess.call("echo 'Output from runs generating exceptions:' > fisher_fails.out",shell=True)
     while(irun<Nruns):
@@ -241,7 +238,7 @@ def threadedFisherRun(Mtot,q,snr,delta,label,Nruns,Nthreads,dists):
         ith=0
         for t in range(count):
             ith+=1
-            thread = threading.Thread(target=FisherRun, args=(Mtot,q,snr,delta,label+str(ith),dists))
+            thread = threading.Thread(target=FisherRun, args=(Mtot,q,snr,delta,label+str(ith),data))
             thread.start()
             threads.append(thread)
         for thread in threads:
@@ -289,12 +286,13 @@ def readCovarFile(file):
                 val=covar[6][6]*covar[7][7]-covar[6][7]**2
                 if val<0:
                     dsky=float('nan')
-                    if -val<1e-13*covar[0][0]*covar[1][1]:dsky=0
+                    if -val<1e-13*covar[6][6]*covar[7][7]:dsky=0
                 else: dsky=math.sqrt(val)
+                print "sky",val,dsky,covar[6][6],covar[7][7]
                 val=covar[5][5]*covar[8][8]-covar[5][8]**2
                 if val<0:
                     dori=float('nan')
-                    if -val<1e-13*covar[0][0]*covar[1][1]:dori=0
+                    if -val<1e-13*covar[5][5]*covar[8][8]:dori=0
                 else: dori=math.sqrt(val)
                 val=covar[0][0]*covar[1][1]-covar[0][1]**2
                 if val<0:
@@ -401,6 +399,64 @@ def FisherStudy(MtotList,qList,SNRList,deltalist,Navg,Nthreads):
         plt.xlim([3,9])
         plt.title("Parameter uncertainty for LISA q="+str(q)+" SMBH merger")
         plt.ylabel("log(d"+par_name(ireport)+")")
+        plt.xlabel("log(M/Msun)")
+        #plt.show()
+        pp.savefig()
+        plt.clf()
+    pp.close()
+
+
+        
+def FisherPlot(outlabel,ipar,qList,SNRList,deltalist,datafile):
+    pp = PdfPages(str(outlabel)+'-Fisher-'+par_name(ipar)+'.pdf')
+    #datafile = open(datafile,'r')
+    tol=1e-10
+    data=np.loadtxt(datafile)
+    for q in qList:
+        tags=[]
+        labels=[]
+        snrcount=0
+        for snr in SNRList:
+            snrcount+=1
+            deltacount=0;
+            for delta in deltalist:
+                deltacount+=1
+                subdata=[]
+                for d in data:
+                    if abs(d[0]/snr-1)<tol and abs(d[1]/delta-1)<tol and abs(d[3]/q-1)<tol:
+                        subdata.append(d)
+                subdata=np.array(subdata)
+                #print "subdata=",subdata
+                iMtot=2
+                imeanz=4
+                istdz=5
+                imeanpar=6+ipar*2
+                istdpar=7+ipar*2
+                    #x.append(math.log10(Mtot/(1+10**meanz)))
+                    #y1.append((means[ireport]-stds[ireport]))
+                    #y2.append((means[ireport]+stds[ireport]))
+                x=[ math.log10(a/(1+10**b)) for a,b in zip(subdata[:,iMtot],subdata[:,imeanz]) ]
+                print "x=",x
+                #print "imeanpar=",imeanpar
+                print "y0=",subdata[:,imeanpar]
+                #print "dy=",subdata[:,istdpar]
+                y1=subdata[:,imeanpar]-subdata[:,istdpar]
+                #print "y1=",y1
+                y2=subdata[:,imeanpar]+subdata[:,istdpar]
+                #print "y2=",y2
+                color=(0.2,0.8/math.sqrt(q),1.0/math.sqrt(snrcount))
+                if(deltacount==1):
+                    plot=plt.fill_between(x, y1, y2, facecolor=color,alpha=0.3, interpolate=True)
+                else:
+                    plot=plt.plot(x,y1,color=color,alpha=1.0)
+                    plot=plt.plot(x,y2,color=color,alpha=1.0)
+            tags.append( Rectangle((0, 0), 1, 1, fc=color,alpha=0.3) )
+            labels.append("SNR="+str(snr))
+        plt.legend(tags,labels)
+        #plt.ylim([-1,7])
+        plt.xlim([3,9])
+        plt.title("Parameter uncertainty for LISA q="+str(q)+" SMBH merger")
+        plt.ylabel("log(d"+par_name(ipar)+")")
         plt.xlabel("log(M/Msun)")
         #plt.show()
         pp.savefig()

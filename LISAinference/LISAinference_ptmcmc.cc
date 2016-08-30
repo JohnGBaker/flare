@@ -677,7 +677,10 @@ int main(int argc, char*argv[]){
 	  cout<<"bad,dim:"<<bad<<","<<dim<<endl;
 	}
       }
-      for(int i=0;i<Npar;i++)for(int j=0;j<=i;j++)gsl_matrix_set(fishcov,i,j,gsl_matrix_get(fishcov,i,j)/sqrt(fim[i][i]*fim[j][j]));//Revert the scaling
+      for(int i=0;i<Npar;i++)for(int j=0;j<=i;j++){
+	  gsl_matrix_set(fishcov,i,j,gsl_matrix_get(fishcov,i,j)/sqrt(fim[i][i]*fim[j][j]));//Revert the scaling
+	  gsl_matrix_set(fishcov,j,i,gsl_matrix_get(fishcov,i,j));
+	}
     }
     if(not bad) {
       cout<<"\nCovariance:"<<endl;
