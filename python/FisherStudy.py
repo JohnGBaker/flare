@@ -10,4 +10,7 @@ print "Ms=",Ms
 #flare.FisherStudy([1.5e4],[1],[10,100,1000],[0.1,0.3],30,6)
 #flare.FisherStudy([1.5e6,1.5e8],[1],[10],[0.1,0.3],12,6)
 #flare.FisherStudy(Ms,[1],[10],[0.1,0.3],6,6)
+#flare.noRun=True
+flare.all_params_file = open("FisherStudy-allparams.dat","w")
 flare.FisherStudy(Ms,[1.1,2.0,4.0,10.0],[10,100,1000],[0.1,0.3],60,6)
+flare.all_params_file.close()

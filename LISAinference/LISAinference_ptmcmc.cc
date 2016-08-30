@@ -507,10 +507,10 @@ int main(int argc, char*argv[]){
   if(doFisher){
     //Next compute the Fisher matrix at the injected state.
     ss.str("");ss<<base<<"_fishcov.dat";
-    ofstream outfish(ss.str().c_str());
     vector< vector<double> > fim(Npar,vector<double>(Npar));
     vector< vector<double> > sfim(Npar,vector<double>(Npar));
     double err=like->getFisher(injected_state,fim);
+    ofstream outfish(ss.str().c_str());
     cout<<"Fisher err ~"<<err<<endl;
     cout<<"At pars:\n"<<endl;
     for(int i=0;i<Npar;i++)cout<<names[i]<<"\t";
@@ -677,7 +677,7 @@ int main(int argc, char*argv[]){
 	  cout<<"bad,dim:"<<bad<<","<<dim<<endl;
 	}
       }
-      for(int i=0;i<Npar;i++)for(int j=0;j<=i;j++)gsl_matrix_set(fishcov,i,j,gsl_matrix_get(fishcov,i,j)*sqrt(fim[i][i]*fim[j][j]));//Revert the scaling
+      for(int i=0;i<Npar;i++)for(int j=0;j<=i;j++)gsl_matrix_set(fishcov,i,j,gsl_matrix_get(fishcov,i,j)/sqrt(fim[i][i]*fim[j][j]));//Revert the scaling
     }
     if(not bad) {
       cout<<"\nCovariance:"<<endl;
@@ -709,6 +709,7 @@ int main(int argc, char*argv[]){
     //Close-out Fisher/Covar
     gsl_matrix_free(fishcov);
     outfish.close();
+    cout<<"Wrote file '"<<base<<"_fishcov.dat"<<"'"<<endl;
   }
   
   if(stoi(opt.value("nsteps"))<=0){

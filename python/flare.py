@@ -13,8 +13,11 @@ import sys
 import traceback
 
 multithreaded=True
+threadLock=threading.Lock()
 ireport=9
 FisherRunFailCount=0
+noRun=False
+all_params_file=False
 
 def set_flare_flags(snr,params):
     flags=""
@@ -177,23 +180,22 @@ def SNRstudy(MtotList,qList,SNRList,Navg):
         plt.clf()
     pp.close()
     
-def FisherRun(Mtot,q,snr,delta,label,data):
-    global FisherRunFailCount
-    done=False
-    while not done:
-        #dist is the return list
-        npts=2**int(3.5 - math.log10(delta)*6.5)  #this formula was based on a study of how many nbptsoverlap are needed for convergence to within ~5% over a range of Fisher_err_target delta values.  The study was for a case with --m1 157500.0 --m2 107500.0 --snr 100 
-        cmd   = flare_dir+"/LISAinference/LISAinference_ptmcmc"
-        flags = "--nsteps=0 --Fisher_err_target="+str(delta)+" --flat-distprior --deltaT 5000"
-        params=draw_params(Mtot,q)
-        flags+=set_flare_flags(snr,params)+" --tagint 1 --nbptsoverlap "+str(npts)
-        name=str(label)
-        flags += " --rng_seed="+str(np.random.rand())+" " 
-        flags += " --outroot "+str(name)+" "
-        cmd += " "+flags+">"+name+".out"
-        setenv = "export ROM_DATA_PATH=/Users/jgbaker/Projects/GWDA/LISA-type-response/flare/ROMdata/q1-12_Mfmin_0.0003940393857519091"
-        try:
-            print "Executing '"+cmd+"'"
+def FisherRunByParams(snr,params,delta,label,extrapoints=1.0):
+    cmd   = flare_dir+"/LISAinference/LISAinference_ptmcmc"
+    #npts=2**int(3.5 - math.log10(delta)*6.5)  #this formula was based on a study of how many nbptsoverlap are needed for convergence to within ~5% over a range of Fisher_err_target delta values.  The study was for a case with --m1 157500.0 --m2 107500.0 --snr 100 
+    npts=extrapoints*20/delta/delta #Simplified variant, multiplied by additional factor of two to be conservative note seems we only have convergence at order (1/nbpts)^0.5 I
+    flags = "--nsteps=0 --Fisher_err_target="+str(delta)+" --flat-distprior --deltaT 5000"
+    flags+=set_flare_flags(snr,params)+" --tagint 1 --nbptsoverlap "+str(npts)
+    name=str(label)
+    flags += " --rng_seed="+str(np.random.rand())+" " 
+    flags += " --outroot "+str(name)+" "
+    cmd += " "+flags+">"+name+".out"
+    setenv = "export ROM_DATA_PATH=/Users/jgbaker/Projects/GWDA/LISA-type-response/flare/ROMdata/q1-12_Mfmin_0.0003940393857519091"
+    try:
+        print "Executing '"+cmd+"'"
+        dist=0
+        cov=[]
+        if not noRun:
             code=subprocess.call(setenv+";"+cmd,shell=True)
             print "Run "+name+" completed with code(",code,")"
             with open(name+"params.txt",'r') as file:
@@ -204,12 +206,27 @@ def FisherRun(Mtot,q,snr,delta,label,data):
             time.sleep(1)#pause to make sure file is ready to read.
             cov=readCovarFile(name+"_fishcov.dat")
             #v=math.sqrt(np.random.rand()-0.1)#to test behavior under occasional failures
-            done=True
-        except (ValueError,ArithmeticError):
-            print "Exception",sys.exc_info()[0]," occurred in run"+name+" for params ",params
-            FisherRunFailCount+=1
-            print "  FailCount=",FisherRunFailCount
-            subprocess.call("echo '\n\n***********************\nFailure "+str(FisherRunFailCount)+"\n***********************\n"+cmd+"' |cat - "+name+".out "+name+"_fishcov.out >> fisher_fails.out",shell=True)
+        done=True
+    except (ValueError,ArithmeticError):
+        print "Exception",sys.exc_info()[0]," occurred in run"+name+" for params ",params
+        FisherRunFailCount+=1
+        print "  FailCount=",FisherRunFailCount
+        subprocess.call("echo '\n\n***********************\nFailure "+str(FisherRunFailCount)+"\n***********************\n"+cmd+"' |cat - "+name+".out "+name+"_fishcov.out >> fisher_fails.out",shell=True)
+    return [float(dist)]+cov
+
+def FisherRun(Mtot,q,snr,delta,label,datum):
+    global FisherRunFailCount
+    done=False
+    while not done:
+        params=draw_params(Mtot,q)
+        if(not getattr(all_params_file,"write",None)==None):
+            threadLock.acquire()
+            all_params_file.write(str(snr)+"\t")
+            for pval in params:
+                all_params_file.write(str(pval)+"\t")
+            all_params_file.write("\n")
+            threadLock.release()
+        datum=FisherRunByParams(snr,params,delta,label)
     data.append( [float(dist)]+cov )
     return
 
@@ -269,8 +286,16 @@ def readCovarFile(file):
                 dlam   = math.sqrt(covar[6][6])
                 dbeta  = math.sqrt(covar[7][7])
                 dpol   = math.sqrt(covar[8][8])
-                dsky   = np.math.cos(beta)*math.sqrt(covar[6][6]*covar[7][7]-covar[6][7]**2)
-                dori   = np.math.sin(inc)*math.sqrt(covar[5][5]*covar[8][8]-covar[8][5]**2)
+                val=covar[6][6]*covar[7][7]-covar[6][7]**2
+                if val<0:
+                    dsky=float('nan')
+                    if -val<1e-13*covar[0][0]*covar[1][1]:dsky=0
+                else: dsky=math.sqrt(val)
+                val=covar[5][5]*covar[8][8]-covar[5][8]**2
+                if val<0:
+                    dori=float('nan')
+                    if -val<1e-13*covar[0][0]*covar[1][1]:dori=0
+                else: dori=math.sqrt(val)
                 val=covar[0][0]*covar[1][1]-covar[0][1]**2
                 if val<0:
                     dmvol=float('nan')
@@ -286,10 +311,11 @@ def readCovarFile(file):
                 print "giving up!!!"
                 done=True
                 raise
-        except ArithmeticError:
+        except ValueError:
             print traceback.format_exc(limit=1)
             print "Continuing after arithmetic error:"
         #else: print "...No execption in read covar"
+            raise
     return [dm1,dm2,dtRef,dD,dphase,dinc,dlam,dbeta,dpol,dsky,dori,dmvol]
             
               
@@ -318,6 +344,7 @@ def FisherStudy(MtotList,qList,SNRList,deltalist,Navg,Nthreads):
                     else:
                         for i in range(Navg):
                             FisherRun(Mtot,q,snr,delta,"dummy",data)
+                    if noRun: continue
                     for i in range(Navg):
                         z=z_at_value(cosmo.luminosity_distance,data[i][0]*units.Mpc,zmax=10000,ztol=1e-6)
                         #print "D=",dist," z=",z
