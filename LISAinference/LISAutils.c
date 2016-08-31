@@ -633,6 +633,10 @@ int LISAGenerateSignalCAmpPhase(
     //printf("Extending signal waveform.  Mfmatch=%g\n",globalparams->Mfmatch);
     ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, globalparams->Mfmatch, globalparams->minf, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
   }
+  if(ret==FAILURE){
+    printf("LISAGenerateSignalCAmpPhase: Generation of ROM for injection failed!\n");
+    return FAILURE;
+  }
   int i;
   ListmodesCAmpPhaseFrequencySeries* listelem = listROM;
   while(listelem){
@@ -730,7 +734,10 @@ int LISAGenerateInjectionCAmpPhase(
     ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, globalparams->Mfmatch, globalparams->minf, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
   }
   /* If the ROM waveform generation failed (e.g. parameters were out of bounds) return FAILURE */
-  if(ret==FAILURE) return FAILURE;
+  if(ret==FAILURE){
+    printf("Failed to generate injection ROM\n");
+    return FAILURE;
+  }
   /*
   printf("Result....\n");
   printf("listROM: %i %i %i\n",listROM->freqseries->amp_real->size,listROM->l,listROM->m);
@@ -999,6 +1006,7 @@ double CalculateLogLCAmpPhase(LISAParams *params, LISAInjectionCAmpPhase* inject
 
     /* Output: value of the loglikelihood for the combined signals, assuming noise independence */
     logL = overlapTDI123 - 1./2*(injection->TDI123ss) - 1./2*(generatedsignal->TDI123hh);
+    //printf("logL=%g",logL);
   }
   /* Clean up */
   LISASignalCAmpPhase_Cleanup(generatedsignal);

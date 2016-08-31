@@ -10,6 +10,7 @@ LLVutils.o: LLVutils.c LLVutils.h
 	$(CC) -c $(CFLAGS) LLVutils.c
 
 bambi.o: bambi.cc bambi.h
+	@echo CPP=$(CPP)
 	$(CPP) -c $(CPPFLAGS) -I$(BAMBIINC) bambi.cc
 
 LLVlikelihood.o: LLVlikelihood.c LLVinference.h LLVutils.h ../LLVsim/LLVFDresponse.h ../LLVsim/LLVnoise.h ../LLVsim/LLVgeometry.h ../tools/constants.h ../tools/struct.h ../tools/likelihood.h ../EOBNRv2HMROM/EOBNRv2HMROM.h ../EOBNRv2HMROM/EOBNRv2HMROMstruct.h ../integration/wip.h

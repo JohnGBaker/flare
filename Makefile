@@ -1,5 +1,5 @@
 MESSAGE="Specify which machine to compile for in the Makefile."
-MACHINE="sylvainsmac"
+MACHINE="discover"
 
 ifeq ($(MACHINE),"sylvainsmac")
   MESSAGE="Compiling for Sylvain's Mac"
@@ -47,6 +47,7 @@ else ifeq ($(MACHINE),"discover")
   FC = mpif90 -DPARALLEL
   CC = mpicc -DPARALLEL
   CXX = mpiicpc -DPARALLEL
+  CPP = mpiicpc -DPARALLEL
   LAPACKLIB = -lmkl_intel_lp64 -lmkl_intel_thread -liomp5 -lpthread -lm -lmkl_core -lmkl_lapack95_lp64
   CFLAGS += -g -O3 -fopenmp -I $(GSLROOT)/include -I $(FFTWROOT)/include -L$(FFTWROOT)/lib -L$(GSLROOT)/lib
   CXXFLAGS = -g -O3 -fopenmp

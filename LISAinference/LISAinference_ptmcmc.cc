@@ -209,11 +209,11 @@ public:
 	  double delta=(fisher_matrix[i][j]-last_fisher_matrix[i][j]);///scales[i]/scales[j];
 	  square+=fisher_matrix[i][j]*fisher_matrix[i][j];
 	  err+=delta*delta;
-	  if(isnan(delta)||delta*delta>tol/10)cout<<"delta["<<i<<","<<j<<"]="<<delta*delta<<endl;
+	  if(std::isnan(delta)||delta*delta>tol/10)cout<<"delta["<<i<<","<<j<<"]="<<delta*delta<<endl;
 	}
       cout<<"oldscales = ";for(int i=0;i<dim;i++)cout<<scales[i]<<"\t";cout<<endl;
       
-      if(isnan(err)){
+      if(std::isnan(err)){
 	for(int i=0;i<dim;i++)scales[i]/=3;
 	err=1e100;
       }else if(err<olderr or err>1000){
