@@ -46,7 +46,8 @@ typedef struct tagLISAParams {
 typedef struct tagLISAGlobalParams {
   double fRef;               /* reference frequency (Hz, default 0 which is interpreted as Mf=0.14) */
   double deltatobs;          /* max duration of observation (years, default 2) - the start of the signals might be cut in time instead of cut in frequency */
-  double minf;               /* Minimal frequency (Hz) - when set to 0 (default), use the first frequency covered by the noise data of the detector */
+  double minf;               /* Minimal frequency (Hz, default=0) - when set to 0, use the lowest frequency where the detector noise model is trusted __LISASimFD_Noise_fLow (set somewhat arbitrarily)*/
+  double maxf;               /* Maximal frequency (Hz, default=0) - when set to 0, use the highest frequency where the detector noise model is trusted __LISASimFD_Noise_fHigh (set somewhat arbitrarily)*/
   int tagextpn;              /* Tag to allow PN extension of the waveform at low frequencies */
   double Mfmatch;            /* When PN extension allowed, geometric matching frequency: will use ROM above this value. If <=0, use ROM down to the lowest covered frequency */
   int nbmodeinj;             /* number of modes to include in the injection (starting with 22) - defaults to 5 (all modes) */

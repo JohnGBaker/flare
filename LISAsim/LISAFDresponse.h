@@ -80,16 +80,19 @@ int LISASimFDResponseTDI3Chan(
   const double beta,                                          /* Second angle for the position in the sky */
   const double inclination,                                   /* Inclination of the source */
   const double psi,                                           /* Polarization angle */
+  const double maxf,                                          /* Maximal frequency to consider - used to ignore hard-to-resolve response at f>1Hz - NOTE: for now, no recomputation of the boundary, so when not resampling can lose a bit of support between the last frequency point covered and maxf */
   const TDItag tditag);                                       /* Selector for the set of TDI observables */
-int LISASimFDResponseTDI1Chan(
-  struct tagListmodesCAmpPhaseFrequencySeries **list,      /* Input: list of modes in Frequency-domain amplitude and phase form as produced by the ROM */
-  struct tagListmodesCAmpPhaseFrequencySeries **listTDI,   /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the TDI channel 1 */
-  const double tRef,                                          /* Time at coalescence */
-  const double lambda,                                        /* First angle for the position in the sky */
-  const double beta,                                          /* Second angle for the position in the sky */
-  const double inclination,                                   /* Inclination of the source */
-  const double psi,                                           /* Polarization angle */
-  const TDItag tditag);                                       /* Selector for the set of TDI observables */
+
+// int LISASimFDResponseTDI1Chan(
+//   struct tagListmodesCAmpPhaseFrequencySeries **list,      /* Input: list of modes in Frequency-domain amplitude and phase form as produced by the ROM */
+//   struct tagListmodesCAmpPhaseFrequencySeries **listTDI,   /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the TDI channel 1 */
+//   const double tRef,                                          /* Time at coalescence */
+//   const double lambda,                                        /* First angle for the position in the sky */
+//   const double beta,                                          /* Second angle for the position in the sky */
+//   const double inclination,                                   /* Inclination of the source */
+//   const double psi,                                           /* Polarization angle */
+//   const double maxf,                                          /* Maximal frequency to consider - used to ignore hard-to-resolve response at f>1Hz - NOTE: for now, no recomputation of the boundary, so when not resampling can lose a bit of support between the last frequency point covered and maxf */
+//   const TDItag tditag);                                       /* Selector for the set of TDI observables */
 
 #if 0
 { /* so that editors will match succeeding brace */

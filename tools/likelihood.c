@@ -620,7 +620,7 @@ gsl_set_error_handler(&Err_Handler);
   double minf = fmax(f1[imin1], f2min);
   double maxf = fmin(f1[imax1], f2max);
   if(fLow>0) {minf = fmax(fLow, minf);}
-  if(fHigh>0) {maxf = fmin(fHigh,maxf);}
+  if(fHigh>0) {maxf = fmin(fHigh, maxf);}
   while(f1[imin1+1]<=minf) imin1++;
   while(f1[imax1-1]>=maxf) imax1--;
   /* Estimate locally values for freqseries1 at the boundaries */
@@ -726,7 +726,7 @@ void ComputeIntegrandValues3Chan(
   if(fHigh>0) {maxf = fmin(fHigh, maxf);}
   while(f1[imin1+1]<=minf) imin1++;
   while(f1[imax1-1]>=maxf) imax1--;
-  /* Estimate locally values for freqseries1 at the boundaries - phase vectors assumed to be the same for channels 1,2,3 */
+  /* Estimate locally values for freqseries1 at the boundaries - phase vectors assumed to be the same for channels 1,2,3 - this is still true now that the response-processed phase includes the signal phase + R-delay phase, which is the same for all channels */
   double areal1chan1minf = EstimateBoundaryLegendreQuad(freq1, freqseries1chan1->amp_real, imin1, minf);
   double aimag1chan1minf = EstimateBoundaryLegendreQuad(freq1, freqseries1chan1->amp_imag, imin1, minf);
   double areal1chan2minf = EstimateBoundaryLegendreQuad(freq1, freqseries1chan2->amp_real, imin1, minf);

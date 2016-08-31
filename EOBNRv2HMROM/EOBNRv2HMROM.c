@@ -842,7 +842,10 @@ int SimEOBNRv2HMROMExtTF2(
       double dphase0=dphase0eob-dphase0tf2;
       double phase0=ph0 - phase0tf2 - f0*dphase0;
       double amp0bcoeff = amp / freqseries_new->amp_real->data[len_add] - 1.0; //Compute correction for continuity matching.
-      double amp0ccoeff = ((amp1/freqseries_new->amp_real->data[len_add+1]-1.0)/amp0bcoeff/(f1*f1/f0/f0)-1.0)/(f1/f0-1.0); //Compute correction for continuity matching.
+      double amp0ccoeff = ((amp1/freqseries_new->amp_real->data[len_add+1]-1.0)/amp0bcoeff/(f1*f1/f0/f0)-1.0)/(f1/f0-1.0);
+      //TESTING
+      //printf("%g, %g\n", amp0bcoeff, amp0ccoeff);
+      //Compute correction for continuity matching.
       /*
       printf("ph0eob,dph0eob= %g,  %g\n",ph0,dphase0eob);
       printf("ph0tf2,dph0tf2= %g,  %g\n",phase0tf2,dphase0tf2);
@@ -894,6 +897,13 @@ int SimEOBNRv2HMROMExtTF2(
     //delete the old content data and replace with the new
     CAmpPhaseFrequencySeries_Cleanup(freqseries);
     listelement->freqseries=freqseries_new;
+
+//TESTING
+//printf("In ext: len freqseries: %d\n", freqseries_new->freq->size);
+//for(int i=0; i<freqseries_new->freq->size; i++) {
+  //printf("%g %g %g %g\n", gsl_vector_get(freqseries_new->freq, i), gsl_vector_get(freqseries_new->amp_real, i), gsl_vector_get(freqseries_new->amp_imag, i), gsl_vector_get(freqseries_new->phase, i));
+//}
+
     listelement=listelement->next;
     gsl_vector_free(freq_new);
   }
