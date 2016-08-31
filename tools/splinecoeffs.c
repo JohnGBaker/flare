@@ -74,7 +74,7 @@ void BuildNotAKnotSpline(
   }
   double* x = vectx->data;
   double* y = vecty->data;
-
+  
   /* Computing vecth and vectDeltay */
   gsl_vector* vecth = gsl_vector_alloc(n-1);
   gsl_vector* vectDeltay = gsl_vector_alloc(n-1);
@@ -247,10 +247,10 @@ void BuildListmodesCAmpPhaseSpline(
     else {
       ListmodesCAmpPhaseFrequencySeries* listelementh = listh;
       while(listelementh) {
-	CAmpPhaseSpline* splines = NULL;
-	BuildSplineCoeffs(&splines, listelementh->freqseries);
 	int l = listelementh->l;
 	int m = listelementh->m;
+	CAmpPhaseSpline* splines = NULL;
+	BuildSplineCoeffs(&splines, listelementh->freqseries);
 	*listspline = ListmodesCAmpPhaseSpline_AddModeNoCopy(*listspline, splines, l, m);
 	listelementh = listelementh->next;	
       }

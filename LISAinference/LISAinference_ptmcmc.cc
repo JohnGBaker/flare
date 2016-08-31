@@ -18,6 +18,7 @@
 #include "ptmcmc.hh"
 #include "LISAinference_common.h"
 #include "gsl/gsl_linalg.h"
+#include "gsl/gsl_eigen.h"
 using namespace std;
 
 typedef initializer_list<double> dlist;
@@ -132,7 +133,7 @@ public:
   double getFisher(const state &s0, vector<vector<double> >&fisher_matrix)override{
     //First we must set the injection context
     /* Initialize the data structure for the injection */
-    //LISAInjectionCAmpPhase* injectedsignalCAmpPhase = NULL;
+    LISAInjectionCAmpPhase* injectedsignalCAmpPhase = NULL;
     LISAInjectionReIm* injectedsignalReIm = NULL;
     if(globalparams->tagint==0) {
       //LISAInjectionCAmpPhase_Init(&injectedsignalCAmpPhase);
@@ -148,21 +149,30 @@ public:
     int maxFisherIter=3*dim;
     //double deltafactor=0.001;
     double deltafactor=fisher_err_target;
-    double tol=5000*deltafactor*deltafactor*deltafactor;
-    valarray<double> scales;
+    double tol=5*deltafactor*deltafactor*deltafactor;
+    valarray<double> scales,minscales(dim);
     nativePrior->getScales(scales);
-    double err=1;
+    scales[0]=s0.get_param(0)/2.0;
+    scales[1]=s0.get_param(1)/2.0;
+    scales[3]=s0.get_param(3)/2.0;
+    for(int i=0;i<dim;i++)minscales[i]=scales[i]*1e-7;
+    double err=1e100;
+    double olderr=err;
     int count=0;
     vector< vector<double> >last_fisher_matrix(dim,vector<double>(dim,0));
-    while(err>tol&&count<maxFisherIter){
-      //cout<<"\ncount="<<count<<"\nscales = ";for(int i=0;i<dim;i++)cout<<scales[i]<<"\t";cout<<endl;
+    //while(err>tol&&count<maxFisherIter&&err<=olderr){
+    bool done=false,finish=false;
+    while(not done){
+      cout<<"\ncount="<<count<<"\nscales = ";for(int i=0;i<dim;i++)cout<<scales[i]<<"\t";cout<<endl;
+      cout<<"minscales = ";for(int i=0;i<dim;i++)cout<<minscales[i]<<"\t";cout<<endl;
       for(int i=0;i<dim;i++){
+	//cout<<"finish="<<finish<<", j lim="<<(finish?dim:i+1)<<endl;
 	double hi=scales[i]*deltafactor;
 	state sPlusi=s0;
 	sPlusi.set_param(i,s0.get_param(i)+hi);
 	state sMinusi=s0;
 	sMinusi.set_param(i,s0.get_param(i)-hi);
-	for(int j=i;j<dim;j++){
+	for(int j=i;j<(finish?dim:i+1);j++){//don't bother with offdiagonals at first for rough-in, then include while finishing
 	  //compute j derivative of model
 	  double hj=scales[j]*deltafactor;
 	  state sPlusj=s0;
@@ -173,39 +183,69 @@ public:
 	  //Compute fisher matrix element
 	  //cout<<"Fisher i,j="<<i<<","<<j<<endl;
 	  //cout<<"            hi,hj="<<hi<<","<<hj<<endl;
-	  fisher_matrix[i][j]
-	    = CalculateOverlapReIm(state2LISAParams( sPlusi), state2LISAParams( sPlusj), injectedsignalReIm)
-	    - CalculateOverlapReIm(state2LISAParams( sPlusi), state2LISAParams(sMinusj), injectedsignalReIm)
-	    - CalculateOverlapReIm(state2LISAParams(sMinusi), state2LISAParams( sPlusj), injectedsignalReIm)
-	    + CalculateOverlapReIm(state2LISAParams(sMinusi), state2LISAParams(sMinusj), injectedsignalReIm);	 
-	  fisher_matrix[i][j]/=4*hi*hj;
-	  
+	  if(globalparams->tagint==1) {
+	    fisher_matrix[i][j]
+	      = CalculateOverlapReIm(state2LISAParams( sPlusi), state2LISAParams( sPlusj), injectedsignalReIm)
+	      - CalculateOverlapReIm(state2LISAParams( sPlusi), state2LISAParams(sMinusj), injectedsignalReIm)
+	      - CalculateOverlapReIm(state2LISAParams(sMinusi), state2LISAParams( sPlusj), injectedsignalReIm)
+	      + CalculateOverlapReIm(state2LISAParams(sMinusi), state2LISAParams(sMinusj), injectedsignalReIm);	 
+	  } else {
+	    fisher_matrix[i][j]
+	      = CalculateOverlapCAmpPhase(state2LISAParams( sPlusi), state2LISAParams( sPlusj), injectedsignalCAmpPhase)
+	      - CalculateOverlapCAmpPhase(state2LISAParams( sPlusi), state2LISAParams(sMinusj), injectedsignalCAmpPhase)
+	      - CalculateOverlapCAmpPhase(state2LISAParams(sMinusi), state2LISAParams( sPlusj), injectedsignalCAmpPhase)
+	      + CalculateOverlapCAmpPhase(state2LISAParams(sMinusi), state2LISAParams(sMinusj), injectedsignalCAmpPhase);	 
+	  }	  
+	  fisher_matrix[i][j]/=4*hi*hj;	  
 	  fisher_matrix[j][i] = fisher_matrix[i][j];
 	}
       }
       
       //estimate error
+      olderr=err;
       err=0;
       double square=0;
-      for(int i=0;i<dim;i++)for(int j=0;j<dim;j++){
+      for(int i=0;i<dim;i++)for(int j=0;j<(finish?dim:i+1);j++){//neglecting offdiagonals until finish 
 	  double delta=(fisher_matrix[i][j]-last_fisher_matrix[i][j]);///scales[i]/scales[j];
 	  square+=fisher_matrix[i][j]*fisher_matrix[i][j];
 	  err+=delta*delta;
-	  //if(isnan(delta)||delta*delta>tol/10)cout<<"delta["<<i<<","<<j<<"]="<<delta*delta<<endl;
+	  if(isnan(delta)||delta*delta>tol/10)cout<<"delta["<<i<<","<<j<<"]="<<delta*delta<<endl;
 	}
+      cout<<"oldscales = ";for(int i=0;i<dim;i++)cout<<scales[i]<<"\t";cout<<endl;
+      
       if(isnan(err)){
 	for(int i=0;i<dim;i++)scales[i]/=3;
-	err=1;
-      }else{
+	err=1e100;
+      }else if(err<olderr or err>1000){
 	//set scale estimate based on result
-	for(int i=0;i<dim;i++)scales[i]=1.0/sqrt(1/scales[i]+fisher_matrix[i][i]);
+	for(int i=0;i<dim;i++){
+	  if(err>olderr)minscales[i]*=1.1;//force toward convergence is deltas are small and not converging.
+	  //scales[i]=1.0/sqrt(1/scales[i]+fisher_matrix[i][i]);
+	  scales[i]=sqrt(scales[i]/sqrt(fisher_matrix[i][i]));
+	  //if(scales[i]<minscales[i])scales[i]=minscales[i];
+	}
 	//prep for next version of fisher calc;
-	for(int i=0;i<dim;i++)for(int j=0;j<dim;j++)last_fisher_matrix[i][j]=fisher_matrix[i][j];
+	for(int i=0;i<dim;i++)for(int j=0;j<(finish?dim:i+1);j++)last_fisher_matrix[i][j]=fisher_matrix[i][j];
+      } else {
+	//leave scales alone and will quit.
       }
       count++;
-      //cout<<"err->"<<err<<"( goal="<<tol<<")"<<endl;
+      cout<<"err->"<<err<<"( goal="<<tol<<"), better than olderr="<<olderr<<"?"<<endl;
+      bool test = not ( err>tol and count<maxFisherIter and ( err>1000 or err<olderr));
+      if(test){
+	cout<<"test is true"<<endl;
+	if(finish){
+	  cout<<"finish is already true: done"<<endl;
+	  done=true;
+	} else {
+	  cout<<"Start finishing..."<<endl;
+	  finish=true;
+	  err=1e100;
+	}
+      }
     }
     err=sqrt(err);
+
     //cout<<"err="<<err<<endl;
     //cout<<"tol="<<tol<<endl;
     if(err<tol)return tol;
@@ -247,7 +287,53 @@ public:
 
     //cout<<" overlap="<<overlap<<endl;
     return overlap;
-  }
+  };
+
+  double CalculateOverlapCAmpPhase(LISAParams params1, LISAParams params2, LISAInjectionCAmpPhase * injection)
+  {
+    double overlap = -DBL_MAX;
+    int ret;
+
+    
+    /* Frequency vector - assumes common to A,E,T, i.e. identical fLow, fHigh in all channels */
+    //gsl_vector* freq = injection->freq; FIXME
+    
+    /* Generating the signal in the three detectors for the input parameters */
+    LISASignalCAmpPhase* signal1 = NULL;
+    LISASignalCAmpPhase* signal2 = NULL;
+    LISASignalCAmpPhase_Init(&signal1);
+    LISASignalCAmpPhase_Init(&signal2);
+    /* FIXME
+    ret = LISAGenerateSignalCAmpPhase(&params1, freq, signal1);
+    if(ret==SUCCESS){
+      ret = LISAGenerateSignalCAmpPhase(&params2, freq, signal2);
+      } */
+    /* If LISAGenerateSignal failed (e.g. parameters out of bound), silently return -Infinity logL */
+    if(ret==FAILURE) {
+      overlap = -DBL_MAX;
+    }
+    else if(ret==SUCCESS) {
+      
+      /* Now we compute the differences*/
+      //Probably based on ComputeIntegrandValues3Chan in tools/likelihood.c which is non-trival
+
+
+      /* Computing the likelihood for each TDI channel - fstartobs has already been taken into account */
+      /* FIXME
+      double loglikelihoodTDI1 = FDLogLikelihoodCAmpPhase(signal1->TDI1Signal, signal2->TDI1Signal, injection->noisevalues1);
+      double loglikelihoodTDI2 = FDLogLikelihoodCAmpPhase(signal1->TDI2Signal, signal2->TDI2Signal, injection->noisevalues2);
+      double loglikelihoodTDI3 = FDLogLikelihoodCAmpPhase(signal1->TDI3Signal, signal2->TDI3Signal, injection->noisevalues3);
+      overlap = loglikelihoodTDI1 + loglikelihoodTDI2 + loglikelihoodTDI3;
+      */
+    }
+    
+    /* Clean up */
+    LISASignalCAmpPhase_Cleanup(signal1);
+    LISASignalCAmpPhase_Cleanup(signal2);
+
+    //cout<<" overlap="<<overlap<<endl;
+    return overlap;
+  };
 
 };
 
@@ -273,6 +359,7 @@ int main(int argc, char*argv[]){
   opt.add(Option("info_every","How often to dump likehood eval info to stdout. Default never","10000"));
   opt.add(Option("rng_seed","Pseudo random number grenerator seed in [0,1). (Default=-1, use clock to seed.)","-1"));
   opt.add(Option("precision","Set output precision digits. (Default 13).","13"));
+  opt.add(Option("noFisher","Skip Fisher computation."));
   opt.add(Option("Fisher_err_target","Set target for Fisher error measure. (Default 0.001).","0.001"));
   opt.add(Option("help","Print help message."));
   //First we parse the ptmcmc-related parameters like un gleam. 
@@ -306,6 +393,7 @@ int main(int argc, char*argv[]){
   istringstream(opt.value("rng_seed"))>>seed;
   istringstream(opt.value("info_every"))>>info_every;
   istringstream(opt.value("Fisher_err_target"))>>fisher_err_target;
+  bool doFisher=not opt.set("noFisher");
   
   //if seed<0 set seed from clock
   if(seed<0)seed=fmod(time(NULL)/3.0e7,1);
@@ -333,8 +421,8 @@ int main(int argc, char*argv[]){
   if(!priorParams->flat_distprior)names[3]="s(D)";
   space.set_names(names);  
   space.set_bound(4,boundary(boundary::wrap,boundary::wrap,0,2*M_PI));//set 2-pi-wrapped space for phi.
-  space.set_bound(6,boundary(boundary::wrap,boundary::wrap,0,2*M_PI));//set 2-pi-wrapped space for phi.
-  space.set_bound(8,boundary(boundary::wrap,boundary::wrap,0,M_PI));//set pi-wrapped space for phi.
+  space.set_bound(6,boundary(boundary::wrap,boundary::wrap,0,2*M_PI));//set 2-pi-wrapped space for lambda.
+  space.set_bound(8,boundary(boundary::wrap,boundary::wrap,0,M_PI));//set pi-wrapped space for pol.
   cout<<"Parameter space:\n"<<space.show()<<endl;
 
   //Set the prior:
@@ -416,84 +504,217 @@ int main(int argc, char*argv[]){
   like->reset();
   if(info_every>0)fl.info_every(info_every);
   
-  //Next compute the Fisher matrix at the injected state.
-  ss.str("");ss<<base<<"_fishcov.dat";
-  ofstream outfish(ss.str().c_str());
-  vector< vector<double> > fim(Npar,vector<double>(Npar));
-  double err=like->getFisher(injected_state,fim);
-  cout<<"Fisher err ~"<<err<<endl;
-  cout<<"At pars:\n"<<endl;
-  for(int i=0;i<Npar;i++)cout<<names[i]<<"\t";
-  cout<<endl;
-  cout<<"\nFisher at injection:"<<endl;
-  outfish<<"#At pars:\n#";
-  for(int i=0;i<Npar;i++)outfish<<names[i]<<"\t";
-  outfish<<endl;
-  for(int i=0;i<Npar;i++)outfish<<injected_state.get_param(i)<<"\t";
-  outfish<<endl;
-  outfish<<"\n#Fisher:"<<endl;
-  for(int i=0;i<Npar;i++){
-    cout<<names[i]<<"\t";
-    for(int j=0;j<=i;j++)cout<<"\t"<<fim[i][j];
+  if(doFisher){
+    //Next compute the Fisher matrix at the injected state.
+    ss.str("");ss<<base<<"_fishcov.dat";
+    vector< vector<double> > fim(Npar,vector<double>(Npar));
+    vector< vector<double> > sfim(Npar,vector<double>(Npar));
+    double err=like->getFisher(injected_state,fim);
+    ofstream outfish(ss.str().c_str());
+    cout<<"Fisher err ~"<<err<<endl;
+    cout<<"At pars:\n"<<endl;
+    for(int i=0;i<Npar;i++)cout<<names[i]<<"\t";
     cout<<endl;
-    for(int j=0;j<=i;j++)outfish<<"\t"<<fim[i][j];
-    for(int j=i+1;j<Npar;j++)outfish<<"\t"<<fim[i][j];
+    cout<<"\nFisher at injection:"<<endl;
+    outfish<<"#At pars:\n#";
+    for(int i=0;i<Npar;i++)outfish<<names[i]<<"\t";
     outfish<<endl;
-  }
-  //Next dump Fisher scaled by diagonals;
-  cout<<"Fisher scales:"<<endl;
-  for(int i=0;i<Npar;i++)cout<<sqrt(fim[i][i])<<"\t";
-  cout<<endl;
-  outfish<<"\n#Fisher scales:"<<endl;
-  for(int i=0;i<Npar;i++)outfish<<sqrt(fim[i][i])<<"\t";
-  outfish<<endl;
-  cout<<"\nScaled Fisher:"<<endl;
-  outfish<<"\n#Scaled Fisher:"<<endl;
-  for(int i=0;i<Npar;i++){
-    cout<<names[i]<<"\t";
-    for(int j=0;j<=i;j++)cout<<"\t"<<fim[i][j]/sqrt(fim[i][i]*fim[j][j]);
-    cout<<endl;
-    for(int j=0;j<=i;j++)outfish<<"\t"<<fim[i][j]/sqrt(fim[i][i]*fim[j][j]);
-    for(int j=i+1;j<Npar;j++)outfish<<"\t"<<fim[i][j]/sqrt(fim[i][i]*fim[j][j]);
+    for(int i=0;i<Npar;i++)outfish<<injected_state.get_param(i)<<"\t";
     outfish<<endl;
-  }
-  //Now invert it to get the covariance matrix
-  //We use GSLs Cholesky decomposition for this.
-  gsl_set_error_handler_off();
-  gsl_matrix * fishcov=gsl_matrix_alloc(Npar,Npar);
-  for(int i=0;i<Npar;i++)for(int j=0;j<=i;j++)gsl_matrix_set(fishcov,i,j,fim[i][j]);//Don't need upper triangle for GSLs routine
-  if(gsl_linalg_cholesky_decomp(fishcov))cout<<"Fisher matrix Cholesky decomposition failed."<<endl;
-  else if(gsl_linalg_cholesky_invert(fishcov))cout<<"Fisher matrix Cholesky inverse failed."<<endl;
-  else {
-    cout<<"\nCovariance:"<<endl;
-    outfish<<"\n#Covariance:"<<endl;
+    outfish<<"\n#Fisher:"<<endl;
     for(int i=0;i<Npar;i++){
       cout<<names[i]<<"\t";
-      for(int j=0;j<=i;j++)cout<<"\t"<<gsl_matrix_get(fishcov,i,j);
+      for(int j=0;j<=i;j++)cout<<"\t"<<fim[i][j];
       cout<<endl;
-      for(int j=0;j<=i;j++)outfish<<"\t"<<gsl_matrix_get(fishcov,i,j);
-      for(int j=i+1;j<Npar;j++)outfish<<"\t"<<gsl_matrix_get(fishcov,i,j);
+      for(int j=0;j<=i;j++)outfish<<"\t"<<fim[i][j];
+      for(int j=i+1;j<Npar;j++)outfish<<"\t"<<fim[i][j];
       outfish<<endl;
     }
-    //Now the correlation matrix:
-    cout<<"\nCovar scales:"<<endl;
-    for(int i=0;i<Npar;i++)cout<<sqrt(gsl_matrix_get(fishcov,i,i))<<"\t";
-    outfish<<"\n#Covar scales:"<<endl;
-    for(int i=0;i<Npar;i++)outfish<<sqrt(gsl_matrix_get(fishcov,i,i))<<"\t";
-    cout<<"\n\nCorrelation:"<<endl;
-    outfish<<"\n\n#Coorrelation:"<<endl;
+    //Next dump Fisher scaled by diagonals;
+    for(int i=0;i<Npar;i++)for(int j=0;j<=i;j++)sfim[j][i]=sfim[i][j]=fim[i][j]/sqrt(fim[i][i]*fim[j][j]);
+    cout<<"Fisher scales:"<<endl;
+    for(int i=0;i<Npar;i++)cout<<sqrt(fim[i][i])<<"\t";
+    cout<<endl;
+    outfish<<"\n#Fisher scales:"<<endl;
+    for(int i=0;i<Npar;i++)outfish<<sqrt(fim[i][i])<<"\t";
+    outfish<<endl;
+    cout<<"\nScaled Fisher:"<<endl;
+    outfish<<"\n#Scaled Fisher:"<<endl;
     for(int i=0;i<Npar;i++){
       cout<<names[i]<<"\t";
-      for(int j=0;j<=i;j++)cout<<"\t"<<gsl_matrix_get(fishcov,i,j)/sqrt(gsl_matrix_get(fishcov,i,i)*gsl_matrix_get(fishcov,j,j));
+      for(int j=0;j<=i;j++)cout<<"\t"<<fim[i][j]/sqrt(fim[i][i]*fim[j][j]);
       cout<<endl;
-      for(int j=0;j<=i;j++)outfish<<"\t"<<gsl_matrix_get(fishcov,i,j)/sqrt(gsl_matrix_get(fishcov,i,i)*gsl_matrix_get(fishcov,j,j));
-  for(int j=i+1;j<Npar;j++)outfish<<"\t"<<gsl_matrix_get(fishcov,i,j)/sqrt(gsl_matrix_get(fishcov,i,i)*gsl_matrix_get(fishcov,j,j));
+      for(int j=0;j<=i;j++)outfish<<"\t"<<fim[i][j]/sqrt(fim[i][i]*fim[j][j]);
+      for(int j=i+1;j<Npar;j++)outfish<<"\t"<<fim[i][j]/sqrt(fim[i][i]*fim[j][j]);
       outfish<<endl;
     }
+    //Now invert it to get the covariance matrix
+    //We use GSLs Cholesky decomposition for this.
+    gsl_set_error_handler_off();
+    gsl_matrix * fishcov=gsl_matrix_alloc(Npar,Npar);
+    bool bad=true;
+    double fishnorm=0;for(int i=0;i<Npar;i++)for(int j=0;j<Npar;j++)fishnorm+=fim[i][j]*fim[i][j];
+    cout<< "Norm of Fisher="<<fishnorm<<endl;
+    if(false){
+      for(int i=0;i<Npar;i++)for(int j=0;j<=i;j++)gsl_matrix_set(fishcov,i,j,fim[i][j]);//Don't need upper triangle for GSLs routine 
+      if(gsl_linalg_cholesky_decomp(fishcov))cout<<"Fisher matrix Cholesky decomposition failed."<<endl;
+      else if(gsl_linalg_cholesky_invert(fishcov))cout<<"Fisher matrix Cholesky inverse failed."<<endl;
+      else bad=false;
+      if(bad){ //try LU decomposition
+	int s;
+	gsl_permutation * p = gsl_permutation_alloc (Npar);
+	gsl_matrix * fishLU=gsl_matrix_alloc(Npar,Npar);
+	for(int i=0;i<Npar;i++)for(int j=0;j<Npar;j++)gsl_matrix_set(fishLU,i,j,fim[i][j]); 
+	if(gsl_linalg_LU_decomp(fishLU,p,&s))cout<<"Fisher matrix LU decomposition failed."<<endl;
+	else if (gsl_linalg_LU_invert(fishLU,p,fishcov))cout<<"Fisher matrix LU inverse failed."<<endl;
+	else bad=false;
+      gsl_permutation_free (p);
+      gsl_matrix_free (fishLU);
+      }
+    } else {
+      for(int i=0;i<Npar;i++)for(int j=0;j<=i;j++)gsl_matrix_set(fishcov,i,j,sfim[i][j]);//Here we invert the scaled Fisher
+      if(gsl_linalg_cholesky_decomp(fishcov))cout<<"Fisher matrix Cholesky decomposition failed."<<endl; 
+      else if(gsl_linalg_cholesky_invert(fishcov))cout<<"Fisher matrix Cholesky inverse failed."<<endl;
+      else bad=false;
+      //try LU decomposition, eliminating vars as needed until success
+      if(bad){
+	vector<int>idxmap(Npar);for(int i=0;i<Npar;i++)idxmap[i]=i;//define an initially trivial map of param indices to (maybe) nondegenerate vector space indices
+	vector<int>idxinvmap(Npar);for(int i=0;i<Npar;i++)idxinvmap[i]=i;//and its inverse
+	int dim=Npar;
+	while(bad and dim>0){
+	  cout<<"   map: ";for(int i=0;i<Npar;i++)cout<<idxmap[i]<<" ";cout<<endl;
+	  cout<<"invmap: ";for(int i=0;i<dim;i++)cout<<idxinvmap[i]<<" ";cout<<endl;
+	  int s;
+	  gsl_permutation * p = gsl_permutation_alloc(dim);
+	  gsl_matrix * fishLU=gsl_matrix_alloc(dim,dim);
+	  gsl_matrix * covLU=gsl_matrix_alloc(dim,dim);
+	  for(int i=0;i<dim;i++){//store reduced dimension matrix in fishcov
+	    for(int j=0;j<dim;j++){
+	      gsl_matrix_set(fishcov,i,j,sfim[idxinvmap[i]][idxinvmap[j]]);
+	    }
+	  }
+	  cout<<"\n#Reduced Fisher:"<<endl;
+	  for(int i=0;i<dim;i++){
+	    cout<<names[idxinvmap[i]]<<"\t";
+	    for(int j=0;j<=i;j++)cout<<"\t"<<gsl_matrix_get(fishcov,i,j);
+	    cout<<endl;
+	  }
+	  for(int i=0;i<dim;i++)for(int j=0;j<dim;j++)gsl_matrix_set(fishLU,i,j,gsl_matrix_get(fishcov,i,j)); 
+	  if(gsl_linalg_LU_decomp(fishLU,p,&s))cout<<"Fisher matrix LU decomposition failed."<<endl;
+	  else if (gsl_linalg_LU_invert(fishLU,p,covLU))cout<<"Fisher matrix LU inverse failed."<<endl;
+	  else {
+	    bad=false;
+	    cout<<"LU inverse succeeded"<<endl;
+	  }
+	  if(bad){ //report eigenvalues for diagnostic and try again.
+	    int s;
+	    gsl_eigen_symmv_workspace * workspace = gsl_eigen_symmv_alloc(dim);
+	    gsl_vector * evals = gsl_vector_alloc(dim);
+	    gsl_matrix * evecs=gsl_matrix_alloc(dim,dim);
+	    for(int i=0;i<dim;i++)for(int j=0;j<dim;j++)gsl_matrix_set(fishLU,i,j,gsl_matrix_get(fishcov,i,j));
+	    gsl_eigen_symmv(fishLU,evals,evecs,workspace);
+	    if(1){
+	      cout<<"Eigenvals:vecs:"<<endl;
+	      for(int i=0;i<dim;i++){
+		cout<<"("<<i<<") "<<gsl_vector_get(evals,i)<<":{";
+		for(int j=0;j<dim;j++){
+		  cout<<gsl_matrix_get(evecs,j,i);
+		  if(j<dim-1)cout<<", ";
+		}
+		cout<<"}"<<endl;
+		if(gsl_vector_get(evals,i)<0)cout<<"    ***Whaaaaa?"<<endl;
+	      }
+	    }
+	    //Next search for and flag the most degenerate parameter
+	    //(defined as the largest row in the eigenvector column of the smallest eigenvalue
+	    double evalmin=1e100;
+	    int ievalmin=-1;
+	    for(int i=0;i<dim;i++)if(gsl_vector_get(evals,i)<evalmin){//find smallest eigenvalue
+		evalmin=gsl_vector_get(evals,i);
+		ievalmin=i;
+	      }
+	    double coeffmax=0;
+	    double icoeffmax=-1;
+	    for(int i=0;i<dim;i++){//find largest eigenvector component
+	      double val=gsl_matrix_get(evecs,i,ievalmin);
+	      if(val<0)val=-val;
+	      if(val>coeffmax){
+		coeffmax=val;
+		icoeffmax=i;
+	      }
+	    }
+	    //Now eliminate that param:
+	    int idegen=idxinvmap[icoeffmax];
+	    cout<<"degenerate eval, par:"<<ievalmin<<", "<<idegen<<endl;
+	    idxmap[idegen]=-1;
+	    for(int i=icoeffmax+1;i<dim;i++){
+	      int ipar=idxinvmap[i];
+	      idxinvmap[i-1]=ipar;
+	      idxmap[ipar]=i-1;
+	    }
+	    dim-=1;
+	    //cleanup
+	    gsl_eigen_symmv_free(workspace);
+	    gsl_vector_free (evals);
+	    gsl_matrix_free (evecs);
+	  }
+	  if(not bad){	  //If done construct the full inverted matrix in fishcov with inf for the degenerate bits. 
+	    for(int i=0;i<Npar;i++)for(int j=0;j<=i;j++){
+		int iLU=idxmap[i];
+		int jLU=idxmap[j];
+		if(iLU>=0 and jLU>=0){
+		  gsl_matrix_set(fishcov,i,j,gsl_matrix_get(covLU,iLU,jLU));
+		gsl_matrix_set(fishcov,j,i,gsl_matrix_get(covLU,iLU,jLU));
+		} else {
+		  gsl_matrix_set(fishcov,i,j,1.0/0);
+		  gsl_matrix_set(fishcov,j,i,1.0/0);
+		}
+	      }
+	  }
+	  gsl_permutation_free (p);
+	  gsl_matrix_free (fishLU);
+	  gsl_matrix_free (covLU);
+	  cout<<"bad,dim:"<<bad<<","<<dim<<endl;
+	}
+      }
+      for(int i=0;i<Npar;i++)for(int j=0;j<=i;j++){
+	  gsl_matrix_set(fishcov,i,j,gsl_matrix_get(fishcov,i,j)/sqrt(fim[i][i]*fim[j][j]));//Revert the scaling
+	  gsl_matrix_set(fishcov,j,i,gsl_matrix_get(fishcov,i,j));
+	}
+    }
+    if(not bad) {
+      cout<<"\nCovariance:"<<endl;
+      outfish<<"\n#Covariance:"<<endl;
+      for(int i=0;i<Npar;i++){
+	cout<<names[i]<<"\t";
+	for(int j=0;j<=i;j++)cout<<"\t"<<gsl_matrix_get(fishcov,i,j);
+	cout<<endl;
+	for(int j=0;j<=i;j++)outfish<<"\t"<<gsl_matrix_get(fishcov,i,j);
+	for(int j=i+1;j<Npar;j++)outfish<<"\t"<<gsl_matrix_get(fishcov,i,j);
+	outfish<<endl;
+      }
+      //Now the correlation matrix:
+      cout<<"\nCovar scales:"<<endl;
+      for(int i=0;i<Npar;i++)cout<<sqrt(gsl_matrix_get(fishcov,i,i))<<"\t";
+      outfish<<"\n#Covar scales:"<<endl;
+      for(int i=0;i<Npar;i++)outfish<<sqrt(gsl_matrix_get(fishcov,i,i))<<"\t";
+      cout<<"\n\nCorrelation:"<<endl;
+      outfish<<"\n\n#Coorrelation:"<<endl;
+      for(int i=0;i<Npar;i++){
+	cout<<names[i]<<"\t";
+	for(int j=0;j<=i;j++)cout<<"\t"<<gsl_matrix_get(fishcov,i,j)/sqrt(gsl_matrix_get(fishcov,i,i)*gsl_matrix_get(fishcov,j,j));
+	cout<<endl;
+	for(int j=0;j<=i;j++)outfish<<"\t"<<gsl_matrix_get(fishcov,i,j)/sqrt(gsl_matrix_get(fishcov,i,i)*gsl_matrix_get(fishcov,j,j));
+	for(int j=i+1;j<Npar;j++)outfish<<"\t"<<gsl_matrix_get(fishcov,i,j)/sqrt(gsl_matrix_get(fishcov,i,i)*gsl_matrix_get(fishcov,j,j));
+	outfish<<endl;
+      }
+    }
+    //Close-out Fisher/Covar
+    gsl_matrix_free(fishcov);
+    outfish.close();
+    cout<<"Wrote file '"<<base<<"_fishcov.dat"<<"'"<<endl;
   }
-  //Close-out Fisher/Covar
-  gsl_matrix_free(fishcov);
-  outfish.close();
+  
   if(stoi(opt.value("nsteps"))<=0){
     cout<<"No MCMC steps requested"<<endl;
     exit(0);

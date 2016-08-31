@@ -212,7 +212,6 @@ static double complex ComputeIntCase1b(
     coeffs[i-1] += I*invp1 * i * coeffs[i];
   }
   coeffE1minus1 = -I*invp1 * coeffs[0];
-
   /* Result */
   double complex cexpm1ip1eps = cexpm1i(p1*eps);
   double complex res = cexp(I*p0) * (coeffE1*(cexpm1ip1eps+1.) + coeffE1minus1*cexpm1ip1eps);
