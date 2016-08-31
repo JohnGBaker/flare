@@ -119,11 +119,14 @@ void ReImFrequencySeries_AddCAmpPhaseFrequencySeries(
   int jStop = sizeout - 1;
   double minfmode = fmax(gsl_vector_get(freqin, 0), fstartobsmode); /* Takes into account fstartobsmode here */
   double maxfmode = gsl_vector_get(freqin, sizein - 1);
-  while(gsl_vector_get(freqout, jStart) < minfmode && jStart < sizeout-1) jStart++;
-  while(gsl_vector_get(freqout, jStop) > maxfmode && jStop > 0) jStop--;
+  while(jStart<sizeout && gsl_vector_get(freqout, jStart) < minfmode && jStart) jStart++;
+  while( jStop > -1 && gsl_vector_get(freqout, jStop) > maxfmode ) jStop--;//allow continuing all the way to an impossible value to may the later loop empty if need be
+  //printf("%g < fout < %g, %g < fin <%g, jStart=%i, jStop=%i\n",freqout->data[0],freqout->data[sizeout-1],freqin->data[0],freqin->data[sizein-1],jStart,jStop);
+  //printf("sizeout=%i, sizein=%i, jStart=%i, jStop=%i\n",sizeout,sizein,jStart,jStop);
   if(jStop <= jStart) {
     printf("Error: empty range of frequencies in ReImFrequencySeries_AddCAmpPhaseFrequencySeries.\n");
-    exit(1);
+    printf(" ...maybe this is OK, continuing with jStart=%i, jStop=%i\n",jStart,jStop);
+    //exit(1);
   }
 
   /* Main loop - evaluating the interpolating splines and adding to the output data */
@@ -134,6 +137,7 @@ void ReImFrequencySeries_AddCAmpPhaseFrequencySeries(
   double* hrealdata = vechreal->data;
   double* himagdata = vechimag->data;
   for(int j=jStart; j<=jStop; j++) { /* Note: loop to jStop included */
+    //printf(" j=%i, jStart=%i, jStop=%i\n",j,jStart,jStop);
     f = freqoutdata[j];
     A = gsl_spline_eval(ampreal, f, accel_ampreal) + I*gsl_spline_eval(ampimag, f, accel_ampimag);
     phi = gsl_spline_eval(phase, f, accel_phase);

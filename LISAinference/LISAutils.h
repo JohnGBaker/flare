@@ -184,6 +184,9 @@ void LISASignalReIm_Init(LISASignalReIm** signal);
 void LISAInjectionReIm_Cleanup(LISAInjectionReIm* signal);
 void LISAInjectionReIm_Init(LISAInjectionReIm** signal);
 
+//Function to restrict range of the signal/injection to within desired limits.
+int listmodesCAmpPhaseTrim(ListmodesCAmpPhaseFrequencySeries* listSeries);
+
 /* Function generating a LISA signal as a list of modes in CAmp/Phase form, from LISA parameters */
 int LISAGenerateSignalCAmpPhase(
   struct tagLISAParams* params,                 /* Input: set of LISA parameters of the signal */
