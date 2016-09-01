@@ -668,6 +668,10 @@ int LISAGenerateSignalCAmpPhase(
     //printf("Extending signal waveform.  Mfmatch=%g\n",globalparams->Mfmatch);
     ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, globalparams->Mfmatch, globalparams->minf, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
   }
+  if(ret==FAILURE){
+    printf("LISAGenerateSignalCAmpPhase: Generation of ROM for injection failed!\n");
+    return FAILURE;
+  }
   
   listmodesCAmpPhaseTrim(listROM);//Eliminate parts of the wf our of range
   
@@ -767,7 +771,10 @@ int LISAGenerateInjectionCAmpPhase(
     ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, globalparams->Mfmatch, globalparams->minf, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
   }
   /* If the ROM waveform generation failed (e.g. parameters were out of bounds) return FAILURE */
-  if(ret==FAILURE) return FAILURE;
+  if(ret==FAILURE){
+    printf("Failed to generate injection ROM\n");
+    return FAILURE;
+  }
   
   listmodesCAmpPhaseTrim(listROM);//Eliminate parts of the wf our of range
 
@@ -1026,7 +1033,7 @@ double CalculateLogLCAmpPhase(LISAParams *params, LISAInjectionCAmpPhase* inject
   //printf("time GenerateSignal: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
 
-
+  
   /* If LISAGenerateSignal failed (e.g. parameters out of bound), silently return -Infinity logL */
   if(ret==FAILURE) {
     logL = -DBL_MAX;
@@ -1050,6 +1057,11 @@ double CalculateLogLCAmpPhase(LISAParams *params, LISAInjectionCAmpPhase* inject
 
     /* Output: value of the loglikelihood for the combined signals, assuming noise independence */
     logL = overlapTDI123 - 1./2*(injection->TDI123ss) - 1./2*(generatedsignal->TDI123hh);
+    if(logL>0){
+      printf("logL=%g, params =\n",logL);
+      printf("overlapTDI123=%g, injection->TDI123ss=%g, generatedsignal->TDI123hh=%g",overlapTDI123, injection->TDI123ss, generatedsignal->TDI123hh);
+      report_LISAParams(params);
+    }
   }
   /* Clean up */
   LISASignalCAmpPhase_Cleanup(generatedsignal);
