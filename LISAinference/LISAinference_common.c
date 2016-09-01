@@ -48,7 +48,7 @@ void addendum(int argc, char *argv[],LISARunParams *runParams, int *ndim, int *n
   }
   printf("Injected params\n");
   report_LISAParams(injectedparams);
-  
+
   /* Define SNR */
   double SNR123, SNR1, SNR2, SNR3;
   if(globalparams->tagint==0) {

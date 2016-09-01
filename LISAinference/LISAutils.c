@@ -621,6 +621,9 @@ int LISAGenerateSignalCAmpPhase(
   struct tagLISAParams* params,            /* Input: set of LISA parameters of the signal */
   struct tagLISASignalCAmpPhase* signal)   /* Output: structure for the generated signal */
 {
+  //
+  //printf("in LISAGenerateSignalCAmpPhase: tRef= %g\n", params->tRef);
+
   int ret;
   ListmodesCAmpPhaseFrequencySeries* listROM = NULL;
   ListmodesCAmpPhaseFrequencySeries* listTDI1 = NULL;
@@ -641,7 +644,7 @@ int LISAGenerateSignalCAmpPhase(
     ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
   } else {
     //printf("Extending signal waveform.  Mfmatch=%g\n",globalparams->Mfmatch);
-    ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, globalparams->Mfmatch, globalparams->minf, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+    ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, globalparams->Mfmatch, globalparams->minf, 0, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
   }
   int i;
   ListmodesCAmpPhaseFrequencySeries* listelem = listROM;
@@ -738,7 +741,7 @@ int LISAGenerateInjectionCAmpPhase(
     ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
   } else {
     //printf("Extending injection waveform.  Mfmatch=%g\n",globalparams->Mfmatch);
-    ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, globalparams->Mfmatch, globalparams->minf, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+    ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, globalparams->Mfmatch, globalparams->minf, 0, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
   }
   /* If the ROM waveform generation failed (e.g. parameters were out of bounds) return FAILURE */
   if(ret==FAILURE) return FAILURE;
@@ -758,7 +761,7 @@ int LISAGenerateInjectionCAmpPhase(
   listelem=listelem->next;
   }
   */
-  
+
   /* Process the waveform through the LISA response */
   //WARNING: tRef is ignored for now, i.e. set to 0
   //TESTING
@@ -790,7 +793,7 @@ int LISAGenerateInjectionCAmpPhase(
   //tend = clock();
   //printf("time SNRs: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
 
-  
+
   /* Output and clean up */
   signal->TDI1Splines = listsplinesinj1;
   signal->TDI2Splines = listsplinesinj2;
@@ -831,7 +834,7 @@ int LISAGenerateSignalReIm(
     ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
   } else {
     //printf("Extending signal waveform.  Mfmatch=%g\n",globalparams->Mfmatch);
-    ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, globalparams->Mfmatch, globalparams->minf, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+    ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, globalparams->Mfmatch, globalparams->minf, 0, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
   }
 
   /* If the ROM waveform generation failed (e.g. parameters were out of bounds) return FAILURE */
@@ -901,7 +904,7 @@ int LISAGenerateInjectionReIm(
     ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
   } else {
     //printf("Extending signal waveform.  Mfmatch=%g\n",globalparams->Mfmatch);
-    ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, globalparams->Mfmatch, globalparams->minf, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+    ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, globalparams->Mfmatch, globalparams->minf, 0, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
   }
 
   /* If the ROM waveform generation failed (e.g. parameters were out of bounds) return FAILURE */
@@ -923,7 +926,7 @@ int LISAGenerateInjectionReIm(
   double fLowCut = fmax(fmax(__LISASimFD_Noise_fLow, fLow), fstartobs);
   double fHigh = fmin(__LISASimFD_Noise_fHigh, globalparams->maxf);
   ListmodesSetFrequencies(listROM, fLowCut, fHigh, nbpts, tagsampling, freq);
-  
+
   /* Initialize structures for the ReIm frequency series */
   ReImFrequencySeries* TDI1 = NULL;
   ReImFrequencySeries* TDI2 = NULL;
@@ -987,6 +990,8 @@ double CalculateLogLCAmpPhase(LISAParams *params, LISAInjectionCAmpPhase* inject
   //printf("time GenerateSignal: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
 
+  //
+  printf("in CalculateLogLCAmpPhase: tRef= %g\n", params->tRef);
 
   /* If LISAGenerateSignal failed (e.g. parameters out of bound), silently return -Infinity logL */
   if(ret==FAILURE) {
@@ -1003,6 +1008,9 @@ double CalculateLogLCAmpPhase(LISAParams *params, LISAInjectionCAmpPhase* inject
     RealFunctionPtr NoiseSn3 = NoiseFunction(globalparams->tagtdi, 3);
     //TESTING
     //tbeg = clock();
+
+    //
+    //printf("fLow, fHigh, fstartobsinjected, fstartobsgenerated = %g, %g, %g, %g\n", fLow, fHigh, fstartobsinjected, fstartobsgenerated);
 
     double overlapTDI123 = FDListmodesFresnelOverlap3Chan(generatedsignal->TDI1Signal, generatedsignal->TDI2Signal, generatedsignal->TDI3Signal, injection->TDI1Splines, injection->TDI2Splines, injection->TDI3Splines, NoiseSn1, NoiseSn2, NoiseSn3, fLow, fHigh, fstartobsinjected, fstartobsgenerated);
     //tend = clock();

@@ -217,7 +217,7 @@ int main(int argc, char *argv[])
   double fstartobs = Newtonianfoft(params->m1, params->m2, params->deltatobs);
   double flow = fmax(params->minf, fstartobs);
   //TEST
-  //printf("fstartobs: %g\n", fstartobs);
+  //printf("fstartobs, minf, fLow: %g, %g, %g\n", fstartobs, params->minf, flow);
 
   /* Generate Fourier-domain waveform as a list of hlm modes */
   /* Use TF2 extension, if required to, to arbitrarily low frequencies */
@@ -228,7 +228,7 @@ int main(int argc, char *argv[])
     ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef, params->phiRef, params->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
   } else {
     //printf("Extending signal waveform.  mfmatch=%g\n",globalparams->mfmatch);
-    ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, params->Mfmatch, flow, params->tRef, params->phiRef, params->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+    ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, params->Mfmatch, flow, 0, params->tRef, params->phiRef, params->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
   }
 
   if(params->taggenwave==hlm) {

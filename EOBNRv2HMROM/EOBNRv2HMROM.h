@@ -121,6 +121,7 @@ int SimEOBNRv2HMROMExtTF2(
   int nbmode,                                    /* Number of modes to generate (starting with the 22) */
   double Mf_match,                               /* Minimum frequency using EOBNRv2HMROM in inverse total mass units*/
   double minf,                                   /* Minimum frequency required */
+  int tagexthm,                                  /* Tag to decide whether or not to extend the higher modes as well */
   double deltatRef,                              /* Time shift so that the peak of the 22 mode occurs at deltatRef */
   double phiRef,                                 /* Phase at reference frequency */
   double fRef,                                   /* Reference frequency (Hz); 0 defaults to fLow */

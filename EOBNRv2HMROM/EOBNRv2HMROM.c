@@ -470,6 +470,12 @@ int EOBNRv2HMROMCore(
     double totaltwopishifttime = twopishifttime - 2*PI*tpeak22estimate + 2*PI*deltatRef_geom;
     double constphaseshift = (double) m/listmode[0][1] * phase_change_ref + shiftphase;
 
+    //
+    //printf("deltatRef_geom: %g\n", deltatRef_geom);
+    //printf("freq_ds 0: %g\n", gsl_vector_get(freq_ds, 0));
+
+    //printf("2*PI*deltatRef_geom * gsl_vector_get(freq_ds, 0), phase_change_ref: %g, %g\n", 2*PI*deltatRef_geom * gsl_vector_get(freq_ds, 0), phase_change_ref);
+
     /* Initialize the complex series for the mode */
     CAmpPhaseFrequencySeries *modefreqseries = NULL;
     int len = (int) freq_ds->size;
@@ -488,6 +494,11 @@ int EOBNRv2HMROMCore(
     gsl_blas_daxpy(totaltwopishifttime, freq_ds, phi_f); /*Beware: here freq_ds must still be in geometric units*/
     gsl_vector_add_constant(phi_f, constphaseshift);
     gsl_vector_memcpy(modefreqseries->phase, phi_f);
+
+//
+//printf("first phi_f: %g\n", gsl_vector_get(phi_f, 0 ));
+//printf("last phi_f: %g\n", gsl_vector_get(phi_f, phi_f->size -1 ));
+
     /* Scale (to physical units) and set the frequencies */
     gsl_vector_scale(freq_ds, 1./Mtot_sec);
     gsl_vector_memcpy(modefreqseries->freq, freq_ds);
@@ -733,13 +744,18 @@ int SimEOBNRv2HMROMExtTF2(
   int nbmode,                                    /* Number of modes to generate (starting with the 22) */
   double Mf_match,                               /* Minimum frequency using EOBNRv2HMROM in inverse total mass units*/
   double minf,                                   /* Minimum frequency required */
+  int tagexthm,                                  /* Tag to decide whether or not to extend the higher modes as well */
   double deltatRef,                              /* Time shift so that the peak of the 22 mode occurs at deltatRef */
   double phiRef,                                 /* Phase at reference frequency */
   double fRef,                                   /* Reference frequency (Hz); 0 defaults to fLow */
   double m1SI,                                   /* Mass of companion 1 (kg) */
   double m2SI,                                   /* Mass of companion 2 (kg) */
   double distance)                               /* Distance of source (m) */
-{
+{//
+  //printf("calling SimEOBNRv2HMROMExtTF2 with minf=%g\n", minf);
+  //printf("params: %d %g %g %g %g %g %g %g %g\n", nbmode, Mf_match, minf, deltatRef, phiRef, fRef, m1SI, m2SI, distance);
+
+
   int ret,i;
   ListmodesCAmpPhaseFrequencySeries* listROM = NULL;
 
@@ -760,6 +776,10 @@ int SimEOBNRv2HMROMExtTF2(
     /* Definitions: l,m, frequency series and length */
     int l = listelement->l;
     int m = listelement->m;
+
+//NOTE: temporary hack to allow avoiding power-law extension of higher modes which seems problematic
+if((l==2&&m==2) || tagexthm) {
+
     /* First we must compute a new frequency grid including a possible extension to lower frequencies*/
     gsl_vector *freq_new;
     gsl_vector* freq = listelement->freqseries->freq;
@@ -905,9 +925,9 @@ int SimEOBNRv2HMROMExtTF2(
 //for(int i=0; i<freqseries_new->freq->size; i++) {
   //printf("%g %g %g %g\n", gsl_vector_get(freqseries_new->freq, i), gsl_vector_get(freqseries_new->amp_real, i), gsl_vector_get(freqseries_new->amp_imag, i), gsl_vector_get(freqseries_new->phase, i));
 //}
-
-    listelement=listelement->next;
     gsl_vector_free(freq_new);
+}
+    listelement=listelement->next;
   }
   *listhlm=listROM;
   /*

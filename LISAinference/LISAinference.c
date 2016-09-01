@@ -266,7 +266,7 @@ void dumper(int *nSamples, int *nlive, int *nPar, double **physLive, double **po
 int main(int argc, char *argv[])
 {
   int myid = 0;
-  noMPI=0;
+  noMPI = 0;
 #ifdef PARALLEL
  	MPI_Init(&argc,&argv);
 	MPI_Comm_rank(MPI_COMM_WORLD,&myid);

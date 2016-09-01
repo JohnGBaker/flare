@@ -269,6 +269,10 @@ int LISASimFDResponseTDI3Chan(
     gsl_vector* amp_imag = freqseries->amp_imag;
     gsl_vector* phase = freqseries->phase;
     int len = (int) freq->size;
+    //
+    //if(l==2&&m==1) printf("no resampling 21\n");
+    //      if(l==2&&m==1) {for(int i=0; i<len; i++) printf("%d, %g, %g, %g, %g\n", i, gsl_vector_get(freq, i), gsl_vector_get(amp_real, i), gsl_vector_get(amp_imag, i), gsl_vector_get(phase, i));};
+
     double f, tf;
     double complex g21mode = 0.;
     double complex g12mode = 0.;
@@ -425,6 +429,9 @@ int LISASimFDResponseTDI3Chan(
       /* Phase term due to the R-delay, including correction to first order */
       double phaseRdelay = -2*PI*R_SI/C_SI*f*cos(beta)*cos(Omega_SI*tf - lambda) * (1 + R_SI/C_SI*Omega_SI*sin(Omega_SI*tf - lambda));
       double phasewithRdelay = gsl_vector_get(phase_resample, j) + phaseRdelay;
+
+    //
+    //if(l==2&&m==1) printf("j, gsl_vector_get(phase_resample, j): %d, %g\n", j, gsl_vector_get(phase_resample, j));
       /**/
       gsl_vector_set(amp_real1, j, creal(camp1));
       gsl_vector_set(amp_imag1, j, cimag(camp1));
