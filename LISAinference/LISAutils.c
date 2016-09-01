@@ -1033,7 +1033,7 @@ double CalculateLogLCAmpPhase(LISAParams *params, LISAInjectionCAmpPhase* inject
   //printf("time GenerateSignal: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
 
-
+  
   /* If LISAGenerateSignal failed (e.g. parameters out of bound), silently return -Infinity logL */
   if(ret==FAILURE) {
     logL = -DBL_MAX;
@@ -1057,7 +1057,11 @@ double CalculateLogLCAmpPhase(LISAParams *params, LISAInjectionCAmpPhase* inject
 
     /* Output: value of the loglikelihood for the combined signals, assuming noise independence */
     logL = overlapTDI123 - 1./2*(injection->TDI123ss) - 1./2*(generatedsignal->TDI123hh);
-    //printf("logL=%g",logL);
+    if(logL>0){
+      printf("logL=%g, params =\n",logL);
+      printf("overlapTDI123=%g, injection->TDI123ss=%g, generatedsignal->TDI123hh=%g",overlapTDI123, injection->TDI123ss, generatedsignal->TDI123hh);
+      report_LISAParams(params);
+    }
   }
   /* Clean up */
   LISASignalCAmpPhase_Cleanup(generatedsignal);
