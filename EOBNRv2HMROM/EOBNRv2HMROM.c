@@ -742,6 +742,8 @@ int SimEOBNRv2HMROMExtTF2(
 {
   int ret,i;
   ListmodesCAmpPhaseFrequencySeries* listROM = NULL;
+  //int lout=-1,mout=-1;
+  int lout=-1,mout=-1;
 
   /* Generate the waveform with the ROM */
   ret = SimEOBNRv2HMROM(&listROM, nbmode, deltatRef, phiRef, fRef, m1SI, m2SI, distance);
@@ -809,6 +811,19 @@ int SimEOBNRv2HMROMExtTF2(
 
     //copy the old freqseries data to a new one and extend with power-law
     CAmpPhaseFrequencySeries* freqseries = listelement->freqseries;
+    if(l==lout&&m==mout){  //write to file for debugging
+      printf("Writing waveform-before for (%i,%i)\n",l,m);
+      FILE *f = fopen("waveform-before.dat", "w");
+      for(i=0;i<freqseries->freq->size;i++){
+	fprintf(f,"%i %i %g  %g  %g  %g  %i\n",l,m,
+		gsl_vector_get(freqseries->freq,i),
+		gsl_vector_get(freqseries->amp_real,i),
+		gsl_vector_get(freqseries->amp_imag,i),
+		gsl_vector_get(freqseries->phase,i),
+		i);
+      }
+      fclose(f);
+    }
     CAmpPhaseFrequencySeries* freqseries_new=0;     //New result will be assembled here
     CAmpPhaseFrequencySeries_Init(&freqseries_new,len_new);
     //set the new freqs
@@ -869,34 +884,53 @@ int SimEOBNRv2HMROMExtTF2(
       //The results are many cycles out of phase almost immediately, so this definitely is not an accurate
       //waveform, but the results are reasonably smooth and of plausible structure.
       //Alternatively, we could also extend these with TaylorF2, btu we are mostly assuming this part of the WF is small
-      double phmax=freqseries->phase->data[len-1];//For phase we extend by a power-law referenced to zero phase at end of ROM
-      double dArfac = 0;
+      double phref=freqseries->phase->data[len-1];//For phase we extend by a power-law referenced to zero phase at end of ROM
+      for(i=0;i<len;i++)if(phref>freqseries->phase->data[i])phref=freqseries->phase->data[i];//get the smallest value of phi to use as ref.
+      phref=phref+1.0;//add one more
+      double ldArfac = 0;
       if(gsl_vector_get(freqseries->amp_real,imatch)>0) //avoid div0 in trivial cases
-	dArfac=exp(-log( gsl_vector_get(freqseries->amp_real,imatch+Navg)
-			 /gsl_vector_get(freqseries->amp_real,imatch) ) / Navg);
-      //double dAifac = exp(-log( gsl_vector_get(freqseries->amp_imag,imatch+Navg)
-      //				/gsl_vector_get(freqseries->amp_imag,imatch+Navg) ) / Navg);
-      double dAifac=dArfac;
-      double dphfac = exp(-log( (gsl_vector_get(freqseries->phase,imatch+Navg)-phmax)
-				/(gsl_vector_get(freqseries->phase,imatch) -phmax)) / Navg);
+	//dArfac=exp(-log( gsl_vector_get(freqseries->amp_real,imatch+Navg)
+	//		 /gsl_vector_get(freqseries->amp_real,imatch) ) / Navg);
+	ldArfac=(log( gsl_vector_get(freqseries->amp_real,imatch+Navg)
+		      /gsl_vector_get(freqseries->amp_real,imatch) ) /
+		 log( gsl_vector_get(freqseries->freq,imatch+Navg)
+		      /gsl_vector_get(freqseries->freq,imatch) )  );
+      //double dphfac = exp(-log( (gsl_vector_get(freqseries->phase,imatch+Navg)-phref)
+      //			/(gsl_vector_get(freqseries->phase,imatch) -phref)) / Navg);
+      double ldphfac = (log( (gsl_vector_get(freqseries->phase,imatch+Navg)-phref)
+			      /(gsl_vector_get(freqseries->phase,imatch) -phref)) / 
+			log( gsl_vector_get(freqseries->freq,imatch+Navg)
+			     /gsl_vector_get(freqseries->freq,imatch) )  );
+      if(1&&l==lout&&m==mout)printf("ldphfac(%i,%i)=%g\n",l,m,ldphfac);
+      //double f0=gsl_vector_get(freqseries->freq,imatch);
       for(i=len_add;i>0;i--){
+	double fratio=gsl_vector_get(freqseries->freq,i-1)/gsl_vector_get(freqseries->freq,i);
+	double dArfac=pow(fratio,ldArfac);
 	gsl_vector_set(freqseries_new->amp_real,i-1,gsl_vector_get(freqseries_new->amp_real,i)*dArfac);
-	gsl_vector_set(freqseries_new->amp_imag,i-1,gsl_vector_get(freqseries_new->amp_imag,i)*dAifac);
-	gsl_vector_set(freqseries_new->phase,i-1,(gsl_vector_get(freqseries_new->phase,i)-phmax)*dphfac+phmax);
+	gsl_vector_set(freqseries_new->amp_imag,i-1,gsl_vector_get(freqseries_new->amp_imag,i)*dArfac);
+	double dphfac=pow(fratio,ldphfac);
+	gsl_vector_set(freqseries_new->phase,i-1,(gsl_vector_get(freqseries_new->phase,i)-phref)*dphfac+phref);
 	//printf("%i: extending %g  %g  %g  %g\n",i,freqseries_new->freq->data[i-1],freqseries_new->amp_real->data[i-1],freqseries_new->amp_imag->data[i-1],freqseries_new->phase->data[i-1]);
       }
+      //printf("Extended (%i,%i) down to f=%g, ampR=%g, ampI=%g, phase=%g\n",l,m,freqseries_new->freq->data[0],freqseries_new->amp_real->data[0],freqseries_new->amp_imag->data[0],freqseries_new->phase->data[0]);
     }
-    /*
-    for(i=0;i<len_new;i++){
-      printf("(%i, %i): %i %i: %g  %g : %g  %g : %g  %g :  %g  %g \n",l,m,i-len_new+len,i,
-	     (i>=len_new-len?freqseries->freq->data[i-len_new+len]:0),freqseries_new->freq->data[i],
-	     (i>=len_new-len?freqseries->amp_real->data[i-len_new+len]:0),freqseries_new->amp_real->data[i],
-	     (i>=len_new-len?freqseries->amp_imag->data[i-len_new+len]:0),freqseries_new->amp_imag->data[i],
-	     (i>=len_new-len?freqseries->phase->data[i-len_new+len]:0),freqseries_new->phase->data[i]);
-    }*/
     //delete the old content data and replace with the new
     CAmpPhaseFrequencySeries_Cleanup(freqseries);
     listelement->freqseries=freqseries_new;
+    //debugging
+    freqseries=listelement->freqseries;
+    if(1&&l==lout&&m==mout){  //write to file for debugging
+      FILE *f = fopen("waveform.dat", "w");
+      for(i=0;i<freqseries->freq->size;i++){
+	fprintf(f,"%i %i %g  %g %g  %g %i\n",l,m,
+		freqseries->freq->data[i],
+		freqseries->amp_real->data[i],
+		freqseries->amp_imag->data[i],
+		freqseries->phase->data[i],
+		i);
+      }
+      fclose(f);
+    }
     listelement=listelement->next;
     gsl_vector_free(freq_new);
   }
