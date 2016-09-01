@@ -1,10 +1,11 @@
 import flare
 import numpy as np
 import sys
+import os
 
 #Usage: python FisherRun.py label snr param1 param2 ...
 
-flare.flare_dir="../flare"
+flare.flare_dir= os.path.dirname(os.path.realpath(__file__))[:-7]
 
 label=sys.argv[1]
 snr=sys.argv[2]

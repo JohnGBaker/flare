@@ -14,6 +14,7 @@ LISAutils.o: LISAutils.c LISAutils.h ../LISAsim/LISAFDresponse.h ../LISAsim/LISA
 	$(CC) -c $(CFLAGS) LISAutils.c
 
 bambi.o: bambi.cc bambi.h
+	@echo CPP=$(CPP)
 	$(CPP) -c $(CPPFLAGS) -I$(BAMBIINC) bambi.cc
 
 ComputeLISASNR.o: ComputeLISASNR.c ComputeLISASNR.h LISAutils.h ../LISAsim/LISAFDresponse.h ../LISAsim/LISAnoise.h ../LISAsim/LISAgeometry.h ../tools/constants.h ../tools/struct.h ../tools/waveform.h ../tools/fft.h ../tools/fresnel.h ../tools/splinecoeffs.h ../tools/likelihood.h ../EOBNRv2HMROM/EOBNRv2HMROM.h ../EOBNRv2HMROM/EOBNRv2HMROMstruct.h ../integration/wip.h

@@ -1,4 +1,5 @@
 MESSAGE="Specify which machine to compile for in the Makefile."
+#MACHINE="sylvainsmac"
 MACHINE="sylvainsmac"
 
 ifeq ($(MACHINE),"sylvainsmac")
@@ -47,6 +48,7 @@ else ifeq ($(MACHINE),"discover")
   FC = mpif90 -DPARALLEL
   CC = mpicc -DPARALLEL
   CXX = mpiicpc -DPARALLEL
+  CPP = mpiicpc -DPARALLEL
   LAPACKLIB = -lmkl_intel_lp64 -lmkl_intel_thread -liomp5 -lpthread -lm -lmkl_core -lmkl_lapack95_lp64
   CFLAGS += -g -O3 -fopenmp -I $(GSLROOT)/include -I $(FFTWROOT)/include -L$(FFTWROOT)/lib -L$(GSLROOT)/lib
   CXXFLAGS = -g -O3 -fopenmp
@@ -147,7 +149,7 @@ ptmcmc:
 	@echo "Do we need to check out ptmcmc from github?:";\
 	if [ \! -d ptmcmc ]; then git clone https://github.com/JohnGBaker/ptmcmc.git; fi;
 	@echo "INCLUDE="$(INCLUDE)
-	$(MAKE) CFLAGS="$(CPPFLAGS) $(CXXFLAGS)" INCLUDE="$(PTMCMC)/include" -C ptmcmc 
+	$(MAKE) CFLAGS="$(CPPFLAGS) $(CXXFLAGS)" INCLUDE="$(PTMCMC)/include" -C ptmcmc
 endif
 
 clean: $(SUBCLEAN)

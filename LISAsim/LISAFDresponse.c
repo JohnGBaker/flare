@@ -336,6 +336,7 @@ int LISASimFDResponseTDI3Chan(
       double deltaflinear = (fHigh - gsl_vector_get(freq, imaxlogsampling))/(nbfreqlinear + 1);
       /* Initialize new vectors */
       len_resample = imaxlogsampling + 1 + nbfreqlinear;
+      //printf("len_resample = %i + 1 + %i = %i\n", imaxlogsampling, nbfreqlinear,len_resample);
       freq_resample = gsl_vector_alloc(len_resample);
       amp_real_resample = gsl_vector_alloc(len_resample);
       amp_imag_resample = gsl_vector_alloc(len_resample);
@@ -360,6 +361,7 @@ int LISASimFDResponseTDI3Chan(
       }
       double fimax = gsl_vector_get(freq, imaxlogsampling);
       for(int j=imaxlogsampling+1; j<len_resample; j++) {
+	//printf("j=%i/%i\n",j,len_resample);
         f = fimax + (j-imaxlogsampling) * deltaflinear;
         gsl_vector_set(freq_resample, j, f);
         gsl_vector_set(amp_real_resample, j, gsl_spline_eval(spline_amp_real, f, accel_amp_real));

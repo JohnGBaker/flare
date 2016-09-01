@@ -31,12 +31,13 @@ def set_flare_flags(snr,params):
     #flags+=" --nbmodeinj 1 --nbmodetemp 1" #for no higher modes in injection and template
     if(snr>0):
         flags+=" --snr "+str(snr)+" --rescale-distprior" #fixing SNR (rescales distance)
-    flags+=" --comp-min 1e5 --comp-max 1e8" #min/max for component mass prior ranges
+    flags+=" --comp-min 1e3 --comp-max 1e9" #min/max for component mass prior ranges
     flags+=" --logflat-massprior" #assume prior uniform in log of masses, rather than uniform for mass."
     #flags+=" --mtot-min 8e5 --mtot-max 2e8 --q-max 11.98"  #additional prior limits on Mtot and q
-    flags+=" --mtot-min 1e4 --mtot-max 1e9 --q-max 11.98"  #additional prior limits on Mtot and q
+    flags+=" --mtot-min 1e4 --mtot-max 1e10 --q-max 11.98"  #additional prior limits on Mtot and q
     #flags+=" --dist-min 5000. --dist-max 200e4 --distance 1e5"  #prior range for distances should verify range based on distances (in Mpc).
     flags+=" --dist-min 1000. --dist-max 4e5"  #prior range for distances approx 0.2<z<33
+    flags+=" --flat-distprior" #by default us a flat prior on the distance rather than as R^2
     #set parameter flags
     m1           = params[0]
     m2           = params[1]
@@ -81,9 +82,10 @@ def set_mcmc_flags(outroot,ptN):
     flags += " --pt_stop_evid_err=0.05" #may terminate earlier based on evidence criterion
     return flags
 
-def set_bambi_flags(outroot):
-    flags  = " --nlive 1000 --tol 1.0 --mmodal --nclspar 2 --maxcls 10 --ztol -60 --seed"
+def set_bambi_flags(outroot,nlive=4000):
+    flags  = " --nlive "+str(nlive)+" --tol 1.0 --mmodal --nclspar 2 --maxcls 10 --ztol -60 --seed"
     flags += " --outroot "+outroot
+    return flags
 
 def par_name(i):
     return ["m1","m2","t0","phi0","D","lambda","beta","inc","pol","sky","orient","Mvol"][i]
@@ -123,7 +125,8 @@ def SNRrun(Mtot,q,snr):
     flags += " --rng_seed="+str(np.random.rand())+" " 
     flags += " --outroot "+str(name)+" "
     cmd += " "+flags+">"+name+".out"
-    setenv = "export ROM_DATA_PATH=/Users/jgbaker/Projects/GWDA/LISA-type-response/flare/ROMdata/q1-12_Mfmin_0.0003940393857519091"
+    setenv=""
+    #setenv = "export ROM_DATA_PATH=/Users/jgbaker/Projects/GWDA/LISA-type-response/flare/ROMdata/q1-12_Mfmin_0.0003940393857519091"
     
     print "Executing '"+cmd+"'"
     code=subprocess.call(setenv+";"+cmd,shell=True)
@@ -190,7 +193,9 @@ def FisherRunByParams(snr,params,delta,label,extrapoints=1.0):
     flags += " --rng_seed="+str(np.random.rand())+" " 
     flags += " --outroot "+str(name)+" "
     cmd += " "+flags+">"+name+".out"
-    setenv = "export ROM_DATA_PATH=/Users/jgbaker/Projects/GWDA/LISA-type-response/flare/ROMdata/q1-12_Mfmin_0.0003940393857519091"
+    setenv=""
+    #setenv = "export ROM_DATA_PATH=/Users/jgbaker/Projects/GWDA/LISA-type-response/flare/ROMdata/q1-12_Mfmin_0.0003940393857519091"
+    setenv="export ROM_DATA_PATH=/discover/nobackup/jgbaker/GW-DA/flare/ROMdata/q1-12_Mfmin_0.0003940393857519091"
     try:
         print "Executing '"+cmd+"'"
         dist=0
