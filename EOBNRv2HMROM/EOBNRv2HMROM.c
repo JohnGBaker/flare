@@ -904,7 +904,7 @@ int SimEOBNRv2HMROMExtTF2(
       if(1&&l==lout&&m==mout)printf("ldphfac(%i,%i)=%g\n",l,m,ldphfac);
       //double f0=gsl_vector_get(freqseries->freq,imatch);
       for(i=len_add;i>0;i--){
-	double fratio=gsl_vector_get(freqseries->freq,i-1)/gsl_vector_get(freqseries->freq,i);
+	double fratio=gsl_vector_get(freqseries_new->freq,i-1)/gsl_vector_get(freqseries_new->freq,i);
 	double dArfac=pow(fratio,ldArfac);
 	gsl_vector_set(freqseries_new->amp_real,i-1,gsl_vector_get(freqseries_new->amp_real,i)*dArfac);
 	gsl_vector_set(freqseries_new->amp_imag,i-1,gsl_vector_get(freqseries_new->amp_imag,i)*dArfac);
