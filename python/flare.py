@@ -31,7 +31,7 @@ def set_flare_flags(snr,params):
     #flags+=" --nbmodeinj 1 --nbmodetemp 1" #for no higher modes in injection and template
     if(snr>0):
         flags+=" --snr "+str(snr)+" --rescale-distprior" #fixing SNR (rescales distance)
-    flags+=" --comp-min 1e3 --comp-max 1e9" #min/max for component mass prior ranges
+    flags+=" --comp-min 1e5 --comp-max 1e8" #min/max for component mass prior ranges
     flags+=" --logflat-massprior" #assume prior uniform in log of masses, rather than uniform for mass."
     #flags+=" --mtot-min 8e5 --mtot-max 2e8 --q-max 11.98"  #additional prior limits on Mtot and q
     flags+=" --mtot-min 1e4 --mtot-max 1e10 --q-max 11.98"  #additional prior limits on Mtot and q
