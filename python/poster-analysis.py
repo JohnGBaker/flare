@@ -19,6 +19,7 @@ def read_injection(file):
             pars.append(val)
             line=f.readline() #Skip comment
     return pars
+
 chainfile=sys.argv[1]
 injfile=re.sub("post_equal_weights",chainfile,"params")
 dirname=os.path.dirname(os.path.abspath(chainfile))
@@ -27,11 +28,13 @@ outpath=dirname+"/"+basename+"_corner.png"
 print "reading posterior samples from file:",chainfile
 print "reading injection from file:",injfile
 print "output to ",outpath
-quit
+
+pars=read_injection(injfile)
+print "pars=",pars
 Npar=len(pars)
 data=np.loadtxt(file,usecols=range(9))
 #injection=[1.5e6, 0.5e6,0, 1.04822e6, 0,1.31,1.7, 1.0471976,1.2 ]
-injection=[1.5e6, 0.5e6,0, 2.4389e6, 0,0,1.7, 1.0471976,1.2 ]
+#injection=[1.5e6, 0.5e6,0, 2.4389e6, 0,0,1.7, 1.0471976,1.2 ]
 names=[r"$m_1$",r"$m_2$",r"$t_0$",r"$D$",r"$\phi_0$",r"$\iota$",r"$\lambda$",r"$\beta$",r"$\psi$"]
 
 # Plot it.

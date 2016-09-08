@@ -58,7 +58,7 @@ else:
     nodes=1
     tasks=1
     cmd   = flare_path+"/LISAinference/LISAinference_ptmcmc"
-    flags = flare.set_mcmc_flags(name,60)
+    flags = flare.set_mcmc_flags(name,80)
 #params=draw_params(Mtot,q)
 params=args.p
 flags+=flare.set_flare_flags(args.snr,params)

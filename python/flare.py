@@ -63,7 +63,7 @@ def set_flare_flags(snr,params):
     return flags
 
 def set_mcmc_flags(outroot,ptN):
-    flags  = ""
+    flags  = " --noFisher"
     #MCMC basics
     flags += " --rng_seed="+str(np.random.rand())
     flags += " --outroot "+str(outroot)
@@ -78,12 +78,13 @@ def set_mcmc_flags(outroot,ptN):
 
     flags += " --pt_reboot_rate=0.0001 --pt_reboot_every=10000 --pt_reboot_grace=50000" #Somewhat hacky trick to avoid chains getting stuck.  Not sure whether we need this.
     #stopping criteria
-    flags += " --nsteps=1e7" #10 million steps may be about the most we can do
+    flags += " --nsteps=100000000" #100y million steps may be about the most we can do
     flags += " --pt_stop_evid_err=0.05" #may terminate earlier based on evidence criterion
     return flags
 
 def set_bambi_flags(outroot,nlive=4000):
-    flags  = " --nlive "+str(nlive)+" --tol 1.0 --mmodal --nclspar 2 --maxcls 10 --ztol -60 --seed"
+    #flags  = " --nlive "+str(nlive)+" --tol 1.0 --mmodal --nclspar 2 --maxcls 10 --ztol -60 --seed"
+    flags  = " --nlive "+str(nlive)+" --tol 1.0 --nclspar 2 --maxcls 10 --ztol -60 --seed"
     flags += " --outroot "+outroot
     return flags
 
