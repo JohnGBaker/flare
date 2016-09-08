@@ -39,6 +39,7 @@
 #include "fft.h"
 #include "LISAgeometry.h"
 #include "LISAFDresponse.h"
+#include "LISAnoise.h"
 
 /********************************** Structures ******************************************/
 
@@ -61,7 +62,8 @@ typedef struct tagGenTDIFDparams {
   double polarization;       /* polarization angle (rad, default 0) */
 
   int nbmode;                /* number of modes to generate (starting with 22) - defaults to 5 (all modes) */
-  double minf;               /* Minimal frequency (Hz) - when set to 0 (default), use the first frequency covered by the ROM */
+  double minf;               /* Minimal frequency (Hz, default=0) - when set to 0, use the lowest frequency where the detector noise model is trusted __LISASimFD_Noise_fLow (set somewhat arbitrarily)*/
+  double maxf;               /* Maximal frequency (Hz, default=0) - when set to 0, use the highest frequency where the detector noise model is trusted __LISASimFD_Noise_fHigh (set somewhat arbitrarily)*/
   double deltatobs;          /* Observation duration (years, default=2) */
   int tagextpn;              /* Tag to allow PN extension of the waveform at low frequencies (default=1) */
   double Mfmatch;            /* When PN extension allowed, geometric matching frequency: will use ROM above this value. If <=0, use ROM down to the lowest covered frequency (default=0.) */

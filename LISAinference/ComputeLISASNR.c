@@ -35,7 +35,8 @@ Arguments are as follows:\n\
 ----- Generation Parameters ----------------------\n\
 --------------------------------------------------\n\
  --nbmode              Number of modes of radiation to generate (1-5, default=5)\n\
- --fLow                Minimal frequency (Hz, default=0) - when too low, use first frequency covered by the ROM\n\
+ --minf                Minimal frequency (Hz, default=0) - when set to 0, use the lowest frequency where the detector noise model is trusted __LISASimFD_Noise_fLow (set somewhat arbitrarily)\n\
+ --maxf                Maximal frequency (Hz, default=0) - when set to 0, use the highest frequency where the detector noise model is trusted __LISASimFD_Noise_fHigh (set somewhat arbitrarily)\n\
  --tagtdi              Tag choosing the set of TDI variables to use (default TDIAETXYZ)\n\
  --tagint              Tag choosing the integrator: 0 for Fresnel (default), 1 for linear integration\n\
  --nbptsoverlap        Number of points to use for linear integration (default 32768)\n\
@@ -61,7 +62,10 @@ Arguments are as follows:\n\
 
   /* Set default values for the generation params */
   params->nbmode = 5;
-  params->fLow = __LISASimFD_Noise_fLow;
+  params->minf = 0.;
+  params->maxf = 0.;
+  params->tagextpn = 1;
+  params->Mfmatch = 0.;
   params->tagtdi = TDIAETXYZ;
   params->tagint = 0;
   params->nbptsoverlap = 32768;
@@ -97,8 +101,14 @@ Arguments are as follows:\n\
       params->polarization = atof(argv[++i]);
     } else if (strcmp(argv[i], "--nbmode") == 0) {
       params->nbmode = atoi(argv[++i]);
-    } else if (strcmp(argv[i], "--fLow") == 0) {
-      params->fLow = atof(argv[++i]);
+    } else if (strcmp(argv[i], "--minf") == 0) {
+      params->minf = atof(argv[++i]);
+    } else if (strcmp(argv[i], "--maxf") == 0) {
+      params->maxf = atof(argv[++i]);
+    } else if (strcmp(argv[i], "--tagextpn") == 0) {
+        globalparams->tagextpn = atoi(argv[++i]);
+    } else if (strcmp(argv[i], "--Mfmatch") == 0) {
+        globalparams->Mfmatch = atof(argv[++i]);
     } else if (strcmp(argv[i], "--tagtdi") == 0) {
       params->tagtdi = ParseTDItag(argv[++i]);
     } else if (strcmp(argv[i], "--tagint") == 0) {
@@ -115,10 +125,14 @@ Arguments are as follows:\n\
       strcpy(params->infile, argv[++i]);
     } else {
       printf("Error: invalid option: %s\n", argv[i]);
-      printf("argc-i=%i\n",argc-i); 
+      printf("argc-i=%i\n",argc-i);
       goto fail;
     }
   }
+
+  /* Set frequency interval to default values */
+  if(params->minf==0.) params->minf = __LISASimFD_Noise_fLow;
+  if(params->maxf==0.) params->maxf = __LISASimFD_Noise_fHigh;
 
   return;
 
@@ -201,9 +215,9 @@ int main(int argc, char *argv[])
       ReImFrequencySeries* TDI1FFTrestr = NULL;
       ReImFrequencySeries* TDI2FFTrestr = NULL;
       ReImFrequencySeries* TDI3FFTrestr = NULL;
-      RestrictFDReImFrequencySeries(&TDI1FFTrestr, TDI1FFT, params->fLow, __LISASimFD_Noise_fHigh);
-      RestrictFDReImFrequencySeries(&TDI2FFTrestr, TDI2FFT, params->fLow, __LISASimFD_Noise_fHigh);
-      RestrictFDReImFrequencySeries(&TDI3FFTrestr, TDI3FFT, params->fLow, __LISASimFD_Noise_fHigh);
+      RestrictFDReImFrequencySeries(&TDI1FFTrestr, TDI1FFT, params->minf, __LISASimFD_Noise_fHigh);
+      RestrictFDReImFrequencySeries(&TDI2FFTrestr, TDI2FFT, params->minf, __LISASimFD_Noise_fHigh);
+      RestrictFDReImFrequencySeries(&TDI3FFTrestr, TDI3FFT, params->minf, __LISASimFD_Noise_fHigh);
 
       /* Compute SNR with linear integration, weighting with non-rescaled noise functions */
       /* Note: assumes same lengths for all FD FFT frequency seriess */
@@ -248,7 +262,10 @@ int main(int argc, char *argv[])
       memset(globalparams, 0, sizeof(LISAGlobalParams));
       globalparams->fRef = params->fRef;
       globalparams->deltatobs = 1.; /* Default value */
-      globalparams->minf = params->fLow;
+      globalparams->minf = params->minf;
+      globalparams->maxf = params->maxf;
+      globalparams->tagextpn = params->tagextpn;
+      globalparams->Mfmatch = params->Mfmatch;
       globalparams->nbmodeinj = params->nbmode;
       globalparams->nbmodetemp = params->nbmode;
       globalparams->tagint = params->tagint;
@@ -260,24 +277,24 @@ int main(int argc, char *argv[])
 
       /* Branch between the Fresnel or linear computation */
       if(params->tagint==0) {
-	LISAInjectionCAmpPhase* injCAmpPhase = NULL;
-	LISAInjectionCAmpPhase_Init(&injCAmpPhase);
-	LISAGenerateInjectionCAmpPhase(injectedparams, injCAmpPhase);
-	SNR = sqrt(injCAmpPhase->TDI123ss);
+        LISAInjectionCAmpPhase* injCAmpPhase = NULL;
+        LISAInjectionCAmpPhase_Init(&injCAmpPhase);
+        LISAGenerateInjectionCAmpPhase(injectedparams, injCAmpPhase);
+        SNR = sqrt(injCAmpPhase->TDI123ss);
       }
       else if(params->tagint==1) {
-	LISAInjectionReIm* injReIm = NULL;
-	LISAInjectionReIm_Init(&injReIm);
-	LISAGenerateInjectionReIm(injectedparams, params->fLow, params->nbptsoverlap, 0, injReIm); /* Hardcoded linear sampling */
+        LISAInjectionReIm* injReIm = NULL;
+        LISAInjectionReIm_Init(&injReIm);
+        LISAGenerateInjectionReIm(injectedparams, params->minf, params->nbptsoverlap, 0, injReIm); /* Hardcoded linear sampling */
 
-	double SNRA2 = FDOverlapReImvsReIm(injReIm->TDI1Signal, injReIm->TDI1Signal, injReIm->noisevalues1);
-	double SNRE2 = FDOverlapReImvsReIm(injReIm->TDI2Signal, injReIm->TDI2Signal, injReIm->noisevalues2);
-	double SNRT2 = FDOverlapReImvsReIm(injReIm->TDI3Signal, injReIm->TDI3Signal, injReIm->noisevalues3);
-	SNR = sqrt(SNRA2 + SNRE2 + SNRT2);
+        double SNRA2 = FDOverlapReImvsReIm(injReIm->TDI1Signal, injReIm->TDI1Signal, injReIm->noisevalues1);
+        double SNRE2 = FDOverlapReImvsReIm(injReIm->TDI2Signal, injReIm->TDI2Signal, injReIm->noisevalues2);
+        double SNRT2 = FDOverlapReImvsReIm(injReIm->TDI3Signal, injReIm->TDI3Signal, injReIm->noisevalues3);
+        SNR = sqrt(SNRA2 + SNRE2 + SNRT2);
       }
       else {
-	printf("Error in ComputeLISASNR: integration tag not recognized.\n");
-	exit(1);
+        printf("Error in ComputeLISASNR: integration tag not recognized.\n");
+        exit(1);
       }
     }
 

@@ -242,12 +242,13 @@ int LISASimFDResponseTDI3Chan(
   struct tagListmodesCAmpPhaseFrequencySeries **listTDI1,  /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the TDI channel 1 */
   struct tagListmodesCAmpPhaseFrequencySeries **listTDI2,  /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the TDI channel 2 */
   struct tagListmodesCAmpPhaseFrequencySeries **listTDI3,  /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the TDI channel 3 */
-  const double tRef,                                          /* Time at coalescence */
-  const double lambda,                                        /* First angle for the position in the sky */
-  const double beta,                                          /* Second angle for the position in the sky */
-  const double inclination,                                   /* Inclination of the source */
-  const double psi,                                           /* Polarization angle */
-  const TDItag tditag)                                        /* Selector for the set of TDI observables */
+  const double tRef,                                       /* Time at coalescence */
+  const double lambda,                                     /* First angle for the position in the sky */
+  const double beta,                                       /* Second angle for the position in the sky */
+  const double inclination,                                /* Inclination of the source */
+  const double psi,                                        /* Polarization angle */
+  const double maxf,                                       /* Maximal frequency to consider - used to ignore hard-to-resolve response at f>1Hz - NOTE: for now, no recomputation of the boundary, so when not resampling can lose a bit of support between the last frequency point covered and maxf */
+  const TDItag tditag)                                     /* Selector for the set of TDI observables */
 {
   /* Computing the complicated trigonometric coefficients */
   //clock_t begsetcoeffs = clock();
@@ -268,6 +269,10 @@ int LISASimFDResponseTDI3Chan(
     gsl_vector* amp_imag = freqseries->amp_imag;
     gsl_vector* phase = freqseries->phase;
     int len = (int) freq->size;
+    //
+    //if(l==2&&m==1) printf("no resampling 21\n");
+    //      if(l==2&&m==1) {for(int i=0; i<len; i++) printf("%d, %g, %g, %g, %g\n", i, gsl_vector_get(freq, i), gsl_vector_get(amp_real, i), gsl_vector_get(amp_imag, i), gsl_vector_get(phase, i));};
+
     double f, tf;
     double complex g21mode = 0.;
     double complex g12mode = 0.;
@@ -309,22 +314,26 @@ int LISASimFDResponseTDI3Chan(
     /* But first test with TDIA show the sampling should be reduced 10-fold - possibly large increase in cost */
     /* We use here deltaf=0.0005 until the cause is better understood */
     /* NOTE: the structure in the response due to the R-delay gives much larger interpolation errors - here we assume the R-delay term is now treated as a phase */
-    int resampled = 0; /* Keep tracks of wether or not we resampled and allocated new resources we need to free */
-    double maxf = gsl_vector_get(freq, len-1);
+    int resampled = 0; /* Keeps track of wether or not we resampled and allocated new resources we need to free */
+    double maxfsignal = gsl_vector_get(freq, len-1);
+    double fHigh = fmin(maxf, maxfsignal);
     double deltaflineartarget = 0.0005;
-    int imaxlogsampling = len-1; /* last index to be covered wth original sampling */
-    while((gsl_vector_get(freq, imaxlogsampling)>0.1) && imaxlogsampling>0) imaxlogsampling--;
+    int imaxlogsampling = len-1; /* last index to be covered with original sampling */
+    while((gsl_vector_get(freq, imaxlogsampling)>fHigh) && imaxlogsampling>0) imaxlogsampling--;
     gsl_vector* freq_resample = NULL; /*  */
     gsl_vector* amp_real_resample = NULL;
     gsl_vector* amp_imag_resample = NULL;
     gsl_vector* phase_resample = NULL;
     int len_resample;
+    //
+    //printf("%d\n", imaxlogsampling);
+    //printf("%g, %g, %g\n", maxf, maxfsignal, fHigh);
     /* We keep original logarithmic sampling below 0.1Hz */
-    if((maxf>0.1) && ((maxf - gsl_vector_get(freq, imaxlogsampling))/deltaflineartarget)>len-1-imaxlogsampling ) { /* condition to check if the linear sampling will add points - if not, do nothing */
+    if((fHigh>0.1) && ((fHigh - gsl_vector_get(freq, imaxlogsampling))/deltaflineartarget)>len-1-imaxlogsampling ) { /* condition to check if the linear sampling will add points - if not, do nothing */
       resampled = 1;
       /* Number of pts in resampled part */
-      int nbfreqlinear = ceil((maxf - gsl_vector_get(freq, imaxlogsampling))/deltaflineartarget);
-      double deltaflinear = (maxf - gsl_vector_get(freq, imaxlogsampling))/(nbfreqlinear + 1);
+      int nbfreqlinear = ceil((fHigh - gsl_vector_get(freq, imaxlogsampling))/deltaflineartarget);
+      double deltaflinear = (fHigh - gsl_vector_get(freq, imaxlogsampling))/(nbfreqlinear + 1);
       /* Initialize new vectors */
       len_resample = imaxlogsampling + 1 + nbfreqlinear;
       //printf("len_resample = %i + 1 + %i = %i\n", imaxlogsampling, nbfreqlinear,len_resample);
@@ -369,7 +378,7 @@ int LISASimFDResponseTDI3Chan(
     }
     else { /* If no resampling, use the values we had as input */
       resampled = 0;
-      len_resample = len;
+      len_resample = imaxlogsampling + 1; /* If maxf < maxfsignal, we will cut the signal above maxf by simply adjusting the range of indices included (NOTE: without recomputing the exact boundary, so some support is lost due to discretization) */
       freq_resample = freq;
       amp_real_resample = amp_real;
       amp_imag_resample = amp_imag;
@@ -421,6 +430,10 @@ int LISASimFDResponseTDI3Chan(
       camp3 = factor3 * amphtilde;
       /* Phase term due to the R-delay, including correction to first order */
       double phaseRdelay = -2*PI*R_SI/C_SI*f*cos(beta)*cos(Omega_SI*tf - lambda) * (1 + R_SI/C_SI*Omega_SI*sin(Omega_SI*tf - lambda));
+      double phasewithRdelay = gsl_vector_get(phase_resample, j) + phaseRdelay;
+
+    //
+    //if(l==2&&m==1) printf("j, gsl_vector_get(phase_resample, j): %d, %g\n", j, gsl_vector_get(phase_resample, j));
       /**/
       gsl_vector_set(amp_real1, j, creal(camp1));
       gsl_vector_set(amp_imag1, j, cimag(camp1));
@@ -428,18 +441,19 @@ int LISASimFDResponseTDI3Chan(
       gsl_vector_set(amp_imag2, j, cimag(camp2));
       gsl_vector_set(amp_real3, j, creal(camp3));
       gsl_vector_set(amp_imag3, j, cimag(camp3));
-      gsl_vector_set(phase1, j, gsl_vector_get(phase_resample, j) + phaseRdelay);
-      gsl_vector_set(phase2, j, gsl_vector_get(phase_resample, j) + phaseRdelay);
-      gsl_vector_set(phase3, j, gsl_vector_get(phase_resample, j) + phaseRdelay);
+      gsl_vector_set(phase1, j, phasewithRdelay);
+      gsl_vector_set(phase2, j, phasewithRdelay);
+      gsl_vector_set(phase3, j, phasewithRdelay);
     }
-    //clock_t tendcontesllation = clock();
-  //printf("Set constellation time: %g s\n", (double)(tendcontesllation - tbegcontesllation) / CLOCKS_PER_SEC);
+    //clock_t tendconstellation = clock();
+  //printf("Set constellation time: %g s\n", (double)(tendconstellation - tbegconstellation) / CLOCKS_PER_SEC);
   //printf("GAB cumulated time: %g s\n", timingcumulativeGABmode);
 
-    /* Copying the vectors of frequencies */
-    gsl_vector_memcpy(freq1, freq_resample);
-    gsl_vector_memcpy(freq2, freq_resample);
-    gsl_vector_memcpy(freq3, freq_resample);
+    /* Copying the vectors of frequencies - we have to allow for the case where it has been shortened */
+    gsl_vector_view freq_resample_subview = gsl_vector_subvector(freq_resample, 0, len_resample);
+    gsl_vector_memcpy(freq1, &freq_resample_subview.vector);
+    gsl_vector_memcpy(freq2, &freq_resample_subview.vector);
+    gsl_vector_memcpy(freq3, &freq_resample_subview.vector);
 
     /* Append the modes to the ouput list-of-modes structures */
     *listTDI1 = ListmodesCAmpPhaseFrequencySeries_AddModeNoCopy(*listTDI1, modefreqseries1, l, m);
@@ -460,6 +474,9 @@ int LISASimFDResponseTDI3Chan(
       gsl_vector_free(phase_resample);
     }
   }
+
+  //
+  //printf("end fdresponse\n");
 
   return SUCCESS;
 }

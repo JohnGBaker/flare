@@ -1,6 +1,6 @@
 MESSAGE="Specify which machine to compile for in the Makefile."
 #MACHINE="sylvainsmac"
-MACHINE="johnsmac"
+MACHINE="sylvainsmac"
 
 ifeq ($(MACHINE),"sylvainsmac")
   MESSAGE="Compiling for Sylvain's Mac"
@@ -149,7 +149,7 @@ ptmcmc:
 	@echo "Do we need to check out ptmcmc from github?:";\
 	if [ \! -d ptmcmc ]; then git clone https://github.com/JohnGBaker/ptmcmc.git; fi;
 	@echo "INCLUDE="$(INCLUDE)
-	$(MAKE) CFLAGS="$(CPPFLAGS) $(CXXFLAGS)" INCLUDE="$(PTMCMC)/include" -C ptmcmc 
+	$(MAKE) CFLAGS="$(CPPFLAGS) $(CXXFLAGS)" INCLUDE="$(PTMCMC)/include" -C ptmcmc
 endif
 
 clean: $(SUBCLEAN)

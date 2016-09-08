@@ -46,7 +46,8 @@ Arguments are as follows:\n\
 ----- Generation Parameters ----------------------\n\
 --------------------------------------------------\n\
  --nbmode              Number of modes of radiation to generate (1-5, default=5)\n\
- --minf                Minimal frequency (Hz, default=0) - when too low, use first frequency covered by the ROM\n\
+ --minf                Minimal frequency (Hz, default=0) - when set to 0, use the lowest frequency where the detector noise model is trusted __LISASimFD_Noise_fLow (set somewhat arbitrarily)\n\
+ --maxf                Maximal frequency (Hz, default=0) - when set to 0, use the highest frequency where the detector noise model is trusted __LISASimFD_Noise_fHigh (set somewhat arbitrarily)\n\
  --deltatobs           Observation duration (years, default=2)\n\
  --tagextpn            Tag to allow PN extension of the waveform at low frequencies (default=1)\n\
  --Mfmatch             When PN extension allowed, geometric matching frequency: will use ROM above this value. If <=0, use ROM down to the lowest covered frequency (default=0.)\n\
@@ -81,6 +82,7 @@ Arguments are as follows:\n\
     /* Set default values for the generation params */
     params->nbmode = 5;
     params->minf = 0.;
+    params->maxf = 0.;
     params->deltatobs = 2.;
     params->tagextpn = 1;
     params->Mfmatch = 0.;
@@ -124,6 +126,8 @@ Arguments are as follows:\n\
             params->nbmode = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--minf") == 0) {
             params->minf = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--maxf") == 0) {
+            params->maxf = atof(argv[++i]);
         } else if (strcmp(argv[i], "--deltatobs") == 0) {
             params->deltatobs = atof(argv[++i]);
         }  else if (strcmp(argv[i], "--tagextpn") == 0) {
@@ -158,7 +162,11 @@ Arguments are as follows:\n\
 	  printf("Error: invalid option: %s\n", argv[i]);
 	  goto fail;
         }
-    }
+      }
+
+    /* Set frequency interval to default values */
+    if(params->minf==0.) params->minf = __LISASimFD_Noise_fLow;
+    if(params->maxf==0.) params->maxf = __LISASimFD_Noise_fHigh;
 
     return;
 
@@ -363,14 +371,14 @@ int main(int argc, char *argv[])
       SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef, params->phiRef, params->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
     } else {
       //printf("Extending signal waveform.  mfmatch=%g\n",globalparams->mfmatch);
-      SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, params->Mfmatch, flow, params->tRef, params->phiRef, params->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+      SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, params->Mfmatch, flow, 0, params->tRef, params->phiRef, params->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
     }
 
     /* Process through the Fourier-domain response for TDI observables */
     ListmodesCAmpPhaseFrequencySeries* listTDI1= NULL;
     ListmodesCAmpPhaseFrequencySeries* listTDI2= NULL;
     ListmodesCAmpPhaseFrequencySeries* listTDI3= NULL;
-    LISASimFDResponseTDI3Chan(&listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->tagtdi);
+    LISASimFDResponseTDI3Chan(&listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->maxf, params->tagtdi);
 
     /* If asked for it, rescale the complex amplitudes to include the factors that were scaled out of TDI observables */
     if(params->restorescaledfactor) {

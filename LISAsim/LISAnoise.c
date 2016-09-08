@@ -156,7 +156,8 @@ RealFunctionPtr NoiseFunction(const TDItag tditag, const int nchan)
 {
   RealFunctionPtr ptr = NULL;
   switch(tditag) {
-  case TDIXYZ: {
+  case TDIXYZ:
+  case TDIX: {
     switch(nchan) {
     case 1: ptr = &SnXYZ; break;
     case 2: ptr = &SnXYZ; break;
@@ -164,7 +165,8 @@ RealFunctionPtr NoiseFunction(const TDItag tditag, const int nchan)
     }
     break;
   }
-  case TDIalphabetagamma: {
+  case TDIalphabetagamma:
+  case TDIalpha: {
     switch(nchan) {
     case 1: ptr = &Snalphabetagamma; break;
     case 2: ptr = &Snalphabetagamma; break;
@@ -172,7 +174,10 @@ RealFunctionPtr NoiseFunction(const TDItag tditag, const int nchan)
     }
     break;
   }
-  case TDIAETXYZ: {
+  case TDIAETXYZ:
+  case TDIAXYZ:
+  case TDIEXYZ:
+  case TDITXYZ: {
     switch(nchan) {
     case 1: ptr = &SnAXYZ; break;
     case 2: ptr = &SnEXYZ; break;
@@ -180,58 +185,14 @@ RealFunctionPtr NoiseFunction(const TDItag tditag, const int nchan)
     }
     break;
   }
-  case TDIAETalphabetagamma: {
+  case TDIAETalphabetagamma:
+  case TDIAalphabetagamma:
+  case TDIEalphabetagamma:
+  case TDITalphabetagamma: {
     switch(nchan) {
     case 1: ptr = &SnAalphabetagamma; break;
     case 2: ptr = &SnEalphabetagamma; break;
     case 3: ptr = &SnTalphabetagamma; break;
-    }
-    break;
-  }
-  case TDIX: {
-    switch(nchan) {
-    case 1: ptr = &SnXYZ; break;
-    }
-    break;
-  }
-  case TDIalpha: {
-    switch(nchan) {
-    case 1: ptr = &Snalphabetagamma; break;
-    }
-    break;
-  }
-  case TDIAXYZ: {
-    switch(nchan) {
-    case 1: ptr = &SnAXYZ; break;
-    }
-  }
-  case TDIEXYZ: {
-    switch(nchan) {
-    case 1: ptr = &SnEXYZ; break;
-    }
-    break;
-  }
-  case TDITXYZ: {
-    switch(nchan) {
-    case 1: ptr = &SnTXYZ; break;
-    }
-    break;
-  }
-  case TDIAalphabetagamma: {
-    switch(nchan) {
-    case 1: ptr = &SnAalphabetagamma; break;
-    }
-    break;
-  }
-  case TDIEalphabetagamma: {
-    switch(nchan) {
-    case 1: ptr = &SnEalphabetagamma; break;
-    }
-    break;
-  }
-  case TDITalphabetagamma: {
-    switch(nchan) {
-    case 1: ptr = &SnTalphabetagamma; break;
     }
     break;
   }

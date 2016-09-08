@@ -393,8 +393,8 @@ double FDOverlapReImvsReIm(
   }
 
   //
-  Write_Text_Vector("/Users/marsat/src/flare/test/testcompareSNRtoFFT", "testfreqoverlap.txt", freqoverlap);
-  Write_Text_Vector("/Users/marsat/src/flare/test/testcompareSNRtoFFT", "testvaluesoverlap.txt", valuesoverlap);
+  //Write_Text_Vector("/Users/marsat/src/flare/test/testcompareSNRtoFFT", "testfreqoverlap.txt", freqoverlap);
+  //Write_Text_Vector("/Users/marsat/src/flare/test/testcompareSNRtoFFT", "testvaluesoverlap.txt", valuesoverlap);
 
   /* Final trapeze integration */
   double overlap = TrapezeIntegrate(freqoverlap, valuesoverlap);
@@ -624,7 +624,7 @@ gsl_set_error_handler(&Err_Handler);
   double minf = fmax(f1[imin1], f2min);
   double maxf = fmin(f1[imax1], f2max);
   if(fLow>0) {minf = fmax(fLow, minf);}
-  if(fHigh>0) {maxf = fmin(fHigh,maxf);}
+  if(fHigh>0) {maxf = fmin(fHigh, maxf);}
   while(f1[imin1+1]<=minf) imin1++;
   while(f1[imax1-1]>=maxf) imax1--;
   /* Estimate locally values for freqseries1 at the boundaries */
@@ -635,7 +635,7 @@ gsl_set_error_handler(&Err_Handler);
   double aimag1maxf = EstimateBoundaryLegendreQuad(freq1, freqseries1->amp_imag, imax1-2, maxf); /* Note the imax1-2 */
   double phi1maxf = EstimateBoundaryLegendreQuad(freq1, freqseries1->phase, imax1-2, maxf); /* Note the imax1-2 */
 
-  
+
   /* Initializing output structure */
   int nbpts = imax1 + 1 - imin1;
   CAmpPhaseFrequencySeries_Init(integrand, nbpts);
@@ -732,7 +732,7 @@ void ComputeIntegrandValues3Chan(
   if(fHigh>0) {maxf = fmin(fHigh, maxf);}
   while(f1[imin1+1]<=minf) imin1++;
   while(f1[imax1-1]>=maxf) imax1--;
-  /* Estimate locally values for freqseries1 at the boundaries - phase vectors assumed to be the same for channels 1,2,3 */
+  /* Estimate locally values for freqseries1 at the boundaries - phase vectors assumed to be the same for channels 1,2,3 - this is still true now that the response-processed phase includes the signal phase + R-delay phase, which is the same for all channels */
   double areal1chan1minf = EstimateBoundaryLegendreQuad(freq1, freqseries1chan1->amp_real, imin1, minf);
   double aimag1chan1minf = EstimateBoundaryLegendreQuad(freq1, freqseries1chan1->amp_imag, imin1, minf);
   double areal1chan2minf = EstimateBoundaryLegendreQuad(freq1, freqseries1chan2->amp_real, imin1, minf);
@@ -893,6 +893,16 @@ double FDSinglemodeFresnelOverlap3Chan(
   CAmpPhaseFrequencySeries* integrand = NULL;
   ComputeIntegrandValues3Chan(&integrand, freqseries1chan1, freqseries1chan2, freqseries1chan3, splines2chan1, splines2chan2, splines2chan3, Snoisechan1, Snoisechan2, Snoisechan3, fLow, fHigh);
 
+  //
+  Write_Text_Vector("/Users/marsat/src/flare/test/testlikelihoodlowM", "temp_freq_chanE.txt", freqseries1chan1->freq);
+  Write_Text_Vector("/Users/marsat/src/flare/test/testlikelihoodlowM", "temp_ampreal_chanE.txt", freqseries1chan1->amp_real);
+  Write_Text_Vector("/Users/marsat/src/flare/test/testlikelihoodlowM", "temp_ampimag_chanE.txt", freqseries1chan1->amp_imag);
+  Write_Text_Vector("/Users/marsat/src/flare/test/testlikelihoodlowM", "temp_phase_chanE.txt", freqseries1chan1->phase);
+  //
+  Write_Text_Matrix("/Users/marsat/src/flare/test/testlikelihoodlowM", "inj_ampreal_spline_chanE.txt", splines2chan1->spline_amp_real);
+  Write_Text_Matrix("/Users/marsat/src/flare/test/testlikelihoodlowM", "inj_ampimag_spline_chanE.txt", splines2chan1->spline_amp_imag);
+  Write_Text_Matrix("/Users/marsat/src/flare/test/testlikelihoodlowM", "inj_phase_spline_chanE.txt", splines2chan1->quadspline_phase);
+
   /* Rescaling the integrand */
   double scaling = 10./gsl_vector_get(integrand->freq, integrand->freq->size-1);
   gsl_vector_scale(integrand->freq, scaling);
@@ -976,6 +986,8 @@ double FDListmodesFresnelOverlap3Chan(
       int mmax2 = max(2, listelementsplines2chan1->m);
       double fcutLow = fmax(fLow, fmax(((double) mmax1)/2. * fstartobs1, ((double) mmax2)/2. * fstartobs2));
       double overlapmode = FDSinglemodeFresnelOverlap3Chan(listelementh1chan1->freqseries, listelementh1chan2->freqseries, listelementh1chan3->freqseries, listelementsplines2chan1->splines, listelementsplines2chan2->splines, listelementsplines2chan3->splines, Snoise1, Snoise2, Snoise3, fcutLow, fHigh);
+      //
+      //printf("fcutLow, fHigh, overlapmode: %g, %g, %g\n", fcutLow, fHigh, overlapmode);
       overlap += overlapmode;
       listelementsplines2chan1 = listelementsplines2chan1->next;
     }
