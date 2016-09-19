@@ -780,8 +780,8 @@ int SimEOBNRv2HMROMExtTF2(
     int l = listelement->l;
     int m = listelement->m;
 
-//NOTE: temporary hack to allow avoiding power-law extension of higher modes which seems problematic
-if((l==2&&m==2) || tagexthm) {
+    //NOTE: temporary hack to allow avoiding power-law extension of higher modes which seems problematic
+    //    if((l==2&&m==2) || tagexthm) {
 
     /* First we must compute a new frequency grid including a possible extension to lower frequencies*/
     gsl_vector *freq_new;
@@ -963,7 +963,7 @@ if((l==2&&m==2) || tagexthm) {
   //   }
 
     gsl_vector_free(freq_new);
-}
+    //}
     listelement=listelement->next;
   }
   *listhlm=listROM;
