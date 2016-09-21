@@ -1,8 +1,13 @@
 *.bk*
 *.o
+#*#
+*~
+python/*.pyc
 LISAsim/LISAexampleSNR
 LLVinference/LLVinference
+LLVinference/LLVlikelihood
 LLVsim/LLVexampleSNR
+LLVsim/GenerateLLVFD
 integration/wiptest
 EOBNRv2HMROM/GenerateWaveform
 LISAinference/ComputeLISASNR

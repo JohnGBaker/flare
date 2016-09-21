@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
     printf("%20.15g,",paramvals[i]);
   }
   printf("%20.15g\n",paramvals[nPar-1]);
-  printf("The result: likelihood = %g\n",result);
+  printf("The result: likelihood = %23.13g\n",result);
   free(injectedparams);
   //free(priorParams);
 
