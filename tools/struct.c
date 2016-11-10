@@ -159,14 +159,17 @@ int Write_Text_Vector(const char dir[], const char fname[], gsl_vector *v) {
   sprintf(path,"%s/%s", dir, fname);
   FILE *f = fopen(path, "w");
   if (!f) {
+    free(path);
     return(1);
   }
   int ret = gsl_vector_fprintf(f, v, "%.16e");
   if (ret != 0) {
     fprintf(stderr, "Error writing data in %s.\n",path);
+    free(path);
     return(1);
   }
   fclose(f);
+  free(path);
   return(0);
 }
 int Write_Text_Matrix(const char dir[], const char fname[], gsl_matrix *m) {
@@ -176,6 +179,7 @@ int Write_Text_Matrix(const char dir[], const char fname[], gsl_matrix *m) {
   sprintf(path,"%s/%s", dir, fname);
   FILE *f = fopen(path, "w");
   if (!f) {
+    free(path);
     return(1);
   }
   int N = (int) m->size1;
@@ -188,9 +192,11 @@ int Write_Text_Matrix(const char dir[], const char fname[], gsl_matrix *m) {
   }
   if (ret != 0) {
     fprintf(stderr, "Error writing data in %s.\n",path);
+    free(path);
     return(1);
   }
   fclose(f);
+  free(path);
   return(0);
 }
 

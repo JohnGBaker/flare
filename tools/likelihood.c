@@ -896,7 +896,7 @@ double FDSinglemodeFresnelOverlap3Chan(
   CAmpPhaseFrequencySeries* integrand = NULL;
   ComputeIntegrandValues3Chan(&integrand, freqseries1chan1, freqseries1chan2, freqseries1chan3, splines2chan1, splines2chan2, splines2chan3, Snoisechan1, Snoisechan2, Snoisechan3, fLow, fHigh);
 
-  //
+  /*
   Write_Text_Vector("/Users/marsat/src/flare/test/testlikelihoodlowM", "temp_freq_chanE.txt", freqseries1chan1->freq);
   Write_Text_Vector("/Users/marsat/src/flare/test/testlikelihoodlowM", "temp_ampreal_chanE.txt", freqseries1chan1->amp_real);
   Write_Text_Vector("/Users/marsat/src/flare/test/testlikelihoodlowM", "temp_ampimag_chanE.txt", freqseries1chan1->amp_imag);
@@ -905,6 +905,7 @@ double FDSinglemodeFresnelOverlap3Chan(
   Write_Text_Matrix("/Users/marsat/src/flare/test/testlikelihoodlowM", "inj_ampreal_spline_chanE.txt", splines2chan1->spline_amp_real);
   Write_Text_Matrix("/Users/marsat/src/flare/test/testlikelihoodlowM", "inj_ampimag_spline_chanE.txt", splines2chan1->spline_amp_imag);
   Write_Text_Matrix("/Users/marsat/src/flare/test/testlikelihoodlowM", "inj_phase_spline_chanE.txt", splines2chan1->quadspline_phase);
+  */
 
   /* Rescaling the integrand */
   double scaling = 10./gsl_vector_get(integrand->freq, integrand->freq->size-1);

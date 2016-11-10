@@ -543,7 +543,7 @@ int SimEOBNRv2HMROM(
   double Mtot_sec = Mtot * MTSUN_SI; /* Total mass in seconds */
 
   if ( q > q_max ) {
-    printf( "Error - %s: q out of range!\nEOBNRv2HMROM is only available for a mass ratio in the range q <= %g.\n", __func__, q_max);
+    //printf( "Error - %s: q out of range!\nEOBNRv2HMROM is only available for a mass ratio in the range q <= %g.\n", __func__, q_max); 
     return FAILURE;
   }
 
@@ -765,7 +765,7 @@ int SimEOBNRv2HMROMExtTF2(
   ret = SimEOBNRv2HMROM(&listROM, nbmode, deltatRef, phiRef, fRef, m1SI, m2SI, distance);
 
   /* If the ROM waveform generation failed (e.g. parameters were out of bounds) return FAILURE */
-  if(ret==FAILURE)printf("SimEOBNRv2HMROMExtTF2: Generation of ROM for injection failed!\n");
+  //if(ret==FAILURE)printf("SimEOBNRv2HMROMExtTF2: Generation of ROM for injection failed!\n");
   if(ret==FAILURE) return FAILURE;
 
   /* Main loop over the modes (as linked list) to perform the extension */
@@ -780,8 +780,8 @@ int SimEOBNRv2HMROMExtTF2(
     int l = listelement->l;
     int m = listelement->m;
 
-//NOTE: temporary hack to allow avoiding power-law extension of higher modes which seems problematic
-if((l==2&&m==2) || tagexthm) {
+    //NOTE: temporary hack to allow avoiding power-law extension of higher modes which seems problematic
+    //    if((l==2&&m==2) || tagexthm) {
 
     /* First we must compute a new frequency grid including a possible extension to lower frequencies*/
     gsl_vector *freq_new;
@@ -963,7 +963,7 @@ if((l==2&&m==2) || tagexthm) {
   //   }
 
     gsl_vector_free(freq_new);
-}
+    //}
     listelement=listelement->next;
   }
   *listhlm=listROM;

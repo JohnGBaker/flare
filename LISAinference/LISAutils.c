@@ -682,7 +682,7 @@ int LISAGenerateSignalCAmpPhase(
     ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, globalparams->Mfmatch, globalparams->minf, 0, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
   }
   if(ret==FAILURE){
-    printf("LISAGenerateSignalCAmpPhase: Generation of ROM for injection failed!\n");
+    //printf("LISAGenerateSignalCAmpPhase: Generation of ROM for injection failed!\n");
     return FAILURE;
   }
 
