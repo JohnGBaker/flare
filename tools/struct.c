@@ -287,6 +287,47 @@ void ReImFrequencySeries_Cleanup(ReImFrequencySeries *freqseries) {
   free(freqseries);
 }
 
+/******** Functions to initialize and clean up ReImTimeSeries structure ********/
+void ReImTimeSeries_Init(ReImTimeSeries **timeseries, const int n) {
+  if(!timeseries) exit(1);
+  /* Create storage for structures */
+  if(!*timeseries) *timeseries=malloc(sizeof(ReImTimeSeries));
+  else
+  {
+    ReImTimeSeries_Cleanup(*timeseries);
+  }
+  gsl_set_error_handler(&Err_Handler);
+  (*timeseries)->times = gsl_vector_alloc(n);
+  (*timeseries)->h_real = gsl_vector_alloc(n);
+  (*timeseries)->h_imag = gsl_vector_alloc(n);
+}
+void ReImTimeSeries_Cleanup(ReImTimeSeries *timeseries) {
+  if(timeseries->times) gsl_vector_free(timeseries->times);
+  if(timeseries->h_real) gsl_vector_free(timeseries->h_real);
+  if(timeseries->h_imag) gsl_vector_free(timeseries->h_imag);
+  free(timeseries);
+}
+/******** Functions to initialize and clean up AmpPhaseTimeSeries structure ********/
+void AmpPhaseTimeSeries_Init(AmpPhaseTimeSeries **timeseries, const int n) {
+  if(!timeseries) exit(1);
+  /* Create storage for structures */
+  if(!*timeseries) *timeseries=malloc(sizeof(AmpPhaseTimeSeries));
+  else
+  {
+    AmpPhaseTimeSeries_Cleanup(*timeseries);
+  }
+  gsl_set_error_handler(&Err_Handler);
+  (*timeseries)->times = gsl_vector_alloc(n);
+  (*timeseries)->h_amp = gsl_vector_alloc(n);
+  (*timeseries)->h_phase = gsl_vector_alloc(n);
+}
+void AmpPhaseTimeSeries_Cleanup(AmpPhaseTimeSeries *timeseries) {
+  if(timeseries->times) gsl_vector_free(timeseries->times);
+  if(timeseries->h_amp) gsl_vector_free(timeseries->h_amp);
+  if(timeseries->h_phase) gsl_vector_free(timeseries->h_phase);
+  free(timeseries);
+}
+
 /******** Functions to initialize and clean up RealTimeSeries structure ********/
 void RealTimeSeries_Init(RealTimeSeries **timeseries, const int n) {
   if(!timeseries) exit(1);

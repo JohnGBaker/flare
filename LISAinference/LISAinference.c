@@ -328,7 +328,7 @@ int main(int argc, char *argv[])
 	    /* Phys live points */
 	    fprintf(fphyslivepoints, "    %.18E", injectedparams->m1);
 	    fprintf(fphyslivepoints, "    %.18E", injectedparams->m2);
-	    fprintf(fphyslivepoints, "    %.18E", 0.); /* For templates, tRef is defined relatively to the injected value */
+	    fprintf(fphyslivepoints, "    %.18E", injectedparams->tRef);
 	    fprintf(fphyslivepoints, "    %.18E", injectedparams->distance);
 	    fprintf(fphyslivepoints, "    %.18E", injectedparams->phiRef);
 	    fprintf(fphyslivepoints, "    %.18E", injectedparams->inclination);

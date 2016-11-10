@@ -359,8 +359,9 @@ int main(int argc, char *argv[])
     SetCoeffsG(params->lambda, params->beta, params->polarization);
 
     /* Starting frequency - takes into account the duration of observation deltatobs and the arg minf */
-    double fstartobs = Newtonianfoft(params->m1, params->m2, params->deltatobs);
-    double flow = fmax(params->minf, fstartobs);
+    double fstartobs = 0.;
+    if(!(params->deltatobs==0)) fstartobs = Newtonianfoft(params->m1, params->m2, params->deltatobs);
+    double fLow = fmax(params->minf, fstartobs);
 
     /* Generate Fourier-domain waveform as a list of hlm modes */
     /* Use TF2 extension, if required to, to arbitrarily low frequencies */
@@ -371,7 +372,7 @@ int main(int argc, char *argv[])
       SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef, params->phiRef, params->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
     } else {
       //printf("Extending signal waveform.  mfmatch=%g\n",globalparams->mfmatch);
-      SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, params->Mfmatch, flow, 0, params->tRef, params->phiRef, params->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+      SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, params->Mfmatch, fLow, 0, params->tRef, params->phiRef, params->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
     }
 
     /* Process through the Fourier-domain response for TDI observables */
@@ -413,27 +414,23 @@ int main(int argc, char *argv[])
       double deltaf = 0.;
       if(params->deltaf==0.) {
         /* Determine deltaf so that N deltat = 1/deltaf > 2*tc where tc is the time to coalescence estimated from Psi22 */
-        /* Assumes the TD waveform ends around t=0 */
-        /* Note: the phase is untouched by the response processing, so the phase in the 22 TDI contribution is still Psi22 and the same for all channels */
-        double tc = EstimateInitialTime(listTDI1, flow);
-        deltaf = 0.5 * 1./(2*(-tc)); /* Extra factor of 1/2 corresponding to 0-padding in TD by factor of 2 */
-        //
-        printf("(tc,deltaf): (%g,%g)\n", tc,deltaf);
+        /* NOTE: assumes the TD waveform ends around t=0 */
+        /* NOTE: estimate based on the 22 mode - fstartobs will be scaled from mode to mode to ensure the same deltatobs for all (except for the 21 mode, which will turn on after the others) */
+        double tc = EstimateInitialTime(listROM, fLow);
+        double deltaf = 0.5 * 1./(2*(-tc)); /* Extra factor of 1/2 corresponding to 0-padding in TD by factor of 2 */
       }
       else deltaf = params->deltaf;
 
-      //
-      ListmodesCAmpPhaseFrequencySeries* TDIAh22 = ListmodesCAmpPhaseFrequencySeries_GetMode(listTDI1, 2, 2);
-      double fHigh22 = gsl_vector_get(TDIAh22->freqseries->freq, TDIAh22->freqseries->freq->size - 1);
-      printf("fHigh22: %g\n", fHigh22);
+      /* Compute TDI FD */
+      /* NOTE: we do NOT use fLow in the role of fstartobs - even when not asking for a deltatobs (deltatobs=0, fstartobs=0), we could enforce that the different modes will start at a frequency that corresponds to the same starting time (again, except for the 21 mode which will turn on after the start of the waveform). We do not do that, as it is primarily useful if we plan to take an IFFT afterwards. */
 
       /* Generate FD frequency series by summing mode contributions */
       ReImFrequencySeries* TDI1FD = NULL;
       ReImFrequencySeries* TDI2FD = NULL;
       ReImFrequencySeries* TDI3FD = NULL;
-      GenerateFDReImFrequencySeries(&TDI1FD, listTDI1, flow, deltaf, 0, params->nbmode); /* Here determines the number of points from deltaf and max frequency in input list of modes */
-      GenerateFDReImFrequencySeries(&TDI2FD, listTDI2, flow, deltaf, 0, params->nbmode); /* Here determines the number of points from deltaf and max frequency in input list of modes */
-      GenerateFDReImFrequencySeries(&TDI3FD, listTDI3, flow, deltaf, 0, params->nbmode); /* Here determines the number of points from deltaf and max frequency in input list of modes */
+      GenerateFDReImFrequencySeries(&TDI1FD, listTDI1, fLow, params->maxf, fstartobs, deltaf, 0); /* Here determines the number of points from deltaf and max frequency in input list of modes */
+      GenerateFDReImFrequencySeries(&TDI2FD, listTDI2, fLow, params->maxf, fstartobs, deltaf, 0); /* Here determines the number of points from deltaf and max frequency in input list of modes */
+      GenerateFDReImFrequencySeries(&TDI3FD, listTDI3, fLow, params->maxf, fstartobs, deltaf, 0); /* Here determines the number of points from deltaf and max frequency in input list of modes */
 
       /* Output */
       char *outfileTDI1FD = malloc(256);

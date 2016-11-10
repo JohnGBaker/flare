@@ -60,13 +60,13 @@ Arguments are as follows:\n\
         } else if (strcmp(argv[i], "--polarization") == 0) {
             params->polarization = atof(argv[++i]);
         } else if (strcmp(argv[i], "--tagtdi") == 0) {
-	  params->tagtdi = ParseTDItag(argv[++i]);
+	          params->tagtdi = ParseTDItag(argv[++i]);
         } else if (strcmp(argv[i], "--nsamplesinfile") == 0) {
             params->nsamplesinfile = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--binaryin") == 0) {
-          params->binaryin = 1;
+            params->binaryin = 1;
         } else if (strcmp(argv[i], "--binaryout") == 0) {
-          params->binaryout = 1;
+            params->binaryout = 1;
         } else if (strcmp(argv[i], "--indir") == 0) {
             strcpy(params->indir, argv[++i]);
         } else if (strcmp(argv[i], "--infile") == 0) {
@@ -114,7 +114,30 @@ static void Read_Wave_hphcTD( RealTimeSeries** hptd, RealTimeSeries** hctd, cons
   /* Clean up */
   gsl_matrix_free(inmatrix);
 }
-/* Output waveform in downsampled form, FD Amp/Pase, all hlm modes in a single file */
+/* Read waveform time series in Amp/Phase form for a single mode h22TD */
+/* NOTE: assumes a single mode amp/phase in the input file */
+static void Read_Wave_h22TD( RealTimeSeries** hptd, const char dir[], const char file[], const int nsamples, int binary)
+{
+  /* Initalize and read input */
+  gsl_matrix* inmatrix =  gsl_matrix_alloc(nsamples, 3);
+  if (!binary) Read_Text_Matrix(dir, file, inmatrix);
+  else Read_Matrix(dir, file, inmatrix);
+
+  /* Initialize structures */
+  AmpPhaseTimeSeries_Init(h22td, nsamples);
+
+  /* Set values */
+  gsl_vector_view timesview = gsl_matrix_column(inmatrix, 0);
+  gsl_vector_view ampview = gsl_matrix_column(inmatrix, 1);
+  gsl_vector_view phaseview = gsl_matrix_column(inmatrix, 2);
+  gsl_vector_memcpy((*h22td)->times, &timesview.vector);
+  gsl_vector_memcpy((*h22td)->h_amp, &ampview.vector);
+  gsl_vector_memcpy((*h22td)->h_phase, &phaseview.vector);
+
+  /* Clean up */
+  gsl_matrix_free(inmatrix);
+}
+/* Output TDI 3 channels TD - real time series */
 /* NOTE: assumes 3 channels with same times */
 static void Write_TDITD(const char dir[], const char file[], RealTimeSeries* TDI1, RealTimeSeries* TDI2, RealTimeSeries* TDI3, int binary)
 {
@@ -128,6 +151,39 @@ static void Write_TDITD(const char dir[], const char file[], RealTimeSeries* TDI
   gsl_matrix_set_col(outmatrix, 1, TDI1->h);
   gsl_matrix_set_col(outmatrix, 2, TDI2->h);
   gsl_matrix_set_col(outmatrix, 3, TDI3->h);
+
+  /* Output */
+  if(!binary) Write_Text_Matrix(dir, file, outmatrix);
+  else Write_Matrix(dir, file, outmatrix);
+}
+/* Output waveform time series in Amp/Phase form for a single mode h22TD */
+static void Write_h22TD(const char dir[], const char file[], AmpPhaseTimeSeries* h22td, int binary)
+{
+  /* Initialize output */
+  /* NOTE: assumes identical times for all 3 TDI observables */
+  int nbtimes = h22td->times->size;
+  gsl_matrix* outmatrix = gsl_matrix_alloc(nbtimes, 3);
+
+  /* Set data */
+  gsl_matrix_set_col(outmatrix, 0, h22td->times);
+  gsl_matrix_set_col(outmatrix, 1, h22td->h_real);
+  gsl_matrix_set_col(outmatrix, 2, h22td->h_phase);
+
+  /* Output */
+  if(!binary) Write_Text_Matrix(dir, file, outmatrix);
+  else Write_Matrix(dir, file, outmatrix);
+}
+/* Output waveform yslr - real time series */
+static void Write_h22TD(const char dir[], const char file[], RealTimeSeries* yslrtd, int binary)
+{
+  /* Initialize output */
+  /* NOTE: assumes identical times for all 3 TDI observables */
+  int nbtimes = yslrtd->times->size;
+  gsl_matrix* outmatrix = gsl_matrix_alloc(nbtimes, 2);
+
+  /* Set data */
+  gsl_matrix_set_col(outmatrix, 0, yslrtd->times);
+  gsl_matrix_set_col(outmatrix, 1, yslrtd->h);
 
   /* Output */
   if(!binary) Write_Text_Matrix(dir, file, outmatrix);
@@ -151,37 +207,75 @@ int main(int argc, char *argv[])
   /* Set geometric coefficients */
   SetCoeffsG(params->lambda, params->beta, params->polarization);
 
-  /* Load TD hp, hc from file */
-  RealTimeSeries* hptd = NULL;
-  RealTimeSeries* hctd = NULL;
-  Read_Wave_hphcTD(&hptd, &hctd, params->indir, params->infile, params->nsamplesinfile, params->binaryin);
-
-  /* Interpolate hp, hc with gsl spline */
-  /* NOTE: assumes indentical times vector */
-  gsl_vector* times = hptd->times;
-  int nbtimes = times->size;
-  gsl_interp_accel* accel_hp = gsl_interp_accel_alloc();
-  gsl_interp_accel* accel_hc = gsl_interp_accel_alloc();
-  gsl_spline* spline_hp = gsl_spline_alloc(gsl_interp_cspline, nbtimes);
-  gsl_spline* spline_hc = gsl_spline_alloc(gsl_interp_cspline, nbtimes);
-  gsl_spline_init(spline_hp, gsl_vector_const_ptr(hptd->times,0), gsl_vector_const_ptr(hptd->h,0), nbtimes);
-  gsl_spline_init(spline_hc, gsl_vector_const_ptr(hctd->times,0), gsl_vector_const_ptr(hctd->h,0), nbtimes);
-
-  //
-  //printf("(%g, %g)\n", gsl_vector_get(times, 0), gsl_vector_get(times, 200));
-  //printf("(%g, %g)\n", gsl_vector_get(times, times->size-1), gsl_vector_get(times, times->size-1-200));
-
-  /* Evaluate TDI */
-  RealTimeSeries* TDI1 = NULL;
-  RealTimeSeries* TDI2 = NULL;
-  RealTimeSeries* TDI3 = NULL;
-  /* Here, hardcoded margin that we will set to 0 on both sides, to avoid problems with delays extending past the input values */
+  /* Here, hardcoded time margin that we will set to 0 on both sides, to avoid problems with delays extending past the input values */
   /* We take R/c as the maximum delay that can occur in the response, and adjust the margin accordingly */
   double maxdelay = R_SI/C_SI;
   double deltat = gsl_vector_get(times, 1) - gsl_vector_get(times, 0);
   int nptmargin = 2 * (int)(maxdelay/deltat);
-  GenerateTDITD3Chan(&TDI1, &TDI2, &TDI3, spline_hp, spline_hc, accel_hp, accel_hc, times, nptmargin, params->tagtdi);
 
-  /* Output */
-  Write_TDITD(params->outdir, params->outfile, TDI1, TDI2, TDI3, params->binaryout);
+  /* Set aside the cases of the orbital delay and constellation response - written with TD amp/phase */
+  /* If not using those tags, use the old processing that uses TD hplus, hcross interpolated */
+  if(!(params->tagtdi==dO) && !(params->tditag==y12L)) {
+
+    /* Load TD hp, hc from file */
+    RealTimeSeries* hptd = NULL;
+    RealTimeSeries* hctd = NULL;
+    Read_Wave_hphcTD(&hptd, &hctd, params->indir, params->infile, params->nsamplesinfile, params->binaryin);
+
+    /* Interpolate hp, hc with gsl spline */
+    /* NOTE: assumes indentical times vector */
+    gsl_vector* times = hptd->times;
+    int nbtimes = times->size;
+    gsl_interp_accel* accel_hp = gsl_interp_accel_alloc();
+    gsl_interp_accel* accel_hc = gsl_interp_accel_alloc();
+    gsl_spline* spline_hp = gsl_spline_alloc(gsl_interp_cspline, nbtimes);
+    gsl_spline* spline_hc = gsl_spline_alloc(gsl_interp_cspline, nbtimes);
+    gsl_spline_init(spline_hp, gsl_vector_const_ptr(hptd->times,0), gsl_vector_const_ptr(hptd->h,0), nbtimes);
+    gsl_spline_init(spline_hc, gsl_vector_const_ptr(hctd->times,0), gsl_vector_const_ptr(hctd->h,0), nbtimes);
+
+    /* Evaluate TDI */
+    RealTimeSeries* TDI1 = NULL;
+    RealTimeSeries* TDI2 = NULL;
+    RealTimeSeries* TDI3 = NULL;
+    GenerateTDITD3Chan(&TDI1, &TDI2, &TDI3, spline_hp, spline_hc, accel_hp, accel_hc, times, nptmargin, params->tagtdi);
+
+    /* Output */
+    Write_TDITD(params->outdir, params->outfile, TDI1, TDI2, TDI3, params->binaryout);
+  }
+
+  /* Set aside the cases of the orbital delay and constellation response - written with TD amp/phase */
+  /* NOTE: for now supports only single-mode (22) waveforms in amp/phase form */
+  else if((params->tagtdi==dO) || (params->tditag==y12L)) {
+    /* Load 22-mode TD - can be the orbital-delayed 22 mode in the case of y12L */
+    AmpPhaseTimeSeries* h22td = NULL;
+    Read_Wave_h22TD(&h22td, params->indir, params->infile, params->nsamplesinfile, params->binaryin);
+
+    /* Interpolate amp, phase with gsl spline */
+    gsl_vector* times = h22td->times;
+    int nbtimes = times->size;
+    gsl_interp_accel* accel_amp = gsl_interp_accel_alloc();
+    gsl_interp_accel* accel_phase = gsl_interp_accel_alloc();
+    gsl_spline* spline_amp = gsl_spline_alloc(gsl_interp_cspline, nbtimes);
+    gsl_spline* spline_phase = gsl_spline_alloc(gsl_interp_cspline, nbtimes);
+    gsl_spline_init(spline_amp, gsl_vector_const_ptr(h22td->times,0), gsl_vector_const_ptr(h22td->h_amp,0), nbtimes);
+    gsl_spline_init(spline_phase, gsl_vector_const_ptr(h22td->times,0), gsl_vector_const_ptr(h22td->h_phase,0), nbtimes);
+
+    if(tagtdi==delayO) {
+      /* Evaluate orbital-delayed signal */
+      AmpPhaseTimeSeries* h22tdO = NULL;
+      Generateh22TDO(&h22tdO, spline_amp, spline_phase, accel_amp, accel_phase, times, nptmargin);
+
+      /* Output */
+      Write_TDITD(params->outdir, params->outfile, TDI1, TDI2, TDI3, params->binaryout);
+    }
+
+    else if(tagtdi==y12L) {
+      /* Evaluate y12 signal - constellation response only, input assumed to be h22tdO already */
+      RealTimeSeries* y12td = NULL;
+      Generatey12LTD(&y12td, spline_amp, spline_phase, accel_amp, accel_phase, times, nptmargin);
+
+      /* Output */
+      Write_yslrTD(params->outdir, params->outfile, y12td, params->binaryout);
+    }
+  }
 }

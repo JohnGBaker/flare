@@ -128,9 +128,9 @@ int FFTTimeSeries(ReImFrequencySeries** freqseries, RealTimeSeries* timeseries, 
 }
 
 /* IFFT of frequency series */
-/* Note: assumes frequency series is FT of real data */
+/* Note: assumes frequency series is FT of real data - produces real time series */
 /* Note: FFT uses flipped convention (i.e. h(f) = int e^(+2ipift)h(t)) */
-int IFFTFrequencySeries(RealTimeSeries** timeseries, ReImFrequencySeries* freqseries, double f1windowbeg, double f2windowbeg, double f1windowend, double f2windowend, int nzeropad)
+int IFFTFrequencySeriesReal(RealTimeSeries** timeseries, ReImFrequencySeries* freqseries, double f1windowbeg, double f2windowbeg, double f1windowend, double f2windowend, int nzeropad)
 {
   /* deltaf of frequency series */
   /* Warning: assumes linear sampling in frequency */
@@ -154,15 +154,17 @@ int IFFTFrequencySeries(RealTimeSeries** timeseries, ReImFrequencySeries* freqse
   double* hrealval = hrealvalues->data;
   double* himagval = himagvalues->data;
   for (int i=0; i<n; i++) {
-    hrealval[i] = WindowFunction(freq[i], f1windowbeg, f2windowend, deltafwindowbeg, deltafwindowend) * hreal[i];
-    himagval[i] = WindowFunction(freq[i], f1windowbeg, f2windowend, deltafwindowbeg, deltafwindowend) * himag[i];
+    double window = WindowFunction(freq[i], f1windowbeg, f2windowend, deltafwindowbeg, deltafwindowend);
+    hrealval[i] = window * hreal[i];
+    himagval[i] = window * himag[i];
   }
 
   /* Input as array of fftw_complex */
   int N = (int) hrealvalues->size;
   fftw_complex* in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N);
+  /* NOTE: Restoring the standard sign convention for the FT, used by FFTW - change in convention amounts to f->-f, equivalent to a conjugation only for FFT of a real series  */
   for(int i=0; i<n; i++) {
-    in[i] = hrealval[i] - I*himagval[i] ; /* Restoring the standard sign convention for the FT, used by FFTW */
+    in[i] = hrealval[i] - I*himagval[i] ;
   }
   for(int i=n; i<N; i++) {
     in[i] = 0;
@@ -182,12 +184,90 @@ int IFFTFrequencySeries(RealTimeSeries** timeseries, ReImFrequencySeries* freqse
   double fac = 1./(N*deltat); /* Additional 1/N to put the FFTW convention in agreement with numpy IFFT */
   double* times = (*timeseries)->times->data;
   double* h = (*timeseries)->h->data;
-  double t;
   for(int i=0; i<N/2; i++) {
     times[i] = (i-N/2)*deltat;
     times[N/2+i] = i*deltat;
     h[i] = fac * out[N/2+i];
     h[N/2+i] = fac * out[i];
+  }
+
+  /* Clean up */
+  gsl_vector_free(hrealvalues);
+  gsl_vector_free(himagvalues);
+  fftw_destroy_plan(p);
+  fftw_free(in);
+  fftw_free(out);
+
+  return SUCCESS;
+}
+
+
+/* IFFT of frequency series */
+/* Note: does not assume frequency series is FT of real data - produces complex time series */
+/* Note: FFT uses flipped convention (i.e. h(f) = int e^(+2ipift)h(t)) */
+int IFFTFrequencySeries(ReImTimeSeries** timeseries, ReImFrequencySeries* freqseries, double f1windowbeg, double f2windowbeg, double f1windowend, double f2windowend, int nzeropad)
+{
+  /* deltaf of frequency series */
+  /* Warning: assumes linear sampling in frequency */
+  double* freq = freqseries->freq->data;
+  double deltaf = freq[1] - freq[0];
+
+  /* Initialize vector for windowed, 0-padded FFT input */
+  int n = (int) freqseries->freq->size;
+  while(freq[n-1] > f2windowend) n--;
+  int nzeros = (int) pow(2, ((int) ceil(log(n)/log(2))) + nzeropad) - n; /* Here defined with floor, but with ceil in FFT */
+  gsl_vector* hrealvalues = gsl_vector_alloc(n + nzeros);
+  gsl_vector* himagvalues = gsl_vector_alloc(n + nzeros);
+  gsl_vector_set_zero(hrealvalues);
+  gsl_vector_set_zero(himagvalues);
+
+  /* Compute input FD values, with windowing */
+  double deltafwindowbeg = f2windowbeg - f1windowbeg;
+  double deltafwindowend = f2windowend - f1windowend;
+  double* hreal = freqseries->h_real->data;
+  double* himag = freqseries->h_imag->data;
+  double* hrealval = hrealvalues->data;
+  double* himagval = himagvalues->data;
+  for (int i=0; i<n; i++) {
+    double window = WindowFunction(freq[i], f1windowbeg, f2windowend, deltafwindowbeg, deltafwindowend);
+    hrealval[i] = window * hreal[i];
+    himagval[i] = window * himag[i];
+  }
+
+  /* Input as array of fftw_complex */
+  int N = (int) hrealvalues->size;
+  fftw_complex* in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N);
+  /* NOTE: the sign convention for the FT used by FFTW is different - change in convention amounts to f->-f, equivalent to a conjugation only for FFT of a real series - for a FFT of a complex series, we do not conjugate and we keep our convention */
+  for(int i=0; i<n; i++) {
+    in[i] = hrealval[i] + I*himagval[i] ;
+  }
+  for(int i=n; i<N; i++) {
+    in[i] = 0;
+  }
+
+  /* FFT - FFTW uses flipped convention (i.e. h(f) = int e^(+2ipift)h(t)) - our convention is h(f) = int e^(-2ipift)h(t) */
+  /* NOTE: due to the difference in convention for the FT, we use the FFTW_FORWARD sign (sign - in the exponential) */
+  fftw_plan p;
+  double complex* out = fftw_malloc(sizeof(fftw_complex) * N);
+  p = fftw_plan_dft_1d(N, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
+  fftw_execute(p);
+
+  /* Initialize output structure */
+  ReImTimeSeries_Init(timeseries, N);
+
+  /* Extracting and converting data from FFTW output - moving negative times to the left */
+  double deltat = 1./(N*deltaf);
+  double fac = 1./(N*deltat); /* Additional 1/N to put the FFTW convention in agreement with numpy IFFT */
+  double* times = (*timeseries)->times->data;
+  double* htdreal = (*timeseries)->h_real->data;
+  double* htdimag = (*timeseries)->h_imag->data;
+  for(int i=0; i<N/2; i++) {
+    times[i] = (i-N/2)*deltat;
+    times[N/2+i] = i*deltat;
+    htdreal[i] = fac * creal(out[N/2+i]);
+    htdimag[i] = fac * cimag(out[N/2+i]);
+    htdreal[N/2+i] = fac * creal(out[i]);
+    htdimag[N/2+i] = fac * cimag(out[i]);
   }
 
   /* Clean up */

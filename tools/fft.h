@@ -55,8 +55,20 @@ int FFTTimeSeries(
 /* IFFT of frequency series */
 /* Note: assumes frequency series is FT of real data */
 /* Note: FFT uses flipped convention (i.e. h(f) = int e^(+2ipift)h(t)) */
-int IFFTFrequencySeries(
+int IFFTFrequencySeriesReal(
   RealTimeSeries** timeseries,       /* Output: real time series*/
+  ReImFrequencySeries* freqseries,   /* Input: complex frequency series, assumed to be the FT of a real time series */
+  double f1windowbeg,                /* Start of window at the beginning */
+  double f2windowbeg,                /* End of window at the beginning */
+  double f1windowend,                /* Start of window at the end */
+  double f2windowend,                /* End of window at the end */
+  int nzeropad);                     /* For 0-padding: length will be (upper power of 2)*2^nzeropad */
+
+/* IFFT of frequency series */
+/* Note: assumes frequency series is FT of complex data - produces complex output */
+/* Note: FFT uses flipped convention (i.e. h(f) = int e^(+2ipift)h(t)) */
+int IFFTFrequencySeries(
+  ReImTimeSeries** timeseries,       /* Output: complex time series */
   ReImFrequencySeries* freqseries,   /* Input: complex frequency series, assumed to be the FT of a real time series */
   double f1windowbeg,                /* Start of window at the beginning */
   double f2windowbeg,                /* End of window at the beginning */

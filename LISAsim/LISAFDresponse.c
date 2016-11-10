@@ -204,7 +204,7 @@ int LISASimFDResponsey12(
       f = gsl_vector_get(freq, j);
       tf = (gsl_spline_eval_deriv(spline_phi, f, accel_phi))/(2*PI);
       //clock_t tbegGAB = clock();
-      EvaluateGABmode(&g12mode, &g21mode, &g23mode, &g32mode, &g31mode, &g13mode, f, tf, Yfactorplus, Yfactorcross, 1);
+      EvaluateGABmode(&g12mode, &g21mode, &g23mode, &g32mode, &g31mode, &g13mode, f, tf, Yfactorplus, Yfactorcross, 1); /* does include the R-delay term */
       //clock_t tendGAB = clock();
       //timingcumulativeGABmode += (double) (tendGAB-tbegGAB) /CLOCKS_PER_SEC;
       /**/

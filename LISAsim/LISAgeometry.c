@@ -93,7 +93,9 @@ static double sinarray[4];
 /* Function to convert string input TDI string to TDItag */
 TDItag ParseTDItag(char* string) {
   TDItag tag;
-  if(strcmp(string, "y12")==0) tag = y12;
+  if(strcmp(string, "delayO")==0) tag = delayO;
+  else if(strcmp(string, "y12L")==0) tag = y12L;
+  else if(strcmp(string, "y12")==0) tag = y12;
   else if(strcmp(string, "TDIXYZ")==0) tag = TDIXYZ;
   else if(strcmp(string, "TDIalphabetagamma")==0) tag = TDIalphabetagamma;
   else if(strcmp(string, "TDIAETXYZ")==0) tag = TDIAETXYZ;
@@ -877,6 +879,34 @@ int RestoreInPlaceScaledFactorTDI(
 
 /*********************** Time-domain response ************************/
 
+/* Processing single mode in amp/phase form through orbital time delay */
+double hOTDAmpPhase(
+  double* amp,                             /* Output: amplitude */
+  double* phase,                           /* Output: phase */
+  gsl_spline* splineamp,                   /* Input spline for TD mode amplitude */
+  gsl_spline* splinephase,                 /* Input spline for TD mode phase */
+  gsl_interp_accel* accelamp,              /* Accelerator for amp spline */
+  gsl_interp_accel* accelphase,            /* Accelerator for phase spline */
+  const double t)                          /* Time */
+{
+  /* Precompute array of sine/cosine */
+  for(int j=0; j<4; j++) {
+    cosarray[j] = cos((j+1) * Omega_SI * t);
+    sinarray[j] = sin((j+1) * Omega_SI * t);
+  }
+  /* Scalar product k.R */
+  double kR = coeffkRconst;
+  for(int j=0; j<2; j++) {
+    kR += cosarray[j] * coeffkRcos[j] + sinarray[j] * coeffkRsin[j];
+  }
+  /* Common factor and delay */
+  double delay = -(kR*R_SI)/C_SI;
+
+  /* Output result */
+  *amp = gsl_spline_eval(splineamp, t+delay, accelamp);
+  *phase = gsl_spline_eval(splinephase, t+delay, accelphase);
+}
+
 /* Functions evaluating yAB observables in time domain */
 double y12TD(
   gsl_spline* splinehp,                    /* Input spline for TD hplus */
@@ -1168,7 +1198,7 @@ int EvaluateTDIAETXYZTD(
 }
 
 /**/
-int GenerateTDITD3Chan(
+int GenerateTDITD3Chanhphc(
   RealTimeSeries** TDI1,                   /* Output: real time series for TDI channel 1 */
   RealTimeSeries** TDI2,                   /* Output: real time series for TDI channel 2 */
   RealTimeSeries** TDI3,                   /* Output: real time series for TDI channel 3 */
@@ -1200,12 +1230,6 @@ int GenerateTDITD3Chan(
   double* tdi3 = (*TDI3)->h->data;
   double tdi1val = 0, tdi2val = 0, tdi3val = 0;
 
-  /* // */
-  /* printf("%g\n", gsl_spline_eval(splinehp, tval[10000], accelhp)); */
-  /* EvaluateTDIXYZTD(&tdi1val, &tdi2val, &tdi3val, splinehp, splinehc, accelhp, accelhc, tval[10000]); */
-  /* printf("%g | %g | %g \n", tdi1val, tdi2val, tdi3val); */
-  /* exit(0); */
-
   /* For testing purposes: basic observable yAB */
   if(tditag==y12) {
     for(int i=nbptmargin; i<nbpt-nbptmargin; i++) {
@@ -1235,6 +1259,40 @@ int GenerateTDITD3Chan(
   }
   else {
     printf("Error: in GenerateTDITD3Chan, TDI tag not recognized.\n");
+  }
+
+  return SUCCESS;
+}
+
+/* Generate hO orbital-delayed for one mode contribution from amp, phase */
+int Generateh22TDO(
+  AmpPhaseTimeSeries** h22tdO,             /* Output: amp/phase time series for h22TDO */
+  gsl_spline* splineamp,                   /* Input spline for TD mode amplitude */
+  gsl_spline* splinephase,                 /* Input spline for TD mode phase */
+  gsl_interp_accel* accelamp,              /* Accelerator for amp spline */
+  gsl_interp_accel* accelphase,            /* Accelerator for phase spline */
+  gsl_vector* times,                       /* Vector of times to evaluate */
+  int nbptsmargin)                         /* Margin set to 0 on both side to avoid problems with delays out of the domain */
+{
+  /* Initialize output */
+  int nbpt = times->size;
+  RealTimeSeries_Init(h22td0, nbpt);
+  gsl_vector_memcpy((*h22td0)->times, times);
+  gsl_vector_set_zero((*h22td0)->h_amp);
+  gsl_vector_set_zero((*h22td0)->h_phase);
+
+  /* Loop over time samples - we take a margin to avoid problems with the domain */
+  double t;
+  double* tval = times->data;
+  double* amp = (*h22tdO)->h_amp->data;
+  double* phase = (*h22tdO)->h_phase->data;
+  double ampval = 0, phaseval = 0;
+
+  /* Loop over time samples */
+  for(int i=nbptmargin; i<nbpt-nbptmargin; i++) {
+    t = tval[i];
+    hOTDAmpPhase(&(amp[i]), &(phase[i]), splineamp, splinephase, accelamp, accelphase, t);
+    phase[i] = 0.;
   }
 
   return SUCCESS;

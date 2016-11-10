@@ -910,11 +910,13 @@ int LISAGenerateSignalReIm(
 
   /* Compute the Re/Im frequency series - takes into account the length of the observation with deltatobs */
   double fstartobs = Newtonianfoft(params->m1, params->m2, globalparams->deltatobs);
+  double fLow = fmax(__LISASimFD_Noise_fLow, globalparams->minf);
+  double fHigh = fmin(__LISASimFD_Noise_fHigh, globalparams->maxf);
   //TESTING
   //tbeg = clock();
-  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(TDI1, listTDI1, freq, fstartobs);
-  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(TDI2, listTDI2, freq, fstartobs);
-  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(TDI3, listTDI3, freq, fstartobs);
+  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(TDI1, listTDI1, freq, fLow, fHigh, fstartobs);
+  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(TDI2, listTDI2, freq, fLow, fHigh, fstartobs);
+  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(TDI3, listTDI3, freq, fLow, fHigh, fstartobs);
   //tend = clock();
   //printf("time ReIm: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
@@ -996,9 +998,9 @@ int LISAGenerateInjectionReIm(
   /* Compute the Re/Im frequency series */
   //TESTING
   //tbeg = clock();
-  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(TDI1, listTDI1, freq, fstartobs);
-  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(TDI2, listTDI2, freq, fstartobs);
-  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(TDI3, listTDI3, freq, fstartobs);
+  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(TDI1, listTDI1, freq, fLow, fHigh, fstartobs);
+  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(TDI2, listTDI2, freq, fLow, fHigh, fstartobs);
+  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(TDI3, listTDI3, freq, fLow, fHigh, fstartobs);
   //tend = clock();
   //printf("time ReIm: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //

@@ -269,23 +269,24 @@ double FDListmodesLogLinearOverlap(
   double minf1, maxf1, minf2, maxf2, minf, maxf;
   ListmodesCAmpPhaseFrequencySeries* listelement1mode22 = ListmodesCAmpPhaseFrequencySeries_GetMode(list1, 2, 2);
   ListmodesCAmpPhaseFrequencySeries* listelement2mode22 = ListmodesCAmpPhaseFrequencySeries_GetMode(list2, 2, 2);
-  minf1 = fmax(gsl_vector_get(listelement1mode22->freqseries->freq, 0), fstartobs1);
-  minf2 = fmax(gsl_vector_get(listelement2mode22->freqseries->freq, 0), fstartobs2);
-  maxf1 = gsl_vector_get(list1->freqseries->freq, (int) list1->freqseries->freq->size - 1);
-  maxf2 = gsl_vector_get(list2->freqseries->freq, (int) list2->freqseries->freq->size - 1);
-  ListmodesCAmpPhaseFrequencySeries* listelement1 = list1;
-  ListmodesCAmpPhaseFrequencySeries* listelement2 = list2;
-  while(listelement1) {
-    maxf1 = fmax(maxf1, gsl_vector_get(listelement1->freqseries->freq, (int) listelement1->freqseries->freq->size - 1));
-    listelement1 = listelement1->next;
+  minf1 = gsl_vector_get(listelement1mode22->freqseries->freq, 0);
+  minf2 = gsl_vector_get(listelement2mode22->freqseries->freq, 0);
+  maxf1 = ListmodesCAmpPhaseFrequencySeries_maxf(list1);
+  maxf2 = ListmodesCAmpPhaseFrequencySeries_maxf(list2);
+  /* Taking into account fLow, fHigh -- fstartobs, determined from 22 mode, is also used as a fLow */
+  if(!(fHigh==0.)) {
+    maxf1 = fmin(maxf1, fHigh);
+    maxf2 = fmin(maxf2, fHigh);
   }
-  while(listelement2) {
-    maxf2 = fmax(maxf2, gsl_vector_get(listelement2->freqseries->freq, (int) listelement2->freqseries->freq->size - 2));
-    listelement2 = listelement2->next;
+  if(!(fLow==0.)) {
+    minf1 = fmax(minf1, fLow);
+    minf2 = fmax(minf2, fLow);
   }
-  /* Actual boundaries to be used in the overlap - also cuts what is not covered by the noise data */
-  minf = fmax(fmax(minf1, minf2), fLow);
-  maxf = fmin(fmin(maxf1, maxf2), fHigh);
+  if(!(fstartobs1==0.)) minf1 = fmax(minf1, fstartobs1);
+  if(!(fstartobs2==0.)) minf1 = fmax(minf2, fstartobs2);
+  /* Actual boundaries to be used in the overlap - intersection of freqs covered by wf 1 and 2 */
+  minf = fmax(minf1, minf2);
+  maxf = fmin(maxf1, maxf2);
 
   /* Vector of frequencies used for the overlap */
   gsl_vector* freqoverlap = gsl_vector_alloc(nbpts);
@@ -294,10 +295,10 @@ double FDListmodesLogLinearOverlap(
   /* Evaluating each frequency series by interpolating and summing the mode contributions */
   ReImFrequencySeries* freqseries1 = NULL;
   ReImFrequencySeries_Init(&freqseries1, nbpts);
-  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(freqseries1, list1, freqoverlap, fstartobs1);
+  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(freqseries1, list1, freqoverlap, fLow, fHigh, fstartobs1);
   ReImFrequencySeries* freqseries2 = NULL;
   ReImFrequencySeries_Init(&freqseries2, nbpts);
-  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(freqseries2, list2, freqoverlap, fstartobs2);
+  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(freqseries2, list2, freqoverlap, fLow, fHigh, fstartobs2);
 
   /* Compute the integrand */
   gsl_vector* valuesoverlap = gsl_vector_alloc(nbpts);
@@ -327,6 +328,8 @@ double FDOverlapReImvsListmodesCAmpPhase(
   struct tagReImFrequencySeries *freqseries1,            /* First waveform, in Re/Im form */
   struct tagListmodesCAmpPhaseFrequencySeries *list2,    /* Second waveform, list of modes in amplitude/phase form */
   gsl_vector* noisevalues,                               /* Vector for the noise values on the freq of h1 */
+  double fLow,                                           /* Minimal frequency - set to 0 to ignore */
+  double fHigh,                                          /* Maximal frequency - set to 0 to ignore */
   double fstartobs2)                                     /* Starting frequency for the 22 mode of wf 2 - as determined from a limited duration of the observation - set to 0 to ignore */
 {
   /* Check the lengths */
@@ -342,7 +345,7 @@ double FDOverlapReImvsListmodesCAmpPhase(
   /* Evaluating frequency series 2 by interpolating and summing the mode contributions */
   ReImFrequencySeries* freqseries2 = NULL;
   ReImFrequencySeries_Init(&freqseries2, nbpts);
-  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(freqseries2, list2, freqoverlap, fstartobs2);
+  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(freqseries2, list2, freqoverlap, fLow, fHigh, fstartobs2);
 
   /* Compute the integrand */
   gsl_vector* valuesoverlap = gsl_vector_alloc(nbpts);
