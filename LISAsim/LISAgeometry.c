@@ -1272,14 +1272,14 @@ int Generateh22TDO(
   gsl_interp_accel* accelamp,              /* Accelerator for amp spline */
   gsl_interp_accel* accelphase,            /* Accelerator for phase spline */
   gsl_vector* times,                       /* Vector of times to evaluate */
-  int nbptsmargin)                         /* Margin set to 0 on both side to avoid problems with delays out of the domain */
+  int nbptmargin)                          /* Margin set to 0 on both side to avoid problems with delays out of the domain */
 {
   /* Initialize output */
   int nbpt = times->size;
-  RealTimeSeries_Init(h22td0, nbpt);
-  gsl_vector_memcpy((*h22td0)->times, times);
-  gsl_vector_set_zero((*h22td0)->h_amp);
-  gsl_vector_set_zero((*h22td0)->h_phase);
+  AmpPhaseTimeSeries_Init(h22tdO, nbpt);
+  gsl_vector_memcpy((*h22tdO)->times, times);
+  gsl_vector_set_zero((*h22tdO)->h_amp);
+  gsl_vector_set_zero((*h22tdO)->h_phase);
 
   /* Loop over time samples - we take a margin to avoid problems with the domain */
   double t;

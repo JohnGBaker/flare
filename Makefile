@@ -1,6 +1,6 @@
 MESSAGE="Specify which machine to compile for in the Makefile."
-#MACHINE="sylvainsmac"
-MACHINE="discover"
+MACHINE="sylvainsmac"
+#MACHINE="discover"
 
 ifeq ($(MACHINE),"sylvainsmac")
   MESSAGE="Compiling for Sylvain's Mac"
@@ -154,7 +154,11 @@ endif
 
 clean: $(SUBCLEAN)
 
+ifdef PTMCMC
 $(SUBCLEAN): %.clean:
 	$(MAKE) -C $* clean
 	$(MAKE) -C ptmcmc INCLUDE="$(PTMCMC)/include" clean
-
+else
+$(SUBCLEAN): %.clean:
+	$(MAKE) -C $* clean
+endif

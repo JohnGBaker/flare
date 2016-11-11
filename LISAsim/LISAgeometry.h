@@ -215,7 +215,7 @@ int Generateh22TDO(
   gsl_interp_accel* accelamp,              /* Accelerator for amp spline */
   gsl_interp_accel* accelphase,            /* Accelerator for phase spline */
   gsl_vector* times,                       /* Vector of times to evaluate */
-  int nbptsmargin);                        /* Margin set to 0 on both side to avoid problems with delays out of the domain */
+  int nbptmargin);                         /* Margin set to 0 on both side to avoid problems with delays out of the domain */
 
 
 /* Generate TDI observables (including orbital delay) for one mode contritbution from amp, phase */

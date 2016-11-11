@@ -57,6 +57,7 @@ typedef struct tagComputeLISASNRparams {
   double polarization;       /* polarization angle (rad, default 0) */
 
   int nbmode;                /* number of modes to generate (starting with 22) - defaults to 5 (all modes) */
+  double deltatobs;          /* Observation duration (years, default=2) */
   double minf;               /* Minimal frequency (Hz, default=0) - when set to 0, use the lowest frequency where the detector noise model is trusted __LISASimFD_Noise_fLow (set somewhat arbitrarily)*/
   double maxf;               /* Maximal frequency (Hz, default=0) - when set to 0, use the highest frequency where the detector noise model is trusted __LISASimFD_Noise_fHigh (set somewhat arbitrarily)*/
   int tagextpn;              /* Tag to allow PN extension of the waveform at low frequencies */
@@ -66,8 +67,13 @@ typedef struct tagComputeLISASNRparams {
   int nbptsoverlap;          /* Number of points to use in loglinear overlaps (default 32768) */
   int fromtditdfile;         /* Option for loading time series for TDI observables and FFTing */
   int nlinesinfile;          /* Number of lines of input file */
-  char indir[256];           /* Path for the input directory */
-  char infile[256];          /* Path for the input file */
+  char indir[256];           /* Input directory */
+  char infile[256];          /* Input file */
+  int loadparamsfile;        /* Option to load physical parameters from file and to output result to file (default 0) */
+  int nlinesparams;          /* Number of lines in params file */
+  char paramsdir[256];       /* Directory for the input/output file */
+  char paramsfile[256];      /* Input file with the parameters */
+  char outputfile[256];      /* Output file */
 } ComputeLISASNRparams;
 
 
