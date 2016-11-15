@@ -216,6 +216,17 @@ int Generateh22TDO(
   gsl_interp_accel* accelphase,            /* Accelerator for phase spline */
   gsl_vector* times,                       /* Vector of times to evaluate */
   int nbptmargin);                         /* Margin set to 0 on both side to avoid problems with delays out of the domain */
+/* Generate y12L from orbital-delayed h22 in amp/phase form */
+int Generatey12LTD(
+  RealTimeSeries** y12Ltd,                 /* Output: real time series for y12L */
+  gsl_spline* splineamp,                   /* Input spline for TD mode amplitude */
+  gsl_spline* splinephase,                 /* Input spline for TD mode phase */
+  gsl_interp_accel* accelamp,              /* Accelerator for amp spline */
+  gsl_interp_accel* accelphase,            /* Accelerator for phase spline */
+  gsl_vector* times,                       /* Vector of times to evaluate */
+  double Theta,                            /* Inclination */
+  double Phi,                              /* Phase */
+  int nbptmargin);                         /* Margin set to 0 on both side to avoid problems with delays out of the domain */
 
 
 /* Generate TDI observables (including orbital delay) for one mode contritbution from amp, phase */

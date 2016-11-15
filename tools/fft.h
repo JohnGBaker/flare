@@ -43,11 +43,20 @@ double WindowFunction(double x, double xi, double xf, double deltaxi, double del
 double WindowFunctionLeft(double x, double xf, double deltaxf);
 double WindowFunctionRight(double x, double xi, double deltaxi);
 
-/* FFT of time series */
+/* FFT of real time series */
+/* Note: FFT uses flipped convention (i.e. h(f) = int e^(+2ipift)h(t)) */
+int FFTRealTimeSeries(
+  ReImFrequencySeries** freqseries,   /* Output: frequency series */
+  RealTimeSeries* timeseries,         /* Input: real time series */
+  double twindowbeg,                  /* Extent of the window at beginning (starts at the first point) */
+  double twindowend,                  /* Extent of the window at the end (end at the last point) */
+  int nzeropad);                      /* For 0-padding: length will be (upper power of 2)*2^nzeropad */
+
+/* FFT of Re/Im time series */
 /* Note: FFT uses flipped convention (i.e. h(f) = int e^(+2ipift)h(t)) */
 int FFTTimeSeries(
   ReImFrequencySeries** freqseries,   /* Output: frequency series */
-  RealTimeSeries* timeseries,         /* Input: real time series */
+  ReImTimeSeries* timeseries,         /* Input: Re/Im time series */
   double twindowbeg,                  /* Extent of the window at beginning (starts at the first point) */
   double twindowend,                  /* Extent of the window at the end (end at the last point) */
   int nzeropad);                      /* For 0-padding: length will be (upper power of 2)*2^nzeropad */

@@ -133,8 +133,12 @@ int RestrictFDReImFrequencySeries(
   double fHigh);                                 /* Maximal frequency */
 /* Function to unwrap the phase mod 2pi  - acts directly on the gsl_vector representing the phase */
 int UnwrapPhase(
-  gsl_vector** phaseout,   /* Output: unwrapped phase vector */
+  gsl_vector*  phaseout,   /* Output: unwrapped phase vector - already allocated */
   gsl_vector*  phasein);   /* Input: phase vector */
+/* Function to convert a time series from Re/Im form to Amp/Phase form - unwrapping the phase */
+int ReImTimeSeries_ToAmpPhase(
+  AmpPhaseTimeSeries** timeseriesout,             /* Output: Amp/Phase time series */
+  ReImTimeSeries* timeseriesin);                  /* Input: Re/Im time series */
 
 /***************** Spin weighted spherical harmonics ****************/
 

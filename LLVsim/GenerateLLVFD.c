@@ -264,9 +264,9 @@ int main(int argc, char *argv[])
     gsl_vector* times = LLV1->times;
     double twindowbeg = 0.05 * (gsl_vector_get(times, times->size - 1) - gsl_vector_get(times, 0)); /* Here hardcoded relative window lengths */
     double twindowend = 0.01 * (gsl_vector_get(times, times->size - 1) - gsl_vector_get(times, 0)); /* Here hardcoded relative window lengths */
-    FFTTimeSeries(&LLV1FFT, LLV1, twindowbeg, twindowend, 2); /* Here hardcoded 0-padding */
-    FFTTimeSeries(&LLV2FFT, LLV2, twindowbeg, twindowend, 2); /* Here hardcoded 0-padding */
-    FFTTimeSeries(&LLV3FFT, LLV3, twindowbeg, twindowend, 2); /* Here hardcoded 0-padding */
+    FFTRealTimeSeries(&LLV1FFT, LLV1, twindowbeg, twindowend, 2); /* Here hardcoded 0-padding */
+    FFTRealTimeSeries(&LLV2FFT, LLV2, twindowbeg, twindowend, 2); /* Here hardcoded 0-padding */
+    FFTRealTimeSeries(&LLV3FFT, LLV3, twindowbeg, twindowend, 2); /* Here hardcoded 0-padding */
 
     /* Output */
     char *outfileLLV1 = malloc(256);

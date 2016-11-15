@@ -16,6 +16,8 @@ Arguments are as follows:\n\
 --------------------------------------------------\n\
 ----- Physical Parameters ------------------------\n\
 --------------------------------------------------\n\
+ --phiRef              Phase (radians, default=0) -- used when input is h22\n\
+ --inclination         Inclination (radians, default=PI/3) -- used when input is h22\n\
  --lambda              First angle for the position in the sky (radians, default=0)\n\
  --beta                Second angle for the position in the sky (radians, default=0)\n\
  --polarization        Polarization of source (radians, default=0)\n\
@@ -36,6 +38,8 @@ Arguments are as follows:\n\
     ssize_t i;
 
     /* Set default values for the physical params */
+    params->phiRef = 0;
+    params->inclination = PI/3;
     params->lambda = 0;
     params->beta = 0;
     params->polarization = 0;
@@ -53,6 +57,10 @@ Arguments are as follows:\n\
         if (strcmp(argv[i], "--help") == 0) {
             fprintf(stdout,"%s", help);
             exit(0);
+        } else if (strcmp(argv[i], "--phiRef") == 0) {
+            params->phiRef = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--inclination") == 0) {
+            params->inclination = atof(argv[++i]);
         } else if (strcmp(argv[i], "--lambda") == 0) {
             params->lambda = atof(argv[++i]);
         } else if (strcmp(argv[i], "--beta") == 0) {
@@ -278,8 +286,7 @@ int main(int argc, char *argv[])
     else if(params->tagtdi==y12L) {
       /* Evaluate y12 signal - constellation response only, input assumed to be h22tdO already */
       RealTimeSeries* y12td = NULL;
-      //
-      //Generatey12LTD(&y12td, spline_amp, spline_phase, accel_amp, accel_phase, times, nptmargin);
+      Generatey12LTD(&y12td, spline_amp, spline_phase, accel_amp, accel_phase, times, params->inclination, params->phiRef, nptmargin);
 
       /* Output */
       Write_yslrTD(params->outdir, params->outfile, y12td, params->binaryout);

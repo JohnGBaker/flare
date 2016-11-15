@@ -45,7 +45,9 @@
 
 typedef enum GenTDIFDtag {
   TDIFD,
-  TDIhlm
+  TDIhlm,
+  h22FFT,
+  yslrFFT
 } GenTDIFDtag;
 
 /* Parameters for the generation of a LISA waveform (in the form of a list of modes) */
@@ -68,6 +70,8 @@ typedef struct tagGenTDIFDparams {
   int tagextpn;              /* Tag to allow PN extension of the waveform at low frequencies (default=1) */
   double Mfmatch;            /* When PN extension allowed, geometric matching frequency: will use ROM above this value. If <=0, use ROM down to the lowest covered frequency (default=0.) */
   double deltaf;             /* When generating frequency series from the mode contributions, deltaf for the output (0 to set automatically at 1/2*1/(2T)) */
+  double twindowbeg;         /* When generating frequency series from file by FFT, twindowbeg (0 to set automatically at 0.05*duration) */
+  double twindowend;         /* When generating frequency series from file by FFT, twindowend (0 to set automatically at 0.01*duration) */
   int tagtdi;                /* Tag selecting the desired output format */
   int taggenwave;            /* Tag selecting the desired output format */
   int restorescaledfactor;   /* If 1, restore the factors that were scaled out of TDI observables */

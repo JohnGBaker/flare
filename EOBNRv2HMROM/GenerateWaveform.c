@@ -210,14 +210,22 @@ static void Write_Wave_hphcTD(const char dir[], const char file[], RealTimeSerie
   else Write_Matrix(dir, file, outmatrix);
 }
 /* Output waveform in frequency series form,Re/Im for hplus and hcross */
+    // Output Re/Im because difference between numpy and C unwrapping
+//static void Write_Wave_h22TD(const char dir[], const char file[], AmpPhaseTimeSeries* h22, int binary)
 static void Write_Wave_h22TD(const char dir[], const char file[], ReImTimeSeries* h22, int binary)
 {
+
   /* Initialize output */
   int nbtimes = h22->times->size;
   gsl_matrix* outmatrix = gsl_matrix_alloc(nbtimes, 3);
 
+  //
+//printf("nbtimes, h_amp, h_phase %d %d %d\n", nbtimes, (int) h22->h_amp->size, (int) h22->h_phase->size);
+
   /* Set output matrix */
   gsl_matrix_set_col(outmatrix, 0, h22->times);
+  //gsl_matrix_set_col(outmatrix, 1, h22->h_amp);
+  //gsl_matrix_set_col(outmatrix, 2, h22->h_phase);
   gsl_matrix_set_col(outmatrix, 1, h22->h_real);
   gsl_matrix_set_col(outmatrix, 2, h22->h_imag);
 
@@ -345,7 +353,13 @@ int main(int argc, char *argv[])
     printf("length h22TD %d\n", h22TD->times->size);
     //exit(0);
 
+    /* Convert to Amp/Phase representation */
+    // Output Re/Im because difference between numpy and C unwrapping
+    //AmpPhaseTimeSeries* h22TDAmpPhase = NULL;
+    //ReImTimeSeries_ToAmpPhase(&h22TDAmpPhase, h22TD);
+
     /* Output */
+    //Write_Wave_h22TD(params->outdir, params->outfile, h22TDAmpPhase, params->binaryout);
     Write_Wave_h22TD(params->outdir, params->outfile, h22TD, params->binaryout);
     exit(0);
   }

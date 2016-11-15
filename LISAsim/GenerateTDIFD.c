@@ -7,6 +7,8 @@ static GenTDIFDtag ParseGenTDIFDtag(char* string) {
   GenTDIFDtag tag;
   if(strcmp(string, "TDIhlm")==0) tag = TDIhlm;
   else if(strcmp(string, "TDIFD")==0) tag = TDIFD;
+  else if(strcmp(string, "h22FFT")==0) tag = h22FFT;
+  else if(strcmp(string, "yslrFFT")==0) tag = yslrFFT;
   else {
     printf("Error in ParseGenTDIFDtag: string not recognized.\n");
     exit(1);
@@ -51,9 +53,11 @@ Arguments are as follows:\n\
  --deltatobs           Observation duration (years, default=2)\n\
  --tagextpn            Tag to allow PN extension of the waveform at low frequencies (default=1)\n\
  --Mfmatch             When PN extension allowed, geometric matching frequency: will use ROM above this value. If <=0, use ROM down to the lowest covered frequency (default=0.)\n\
- --deltaf;             When generating frequency series from the mode contributions, deltaf for the output (0 to set automatically at 1/2*1/(2T))\n\
+ --deltaf              When generating frequency series from the mode contributions, deltaf for the output (0 to set automatically at 1/2*1/(2T))\n\
+ --twindowbeg          When generating frequency series from file by FFT, twindowbeg (0 to set automatically at 0.05*duration)\n\
+ --twindowend          When generating frequency series from file by FFT, twindowend (0 to set automatically at 0.01*duration)\n\
  --tagtdi              Tag choosing the set of TDI variables to use (default TDIAETXYZ)\n\
- --taggenwave          Tag choosing the wf format: TDIhlm (default: downsampled mode contributions to TDI in Amp/Phase form), TDIFD (hlm interpolated and summed accross modes)\n\
+ --taggenwave          Tag choosing the wf format: TDIhlm (default: downsampled mode contributions to TDI in Amp/Phase form), TDIFD (hlm interpolated and summed accross modes), h22FFT and yslrFFT (used with fomrtditdfile -- loads time series and FFT)\n\
  --restorescaledfactor Option to restore the factors scaled out of TDI observables (default: false)\n	\
  --fromtditdfile       Option for loading time series for TDI observables and FFTing (default: false)\n\
  --nsamplesinfile      Number of lines of input file when loading TDI time series from file\n\
@@ -87,6 +91,8 @@ Arguments are as follows:\n\
     params->tagextpn = 1;
     params->Mfmatch = 0.;
     params->deltaf = 0.;
+    params->twindowbeg = 0.;
+    params->twindowend = 0.;
     params->tagtdi = TDIXYZ;
     params->taggenwave = TDIhlm;
     params->restorescaledfactor = 0;
@@ -136,6 +142,10 @@ Arguments are as follows:\n\
             params->Mfmatch = atof(argv[++i]);
         } else if (strcmp(argv[i], "--deltaf") == 0) {
             params->deltaf = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--twindowbeg") == 0) {
+            params->twindowbeg = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--twindowend") == 0) {
+            params->twindowend = atof(argv[++i]);
         } else if (strcmp(argv[i], "--tagtdi") == 0) {
 	  params->tagtdi = ParseTDItag(argv[++i]);
         } else if (strcmp(argv[i], "--taggenwave") == 0) {
@@ -264,6 +274,48 @@ static void Read_TDITD3Chan( RealTimeSeries** TDI1, RealTimeSeries** TDI2, RealT
   /* Clean up */
   gsl_matrix_free(inmatrix);
 }
+/* Read waveform Re/Im time series */
+static void Read_ReImTimeSeries(ReImTimeSeries** timeseries, const char dir[], const char file[], const int nblines, const int binary)
+{
+  /* Initalize and read input */
+  gsl_matrix* inmatrix =  gsl_matrix_alloc(nblines, 3);
+  if(!binary) Read_Text_Matrix(dir, file, inmatrix);
+  else Read_Matrix(dir, file, inmatrix);
+
+  /* Initialize structures */
+  ReImTimeSeries_Init(timeseries, nblines);
+
+  /* Set values */
+  gsl_vector_view timesview = gsl_matrix_column(inmatrix, 0);
+  gsl_vector_view hrealview = gsl_matrix_column(inmatrix, 1);
+  gsl_vector_view himagview = gsl_matrix_column(inmatrix, 2);
+  gsl_vector_memcpy((*timeseries)->times, &timesview.vector);
+  gsl_vector_memcpy((*timeseries)->h_real, &hrealview.vector);
+  gsl_vector_memcpy((*timeseries)->h_imag, &himagview.vector);
+
+  /* Clean up */
+  gsl_matrix_free(inmatrix);
+}
+/* Read waveform Real time series */
+static void Read_RealTimeSeries(RealTimeSeries** timeseries, const char dir[], const char file[], const int nblines, const int binary)
+{
+  /* Initalize and read input */
+  gsl_matrix* inmatrix =  gsl_matrix_alloc(nblines, 2);
+  if(!binary) Read_Text_Matrix(dir, file, inmatrix);
+  else Read_Matrix(dir, file, inmatrix);
+
+  /* Initialize structures */
+  RealTimeSeries_Init(timeseries, nblines);
+
+  /* Set values */
+  gsl_vector_view timesview = gsl_matrix_column(inmatrix, 0);
+  gsl_vector_view hview = gsl_matrix_column(inmatrix, 1);
+  gsl_vector_memcpy((*timeseries)->times, &timesview.vector);
+  gsl_vector_memcpy((*timeseries)->h, &hview.vector);
+
+  /* Clean up */
+  gsl_matrix_free(inmatrix);
+}
 /* Output waveform in frequency series form,Re/Im for hplus and hcross */
 static void Write_FrequencySeries(const char dir[], const char file[], ReImFrequencySeries* freqseries, const int binary)
 {
@@ -309,49 +361,134 @@ static void Write_TDIhlm(const char dir[], const char file[], ListmodesCAmpPhase
 
 int main(int argc, char *argv[])
 {
+  //
+  printf("a\n");
+
   /* Initialize structure for parameters */
   GenTDIFDparams* params;
   params = (GenTDIFDparams*) malloc(sizeof(GenTDIFDparams));
   memset(params, 0, sizeof(GenTDIFDparams));
 
+  //
+  printf("a\n");
+
   /* Parse commandline to read parameters */
   parse_args_GenerateTDIFD(argc, argv, params);
 
+  //
+  printf("a\n");
+
   if(params->fromtditdfile) {
-    /* Load TD TDI from file */
-    RealTimeSeries* TDI1 = NULL;
-    RealTimeSeries* TDI2 = NULL;
-    RealTimeSeries* TDI3 = NULL;
-    Read_TDITD3Chan(&TDI1, &TDI2, &TDI3, params->indir, params->infile, params->nsamplesinfile, params->binaryin);
 
-    /* Compute FFT */
-    ReImFrequencySeries* TDI1FFT = NULL;
-    ReImFrequencySeries* TDI2FFT = NULL;
-    ReImFrequencySeries* TDI3FFT = NULL;
-    gsl_vector* times = TDI1->times;
-    double twindowbeg = 0.05 * (gsl_vector_get(times, times->size - 1) - gsl_vector_get(times, 0)); /* Here hardcoded relative window lengths */
-    double twindowend = 0.01 * (gsl_vector_get(times, times->size - 1) - gsl_vector_get(times, 0)); /* Here hardcoded relative window lengths */
-    FFTTimeSeries(&TDI1FFT, TDI1, twindowbeg, twindowend, 2); /* Here hardcoded 0-padding */
-    FFTTimeSeries(&TDI2FFT, TDI2, twindowbeg, twindowend, 2); /* Here hardcoded 0-padding */
-    FFTTimeSeries(&TDI3FFT, TDI3, twindowbeg, twindowend, 2); /* Here hardcoded 0-padding */
+    if(params->taggenwave==TDIFD) {
+      /* Load TD TDI from file */
+      RealTimeSeries* TDI1 = NULL;
+      RealTimeSeries* TDI2 = NULL;
+      RealTimeSeries* TDI3 = NULL;
+      Read_TDITD3Chan(&TDI1, &TDI2, &TDI3, params->indir, params->infile, params->nsamplesinfile, params->binaryin);
 
-    /* Output */
-    char *outfileTDI1 = malloc(256);
-    char *outfileTDI2 = malloc(256);
-    char *outfileTDI3 = malloc(256);
-    sprintf(outfileTDI1, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 1, params->binaryout));
-    Write_FrequencySeries(params->outdir, outfileTDI1, TDI1FFT, params->binaryout);
-    if(!(params->tagtdi==y12)) {
-      sprintf(outfileTDI2, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 2, params->binaryout));
-      sprintf(outfileTDI3, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 3, params->binaryout));
-      Write_FrequencySeries(params->outdir, outfileTDI2, TDI2FFT, params->binaryout);
-      Write_FrequencySeries(params->outdir, outfileTDI3, TDI3FFT, params->binaryout);
+      /* Compute FFT */
+      ReImFrequencySeries* TDI1FFT = NULL;
+      ReImFrequencySeries* TDI2FFT = NULL;
+      ReImFrequencySeries* TDI3FFT = NULL;
+      gsl_vector* times = TDI1->times;
+      double twindowbeg, twindowend;
+      if(params->twindowbeg==0.) {
+        twindowbeg = 0.05 * (gsl_vector_get(times, times->size - 1) - gsl_vector_get(times, 0)); /* Here hardcoded relative window lengths */
+      }
+      else {
+        twindowbeg = params->twindowbeg;
+      }
+      if(params->twindowend==0.) {
+        twindowend = 0.01 * (gsl_vector_get(times, times->size - 1) - gsl_vector_get(times, 0)); /* Here hardcoded relative window lengths */
+      }
+      else {
+        twindowend = params->twindowend;
+      }
+      FFTRealTimeSeries(&TDI1FFT, TDI1, twindowbeg, twindowend, 2); /* Here hardcoded 0-padding */
+      FFTRealTimeSeries(&TDI2FFT, TDI2, twindowbeg, twindowend, 2); /* Here hardcoded 0-padding */
+      FFTRealTimeSeries(&TDI3FFT, TDI3, twindowbeg, twindowend, 2); /* Here hardcoded 0-padding */
+
+      /* Output */
+      char *outfileTDI1 = malloc(256);
+      char *outfileTDI2 = malloc(256);
+      char *outfileTDI3 = malloc(256);
+      sprintf(outfileTDI1, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 1, params->binaryout));
+      Write_FrequencySeries(params->outdir, outfileTDI1, TDI1FFT, params->binaryout);
+      if(!(params->tagtdi==y12)) {
+        sprintf(outfileTDI2, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 2, params->binaryout));
+        sprintf(outfileTDI3, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 3, params->binaryout));
+        Write_FrequencySeries(params->outdir, outfileTDI2, TDI2FFT, params->binaryout);
+        Write_FrequencySeries(params->outdir, outfileTDI3, TDI3FFT, params->binaryout);
+      }
+      free(outfileTDI1);
+      free(outfileTDI2);
+      free(outfileTDI3);
+
+      exit(0);
     }
-    free(outfileTDI1);
-    free(outfileTDI2);
-    free(outfileTDI3);
+    else if(params->taggenwave==h22FFT) {
+      /* Load Re/Im h22 from file */
+      ReImTimeSeries* h22td = NULL;
+      Read_ReImTimeSeries(&h22td, params->indir, params->infile, params->nsamplesinfile, params->binaryin);
 
-    exit(0);
+      /* Compute FFT */
+      ReImFrequencySeries* h22FFT = NULL;
+      gsl_vector* times = h22td->times;
+      double twindowbeg, twindowend;
+      if(params->twindowbeg==0.) {
+        twindowbeg = 0.05 * (gsl_vector_get(times, times->size - 1) - gsl_vector_get(times, 0)); /* Here hardcoded relative window lengths */
+      }
+      else {
+        twindowbeg = params->twindowbeg;
+      }
+      if(params->twindowend==0.) {
+        twindowend = 0.01 * (gsl_vector_get(times, times->size - 1) - gsl_vector_get(times, 0)); /* Here hardcoded relative window lengths */
+      }
+      else {
+        twindowend = params->twindowend;
+      }
+      FFTTimeSeries(&h22FFT, h22td, twindowbeg, twindowend, 2); /* Here hardcoded 0-padding */
+
+      /* Output */
+      Write_FrequencySeries(params->outdir, params->outfileprefix, h22FFT, params->binaryout);
+    }
+    else if(params->taggenwave==yslrFFT) {
+      //
+      printf("a\n");
+
+      /* Load Re/Im h22 from file */
+      RealTimeSeries* yslrtd = NULL;
+      Read_RealTimeSeries(&yslrtd, params->indir, params->infile, params->nsamplesinfile, params->binaryin);
+
+      //
+      printf("a\n");
+      printf("times[0,1] %g, %g\n", gsl_vector_get(yslrtd->times, 0), gsl_vector_get(yslrtd->times, 1));
+
+      /* Compute FFT */
+      ReImFrequencySeries* yslrFFT = NULL;
+      gsl_vector* times = yslrtd->times;
+      double twindowbeg, twindowend;
+      if(params->twindowbeg==0.) {
+        twindowbeg = 0.05 * (gsl_vector_get(times, times->size - 1) - gsl_vector_get(times, 0)); /* Here hardcoded relative window lengths */
+      }
+      else {
+        twindowbeg = params->twindowbeg;
+      }
+      if(params->twindowend==0.) {
+        twindowend = 0.01 * (gsl_vector_get(times, times->size - 1) - gsl_vector_get(times, 0)); /* Here hardcoded relative window lengths */
+      }
+      else {
+        twindowend = params->twindowend;
+      }
+
+        //
+        printf("aa\n");
+      FFTRealTimeSeries(&yslrFFT, yslrtd, twindowbeg, twindowend, 2); /* Here hardcoded 0-padding */
+
+      /* Output */
+      Write_FrequencySeries(params->outdir, params->outfileprefix, yslrFFT, params->binaryout);
+    }
   }
 
   else {

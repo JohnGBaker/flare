@@ -521,8 +521,9 @@ int RestrictFDReImFrequencySeries(
 }
 
 /* Function to unwrap the phase mod 2pi  - acts directly on a gsl_vector representing the phase */
+/* WARNING : found significant accumulating difference with the numpy unwrap function - to be understood */
 int UnwrapPhase(
-  gsl_vector** phaseout,   /* Output: unwrapped phase vector */
+  gsl_vector* phaseout,    /* Output: unwrapped phase vector, already allocated */
   gsl_vector*  phasein)    /* Input: phase vector */
 {
   size_t N = phasein->size;
@@ -530,10 +531,6 @@ int UnwrapPhase(
   double* diffcorr = (double*) malloc(sizeof(double) * N);
   double* cumsum = (double*) malloc(sizeof(double) * N);
   double* p = phasein->data;
-
-  /* Initialize output */
-  *phaseout = gsl_vector_alloc(N);
-  double* pout = (*phaseout)->data;
 
   /* Incremental phase variation - indexed from 1 to N-1 */
   diff[0] = 0;
@@ -549,6 +546,7 @@ int UnwrapPhase(
   /* One could preserve sign of variation if diff[i] = +pi (maps to -pi here) - here we simply assume that the phase jumps are strictly smaller than +-pi, which is the limiting case for the reconstruction to work  */
 
   /* Cumulative sum of diff */
+  double* pout = phaseout->data;
   pout[0] = p[0];
   for(int i=1; i<N; i++) {
     pout[i] = pout[i-1] + diff[i];
@@ -556,6 +554,39 @@ int UnwrapPhase(
 
   /* Cleanup */
   free(diff);
+}
+
+/* Function to convert a time series from Re/Im form to Amp/Phase form - unwrapping the phase */
+int ReImTimeSeries_ToAmpPhase(
+  AmpPhaseTimeSeries** timeseriesout,             /* Output: Amp/Phase time series */
+  ReImTimeSeries* timeseriesin)                   /* Input: Re/Im time series */
+{
+  /* Initialize output */
+  int npt = (int) timeseriesin->times->size;
+  AmpPhaseTimeSeries_Init(timeseriesout, npt);
+  gsl_vector_memcpy((*timeseriesout)->times, timeseriesin->times);
+
+  /* Compute amplitude and phase */
+  gsl_vector* amp = gsl_vector_alloc(npt);
+  gsl_vector* phase = gsl_vector_alloc(npt);
+  double* ampval = amp->data;
+  double* phaseval = phase->data;
+  double* hreal = timeseriesin->h_real->data;
+  double* himag = timeseriesin->h_imag->data;
+  for(int i=0; i<npt; i++) {
+    ampval[i] = cabs(hreal[i] + I*himag[i]);
+    phaseval[i] = carg(hreal[i] + I*himag[i]);
+  }
+
+  /* Unwrap phase */
+  UnwrapPhase((*timeseriesout)->h_phase, phase);
+
+  /* Copy amplitude */
+  gsl_vector_memcpy((*timeseriesout)->h_amp, amp);
+
+  /* Cleanup */
+  gsl_vector_free(amp);
+  gsl_vector_free(phase);
 }
 
 /***************** Other structure functions ****************/
