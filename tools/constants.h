@@ -71,7 +71,8 @@ extern "C" {
 
 #define Omega_SI 1.99098659e-7 /* Orbital pulsation: 2pi/year */
 #define f0_SI 3.168753575e-8 /* Orbital fequency: 1/year */
-#define L_SI 5.0e9 /* Arm length of the detector: 5.10^6 km */
+//#define L_SI 5.0e9 /* Arm length of the detector (in m): (Standard LISA) */
+#define L_SI 2.5e9 /* Arm length of the detector (in m): (L3 reference LISA) */
 #define R_SI 1.4959787066e11 /* Radius of the orbit around the sun: 1AU */
 
 /**********************************************************/

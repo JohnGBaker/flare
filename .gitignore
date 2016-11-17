@@ -1,5 +1,6 @@
 *.bk*
 *.o
+*.pyc
 LISAsim/LISAexampleSNR
 LLVinference/LLVinference
 LLVsim/LLVexampleSNR

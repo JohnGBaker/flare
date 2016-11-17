@@ -44,10 +44,22 @@
 /* Taken from (4) in McWilliams&al_0911 */
 static double Spm(const double f) {
   double invf2 = 1./(f*f);
-  return 2.5e-48 * invf2 * sqrt(1. + 1e-8*invf2);
+  //return 2.5e-48 * invf2 * sqrt(1. + 1e-8*invf2);
+  const double Daccel=3.0e-15; //acceleration noise in m/s^2/sqrt(Hz)
+  const double SaccelFF=Daccel*Daccel/4.0/PI/PI/C_SI/C_SI; //f^-2 coeff for fractional-freq noise PSD from accel noise; yields 2.54e-48 from 3e-15;
+  double invf8=invf2*invf2*invf2*invf2;
+  //Here we add an eyeball approximation based on 4yrs integration with L3LISAReferenceMission looking at a private comm from Neil Cornish 2016.11.12
+  double WDWDnoise=5000.0/sqrt(1e-21*invf8 + invf2 + 3e28/invf8)*SaccelFF*invf2;
+  //return SaccelFF * invf2 * sqrt(1. + 1e-8*invf2) + WDWDnoise;
+  return SaccelFF * invf2 * sqrt(1. + 1e-7*invf2) + WDWDnoise; //Increased reddening by factor of 10 for comparison with Neil Cornish 2015.11.15
 }
+
 static double Sop(const double f) {
-  return 1.8e-37 *f*f;
+  //const double Dop=2.0e-11; //Optical path noise in m/rtHz (Standard LISA)
+  const double Dop=1.2e-11; //Optical path noise in m/rtHz (L3 LISA reference)
+  const double SopFF=Dop*Dop*4.0*PI*PI/C_SI/C_SI; //f^2 coeff for OP frac-freq noise PSD.  Yields 1.76e-37 for Dop=2e-11.
+  //return 1.8e-37 *f*f;
+  return SopFF * f * f;
 }
 
 /* Noise Sn for TDI observables - factors have been scaled out both in the response and the noise */

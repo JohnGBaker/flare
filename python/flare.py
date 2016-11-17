@@ -31,7 +31,7 @@ def set_flare_flags(snr,params):
     #flags+=" --nbmodeinj 1 --nbmodetemp 1" #for no higher modes in injection and template
     if(snr>0):
         flags+=" --snr "+str(snr)+" --rescale-distprior" #fixing SNR (rescales distance)
-    flags+=" --comp-min 1e3 --comp-max 1e9" #min/max for component mass prior ranges
+    flags+=" --comp-min 1e5 --comp-max 1e8" #min/max for component mass prior ranges
     flags+=" --logflat-massprior" #assume prior uniform in log of masses, rather than uniform for mass."
     #flags+=" --mtot-min 8e5 --mtot-max 2e8 --q-max 11.98"  #additional prior limits on Mtot and q
     flags+=" --mtot-min 1e4 --mtot-max 1e10 --q-max 11.98"  #additional prior limits on Mtot and q
@@ -88,7 +88,7 @@ def set_bambi_flags(outroot,nlive=4000):
     return flags
 
 def par_name(i):
-    return ["m1","m2","t0","phi0","D","lambda","beta","inc","pol","sky","orient","Mvol"][i]
+    return ["m1","m2","t0","D","phi0","inc","lambda","beta","pol","sky","orient","Mvol"][i]
 
 def draw_params(Mtot,q):
     #we suppose fixed Mtot,q,SNR and draw the other params
@@ -126,7 +126,7 @@ def SNRrun(Mtot,q,snr):
     flags += " --outroot "+str(name)+" "
     cmd += " "+flags+">"+name+".out"
     setenv=""
-    #setenv = "export ROM_DATA_PATH=/Users/jgbaker/Projects/GWDA/LISA-type-response/flare/ROMdata/q1-12_Mfmin_0.0003940393857519091"
+    setenv = "export ROM_DATA_PATH=/Users/jgbaker/Projects/GWDA/LISA-type-response/flare/ROMdata/q1-12_Mfmin_0.0003940393857519091"
     
     print "Executing '"+cmd+"'"
     code=subprocess.call(setenv+";"+cmd,shell=True)
@@ -194,8 +194,8 @@ def FisherRunByParams(snr,params,delta,label,extrapoints=1.0):
     flags += " --outroot "+str(name)+" "
     cmd += " "+flags+">"+name+".out"
     setenv=""
-    #setenv = "export ROM_DATA_PATH=/Users/jgbaker/Projects/GWDA/LISA-type-response/flare/ROMdata/q1-12_Mfmin_0.0003940393857519091"
-    setenv="export ROM_DATA_PATH=/discover/nobackup/jgbaker/GW-DA/flare/ROMdata/q1-12_Mfmin_0.0003940393857519091"
+    setenv = "export ROM_DATA_PATH=/Users/jgbaker/Projects/GWDA/LISA-type-response/flare/ROMdata/q1-12_Mfmin_0.0003940393857519091"
+    #setenv="export ROM_DATA_PATH=/discover/nobackup/jgbaker/GW-DA/flare/ROMdata/q1-12_Mfmin_0.0003940393857519091"
     try:
         print "Executing '"+cmd+"'"
         dist=0
@@ -292,13 +292,14 @@ def readCovarFile(file):
                 if val<0:
                     dsky=float('nan')
                     if -val<1e-13*covar[6][6]*covar[7][7]:dsky=0
-                else: dsky=math.sqrt(val)
+                else: dsky=math.sqrt(val)*math.cos(pars[7])
                 print "sky",val,dsky,covar[6][6],covar[7][7]
                 val=covar[5][5]*covar[8][8]-covar[5][8]**2
                 if val<0:
                     dori=float('nan')
                     if -val<1e-13*covar[5][5]*covar[8][8]:dori=0
-                else: dori=math.sqrt(val)
+                else: dori=math.sqrt(val)*math.sin(pars[5])
+                #HACK? need to verify factor of sin(inc) here!
                 val=covar[0][0]*covar[1][1]-covar[0][1]**2
                 if val<0:
                     dmvol=float('nan')
@@ -341,7 +342,7 @@ def FisherStudy(MtotList,qList,SNRList,deltalist,Navg,Nthreads):
                 for Mtot in MtotList:
                     data=[]
                     logzs=np.zeros(Navg);
-                    print "Running SNRrun(",Mtot,",",q,",",snr,")"
+                    print "Running FisherRun(",Mtot,",",q,",",snr,")"
                     if(multithreaded):
                         threadedFisherRun(Mtot,q,snr,delta,"dummy",Navg,Nthreads,data)
                     else:
@@ -412,16 +413,20 @@ def FisherStudy(MtotList,qList,SNRList,deltalist,Navg,Nthreads):
 
 
         
-def FisherPlot(outlabel,ipar,qList,SNRList,deltalist,datafile):
+def FisherPlot(outlabel,ipar,qList,SNRList,deltalist,datafile,scaled=False,targetSNR=None,errorNsigma=2):
     pp = PdfPages(str(outlabel)+'-Fisher-'+par_name(ipar)+'.pdf')
     #datafile = open(datafile,'r')
     tol=1e-10
     data=np.loadtxt(datafile)
+    punits=["Msun","Msun","s","Mpc","rad","rad","rad","rad","rad",r"$rad^2$",r"$rad^2$",r"$Msun^2$"]
+    sunits=["m1",  "m2",  "s","D",  "rad","rad","rad","rad","rad",r"$rad^2$",r"$rad^2$",r"(m1*m2)"]
+    if(scaled):punits=sunits
     for q in qList:
         tags=[]
         labels=[]
         snrcount=0
         for snr in SNRList:
+            if(targetSNR==None):targetSNR=snr
             snrcount+=1
             deltacount=0;
             for delta in deltalist:
@@ -431,7 +436,7 @@ def FisherPlot(outlabel,ipar,qList,SNRList,deltalist,datafile):
                     if abs(d[0]/snr-1)<tol and abs(d[1]/delta-1)<tol and abs(d[3]/q-1)<tol:
                         subdata.append(d)
                 subdata=np.array(subdata)
-                #print "subdata=",subdata
+                print "subdata=",subdata
                 iMtot=2
                 imeanz=4
                 istdz=5
@@ -440,14 +445,33 @@ def FisherPlot(outlabel,ipar,qList,SNRList,deltalist,datafile):
                     #x.append(math.log10(Mtot/(1+10**meanz)))
                     #y1.append((means[ireport]-stds[ireport]))
                     #y2.append((means[ireport]+stds[ireport]))
-                x=[ math.log10(a/(1+10**b)) for a,b in zip(subdata[:,iMtot],subdata[:,imeanz]) ]
-                print "x=",x
+                #compute scalings, if needed
+                scales=subdata[:,iMtot]*0 #initially set all (logs of) scales to 0.0
+                if(scaled):#note all param error data are in log-space here
+                    if(ipar==0): #scale by m1
+                        scales=np.log10(subdata[:,iMtot]/(1+1/q))
+                    if(ipar==1): #scale by m2
+                        scales=np.log10(subdata[:,iMtot]/(1+q))
+                    if(ipar==3): #scale by distance as computed from mean z
+                        scales=np.array([math.log10(cosmo.luminosity_distance(10.0**zz).value) for zz in subdata[:,imeanz]])
+                    if(ipar==11): #scale by m1*m2
+                        scales=np.log10(subdata[:,iMtot]*subdata[:,iMtot]/(1+q)/(1+1/q))
+
+                meanzarray=subdata[:,imeanz]
+                SNRrescale_factor=1.0
+                if(not targetSNR==snr):
+                    SNRrescale_factor=targetSNR/snr
+                    #next make a new array of redshifts znew=z(D(z)/SNRrescale_factor)
+                    meanzarray=np.array([math.log10(z_at_value(cosmo.luminosity_distance,cosmo.luminosity_distance(10**zz/SNRrescale_factor),zmax=10000,ztol=1e-6)) for zz in meanzarray])
+                    print "Rescaling SNR by ",SNRrescale_factor," from ",snr," to ", targetSNR
+                x=[ math.log10(a/(1+10**b)) for a,b in zip(subdata[:,iMtot],meanzarray) ]
+                #print "x=",x
                 #print "imeanpar=",imeanpar
-                print "y0=",subdata[:,imeanpar]
+                #print "y0=",subdata[:,imeanpar]
                 #print "dy=",subdata[:,istdpar]
-                y1=subdata[:,imeanpar]-subdata[:,istdpar]
+                y1=subdata[:,imeanpar]-subdata[:,istdpar]-scales + math.log10(1.0*errorNsigma/SNRrescale_factor)
                 #print "y1=",y1
-                y2=subdata[:,imeanpar]+subdata[:,istdpar]
+                y2=subdata[:,imeanpar]+subdata[:,istdpar]-scales + math.log10(1.0*errorNsigma/SNRrescale_factor)
                 #print "y2=",y2
                 color=(0.2,0.8/math.sqrt(q),1.0/math.sqrt(snrcount))
                 if(deltacount==1):
@@ -455,13 +479,76 @@ def FisherPlot(outlabel,ipar,qList,SNRList,deltalist,datafile):
                 else:
                     plot=plt.plot(x,y1,color=color,alpha=1.0)
                     plot=plt.plot(x,y2,color=color,alpha=1.0)
-            tags.append( Rectangle((0, 0), 1, 1, fc=color,alpha=0.3) )
-            labels.append("SNR="+str(snr))
+                #plt.plot(x,scales)
+                tags.append( Rectangle((0, 0), 1, 1, fc=color,alpha=0.3) )
+            labels.append("SNR="+str(targetSNR))
         plt.legend(tags,labels)
         #plt.ylim([-1,7])
         plt.xlim([3,9])
         plt.title("Parameter uncertainty for LISA q="+str(q)+" SMBH merger")
-        plt.ylabel("log(d"+par_name(ipar)+")")
+        plt.ylabel("log("+str(errorNsigma)+r"$\sigma$"+"["+par_name(ipar)+"]/"+punits[ipar]+")")
+        plt.xlabel("log(M/Msun)")
+        #plt.show()
+        pp.savefig()
+        plt.clf()
+    pp.close()
+
+        
+def HorizonPlot(outlabel,ipar,qList,snr,delta,datafile,horizonlist,scaled=False,errorNsigma=2):
+    pp = PdfPages(str(outlabel)+'-Horizon-'+par_name(ipar)+'.pdf')
+    #datafile = open(datafile,'r')
+    tol=1e-10
+    data=np.loadtxt(datafile)
+    punits=["Msun","Msun","s","Mpc","rad","rad","rad","rad","rad",r"$rad^2$",r"$rad^2$",r"$Msun^2$"]
+    sunits=["m1",  "m2",  "s","D",  "rad","rad","rad","rad","rad",r"$rad^2$",r"$rad^2$",r"(m1*m2)"]
+    if(scaled):punits=sunits
+    for q in qList:
+        tags=[]
+        labels=[]
+        subdata=[]
+        for d in data:
+            if abs(d[0]/snr-1)<tol and abs(d[1]/delta-1)<tol and abs(d[3]/q-1)<tol:
+                subdata.append(d)
+        subdata=np.array(subdata)
+        print "subdata=",subdata
+        iMtot=2
+        imeanz=4
+        istdz=5
+        imeanpar=6+ipar*2
+        istdpar=7+ipar*2
+        #compute scalings, if needed
+        scales=subdata[:,iMtot]*0 #initially set all (logs of) scales to 0.0
+        if(scaled):#note all param error data are in log-space here
+            if(ipar==0): #scale by m1
+                scales=np.log10(subdata[:,iMtot]/(1+1/q))
+            if(ipar==1): #scale by m2
+                scales=np.log10(subdata[:,iMtot]/(1+q))
+            if(ipar==3): #scale by distance as computed from mean z
+                scales=np.array([math.log10(cosmo.luminosity_distance(10.0**zz).value) for zz in subdata[:,imeanz]])
+            if(ipar==11): #scale by m1*m2
+                scales=np.log10(subdata[:,iMtot]*subdata[:,iMtot]/(1+q)/(1+1/q))
+                
+        colorcount=0
+        for horizoncut in horizonlist:                   
+            colorcount+=1
+            meanzarray=subdata[:,imeanz]
+            testvalues=10**(subdata[:,imeanpar]-scales + math.log10(1.0*errorNsigma))
+            SNRrescale_factors=testvalues/horizoncut
+            if(ipar>=9):#derived quadratic scaled stats
+                SNRrescale_factors=np.sqrt(SNRrescale_factors)
+            #next make a new array of redshifts znew=z(D(z)/SNRrescale_factor)
+            meanzarray=np.array([math.log10(z_at_value(cosmo.luminosity_distance,cosmo.luminosity_distance(10**zz/fac),zmax=10000,ztol=1e-6)) for zz,fac in zip(meanzarray,SNRrescale_factors)])
+            x=[ math.log10(a/(1+10**b)) for a,b in zip(subdata[:,iMtot],meanzarray) ]
+            color=(1.0-colorcount/(len(horizonlist)+1.0),0.8/math.sqrt(q),colorcount/(len(horizonlist)+1.0))
+            #plot=plt.fill_between(x, y1, y2, facecolor=color,alpha=0.3, interpolate=True)
+            plot=plt.plot(x,meanzarray,color=color,alpha=1.0)
+            tags.append( Rectangle((0, 0), 1, 1, fc=color,alpha=0.3) )
+            labels.append(str(horizoncut)+"="+str(errorNsigma)+r"$\sigma$"+"["+par_name(ipar)+"]/"+punits[ipar])
+        plt.legend(tags,labels)
+        plt.ylim([-1,3])
+        plt.xlim([3,9])
+        plt.title("Parameter error horizon for L3 LISA q="+str(q)+" SMBH merger")
+        plt.ylabel("log(z)")
         plt.xlabel("log(M/Msun)")
         #plt.show()
         pp.savefig()
