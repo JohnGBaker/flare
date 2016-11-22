@@ -42,13 +42,68 @@
 
 /* Proof mass and optic noises - f in Hz */
 /* Taken from (4) in McWilliams&al_0911 */
+/*
 static double Spm(const double f) {
   double invf2 = 1./(f*f);
-  return 2.5e-48 * invf2 * sqrt(1. + 1e-8*invf2);
+  //return 2.5e-48 * invf2 * sqrt(1. + 1e-8*invf2);
+  //const double Daccel=3.0e-15; //acceleration noise in m/s^2/sqrt(Hz)
+  const double Daccel=3.0e-15/(2.5e9/L_SI); //scaled off L3LISA-v1 to for equal-SNR PE experiment
+  const double SaccelFF=Daccel*Daccel/4.0/PI/PI/C_SI/C_SI; //f^-2 coeff for fractional-freq noise PSD from accel noise; yields 2.54e-48 from 3e-15;
+  double invf8=invf2*invf2*invf2*invf2;
+  //Here we add an eyeball approximation based on 4yrs integration with L3LISAReferenceMission looking at a private comm from Neil Cornish 2016.11.12
+  double WDWDnoise=5000.0/sqrt(1e-21*invf8 + invf2 + 3e28/invf8)*SaccelFF*invf2;
+  //return SaccelFF * invf2 * sqrt(1. + 1e-8*invf2) + WDWDnoise;
+  return SaccelFF * invf2 * sqrt(1. + 1e-7*invf2) + WDWDnoise; //Increased reddening by factor of 10 for comparison with Neil Cornish 2015.11.15
 }
+*/
+/*
 static double Sop(const double f) {
-  return 1.8e-37 *f*f;
+  //const double Dop=2.0e-11; //Optical path noise in m/rtHz (Standard LISA)
+  //const double Dop=1.2e-11; //Optical path noise in m/rtHz (L3 LISA reference)
+  const double Dop=1.2e-11/(2.5e9/L_SI); //scaled off L3LISA-v1 to for equal-SNR PE experiment
+  const double SopFF=Dop*Dop*4.0*PI*PI/C_SI/C_SI; //f^2 coeff for OP frac-freq noise PSD.  Yields 1.76e-37 for Dop=2e-11.
+  //return 3.8e-38 *f*f;
+  return SopFF * f * f;
 }
+*/
+
+
+// Proof mass and optical noises - f in Hz 
+// L3 Reference Mission, from Petiteau LISA-CST-TN-0001
+static double Spm(const double f) {
+  double invf2 = 1./(f*f);
+  //double invf4=invf2*invf2;
+  //double invf8=invf4*invf4;
+  //double invf10=invf8*invf2;
+  const double twopi2=4.0*PI*PI;
+  double ddtsq=twopi2/invf2; //time derivative factor
+  const double C2=1.0*C_SI*C_SI; //veloc to doppler
+  const double Daccel_white=3.0e-15; //acceleration noise in m/s^2/sqrt(Hz)
+  const double Daccel_white2=Daccel_white*Daccel_white;
+  const double Dloc=1.7e-12; //local IFO noise in m/sqrt(Hz)
+  const double Dloc2=Dloc*Dloc;
+  double Saccel_white=Daccel_white2/ddtsq; //PM vel noise PSD (white accel part)
+  //double Saccel_red=Saccel_white*(1.0 + 2.12576e-44*invf10 + 3.6e-7*invf2); //reddening factor from Petiteau Eq 1
+  double Saccel_red=Saccel_white*(1.0 + 36.0*(pow(3e-5/f,10) + 1e-8*invf2)); //reddening factor from Petiteau Eq 1
+  double Sloc=Dloc2*ddtsq/4.0;//Factor of 1/4.0 is in Petiteau eq 2
+  double S4yrWDWD=5.16e-27*exp(-pow(f,1.2)*2.9e3)*pow(f,(-7./3.))*0.5*(1.0 + tanh(-(f-2.0e-3)*1.9e3))*ddtsq;//Stas' fit for 4yr noise (converted from Sens curve to position noise by multipyling by 3*L^2/80) which looks comparable to my fit), then converted to velocity noise
+  double Spm_vel = ( Saccel_red + Sloc + S4yrWDWD );  
+  return Spm_vel / C2;//finally convert from velocity noise to fractional-frequency doppler noise.
+}
+
+static double Sop(const double f) {
+  //double invf2 = 1./(f*f);
+  const double twopi2=4.0*PI*PI;
+  double ddtsq=twopi2*f*f; //time derivative factor
+  const double C2=C_SI*C_SI; //veloc to doppler
+  const double Dloc=1.7e-12; //local IFO noise in m/sqrt(Hz)
+  const double Dsci=8.9e-12; //science IFO noise in m/sqrt(Hz)
+  const double Dmisc=2.0e-12; //misc. optical path noise in m/sqrt(Hz)
+  const double Dop2=Dsci*Dsci+Dloc*Dloc+Dmisc*Dmisc;
+  double Sop=Dop2*ddtsq/C2; //f^2 coeff for OP frac-freq noise PSD.  Yields 1.76e-37 for Dop=2e-11.
+  return Sop;
+}
+
 
 /* Noise Sn for TDI observables - factors have been scaled out both in the response and the noise */
 /* Rescaled by 4*sin2pifL^2 */

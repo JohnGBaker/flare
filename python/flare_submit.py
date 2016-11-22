@@ -35,6 +35,7 @@ cd $outdir
 setenv OMP_NUM_THREADS SCRIPT_THREADS;
 time mpirun -np SCRIPT_TASKS SCRIPT_COMMAND > SCRIPT_NAME.out
 
+exit 0
 """
 #We assume that the script is located in the flare/python directory
 #below [:-7] is to stript "/python 
@@ -57,7 +58,7 @@ else:
     nodes=1
     tasks=1
     cmd   = flare_path+"/LISAinference/LISAinference_ptmcmc"
-    flags = flare.set_mcmc_flags(name,80)
+    flags = flare.set_mcmc_flags(name,60)
 #params=draw_params(Mtot,q)
 params=args.p
 flags+=flare.set_flare_flags(args.snr,params)
