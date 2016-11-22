@@ -24,6 +24,7 @@ prd,superscriptaddress,nofootinbib]{revtex4}
 \newcommand\calO{{\mathcal{O}}}
 \newcommand\calM{{\mathcal{M}}}
 \newcommand\calF{{\mathcal{F}}}
+\newcommand\calT{{\mathcal{T}}}
 \newcommand\bfx{\mathbf{x}}
 \newcommand{\ov}[1]{\overline{#1}}
 \newcommand{\ph}[1]{\phantom{#1}}
@@ -41,16 +42,19 @@ prd,superscriptaddress,nofootinbib]{revtex4}
 
 \title{Modulations and delays in Fourier domain: precessing binaries and LISA-type detector response}
 
-\author{John G. Baker}
-\affiliation{Gravitational Astrophysics Laboratory, NASA Goddard Space Flight Center, 8800 Greenbelt Rd., Greenbelt, MD 20771, USA}
-\author{Alessandra Buonanno}
-\affiliation{Department of Physics, University of Maryland, College Park, MD 20742, USA}
-\affiliation{Max Planck Institute for Gravitational Physics (Albert Einstein Institute), Am M\"uhlenberg 1, Potsdam-Golm, 14476, Germany}
-\author{Philip. B. Graff}
-\affiliation{Department of Physics, University of Maryland, College Park, MD 20742, USA}
-\affiliation{Gravitational Astrophysics Laboratory, NASA Goddard Space Flight Center, 8800 Greenbelt Rd., Greenbelt, MD 20771, USA}
-\author{Sylvain Marsat}
-\affiliation{Max Planck Institute for Gravitational Physics (Albert Einstein Institute), Am M\"uhlenberg 1, Potsdam-Golm, 14476, Germany}
+\author{A. A. Author}
+\affiliation{U. U. University}
+
+%\author{John G. Baker}
+%\affiliation{Gravitational Astrophysics Laboratory, NASA Goddard Space Flight Center, 8800 Greenbelt Rd., Greenbelt, MD 20771, USA}
+%\author{Alessandra Buonanno}
+%\affiliation{Department of Physics, University of Maryland, College Park, MD 20742, USA}
+%\affiliation{Max Planck Institute for Gravitational Physics (Albert Einstein Institute), Am M\"uhlenberg 1, Potsdam-Golm, 14476, Germany}
+%\author{Philip. B. Graff}
+%\affiliation{Department of Physics, University of Maryland, College Park, MD 20742, USA}
+%\affiliation{Gravitational Astrophysics Laboratory, NASA Goddard Space Flight Center, 8800 Greenbelt Rd., Greenbelt, MD 20771, USA}
+%\author{Sylvain Marsat}
+%\affiliation{Max Planck Institute for Gravitational Physics (Albert Einstein Institute), Am M\"uhlenberg 1, Potsdam-Golm, 14476, Germany}
 
 
 \date{\today}
@@ -210,8 +214,8 @@ For spinning compact objects, the presence of the spins leads to the precession 
 It was suggested by a number of authors~\cite{} that the effect of the precession can be modeled, to a good approximation, by a time-dependent rotation of a non-precessing waveform. In this approach, one introduces a precessing frame following the evolution of the plane of the orbit, and approximates the waveform in this precessing frame by using a non-precessing model. Different prescriptions have been proposed for the construction of the precessing frame itself~\cite{}.
 
 If $(\alpha, \beta, \gamma)$ are the Euler angles relating the precessing frame to the inertial frame in the $(z,y,z)$ convention, the modes in the inertial frame $h_{\ell m}^{\rm I}$ are then related to the modes in the precessing frame $h_{\ell m}^{\rm P}$ by~\cite{Goldberg+67}
-\be
-	h_{\ell m}^{\rm I} = \sum\limits_{m=-\ell}^{\ell} D^{\ell}_{mm'} (\alpha,\beta,\gamma) h_{\ell m'}^{\rm P} \,,
+\be\label{eq:wignerrot}
+	h_{\ell m}^{\rm I} = \sum\limits_{m=-\ell}^{\ell} D^{\ell *}_{m'm} (\alpha,\beta,\gamma) h_{\ell m'}^{\rm P} \,,
 \ee
 where the $D^{\ell}_{mm'}$ are Wigner matrices~\cite{}. Notice that there is no mixing of the modes with different values of $\ell$.
 
@@ -283,40 +287,25 @@ Notice that these approximations are not exactly the same as the ones usually ma
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsection{Leading order: the locally linear phase approximation}
+\subsection{Leading order: the local approximation}
 \label{subsec:LLP}
 
-Under the assumptions above, it is possible to see the convolution in the $f'$ variable in~\eqref{eq:FDkernel} as being a local operation, allowing us to expand the signal $\tilde{h}(f-f')$ around $f$.
-
-To this end, we will separate the signal in a Fourier-domain amplitude and phase, according to
-%
+Under the assumptions above, it is possible to see the convolution in the $f'$ variable in~\eqref{eq:FDkernel} as being a local operation, allowing us to expand the signal $\tilde{h}(f-f')$ around $f$. A first leading-order approximation, which could be called the local approximation for reasons that will appear clear below, is to discard the $f'$ dependence in the first argument of $\tilde{g}(f-f', f')$, to keep only the leading order in the Fourier-domain amplitude, and to expand the Fourier-domain phase to the first order, according to
 \be
-	\tilde{h}(f) = A(f) e^{-i\Psi(f)} \,,
+	\tilde{h}(f-f') \simeq A(f) \exp\left[ -i\left( \Psi(f) - f' \frac{\ud \Psi}{\ud f} \right) \right] \,,
 \ee
-%
-
-A first leading-order approximation, which could be called the locally linear phase (LLP) approximation, is to discard the $f'$ dependence in the first argument of $\tilde{g}(f-f', f')$, to keep only the leading order in the Fourier-domain amplitude, and to expand the Fourier-domain phase to the first order, according to
-%
-\be
-	\tilde{h}_{\rm LLP}(f-f') \simeq A(f) \exp\left[ -i\left( \Psi(f) - f' \frac{\ud \Psi}{\ud f} \right) \right] \,,
-\ee
-%
-Here and in the rest of the paper, derivatives with respect to $f$ will always be evaluated at $f$. Notice that, because of the freedom of adding a linear term to $\Psi(f)$ by simply shifting the signal in time, no assumption can be made on the smallness of the first derivative of the phase, and this is really a leading order approximation.
+Here and in the rest of the paper, derivatives with respect to the frequency will always be evaluated at $f$. Notice that, because of the freedom of adding a linear term to $\Psi(f)$ by simply shifting the signal in time, no assumption can be made on the smallness of the first derivative of the phase, and this is really a leading order approximation.
 
 Plugging this relation in~\eqref{eq:FDkernel}, we obtain
-%
 \begin{align}
-	\tilde{s}_{\rm LLP}(f) &= \tilde{h}(f) \int \ud f' \, \exp\left[ i f' \frac{\ud \Psi}{\ud f} \right] \tilde{g}(f,f') \nn\\
+	\tilde{s}(f) &= \tilde{h}(f) \int \ud f' \, \exp\left[ i f' \frac{\ud \Psi}{\ud f} \right] \tilde{g}(f,f') \nn\\
 	&= \tilde{h}(f) g\left( f, -\frac{1}{2\pi} \frac{\ud \Psi}{\ud f} \right) \,,
 \end{align}
-%
-which motivates the introduction of the effective time, seen as a function of frequency,
-%
+which motivates the introduction of an effective time, seen as a function of frequency,
 \be\label{eq:deftf}
 	\tf \equiv -\frac{1}{2\pi} \frac{\ud \Psi}{\ud f} \,,
 \ee
-%
-where the tilde here does not indicate a Fourier transform operation but simply that this quantity is an effective time defined from the Fourier-domain waveform. This definition is a generalization of the time-to-frequency correspondence at the heart of the SPA, as will be discussed in Sec.~\ref{subsec:linkSPA}, but it is worth noting that here it is defined entirely from the Fourier-domain waveform. Fig.~\ref{fig:tf} shows for the example of an equal-mass waveform. In particular, one should note that $\tf$ is not monotonously increasing with frequency anymore when reaching in the high-frequency part of the waveform, corresponding to the ringdown. This would forbid an unambiguous definition of an inverse fequency-of-time correspondence $f(t)$. 
+where the tilde here does not indicate a Fourier transform operation but simply that this quantity is an effective time defined from the Fourier-domain waveform. This definition is a generalization of the time-to-frequency correspondence at the heart of the SPA, as will be discussed in Sec.~\ref{subsec:linkSPA}, but it is worth noting that here it is defined entirely from the Fourier-domain waveform. Fig.~\ref{fig:tf} shows the time function $\tf$ for the example of an equal-mass waveform. In particular, one should note that $\tf$ is not monotonously increasing with frequency anymore when reaching in the high-frequency part of the waveform, corresponding to the ringdown. This would forbid an unambiguous definition of an inverse fequency-of-time correspondence $f(t)$. 
 
 \begin{figure}
   \centering
@@ -329,19 +318,19 @@ where the tilde here does not indicate a Fourier transform operation but simply 
 
 Using this notation, we have simply
 %
-\be\label{eq:LLP}
-	\tilde{s}_{\rm LLP}(f) = \tilde{h}(f) g(f, \tf) \,.
+\be\label{eq:local}
+	\tilde{s}_{\rm local}(f) = \tilde{h}(f) g(f, \tf) \,.
 \ee
 %
-The interpretation of this approximation is straightforward: the signal is simply multiplied by the response function evaluated at the time $\tf$. Additionally, when delays are present, the frequency-dependence of the response is evaluated directly at $f$. For precessing binary, this corresponds to the approximation used for the PhenomP approximant~\cite{}, as we will discuss in Sec.~\ref{}.
+The interpretation of this approximation is straightforward: the signal is simply multiplied by the response function evaluated at the time $\tf$. Additionally, when delays are present, the frequency-dependence of the response is evaluated directly at $f$. For precessing binary, this corresponds to the approximation used for the PhenomP approximant~\cite{Hannam+13}, as will be discussed in Sec.~\ref{}.
 
-It is worth noting that a shift in time of the time-domain signal will, by construction, be appropriately propagated to~\eqref{eq:LLP}. If $h'(t) = h(t -  \Delta t)$ but the modulation and delays are left unchanged (which is relevant for space-based detectors, not for precessing binaries), $\Psi'(f) = \Psi(f) - 2\pi f \Delta t$, so that
+It is worth noting that a shift in time of the time-domain signal will, by construction, be appropriately propagated to~\eqref{eq:local}. If $h'(t) = h(t -  \Delta t)$ [but the modulation and delays are left unchanged (which is relevant for space-based detectors, not for precessing binaries)], $\Psi'(f) = \Psi(f) - 2\pi f \Delta t$, so that
 %
-\be\label{eq:LLP}
-	\tilde{s}'_{\rm LLP}(f) = \tilde{h}'(f) g(f, \tf + \Delta t) \,. 
+\be\label{eq:localshifted}
+	\tilde{s}'_{\rm local}(f) = \tilde{h}'(f) g(f, \tf + \Delta t) \,. 
 \ee
 %
-This observation also justifies that the first derivative of the Fourier-domain phase cannot, in general, be considered a small quantity, as it can take arbitrary values for arbitrary shifts in time of the signal. The leading order approximation corresponds to neglecting the curvature in $\Psi(f)$, hence the name Locally Linear Phase approximation.
+This observation also justifies that the first derivative of the Fourier-domain phase cannot, in general, be considered a small quantity, as it can take arbitrary values for arbitrary shifts in time of the signal. The leading order approximation corresponds to neglecting the curvature in $\Psi(f)$, and yields a result~\eqref{eq:local} where the passage to the Fourier domain is done by simply using a time-to-frequency correspondence~\eqref{eq:deftf}, which motivates the name ``local approximation''.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -626,6 +615,11 @@ in the sense of matrices. The spin-weighted spherical harmonics factors in~\eqre
 	P_{slr}^{\ell m} &= \frac{1}{4} \frac{1}{1-\hat{k}\cdot n_{l}} {}_{-2}Y_{\ell m} n_{l}\cdot \left( P_{+} - i P_{\times} \right) \cdot n_{l} \text{ for } m>0 \,,
 \end{align}
 %\end{subequations}
+the transfer function for~\eqref{eq:dfresponsec} reads in the local approximation
+\be
+	\calT_{slr}^{\ell m} = \frac{i \pi f L}{2} \sinc \left[ \pi f L\left(1-\hat{k}\cdot n_{l} \right) \right] \exp\left[ \pi f \left( L + \hat{k}\cdot \left( p_{1}^{L} + p_{2}^{L} \right) \right) \right] {}_{-2}Y_{\ell m} n_{l}\cdot \left( P_{+} - i P_{\times} \right) \cdot n_{l} \text{ for } m>0 \,,
+\ee
+where we used the fact that, in our rigid approximation for the trajectory of the constellation, $p^{L}_{r} - p^{L}_{s} =  L n_{l}$.
 
 Note that, if the corrections~\eqref{} are included for the constellation delays, this transfer function will not have this simple form anymore as $\dot{d}$ will have a different velocity-dependent expression for the sending and receiving spacecrafts.
 
@@ -684,8 +678,16 @@ Fig.~\ref{fig:fomLISA} shows the magnitude of the figures of merit $\epsilon$ fo
 \subsection{Error control for the Fourier-domain response}
 \label{subsec:errorsLISA}
 
-[implementation]
-[examples of errors]
+\begin{figure}
+  \centering
+  \includegraphics[width=.48\linewidth]{plots/tdifdAamp.pdf}
+  \hspace{0.2cm}
+  \includegraphics[width=.48\linewidth]{plots/tdifdAphase.pdf}
+  \caption{Fourier-domain amplitude and phase timescales, as defined in~\eqref{eq:defTf} and~\eqref{eq:defTA}, in geometric units for an equal-mass, non-spinning system. The right panel shows the merger and ringdown part of the signal in more details, the time-domain frequency at merger being represented by the vertical line. The derivatives from which these timescales are built encounter zero-crossings in the high-frequency range.}
+  \label{fig:tdifdA}
+\end{figure}
+
+Fig.~\ref{fig:tdifdA} shows the amplitude and phase errors in the Fourier-domain local response when compared to the FFT of the time-domain response~\eqref{eq:yslr}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -707,19 +709,46 @@ Here we will only consider the inertial-frame modes induced by the precessing-fr
 [explain model with smoothing for the angles with its two versions]
 [qualify how bad the model is with respect to full NR]
 
+In the following, since our purpose here is not to provide a full-fledged model for precessing signals in the Fourier domain, we will not explore the full parameter space and we will limit our analysis to a simplified toy model for precession. Namely, we will approximate the Euler angles during the inspiral phase by using the PN expressions used in PhenomP~\cite{Hannam+13}, and we will adopt two alternatives asymptotic behaviours post-merger. In the first one (thereafter Case I), we simply send smoothly all three Euler angles to constants. In the second one (Case II), we send the opening angle of the precession cone $\beta$ to a constant, but we reproduce the behaviour describe letting the frame rotate around the direction of the final total angular momentum $\hat{\bm{J}}_{\rm final}$ with an angular velocity of $\Omega_{\rm frame} = \omega_{220} - \omega_{210}$. Fig.~\ref{fig:prectoymodel} shows the Euler angles evolution for Cases I and II.
+
 \begin{figure}
   \centering
-  \includegraphics[width=.48\linewidth]{plots/LISAfomdO.pdf}
+  \includegraphics[width=.48\linewidth]{plots/prectoymodelalphagamma.pdf}
   \hspace{0.2cm}
-  \includegraphics[width=.48\linewidth]{plots/LISAfomdc.pdf}
-  \caption{Figures of merit of the approximation as defined in~\eqref{eq:deffom}, for an equal-mass, non-spinning system and for total masses of $10^{7} \Msol$, $10^{4} \Msol$ and $10^{2} \Msol$. The upper left panel corresponds to the orbital delay part of the response~\eqref{eq:dfresponseO}, and the upper right panel corresponds to the LISA-centered response~\eqref{eq:dfresponsec}. The central line and interval are the mean and $1\sigma$ standard deviation of the logarithm of $\epsilon$ over 400 random values for the position in the sky, inclination and polarization.}
-  \label{fig:TfTA}
+  \includegraphics[width=.48\linewidth]{plots/prectoymodelbeta.pdf}
+  \caption{Evolution of Euler angles $(\alpha, \beta, \gamma)$ for our two toy models. Dashed lines represent Case I and solid lines Case II. The vertical line indicates the time of merger. Dashed black lines indicate the enforced asymptotic behaviour: frame rotation with angular velocity $\omega_{220} -\omega_{210}$ in Case II, and asymptotically constant $\beta$.}
+  \label{fig:prectoymodel}
 \end{figure}
+
+These simplifications comes with obvious limitations. Notably, they produce modulation functions $F(t)$ that are very smooth by construction. However, these two toy models will allow us to explore the separation of timescales in the merger-ringdown part of the signal, and to highlight how the perturbative analysis can be challenged by the rapid rotation of the radiation frame after merger, even in this idealized model.
 
 In the absence of delays, we have a simple modulation of the signal by a function $F(t)$, as given in~\eqref{eq:defmodulationprec} above. The convolution with a frequency-dependent kernel~\eqref{eq:FDkernel} becomes a simple convolution in the Fourier-domain,
 \be\label{eq:convolution}
 	\tilde{s} (f) = \int \ud f' \, \tilde{h}(f-f') \tilde{F} (f') \,.
 \ee
+
+It will be convenient to use the notation
+\be\label{eq:defFlmlmp}
+	F_{\ell m, \ell m'} \equiv D^{\ell *}_{m'm} (\alpha,\beta,\gamma)
+\ee
+which represents the modulation function corresponding to the contribution of each precessing-frame mode $h^{P}_{\ell m}$ mode to the inertial-frame mode $h^{I}_{\ell m'}$ (see Eq.~\eqref{eq:wignerrot}). One can also define Fourier-domain tranfer functions for each mode contribution, according to
+\be\label{eq:defTlmlmp}
+	\mathrm{FT} \left[F_{\ell m, \ell m'} h \right] (f) \equiv \calT_{\ell m, \ell m'} (f) \tilde{h}(f) \,,
+\ee
+where $\mathrm{FT}$ stands sfor the Fourier transform. Fig.~\ref{fig:prectransfer} gives the amplitude and phase of the transfer functions $\calT_{22, 2 m'}$ for the two cases I and II. As expected, the difference between the two toy models for the post-merger frame precession is localized to the high frequency range. One can see a clear hierarchy in the amplitude of the inertial-frame modes generated by the precessing-frame 22 mode. This hierarchy come from the Wigner geometric factors and is dependent on the opening angle of the precession cone, or second Euler angle $\beta$, which in turn is dependent on the magnitude of the misaligned spins in the system. Case II shows stronger amplitude features in the merger and ringdown.
+
+\begin{figure}
+  \centering
+  \includegraphics[width=.48\linewidth]{plots/prectransferAcaseI.pdf}
+  \hspace{0.2cm}
+  \includegraphics[width=.48\linewidth]{plots/prectransferPsicaseI.pdf}
+  %
+  \includegraphics[width=.48\linewidth]{plots/prectransferAcaseII.pdf}
+  \hspace{0.2cm}
+  \includegraphics[width=.48\linewidth]{plots/prectransferPsicaseII.pdf}  
+  \caption{Amplitude and phase of the Fourier-domain transfer fonctions $\calT_{22,2m'}$ as defined in~\eqref{eq:defTlmlmp} for individual mode contributions. The left panels show the amplitude and the right panels the phase.}
+  \label{fig:prectransfer}
+\end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -735,12 +764,23 @@ meaning that the expansion becomes {\it less} well behaved for {\it lower} frequ
 Notice that, for the amplitude derivatives in~\eqref{eq:expandA} and the higher order derivatives of the phase in~\eqref{eq:expandPsi}, the same PN scaling arguments give however the opposite, more usual behaviour that the terms beyond the first one appear as corrections becoming less and less important at lower frequencies. For instance, within the SPA we obtain
 \begin{subequations}
 \begin{align}
-	\frac{\ud^{3} \Psi}{\ud f^{3}} \partial_{t}^{3} F &= \calO(6) \,, \\
-	\frac{1}{A}\frac{\ud A}{\ud f} \partial_{t} F &= \calO(2) \,.
+	\frac{\ud^{3} \Psi}{\ud f^{3}} \frac{1}{F} \partial_{t}^{3} F &= \calO(6) \,, \\
+	\frac{1}{A}\frac{\ud A}{\ud f} \frac{1}{F} \partial_{t} F &= \calO(2) \,.
 \end{align}
 \end{subequations}
 
-[add plots and discussion of real figures of merit as measured from the model]
+\begin{figure}
+  \centering
+  \includegraphics[width=.48\linewidth]{plots/precfom22caseI.pdf}
+  \hspace{0.2cm}
+  \includegraphics[width=.48\linewidth]{plots/precfom21caseI.pdf}
+  %
+  \includegraphics[width=.48\linewidth]{plots/precfom22caseII.pdf}
+  \hspace{0.2cm}
+  \includegraphics[width=.48\linewidth]{plots/precfom21caseII.pdf}
+  \caption{Figures of merit of the approximation as defined in~\eqref{eq:deffom} for the precession modulations. The precessing-frame waveform is taken to be the $22$ mode of an equal-mass, non-spinning system. The two upper panels show the case where the frame rotation is freezed at merger (Case I), while the two lower panels show the case where it rotates after merger (Case II) (see Sec.~\ref{subsec:precmodel} for their definitions). The left panels show the figures of merit for $F_{22, 22}$, and the right panels for $F_{22, 21}$. The vertical line represents the frequency at merger. The amplitude corrections become non-negligible after merger, and become large enough to challenge a perturbative treatment in Case II for $F_{22,21}$ (notice the change of scale for the lower right panel).}
+  \label{fig:TfTA}
+\end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -753,15 +793,14 @@ Thanks to the separation of timescales between the precessional timescale and th
 
 We consider the high-frequency part of the signal above some frequency $f_{0}$, up to some maximal frequency $f_{\rm max}$ where the Fourier-domain amplitude of the signal has decayed to a negligible level. In our example of the equal-mass, non-spinning waveform, we take $[Mf_{0}, Mf_{\rm max}] = [0.05, 0.16]$. First, we eliminate a constant and a linear term in the phase by choosing another frequency central to the high-frequency range we want to represent, which we take to be $Mf_{p} = 0.1$. We can think of $f_{p}$ as representing roughly the frequency at merger, and of the associated time $t_{p}\equiv \tf(f_{p})$ as an estimate of the time of merger. Note that the method should only be weakly sensitive to the precise choice of $f_{p}$ and $t_{p}$.
 
-Additionaly, we taper the amplitude to arrive at a flat amplitude at $f_{0}$, at the price of introducing a deviation from the amplitude of the original signal. We localize this deviation to $f\leq f_{1}$, with $Mf_{1} = 0.06$ in our example, and in general the trigonometric representation will be accurate to the original signal only for $f\geq f_{1}$. We denote by $\mathcal{W}(f)$ this tapering, built in practice as the discrete integral of a cosine window function. To ensure good continuity properties, we perform an artificial symmetrization to a ficitious range $f\in [f_{0} - (f_{\rm max} - f_{0}), f_{0}]$, by imposing symmetric amplitudes and phases about $f_{0}$. Defining $\Delta f \equiv 2 (f_{\rm max} - f_{0})$, we write 
+Additionaly, we taper the amplitude to arrive at a flat amplitude at $f_{0}$, at the price of introducing a deviation from the amplitude of the original signal. We localize this deviation to $f\leq f_{1}$, with $Mf_{1} = 0.06$ in our example, and in general the trigonometric representation will be accurate to the original signal only for $f\geq f_{1}$. This tapering is built in practice as the discrete integral of a cosine window function. To ensure good continuity properties, we perform an artificial symmetrization to a fictitious range $f\in [f_{0} - (f_{\rm max} - f_{0}), f_{0}]$, by imposing symmetric amplitudes and phases about $f_{0}$. Defining $\Delta f \equiv 2 (f_{\rm max} - f_{0})$, we write 
 \be\label{eq:defhsym}
 	\tilde{h}_{\rm sym}(f) = 
 	\begin{cases} 
-	\mathcal{W}(f) \exp\left[- i \left( \Psi(f_{0}) - 2i\pi (f-f_{0}) t_{p} \right) \right] \tilde{h}(f) \,,  &\text{ for } f \in [f_{0}, f_{0} + \Delta f /2] \\
-	\tilde{h}_{\rm sym}(2 f_{0} - f) \,,  &\text{ for } f \in [f_{0} - \Delta f/2, f_{0}]
+		\exp\left[- i \left( \Psi(f_{0}) - 2i\pi (f-f_{0}) t_{p} \right) \right] \tilde{h}(f) \,,  &\text{ for } f \in [f_{0}, f_{0} + \Delta f /2] \\
+	\tilde{h}_{\rm sym}(2 f_{0} - f)^{*} \,,  &\text{ for } f \in [f_{0} - \Delta f/2, f_{0}]
 	\end{cases}
 \ee
-Fig~\ref{fig:convolsymmetrized} shows both the original high-frequency part of the signal and its symmetrized version with a flattened amplitude.
 
 Next, we build a a trigonometric polynomial representation of $\tilde{h}_{\rm sym }$. This construction is intimately related to the DFT, but we recall it for completeness. For a periodic function $f(x)$ defined on $x\in [x_{0}, x_{0} + \Delta x]$, and represented by $N$ samples $x_{j} = \ov{x} + j \Delta x/N$ (with $N$ chosen to satisfy the Nyquist criterion), we can build a trigonometric interpolant $P(x)$ as
 \be
@@ -777,31 +816,74 @@ which is the expression of the inverse DFT in our sign convention~\eqref{}, the 
 	c_{k} &= y_{k+N} \text{ for } k=-M+1,\dots, -1 \,, \nn\\
 	c_{M} &= c_{-M} = \frac{y_{M}}{2} \,,
 \end{align}
-where the condition $c_{M} = c_{-M}$ is an arbitrary condition enforced to match the number of degrees of freedom.
+where the condition $c_{M} = c_{-M}$ is an arbitrary condition enforced to match the number of degrees of freedom. Fig~\ref{fig:convolsymmetrized} shows both the original high-frequency part of the signal and its reconstruction as a trigonometric polynomial.
+
+\begin{figure}
+  \centering
+  \includegraphics[width=.48\linewidth]{plots/trigamp.pdf}
+  \hspace{0.2cm}
+  \includegraphics[width=.48\linewidth]{plots/trigphase.pdf}
+  \caption{Amplitude (left panel) and phase (right panel) of the high-frequency part of $\tilde{h}_{\rm sym}$, compared to its trigonometric polynomial representation.}
+  \label{fig:trig}
+\end{figure}
 
 Now, assuming that we wish to compute~\eqref{eq:convolution} for a frequency $f$ such that the extent of the convolution does not extend beyond $[f_{1}, f_{\rm max}]$, we can approximate
 \be\label{eq:hsymtrigo}
 	\tilde{h}_{\rm sym } (f) \simeq \sum\limits_{k=-M}^{+M} (-1)^{k} c_{k} e^{2i\pi k \frac{f-f_{0}}{\Delta f}} \,,
 \ee
 where the factor $(-1)^{k}$ comes from the fact that $f_{0}$ is here at the center of the interval. The coefficients $c_{k}$ are built following the rules~\eqref{eq:ckyk} from the inverse DFT coefficients
-\be
+\be\label{eq:ykDFT}
 	y_{k} = \frac{1}{N} \sum\limits_{j=0}^{N-1} \tilde{h}_{\rm sym}\left( f_{0} + \frac{2j - N}{N} \Delta f \right) \omega^{jk} \,.
 \ee
 When inserting this representation~\eqref{eq:defhsym} and~\eqref{eq:hsymtrigo} into~\eqref{eq:convolution}, we obtain
-\be
+\be\label{eq:resultdirectconvol}
 	\tilde{s}(f) = e^{-i \Psi(f_{0})} e^{2i\pi (f-f_{0}) t_{p}} \sum\limits_{k=-M}^{+M} (-1)^{k} c_{k} e^{2i\pi k \frac{f-f_{0}}{\Delta f}} F(t_{p} + k\delta t) \,, 
 \ee
 where we defined the time sampling $\delta t \equiv 1/\Delta f$. We see that we are left with a DFT-like expression to compute from $N+1$ time samples of the modulation function $F$, centered around $t_{p}$.
 
-In terms of performance, the implementation of~\eqref{} and~\eqref{} above is expected to have a very reasonable cost. We obtained results with a good accuracy, as shown in Fig.~\ref{}, by including 32 samples (64 samples in the artificially symmetrized signal). Since we only need to evaluate , these operations effectively amount to two DFT operations on $\sim$128 samples, to cover . This is of the same order of magnitude as the number of (logarithmically-spaced) frequency samples used to represent the Fourier-domain waveform with its amplitude and phase in the first place, thus the cost is comparable to the Taylor-like approach presented in Sec.~\ref{sec:quadphasedelay}. 
+In terms of performance, the implementation of~\eqref{eq:ykDFT} and~\eqref{eq:resultdirectconvol} above is expected to have a very reasonable cost. We obtained results with a good accuracy, as shown in Fig.~\ref{fig:convolsymmetrized}, by including $M=32$ samples ($N=64$ samples in total for the artificially symmetrized signal). The calculation described here is done only once for a given waveform and modulation function. The number of samples is of the same order of magnitude as the number of (logarithmically-spaced) frequency samples used to represent the Fourier-domain waveform with its amplitude and phase in the first place, thus the cost is comparable to the Taylor-like approach presented in Sec.~\ref{sec:quadphasedelay}. 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsection{Error control for the Fourier-domain modulation}
 \label{subsec:errorsPrec}
 
-[show summary of amplitude/phase errors on the example case]
-[show mismatch calculations]
+\begin{figure}
+  \centering
+  \includegraphics[width=.48\linewidth]{plots/precerrorA22caseI.pdf}
+  \hspace{0.2cm}
+  \includegraphics[width=.48\linewidth]{plots/precerrorPsi22caseI.pdf}
+  %
+  \includegraphics[width=.48\linewidth]{plots/precerrorA21caseI.pdf}
+  \hspace{0.2cm}
+  \includegraphics[width=.48\linewidth]{plots/precerrorPsi21caseI.pdf}  
+  \caption{Errors in the Fourier-domain transfer fonctions $\calT_{22,22}$ and $\calT_{22,21}$ as defined in~\eqref{eq:defTlmlmp}, for Case I and for various approximations. The black curve is the exact result provided by the FFT. The blue curve gives the leading-order, local approximation. The red curve includes quadratic corrections in phase and in amplitude. The yellow curve shows the result of the direct conolution approach of Sec.~\ref{subsec:directconvolution}. The left panels show the amplitude and the right panels the phase difference with the FFT. Note that the vertical scales are not uniform.}
+  \label{fig:precerrorcaseI}
+\end{figure}
+
+\begin{figure}
+  \centering
+  \includegraphics[width=.48\linewidth]{plots/precerrorA22caseII.pdf}
+  \hspace{0.2cm}
+  \includegraphics[width=.48\linewidth]{plots/precerrorPsi22caseII.pdf}
+  %
+  \includegraphics[width=.48\linewidth]{plots/precerrorA21caseII.pdf}
+  \hspace{0.2cm}
+  \includegraphics[width=.48\linewidth]{plots/precerrorPsi21caseII.pdf}  
+  \caption{Errors in the Fourier-domain transfer fonctions $\calT_{22,22}$ and $\calT_{22,21}$. Conventions are the same as in Fig.~\ref{fig:precerrorcaseI} but for Case II, with a more rapid post-merger frame precession. Note that the vertical scales are not uniform.}
+  \label{fig:precerrorcaseII}
+\end{figure}
+
+Figs.~\ref{fig:precerrorcaseI} and~\ref{fig:precerrorcaseII} show the amplitude and the phase error of the various reconstructions of the Fourier-domain transfer functions $\calT_{22,22}$ and $\calT_{22,21}$. Alongside with the exact result provided by the FFT of the time-domain precession modulation, we show the result obtained with the leading-order approximation (the local approximation) and with. We also show the result for the direct convolution approach presented in Sec.~\ref{subsec:directconvolution}.
+
+\begin{figure}
+  \centering
+  \includegraphics[width=.48\linewidth]{plots/precmmsimple.pdf}
+  \hspace{0.2cm}
+  \includegraphics[width=.48\linewidth]{plots/precmmasympt.pdf}
+  \caption{Mismatches computed between the exact FFT and the various approximations respresented in Figs.~\ref{fig:precerrorcaseI} and~\ref{fig:precerrorcaseII}.}
+  \label{fig:precmm}
+\end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
