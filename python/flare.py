@@ -548,13 +548,15 @@ def FisherPlot(outlabel,ipar,qList,SNRList,deltalist,datafile,scaled=False,targe
     pp.close()
 
         
-def HorizonPlot(outlabel,ipar,qList,snr,delta,datafile,horizonlist,scaled=False,errorNsigma=2):
-    pp = PdfPages(str(outlabel)+'-Horizon-'+par_name(ipar)+'.pdf')
+def HorizonPlot(outlabel,ipar,qList,snr,delta,datafile,horizonlist,scaled=False,errorNsigma=2,show_range=False):
+    rangetag=''
+    if(show_range):rangetag='range-'
+    pp = PdfPages(str(outlabel)+'-Horizon-'+rangetag+par_name(ipar)+'.pdf')
     #datafile = open(datafile,'r')
     tol=1e-10
     data=np.loadtxt(datafile)
     punits=["Msun","Msun","s","Mpc","rad","rad","rad","rad","rad",r"$rad^2$",r"$rad^2$",r"$Msun^2$"]
-    sunits=["m1",  "m2",  "s","D",  "rad","rad","rad","rad","rad",r"$rad^2$",r"$rad^2$",r"(m1*m2)"]
+    sunits=["m1",  "m2",  "s","D",  "rad","rad","rad","rad","rad",r"$deg^2$",r"$rad^2$",r"(m1*m2)"]
     if(scaled):punits=sunits
     for q in qList:
         tags=[]
@@ -579,29 +581,39 @@ def HorizonPlot(outlabel,ipar,qList,snr,delta,datafile,horizonlist,scaled=False,
                 scales=np.log10(subdata[:,iMtot]/(1+q))
             if(ipar==3): #scale by distance as computed from mean z
                 scales=np.array([math.log10(cosmo.luminosity_distance(10.0**zz).value) for zz in subdata[:,imeanz]])
+            if(ipar==9): #scale by arcmin^2
+                scales=np.full_like(subdata[:,iMtot], 2*math.log10(math.pi/180.0))
             if(ipar==11): #scale by m1*m2
                 scales=np.log10(subdata[:,iMtot]*subdata[:,iMtot]/(1+q)/(1+1/q))
-                
+        print scales        
         colorcount=0
         for horizoncut in horizonlist:                   
             colorcount+=1
             meanzarray=subdata[:,imeanz]
+            stdpararray=subdata[:,istdpar]
             testvalues=10**(subdata[:,imeanpar]-scales + math.log10(1.0*errorNsigma))
             SNRrescale_factors=testvalues/horizoncut
+            dSNRrescale_factors=10**stdpararray;
             if(ipar>=9):#derived quadratic scaled stats
                 SNRrescale_factors=np.sqrt(SNRrescale_factors)
-            #next make a new array of redshifts znew=z(D(z)/SNRrescale_factor)
-            meanzarray=np.array([math.log10(z_at_value(cosmo.luminosity_distance,cosmo.luminosity_distance(10**zz/fac),zmax=10000,ztol=1e-6)) for zz,fac in zip(meanzarray,SNRrescale_factors)])
-            x=[ math.log10(a/(1+10**b)) for a,b in zip(subdata[:,iMtot],meanzarray) ]
+                dSNRrescale_factors=np.sqrt(dSNRrescale_factors)
+            midzarray=np.array([math.log10(z_at_value(cosmo.luminosity_distance,cosmo.luminosity_distance(10**zz/fac),zmax=10000,ztol=1e-6)) for zz,fac in zip(meanzarray,SNRrescale_factors)])
+            if(show_range):
+                topzarray=np.array([math.log10(z_at_value(cosmo.luminosity_distance,cosmo.luminosity_distance(10**zz/fac),zmax=10000,ztol=1e-6)) for zz,fac in zip(meanzarray,SNRrescale_factors/dSNRrescale_factors)])
+                botzarray=np.array([math.log10(z_at_value(cosmo.luminosity_distance,cosmo.luminosity_distance(10**zz/fac),zmax=10000,ztol=1e-6)) for zz,fac in zip(meanzarray,SNRrescale_factors*dSNRrescale_factors)])
+
+            x=[ math.log10(a/(1+10**b)) for a,b in zip(subdata[:,iMtot],midzarray) ]
             color=(1.0-colorcount/(len(horizonlist)+1.0),0.8/math.sqrt(q),colorcount/(len(horizonlist)+1.0))
-            #plot=plt.fill_between(x, y1, y2, facecolor=color,alpha=0.3, interpolate=True)
-            plot=plt.plot(x,meanzarray,color=color,alpha=1.0)
+            if(show_range):
+                plot=plt.fill_between(x, botzarray, topzarray, facecolor=color,alpha=0.3, interpolate=True)
+                color=np.array(color)*0.8
+            plot=plt.plot(x,midzarray,color=color,alpha=1.0)
             tags.append( Rectangle((0, 0), 1, 1, fc=color,alpha=0.3) )
             labels.append(str(horizoncut)+"="+str(errorNsigma)+r"$\sigma$"+"["+par_name(ipar)+"]/"+punits[ipar])
         plt.legend(tags,labels)
         plt.ylim([-1,3])
         plt.xlim([3,9])
-        plt.title("Parameter error horizon for L3 LISA q="+str(q)+" SMBH merger")
+        plt.title("Science range for "+outlabel+" q="+str(q)+" SMBH merger")
         plt.ylabel("log(z)")
         plt.xlabel("log(M/Msun)")
         #plt.show()
