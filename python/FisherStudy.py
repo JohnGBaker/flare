@@ -11,8 +11,8 @@ print "Ms=",Ms
 #label="L3LISA-v1-sens-but-5Gm-test-wide"
 label="L3LISARef"
 #label="L3LISA-v1"
-flare.SNRstudy(label,Ms,[1,2],[10,100,1000],300)
-quit
+#flare.SNRstudy(label,Ms,[1,2],[10,100,1000],300)
+#quit
 ##flare.SNRstudy(Ms,[1,2,4,10],[10,100,1000],300)
 ##flare.FisherStudy([1.5e4],[1],[10,100,1000],[0.1,0.3],30,6)
 ##flare.FisherStudy([1.5e6,1.5e8],[1],[10],[0.1,0.3],12,6)

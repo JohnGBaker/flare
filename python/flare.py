@@ -18,6 +18,7 @@ ireport=9
 FisherRunFailCount=0
 noRun=False
 all_params_file=False
+ROM_DATA_PATH="/discover/nobackup/jgbaker/GW-DA/flare/ROMdata/q1-12_Mfmin_0.0003940393857519091"
 
 def set_flare_flags(snr,params):
     flags=""
@@ -126,8 +127,10 @@ def SNRrun(Mtot,q,snr):
     flags += " --outroot "+str(name)+" "
     cmd += " "+flags+">"+name+".out"
     setenv=""
-    setenv = "export ROM_DATA_PATH=/Users/jgbaker/Projects/GWDA/LISA-type-response/flare/ROMdata/q1-12_Mfmin_0.0003940393857519091"
-    
+    #setenv = "export ROM_DATA_PATH=/Users/jgbaker/Projects/GWDA/LISA-type-response/flare/ROMdata/q1-12_Mfmin_0.0003940393857519091"
+    #setenv="export ROM_DATA_PATH=/discover/nobackup/jgbaker/GW-DA/flare/ROMdata/q1-12_Mfmin_0.0003940393857519091"
+    setenv="export ROM_DATA_PATH="+ROM_DATA_PATH
+
     print "Executing '"+cmd+"'"
     code=subprocess.call(setenv+";"+cmd,shell=True)
     print "Run completed with code(",code,")"
@@ -138,7 +141,49 @@ def SNRrun(Mtot,q,snr):
         print "distance =",dist
     return float(dist)
 
-def SNRstudy(outlabel,MtotList,qList,SNRList,Navg):
+def tSNRrun(Mtot,q,snr,name,data):
+    cmd   = flare_dir+"/LISAinference/LISAinference_ptmcmc"
+    flags = " --nsteps=0 --noFisher"
+    params=draw_params(Mtot,q)
+    flags+=set_flare_flags(snr,params)
+    flags += " --rng_seed="+str(np.random.rand())+" " 
+    flags += " --outroot "+str(name)+" "
+    cmd += " "+flags+">"+name+".out"
+    setenv=""
+    #setenv = "export ROM_DATA_PATH=/Users/jgbaker/Projects/GWDA/LISA-type-response/flare/ROMdata/q1-12_Mfmin_0.0003940393857519091"
+    setenv="export ROM_DATA_PATH="+ROM_DATA_PATH
+
+    print "Executing '"+cmd+"'"
+    code=subprocess.call(setenv+";"+cmd,shell=True)
+    print "Run completed with code(",code,")"
+    with open(name+"params.txt",'r') as file:
+        lines=file.read()
+        #print lines
+        dist=re.search("dist_resc:(.*)", lines).group(1)
+        print "distance =",dist
+    data.append(float(dist))
+    return
+
+def threadedSNRrun(Mtot,q,snr,label,Nruns,Nthreads,data):
+    irun=0
+    if(FisherRunFailCount==0):subprocess.call("echo 'Output from runs generating exceptions:' > fisher_fails.out",shell=True)
+    while(irun<Nruns):
+        if(Nthreads<Nruns-1):count=Nthreads
+        else: count=Nruns-irun
+        print "irun=",irun,"Count=",count,"Nruns=",Nruns,"Nthreads=",Nthreads
+        threads=[];
+        ith=0
+        for t in range(count):
+            ith+=1
+            thread = threading.Thread(target=tSNRrun, args=(Mtot,q,snr,label+str(ith),data))
+            thread.start()
+            threads.append(thread)
+        for thread in threads:
+            thread.join() #this blocks further execution until the thread has returned
+        irun += count
+        print " Batch of runs done, now irun=",irun
+
+def SNRstudy(outlabel,MtotList,qList,SNRList,Navg,Nthreads=1):
     pp = PdfPages(str(outlabel)+'-SNRstudy.pdf')
     for q in qList:
         tags=[]
@@ -148,18 +193,24 @@ def SNRstudy(outlabel,MtotList,qList,SNRList,Navg):
             count+=1
             y1=[]
             y2=[]
-            x=[]
+            x=[]            
             for Mtot in MtotList:
                 print "Running SNRrun(",Mtot,",",q,",",snr,")"
-                dists=np.zeros(Navg);
-                for i in range(Navg):
-                    dist=SNRrun(Mtot,q,snr)
+                data=[]
+                if(multithreaded and Nthreads>1):
+                    threadedSNRrun(Mtot,q,snr,"dummy",Navg,Nthreads,data)
+                else:
+                    for i in range(Navg):
+                        dist=SNRrun(Mtot,q,snr)
+                        data.append(dist)
+                zs=np.zeros(Navg);
+                for dist in data:
                     z=z_at_value(cosmo.luminosity_distance,dist*units.Mpc,zmax=10000,ztol=1e-6)
                     print "D=",dist," z=",z
-                    dists[i]=math.log10(z)
-                    #dists[i]=math.log10(dist)
-                mean=np.mean(dists);
-                std=np.std(dists);
+                    zs[i]=math.log10(z)
+                    #zs[i]=math.log10(dist)
+                mean=np.mean(zs);
+                std=np.std(zs);
                 print "M=",Mtot," q=",q,"dist=",mean,"+/-",std
                 x.append(math.log10(Mtot/(1+10**mean)))
                 #x.append(math.log10(Mtot))
@@ -172,6 +223,7 @@ def SNRstudy(outlabel,MtotList,qList,SNRList,Navg):
             plot=plt.fill_between(x, y1, y2, facecolor=color,alpha=0.3, interpolate=True)
             tags.append( Rectangle((0, 0), 1, 1, fc=color,alpha=0.3) )
             labels.append("SNR="+str(snr))
+            print "Finished band for SNR="+str(snr)
         plt.legend(tags,labels)
         plt.ylim([-1,3])
         plt.xlim([2,9])
@@ -181,6 +233,7 @@ def SNRstudy(outlabel,MtotList,qList,SNRList,Navg):
         #plt.show()
         pp.savefig()
         plt.clf()
+        print "Finished plot for q="+str(q)
     pp.close()
     
 def FisherRunByParams(snr,params,delta,label,extrapoints=1.0):
@@ -194,8 +247,9 @@ def FisherRunByParams(snr,params,delta,label,extrapoints=1.0):
     flags += " --outroot "+str(name)+" "
     cmd += " "+flags+">"+name+".out"
     setenv=""
-    setenv = "export ROM_DATA_PATH=/Users/jgbaker/Projects/GWDA/LISA-type-response/flare/ROMdata/q1-12_Mfmin_0.0003940393857519091"
+    #setenv = "export ROM_DATA_PATH=/Users/jgbaker/Projects/GWDA/LISA-type-response/flare/ROMdata/q1-12_Mfmin_0.0003940393857519091"
     #setenv="export ROM_DATA_PATH=/discover/nobackup/jgbaker/GW-DA/flare/ROMdata/q1-12_Mfmin_0.0003940393857519091"
+    setenv="export ROM_DATA_PATH="+ROM_DATA_PATH
     try:
         print "Executing '"+cmd+"'"
         dist=0
