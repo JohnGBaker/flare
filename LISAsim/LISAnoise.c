@@ -85,6 +85,7 @@ static double Spm(const double f) {
   double Saccel_white=Daccel_white2/ddtsq; //PM vel noise PSD (white accel part)
   //double Saccel_red=Saccel_white*(1.0 + 2.12576e-44*invf10 + 3.6e-7*invf2); //reddening factor from Petiteau Eq 1
   double Saccel_red=Saccel_white*(1.0 + 36.0*(pow(3e-5/f,10) + 1e-8*invf2)); //reddening factor from Petiteau Eq 1
+  //Saccel_red*=4.0;//Hack to decrease low-freq sens by fac of 2.
   double Sloc=Dloc2*ddtsq/4.0;//Factor of 1/4.0 is in Petiteau eq 2
   double S4yrWDWD=5.16e-27*exp(-pow(f,1.2)*2.9e3)*pow(f,(-7./3.))*0.5*(1.0 + tanh(-(f-2.0e-3)*1.9e3))*ddtsq;//Stas' fit for 4yr noise (converted from Sens curve to position noise by multipyling by 3*L^2/80) which looks comparable to my fit), then converted to velocity noise
   double Spm_vel = ( Saccel_red + Sloc + S4yrWDWD );  
