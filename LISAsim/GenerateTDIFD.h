@@ -75,7 +75,7 @@ typedef struct tagGenTDIFDparams {
   int tagtdi;                /* Tag selecting the desired output format */
   int taggenwave;            /* Tag selecting the desired output format */
   int restorescaledfactor;   /* If 1, restore the factors that were scaled out of TDI observables */
-  int fromtditdfile;         /* Tag for loading time series for TDI observables and FFTing */
+  int fromtdfile;            /* Option for loading time series and FFTing (default: false) */
   int nsamplesinfile;        /* Number of lines of input file */
   int binaryin;              /* Tag for loading the data in gsl binary form instead of text (default false) */
   int binaryout;             /* Tag for outputting the data in gsl binary form instead of text (default false) */

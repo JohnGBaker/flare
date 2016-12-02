@@ -103,21 +103,33 @@ The convention we will be using for the Fourier transform of a signal $h(t)$ is
 \ee
 Notice that this sign convention is not the most frequently used in the literature. We chose it to ensure that, with the conventions of~\cite{BlanchetLiving}, spin-weighted spherical modes $h_{\ell m}$ with $m>0$ will have support mostly for positive frequencies. One can revert to the more usual convention by taking $f\rightarrow -f$.
 
-The gravitational waveform emitted in the direction $(\Theta, \Phi)$, with its two polarizations $h_{+},h_{\times}$, can be decomposed in spin-weighted spherical modes as~\cite{Thorne80}
+A useful representation of the gravitational waveform is given by its decomposition in spin-weighted spherical. The waveform emitted in the direction $(\Theta, \Phi)$, with its two polarizations $h_{+},h_{\times}$, can be decomposed as a superposition of modes as~\cite{Thorne80}
 \be\label{eq:defmodes}
-	h_{+} - i h_{\times} = \sum\limits_{\ell \geq 2} \sum\limits_{m=-\ell}^{+\ell} {}_{-2}Y_{\ell m}(\Theta,\Phi) h_{\ell m} \,,
+	h_{+} - i h_{\times} = \sum\limits_{\ell \geq 2} \sum\limits_{m=-\ell}^{\ell} {}_{-2}Y_{\ell m}(\Theta,\Phi) h_{\ell m} \,,
 \ee
-where the ${}_{-2}Y_{\ell m}(\Theta,\Phi)$ are spin-weighted spherical harmonics. Since we will work in the Fourier domain, it will be useful to write the contributions of the individual modes to the Fourier transforms of the polarizations as
+where the ${}_{-2}Y_{\ell m}(\Theta,\Phi)$ are spin-weighted spherical harmonics. For a non-precessing system, with a fixed orbital plane, the individual modes have the additional symmetry property $h_{\ell -m} = (-1)^{\ell} h_{\ell m}^{*}$. Since we will work in the Fourier domain, it will be useful to write the contributions of the individual modes to the Fourier transforms of the polarizations as
 \begin{subequations}\label{eq:hpcfrommodes}
 \begin{align}
-	\tilde{h}_{+}(f) &= \frac{1}{2} \sum\limits_{\ell \geq 2} \sum\limits_{m=-\ell}^{+\ell} \left( {}_{-2}Y_{\ell m} \widetilde{h_{\ell m}}(f) + {}_{-2}Y_{\ell m}^{*} \widetilde{h_{\ell m}}(-f)^{*} \right) \,, \\
-	\tilde{h}_{\times}(f) &= \frac{i}{2} \sum\limits_{\ell \geq 2} \sum\limits_{m=-\ell}^{+\ell} \left( {}_{-2}Y_{\ell m} \widetilde{h_{\ell m}}(f) - {}_{-2}Y_{\ell m}^{*} \widetilde{h_{\ell m}}(-f)^{*} \right) \,,
+	\tilde{h}_{+}(f) &= \frac{1}{2} \sum\limits_{\ell \geq 2} \sum\limits_{m=-\ell}^{\ell} \left( {}_{-2}Y_{\ell m} \widetilde{h_{\ell m}}(f) + {}_{-2}Y_{\ell m}^{*} \widetilde{h_{\ell m}}(-f)^{*} \right) \,, \\
+	\tilde{h}_{\times}(f) &= \frac{i}{2} \sum\limits_{\ell \geq 2} \sum\limits_{m=-\ell}^{\ell} \left( {}_{-2}Y_{\ell m} \widetilde{h_{\ell m}}(f) - {}_{-2}Y_{\ell m}^{*} \widetilde{h_{\ell m}}(-f)^{*} \right) \,,
 \end{align}
 \end{subequations}
-where we used $\widetilde{h_{\ell m}^{*}}(f) = \widetilde{h_{\ell m}}(-f)^{*}$. In the following, we will denote generically by $h$ an individual mode of the waveform, dropping the mode indices $\ell m$, and we will often refer to the Fourier-domain amplitude $A$ and phase $\Psi$ of the mode, according to
-\be
+where we used $\widetilde{h_{\ell m}^{*}}(f) = \widetilde{h_{\ell m}}(-f)^{*}$. An additional approximation often used in waveform models consists in considering that the Fourier transforms $\tilde{h}_{\ell m}$ have support only on one side of the spectrum, either for positive of for negative frequencies depending on the sign of $m$. This holds in particular within the stationary phase approximation, as explained below. With our sign convention~\eqref{eq:defFT}, this approximation reads
+\begin{align}\label{eq:approxnegativef}
+	\tilde{h}_{\ell m} (f) &\simeq 0 \text{ for } f<0, \; m>0 \nn\,,\\
+	\tilde{h}_{\ell m} (f) &\simeq 0 \text{ for } f>0, \; m<0 \,.
+\end{align}
+
+In the following, we will drop the mode indices and the sum over modes, and we will denote generically by $h$ an individual mode of the waveform\footnote{This notation for a generic individual mode is not to be confused with the often encountered notation $h\equiv h_{+} - i h_{\times}$.}. Note that, if we are considering real signals $s(t)$ (such as $h_{+}$, $h_{\times}$), we can focus for instance on the positive-frequencies range and reconstruct the negative frequencies as $\tilde{s}(-f) = \tilde{s}(f)^{*}$. For positive frequencies $f>0$, we will use for $h$ the notation
+\begin{align}\label{eq:notationhsignm}
+	h(t) &\equiv h_{\ell m}(t) \,, \quad \tilde{h}(f) \equiv \tilde{h}_{\ell m}(f) \text{ for } m>0 \,, \nn\\
+	h(t) &\equiv h_{\ell m}^{*}(t) \,, \quad \tilde{h}(f) \equiv \tilde{h}_{\ell m}(-f)^{*} \text{ for } m<0 \,.
+\end{align}
+We will further decompose $\tilde{h}$ into a Fourier-domain amplitude $A$ and a phase $\Psi$ according to
+\be\label{eq:defAPsi}
 	\tilde{h}(f) \equiv A(f) e^{-i\Psi(f)} \,.
 \ee
+
 Since we intend to work in the Fourier domain, we will use PhenomD waveforms~\cite{Khan+15}. These phenomenological waveforms provide analytic fits for both the Fourier-domain amplitude and phase of the 22 mode, with fit coefficients that were calibrated on EOB/NR hybrids [describe smoothing across intervals]. Fig.~\ref{fig:ampphase} shows an example of amplitude and phase in geometric units for an equal-mass binary.
 
 \begin{figure}
@@ -305,7 +317,7 @@ which motivates the introduction of an effective time, seen as a function of fre
 \be\label{eq:deftf}
 	\tf \equiv -\frac{1}{2\pi} \frac{\ud \Psi}{\ud f} \,,
 \ee
-where the tilde here does not indicate a Fourier transform operation but simply that this quantity is an effective time defined from the Fourier-domain waveform. This definition is a generalization of the time-to-frequency correspondence at the heart of the SPA, as will be discussed in Sec.~\ref{subsec:linkSPA}, but it is worth noting that here it is defined entirely from the Fourier-domain waveform. Fig.~\ref{fig:tf} shows the time function $\tf$ for the example of an equal-mass waveform. In particular, one should note that $\tf$ is not monotonously increasing with frequency anymore when reaching in the high-frequency part of the waveform, corresponding to the ringdown. This would forbid an unambiguous definition of an inverse fequency-of-time correspondence $f(t)$. 
+This definition is a generalization of the time-to-frequency correspondence at the heart of the SPA, as will be discussed in Sec.~\ref{subsec:linkSPA}, but it is worth noting that here it is defined entirely from the Fourier-domain waveform. Fig.~\ref{fig:tf} shows the time function $\tf$ for the example of an equal-mass waveform. In particular, one should note that $\tf$ is not monotonously increasing with frequency anymore when reaching in the high-frequency part of the waveform, corresponding to the ringdown. This would forbid an unambiguous definition of an inverse fequency-of-time correspondence $f(t)$. 
 
 \begin{figure}
   \centering
@@ -596,30 +608,34 @@ Additionally, we limit ourselves to a rigid model for the detector, namely we as
 
 Although all the effects (i)-(v) are neglected here, keeping track of these corrections is crucial for the purpose of noise cancellations, and led to the development of new generations of TDI observables~\cite{}.
 
-We now turn to the transposition of~\eqref{eq:yslr} to the Fourier-domain. We will choose to write the response directly in terms of spin-weighted spherical modes $h_{\ell m}$, whose Fourier transforms are assumed to have a smooth amplitude and phase. Since the orbital delay due to the orbit around the Sun is common to all $y_{slr}$ observables, we will decompose the response in the orbital delay and the constellation-centered response as
-\begin{subequations}
-\begin{align}
-	h^{\rm TT}_{O} (t) &\equiv h^{\rm TT}(t-\hat{k}\cdot p_{O}) \,, \label{eq:dfresponseO} \\
-	y_{slr} &= \frac{1}{2} \frac{1}{1 - \hat{k}\cdot n_{l}} n_{l}\cdot \left[ h_{O}^{\rm TT}(t - \hat{k}\cdot p^{L}_{s}) - h_{O}^{\rm TT}(t - \hat{k}\cdot p^{L}_{r}) \right] \cdot n_{l}\,, \label{eq:dfresponsec}
-\end{align}
-\end{subequations}
+We now turn to the transposition of~\eqref{eq:yslr} to the Fourier-domain. Since the orbital delay due to the orbit around the Sun is common to all $y_{slr}$ observables, we will decompose the full instrument response in two steps. The first step consists simply in applying the varying time delay to bring the signal from the SSB to the center of the constellation. We write this orbital time delay as
+\be\label{eq:defresponseO}
+	h^{\rm TT}_{O} (t) = h^{\rm TT}(t-\hat{k}\cdot p_{O}) \,.
+\ee
+The second step consists in the remaining, constellation-centered response, which we write as
+\be\label{eq:dfresponsec}
+	y_{slr} = \frac{1}{2} \frac{1}{1 - \hat{k}\cdot n_{l}} n_{l}\cdot \left[ h_{O}^{\rm TT}(t - L - \hat{k}\cdot p^{L}_{s}) - h_{O}^{\rm TT}(t - \hat{k}\cdot p^{L}_{r}) \right] \cdot n_{l}\,,
+\ee
 where we introduced the positions of the spacecrafts relative to the center of the constellation, $p^{L}_{A} \equiv p_{A} - p_{O}$.
 
-When using the rigid approximation for the constellation, a particular simplification occurs when writing the transfer function at leading order in the delays. First, we define the matrices $P^{+},P^{\times}$ such that
+We will decompose the full signal in the contributions of the individual spin-weighted spherical modes $h_{\ell m}$, whose Fourier transforms are assumed to have a smooth amplitude and phase. First, we define the matrices $P_{+},P_{\times}$ such that, in the sense of matrices,
 \be
-	h^{\rm TT} = h_{+}P_{+} + h_{\times}P_{\times} \,,
+	h^{\rm TT} = h_{+}P_{+} + h_{\times}P_{\times} \,.
 \ee
-in the sense of matrices. The spin-weighted spherical harmonics factors in~\eqref{eq:hpcfrommodes} are mere constants of time, so we can also define a geometric projection factor $P_{slr}^{\ell m}$ for each individual mode. Under the assumption that we can neglect the negative frequencies for the modes $m>0$ and the positive frequencies for $m<0$ (which is also used for precessing waveforms), we have for $f>0$ and $m>0$
-%\begin{subequations}
-\begin{align}
-	P_{slr}^{\ell m} &= \frac{1}{4} \frac{1}{1-\hat{k}\cdot n_{l}} {}_{-2}Y_{\ell m} n_{l}\cdot \left( P_{+} - i P_{\times} \right) \cdot n_{l} \text{ for } m>0 \,,
-\end{align}
-%\end{subequations}
-the transfer function for~\eqref{eq:dfresponsec} reads in the local approximation
+Assuming that the approximation~\eqref{eq:approxnegativef} applies, we focus only on positive frequencies and consider a mode contribution $h$ following~\eqref{eq:notationhsignm}. We can define a complex matrix $P$ incorporating the spin-weighted spherical harmonic constant factor as
 \be
-	\calT_{slr}^{\ell m} = \frac{i \pi f L}{2} \sinc \left[ \pi f L\left(1-\hat{k}\cdot n_{l} \right) \right] \exp\left[ \pi f \left( L + \hat{k}\cdot \left( p_{1}^{L} + p_{2}^{L} \right) \right) \right] {}_{-2}Y_{\ell m} n_{l}\cdot \left( P_{+} - i P_{\times} \right) \cdot n_{l} \text{ for } m>0 \,,
+	P = 
+	\begin{cases} 
+	\frac{1}{2} {}_{-2}Y_{\ell m} \left( P_{+} + i P_{\times} \right) \text{ for } m>0\,,\\
+	\frac{1}{2} {}_{-2}Y_{\ell m}^{*} \left( P_{+} - i P_{\times} \right) \text{ for } m<0\,.
+	\end{cases}
 \ee
-where we used the fact that, in our rigid approximation for the trajectory of the constellation, $p^{L}_{r} - p^{L}_{s} =  L n_{l}$.
+
+When using the rigid approximation for the constellation, a particular simplification occurs when writing the transfer function at leading order in the delays. The Fourier-domain transfer function for~\eqref{eq:dfresponsec} then reads in the local approximation
+\be
+	\calT_{slr}^{\ell m} = \frac{i \pi f L}{2} \sinc \left[ \pi f L\left(1-\hat{k}\cdot n_{l} \right) \right] \exp\left[ i \pi f \left( L + \hat{k}\cdot \left( p_{1}^{L} + p_{2}^{L} \right) \right) \right]  n_{l} \cdot P_{\ell m} \cdot n_{l} \text{ for } m>0 \,,
+\ee
+where we used the fact that, in our rigid approximation for the trajectory of the constellation, $p^{L}_{r} - p^{L}_{s} =  L n_{l}$. In the case $m<0$, the formalism can be applied in the same way, except that notations are complicated by the fact that the mode $\tilde{h}_{\ell m}$ has to be evaluated at $-f$. In the following, we will limit ourselves to the case $m>0$ for simplicity of presentation.
 
 Note that, if the corrections~\eqref{} are included for the constellation delays, this transfer function will not have this simple form anymore as $\dot{d}$ will have a different velocity-dependent expression for the sending and receiving spacecrafts.
 
@@ -759,7 +775,7 @@ We investigate now the post-Newtonian order counting of the expansion~\eqref{eq:
 \be
 	\Tf^{2p} \partial_{t}^{2p} F = \calO(-1) \,,
 \ee
-meaning that the expansion becomes {\it less} well behaved for {\it lower} frequencies. The presence of a $1/p!$ gives a formal sense to the expansion if the successive derivatives of $F(t)$ are appropriately bounded, but one may have to keep a large number of terms in the sum. The approximation that consists in taking the first term in the series, the LLP approximation~\eqref{} which was in particular used for the PhenomP~\cite{} waveform model, gets {\it worse} the further away from merger the signal is. [This does not seem to have been clearly stated before, to check]. We investigate further in Sec.~\ref{} the validity of the treatment of precession used for PhenomP.
+meaning that the expansion becomes {\it less} well behaved for {\it lower} frequencies. The presence of a $1/p!$ gives a formal sense to the expansion if the successive derivatives of $F(t)$ are appropriately bounded, but one may have to keep a large number of terms in the sum. The approximation that consists in taking the first term in the series, the LLP approximation~\eqref{} which was in particular used for the PhenomP~\cite{} waveform model, gets {\it worse} the further away from merger the signal is. We investigate further in Sec.~\ref{} the validity of the treatment of precession used for PhenomP.
 
 Notice that, for the amplitude derivatives in~\eqref{eq:expandA} and the higher order derivatives of the phase in~\eqref{eq:expandPsi}, the same PN scaling arguments give however the opposite, more usual behaviour that the terms beyond the first one appear as corrections becoming less and less important at lower frequencies. For instance, within the SPA we obtain
 \begin{subequations}

@@ -524,36 +524,47 @@ int RestrictFDReImFrequencySeries(
 /* WARNING : found significant accumulating difference with the numpy unwrap function - to be understood */
 int UnwrapPhase(
   gsl_vector* phaseout,    /* Output: unwrapped phase vector, already allocated */
-  gsl_vector*  phasein)    /* Input: phase vector */
+  gsl_vector* phasein)     /* Input: phase vector */
 {
   size_t N = phasein->size;
-  double* diff = (double*) malloc(sizeof(double) * N);
-  double* diffcorr = (double*) malloc(sizeof(double) * N);
-  double* cumsum = (double*) malloc(sizeof(double) * N);
   double* p = phasein->data;
+  double* pmod = (double*) malloc(sizeof(double) * N);
+  int* jumps = (int*) malloc(sizeof(int) * N);
+  int* cumul = (int*) malloc(sizeof(int) * N);
 
-  /* Incremental phase variation - indexed from 1 to N-1 */
-  diff[0] = 0;
+  /* Compute phase mod 2pi (shifted to be between -pi and pi) */
   for(int i=1; i<N; i++) {
-    diff[i] = p[i+1] - p[i];
+    pmod[i] = p[i] - floor((p[i] + PI) / (2*PI))*(2*PI) - PI;
   }
 
-  /* Compute phase variation mod 2pi (shifted to be between -pi and pi) */
+  /* Identify jumps */
+  jumps[0] = 0;
+  double d = 0.;
   for(int i=1; i<N; i++) {
-    diff[i] = (diff[i] + PI) - floor((diff[i] + PI) / (2*PI))*(2*PI) - PI;
+    d = pmod[i] - pmod[i-1];
+    if(d<PI) jumps[i] = 1;
+    else if(d>PI) jumps[i] = -1;
+    else jumps[i] = 0;
   }
 
-  /* One could preserve sign of variation if diff[i] = +pi (maps to -pi here) - here we simply assume that the phase jumps are strictly smaller than +-pi, which is the limiting case for the reconstruction to work  */
+  /* Cumulative of the jump sequence */
+  int c = 0;
+  cumul[0] = 0;
+  for(int i=1; i<N; i++) {
+    c += jumps[i];
+    cumul[i] = c;
+  }
 
-  /* Cumulative sum of diff */
+  /* Correct original phase series by the number of 2pi factor given by the cumulative of the jumps */
   double* pout = phaseout->data;
-  pout[0] = p[0];
-  for(int i=1; i<N; i++) {
-    pout[i] = pout[i-1] + diff[i];
+  for(int i=0; i<N; i++) {
+    pout[i] = 2*PI*cumul[i] + p[i];
   }
 
   /* Cleanup */
-  free(diff);
+  free(pmod);
+  free(jumps);
+  free(cumul);
 }
 
 /* Function to convert a time series from Re/Im form to Amp/Phase form - unwrapping the phase */
@@ -587,6 +598,31 @@ int ReImTimeSeries_ToAmpPhase(
   /* Cleanup */
   gsl_vector_free(amp);
   gsl_vector_free(phase);
+}
+
+/* Function to convert a time series from Amp/Phase form to Re/Im form */
+int AmpPhaseTimeSeries_ToReIm(
+  ReImTimeSeries** timeseriesout,                 /* Output: Re/Im time series */
+  AmpPhaseTimeSeries* timeseriesin)               /* Input: Amp/Phase time series */
+{
+  /* Initialize output */
+  int npt = (int) timeseriesin->times->size;
+  ReImTimeSeries_Init(timeseriesout, npt);
+  gsl_vector_memcpy((*timeseriesout)->times, timeseriesin->times);
+  gsl_vector_set_zero((*timeseriesout)->h_real);
+  gsl_vector_set_zero((*timeseriesout)->h_imag);
+
+  /* Compute amplitude and phase */
+  gsl_vector* hreal = gsl_vector_alloc(npt);
+  gsl_vector* himag = gsl_vector_alloc(npt);
+  double* hrealval = (*timeseriesout)->h_real->data;
+  double* himagval = (*timeseriesout)->h_imag->data;
+  double* hamp = timeseriesin->h_amp->data;
+  double* hphase = timeseriesin->h_phase->data;
+  for(int i=0; i<npt; i++) {
+    hrealval[i] = hamp[i]*cos(hphase[i]);
+    himagval[i] = hamp[i]*sin(hphase[i]);
+  }
 }
 
 /***************** Other structure functions ****************/

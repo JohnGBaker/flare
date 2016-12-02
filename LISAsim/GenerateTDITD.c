@@ -122,29 +122,6 @@ static void Read_Wave_hphcTD( RealTimeSeries** hptd, RealTimeSeries** hctd, cons
   /* Clean up */
   gsl_matrix_free(inmatrix);
 }
-/* Read waveform time series in Amp/Phase form for a single mode h22TD */
-/* NOTE: assumes a single mode amp/phase in the input file */
-static void Read_Wave_h22TD( AmpPhaseTimeSeries** h22td, const char dir[], const char file[], const int nsamples, int binary)
-{
-  /* Initalize and read input */
-  gsl_matrix* inmatrix =  gsl_matrix_alloc(nsamples, 3);
-  if (!binary) Read_Text_Matrix(dir, file, inmatrix);
-  else Read_Matrix(dir, file, inmatrix);
-
-  /* Initialize structures */
-  AmpPhaseTimeSeries_Init(h22td, nsamples);
-
-  /* Set values */
-  gsl_vector_view timesview = gsl_matrix_column(inmatrix, 0);
-  gsl_vector_view ampview = gsl_matrix_column(inmatrix, 1);
-  gsl_vector_view phaseview = gsl_matrix_column(inmatrix, 2);
-  gsl_vector_memcpy((*h22td)->times, &timesview.vector);
-  gsl_vector_memcpy((*h22td)->h_amp, &ampview.vector);
-  gsl_vector_memcpy((*h22td)->h_phase, &phaseview.vector);
-
-  /* Clean up */
-  gsl_matrix_free(inmatrix);
-}
 /* Output TDI 3 channels TD - real time series */
 /* NOTE: assumes 3 channels with same times */
 static void Write_TDITD(const char dir[], const char file[], RealTimeSeries* TDI1, RealTimeSeries* TDI2, RealTimeSeries* TDI3, int binary)
@@ -164,39 +141,7 @@ static void Write_TDITD(const char dir[], const char file[], RealTimeSeries* TDI
   if(!binary) Write_Text_Matrix(dir, file, outmatrix);
   else Write_Matrix(dir, file, outmatrix);
 }
-/* Output waveform time series in Amp/Phase form for a single mode h22TD */
-static void Write_h22TD(const char dir[], const char file[], AmpPhaseTimeSeries* h22td, int binary)
-{
-  /* Initialize output */
-  /* NOTE: assumes identical times for all 3 TDI observables */
-  int nbtimes = h22td->times->size;
-  gsl_matrix* outmatrix = gsl_matrix_alloc(nbtimes, 3);
 
-  /* Set data */
-  gsl_matrix_set_col(outmatrix, 0, h22td->times);
-  gsl_matrix_set_col(outmatrix, 1, h22td->h_amp);
-  gsl_matrix_set_col(outmatrix, 2, h22td->h_phase);
-
-  /* Output */
-  if(!binary) Write_Text_Matrix(dir, file, outmatrix);
-  else Write_Matrix(dir, file, outmatrix);
-}
-/* Output waveform yslr - real time series */
-static void Write_yslrTD(const char dir[], const char file[], RealTimeSeries* yslrtd, int binary)
-{
-  /* Initialize output */
-  /* NOTE: assumes identical times for all 3 TDI observables */
-  int nbtimes = yslrtd->times->size;
-  gsl_matrix* outmatrix = gsl_matrix_alloc(nbtimes, 2);
-
-  /* Set data */
-  gsl_matrix_set_col(outmatrix, 0, yslrtd->times);
-  gsl_matrix_set_col(outmatrix, 1, yslrtd->h);
-
-  /* Output */
-  if(!binary) Write_Text_Matrix(dir, file, outmatrix);
-  else Write_Matrix(dir, file, outmatrix);
-}
 
 /***************** Main program *****************/
 
@@ -256,7 +201,7 @@ int main(int argc, char *argv[])
   else if((params->tagtdi==delayO) || (params->tagtdi==y12L)) {
     /* Load 22-mode TD - can be the orbital-delayed 22 mode in the case of y12L */
     AmpPhaseTimeSeries* h22td = NULL;
-    Read_Wave_h22TD(&h22td, params->indir, params->infile, params->nsamplesinfile, params->binaryin);
+    Read_AmpPhaseTimeSeries(&h22td, params->indir, params->infile, params->nsamplesinfile, params->binaryin);
 
     /* Interpolate amp, phase with gsl spline */
     gsl_vector* times = h22td->times;
@@ -280,7 +225,7 @@ int main(int argc, char *argv[])
       Generateh22TDO(&h22tdO, spline_amp, spline_phase, accel_amp, accel_phase, times, nptmargin);
 
       /* Output */
-      Write_h22TD(params->outdir, params->outfile, h22tdO, params->binaryout);
+      Write_AmpPhaseTimeSeries(params->outdir, params->outfile, h22tdO, params->binaryout);
     }
 
     else if(params->tagtdi==y12L) {
@@ -289,7 +234,7 @@ int main(int argc, char *argv[])
       Generatey12LTD(&y12td, spline_amp, spline_phase, accel_amp, accel_phase, times, params->inclination, params->phiRef, nptmargin);
 
       /* Output */
-      Write_yslrTD(params->outdir, params->outfile, y12td, params->binaryout);
+      Write_RealTimeSeries(params->outdir, params->outfile, y12td, params->binaryout);
     }
   }
 }

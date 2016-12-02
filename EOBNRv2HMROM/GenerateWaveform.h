@@ -63,15 +63,16 @@ typedef struct tagGenWaveParams {
   double deltatobs;          /* Observation duration (years, default=2) */
   int tagextpn;              /* Tag to allow PN extension of the waveform at low frequencies */
   double Mfmatch;            /* When PN extension allowed, geometric matching frequency: will use ROM above this value. If <=0, use ROM down to the lowest covered frequency */
-  int nbmode;                /* number of modes to generate (starting with 22) - defaults to 5 (all modes) */
+  int nbmode;                /* Number of modes to generate (starting with 22) - defaults to 1 (22 only) */
   int taggenwave;            /* Tag selecting the desired output format */
-  double f1windowend;        /* If generating hphcTD, start frequency for windowing at the end - set to 0 to ignore and use 0.995*fHighROM, where fHighROM is the highest frequency covered by the ROM (Hz, default=0) */
-  double f2windowend;        /* If generating hphcTD, stop frequency for windowing at the end - set to 0 to ignore and use fHighROM, where fHighROM is the highest frequency covered by the ROM (Hz, default=0) */
+  double f1windowbeg;        /* If generating h22TD/hphcTD, start frequency for windowing at the beginning - set to 0 to ignore and use max(fstartobs, fLowROM, minf), where fLowROM is either the lowest frequency covered by the ROM or simply minf if PN extension is used (Hz, default=0) */
+  double f2windowbeg;        /* If generating h22TD/hphcTD, stop frequency for windowing at the beginning - set to 0 to ignore and use 1.1*f1windowbeg (Hz, default=0) */
+  double f1windowend;        /* If generating h22TD/hphcTD, start frequency for windowing at the end - set to 0 to ignore and use 0.995*f2windowend (Hz, default=0) */
+  double f2windowend;        /* If generating h22TD/hphcTD, stop frequency for windowing at the end - set to 0 to ignore and use min(maxf, fHighROM), where fHighROM is the highest frequency covered by the ROM (Hz, default=0) */
   int binaryout;             /* Tag for outputting the data in gsl binary form instead of text (default 0) */
   char outdir[256];          /* Path for the output directory */
   char outfile[256];         /* Path for the output file */
 } GenWaveParams;
-
 
 #if 0
 { /* so that editors will match succeeding brace */

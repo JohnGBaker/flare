@@ -50,16 +50,18 @@ void Err_Handler(const char *reason, const char *file, int line, int gsl_errno) 
 /* Functions to read binary data from files */
 int Read_Vector(const char dir[], const char fname[], gsl_vector *v) {
   char *path=malloc(strlen(dir)+64);
-
   sprintf(path,"%s/%s", dir, fname);
   FILE *f = fopen(path, "rb");
   if (!f) {
-      return(FAILURE);
+    fprintf(stderr, "Error reading data from %s\n", path);
+    free(path);
+    return(FAILURE);
   }
   int ret = gsl_vector_fread(f, v);
   if (ret != 0) {
-      fprintf(stderr, "Error reading data from %s.\n",path);
-      return(FAILURE);
+    fprintf(stderr, "Error reading data from %s.\n",path);
+    free(path);
+    return(FAILURE);
   }
   fclose(f);
   free(path);
@@ -67,16 +69,18 @@ int Read_Vector(const char dir[], const char fname[], gsl_vector *v) {
 }
 int Read_Matrix(const char dir[], const char fname[], gsl_matrix *m) {
   char *path=malloc(strlen(dir)+64);
-
   sprintf(path,"%s/%s", dir, fname);
   FILE *f = fopen(path, "rb");
   if (!f) {
-      return(FAILURE);
+    fprintf(stderr, "Error reading data from %s\n", path);
+    free(path);
+    return(FAILURE);
   }
   int ret = gsl_matrix_fread(f, m);
   if (ret != 0) {
-      fprintf(stderr, "Error reading data from %s.\n", path);
-      return(FAILURE);
+    fprintf(stderr, "Error reading data from %s\n", path);
+    free(path);
+    return(FAILURE);
   }
   fclose(f);
   free(path);
@@ -85,16 +89,18 @@ int Read_Matrix(const char dir[], const char fname[], gsl_matrix *m) {
 /* Functions to read text data from files */
 int Read_Text_Vector(const char dir[], const char fname[], gsl_vector *v) {
   char *path=malloc(strlen(dir)+64);
-
   sprintf(path,"%s/%s", dir, fname);
   FILE *f = fopen(path, "rb");
   if (!f) {
-      return(FAILURE);
+    fprintf(stderr, "Error reading data from %s\n", path);
+    free(path);
+    return(FAILURE);
   }
   int ret = gsl_vector_fscanf(f, v);
   if (ret != 0) {
-      fprintf(stderr, "Error reading data from %s.\n",path);
-      return(FAILURE);
+    fprintf(stderr, "Error reading data from %s.\n",path);
+    free(path);
+    return(FAILURE);
   }
   fclose(f);
   free(path);
@@ -102,34 +108,38 @@ int Read_Text_Vector(const char dir[], const char fname[], gsl_vector *v) {
 }
 int Read_Text_Matrix(const char dir[], const char fname[], gsl_matrix *m) {
   char *path=malloc(strlen(dir)+64);
-
   sprintf(path,"%s/%s", dir, fname);
   FILE *f = fopen(path, "rb");
   if (!f) {
-      return(FAILURE);
+    fprintf(stderr, "Error reading data from %s\n", path);
+    free(path);
+    return(FAILURE);
   }
   int ret = gsl_matrix_fscanf(f, m);
   if (ret != 0) {
-      fprintf(stderr, "Error reading data from %s.\n",path);
-      return(FAILURE);
+    fprintf(stderr, "Error reading data from %s.\n",path);
+    free(path);
+    return(FAILURE);
   }
   fclose(f);
   free(path);
-  return(0);
+  return(SUCCESS);
 }
 /* Functions to write data to files */
 int Write_Vector(const char dir[], const char fname[], gsl_vector *v) {
   char *path=malloc(strlen(dir)+64);
-
   sprintf(path,"%s/%s", dir, fname);
   FILE *f = fopen(path, "w");
   if (!f) {
-      return(FAILURE);
+    fprintf(stderr, "Error writing data to %s\n", path);
+    free(path);
+    return(FAILURE);
   }
   int ret = gsl_vector_fwrite(f, v);
   if (ret != 0) {
-      fprintf(stderr, "Error writing data to %s.\n",path);
-      return(FAILURE);
+    fprintf(stderr, "Error writing data to %s\n",path);
+    free(path);
+    return(FAILURE);
   }
   fclose(f);
   free(path);
@@ -141,12 +151,15 @@ int Write_Matrix(const char dir[], const char fname[], gsl_matrix *m) {
   sprintf(path,"%s/%s", dir, fname);
   FILE *f = fopen(path, "w");
   if (!f) {
-      return(FAILURE);
+    fprintf(stderr, "Error writing data to %s\n", path);
+    free(path);
+    return(FAILURE);
   }
   int ret = gsl_matrix_fwrite(f, m);
   if (ret != 0) {
-      fprintf(stderr, "Error writing data to %s.\n", path);
-      return(FAILURE);
+    fprintf(stderr, "Error writing data to %s\n", path);
+    free(path);
+    return(FAILURE);
   }
   fclose(f);
   free(path);
@@ -155,22 +168,22 @@ int Write_Matrix(const char dir[], const char fname[], gsl_matrix *m) {
 /* Functions to write text data to files */
 int Write_Text_Vector(const char dir[], const char fname[], gsl_vector *v) {
   char *path=malloc(strlen(dir)+64);
-
   sprintf(path,"%s/%s", dir, fname);
   FILE *f = fopen(path, "w");
   if (!f) {
+    fprintf(stderr, "Error writing data to %s\n", path);
     free(path);
-    return(1);
+    return(FAILURE);
   }
   int ret = gsl_vector_fprintf(f, v, "%.16e");
   if (ret != 0) {
-    fprintf(stderr, "Error writing data in %s.\n",path);
+    fprintf(stderr, "Error writing data to %s\n",path);
     free(path);
-    return(1);
+    return(FAILURE);
   }
   fclose(f);
   free(path);
-  return(0);
+  return(SUCCESS);
 }
 int Write_Text_Matrix(const char dir[], const char fname[], gsl_matrix *m) {
   char *path=malloc(strlen(dir)+64);
@@ -179,8 +192,9 @@ int Write_Text_Matrix(const char dir[], const char fname[], gsl_matrix *m) {
   sprintf(path,"%s/%s", dir, fname);
   FILE *f = fopen(path, "w");
   if (!f) {
+    fprintf(stderr, "Error writing data to %s\n",path);
     free(path);
-    return(1);
+    return(FAILURE);
   }
   int N = (int) m->size1;
   int M = (int) m->size2;
@@ -191,13 +205,13 @@ int Write_Text_Matrix(const char dir[], const char fname[], gsl_matrix *m) {
     if(i < N-1) ret |= (fprintf(f, "\n") < 0);
   }
   if (ret != 0) {
-    fprintf(stderr, "Error writing data in %s.\n",path);
+    fprintf(stderr, "Error writing data to %s\n",path);
     free(path);
-    return(1);
+    return(FAILURE);
   }
   fclose(f);
   free(path);
-  return(0);
+  return(SUCCESS);
 }
 
 /******** Functions to initialize and clean up CAmpPhaseFrequencySeries structure ********/
@@ -487,4 +501,143 @@ void ListmodesCAmpPhaseSpline_Destroy(
     list = pop->next;
     free( pop );
   }
+}
+
+/***********************************************************************/
+/**************** I/O functions for internal structures ****************/
+
+/* Read waveform Amp/Phase time series */
+int Read_AmpPhaseTimeSeries(AmpPhaseTimeSeries** timeseries, const char dir[], const char file[], const int nblines, const int binary)
+{
+  /* Initalize and read input */
+  int ret;
+  gsl_matrix* inmatrix =  gsl_matrix_alloc(nblines, 3);
+  if(!binary) ret = Read_Text_Matrix(dir, file, inmatrix);
+  else ret = Read_Matrix(dir, file, inmatrix);
+
+  /* Initialize structures */
+  AmpPhaseTimeSeries_Init(timeseries, nblines);
+
+  /* Set values */
+  gsl_vector_view timesview = gsl_matrix_column(inmatrix, 0);
+  gsl_vector_view hampview = gsl_matrix_column(inmatrix, 1);
+  gsl_vector_view hphaseview = gsl_matrix_column(inmatrix, 2);
+  gsl_vector_memcpy((*timeseries)->times, &timesview.vector);
+  gsl_vector_memcpy((*timeseries)->h_amp, &hampview.vector);
+  gsl_vector_memcpy((*timeseries)->h_phase, &hphaseview.vector);
+
+  /* Clean up */
+  gsl_matrix_free(inmatrix);
+
+  return ret;
+}
+
+/* Read waveform Re/Im time series */
+int Read_ReImTimeSeries(ReImTimeSeries** timeseries, const char dir[], const char file[], const int nblines, const int binary)
+{
+  /* Initalize and read input */
+  int ret;
+  gsl_matrix* inmatrix =  gsl_matrix_alloc(nblines, 3);
+  if(!binary) ret = Read_Text_Matrix(dir, file, inmatrix);
+  else ret = Read_Matrix(dir, file, inmatrix);
+
+  /* Initialize structures */
+  ReImTimeSeries_Init(timeseries, nblines);
+
+  /* Set values */
+  gsl_vector_view timesview = gsl_matrix_column(inmatrix, 0);
+  gsl_vector_view hrealview = gsl_matrix_column(inmatrix, 1);
+  gsl_vector_view himagview = gsl_matrix_column(inmatrix, 2);
+  gsl_vector_memcpy((*timeseries)->times, &timesview.vector);
+  gsl_vector_memcpy((*timeseries)->h_real, &hrealview.vector);
+  gsl_vector_memcpy((*timeseries)->h_imag, &himagview.vector);
+
+  /* Clean up */
+  gsl_matrix_free(inmatrix);
+
+  return ret;
+}
+
+/* Read waveform Real time series */
+int Read_RealTimeSeries(RealTimeSeries** timeseries, const char dir[], const char file[], const int nblines, const int binary)
+{
+  /* Initalize and read input */
+  int ret;
+  gsl_matrix* inmatrix =  gsl_matrix_alloc(nblines, 2);
+  if(!binary) ret = Read_Text_Matrix(dir, file, inmatrix);
+  else ret = Read_Matrix(dir, file, inmatrix);
+
+  /* Initialize structures */
+  RealTimeSeries_Init(timeseries, nblines);
+
+  /* Set values */
+  gsl_vector_view timesview = gsl_matrix_column(inmatrix, 0);
+  gsl_vector_view hview = gsl_matrix_column(inmatrix, 1);
+  gsl_vector_memcpy((*timeseries)->times, &timesview.vector);
+  gsl_vector_memcpy((*timeseries)->h, &hview.vector);
+
+  /* Clean up */
+  gsl_matrix_free(inmatrix);
+
+  return ret;
+}
+
+/* Output Re/Im frequency series */
+int Write_ReImFrequencySeries(const char dir[], const char file[], ReImFrequencySeries* freqseries, const int binary)
+{
+  /* Initialize output */
+  /* Note: assumes hplus, hcross have same length as expected */
+  int nbfreq = freqseries->freq->size;
+  gsl_matrix* outmatrix = gsl_matrix_alloc(nbfreq, 3);
+
+  /* Set output matrix */
+  gsl_matrix_set_col(outmatrix, 0, freqseries->freq);
+  gsl_matrix_set_col(outmatrix, 1, freqseries->h_real);
+  gsl_matrix_set_col(outmatrix, 2, freqseries->h_imag);
+
+  /* Output */
+  int ret;
+  if (!binary) ret = Write_Text_Matrix(dir, file, outmatrix);
+  else ret = Write_Matrix(dir, file, outmatrix);
+
+  return ret;
+}
+
+/* Output real time series */
+int Write_RealTimeSeries(const char dir[], const char file[], RealTimeSeries* timeseries, int binary)
+{
+  /* Initialize output */
+  int nbtimes = timeseries->times->size;
+  gsl_matrix* outmatrix = gsl_matrix_alloc(nbtimes, 2);
+
+  /* Set data */
+  gsl_matrix_set_col(outmatrix, 0, timeseries->times);
+  gsl_matrix_set_col(outmatrix, 1, timeseries->h);
+
+  /* Output */
+  int ret;
+  if(!binary) ret = Write_Text_Matrix(dir, file, outmatrix);
+  else ret = Write_Matrix(dir, file, outmatrix);
+
+  return ret;
+}
+
+/* Output Amp/Phase time series */
+int Write_AmpPhaseTimeSeries(const char dir[], const char file[], AmpPhaseTimeSeries* timeseries, int binary)
+{
+  /* Initialize output */
+  int nbtimes = timeseries->times->size;
+  gsl_matrix* outmatrix = gsl_matrix_alloc(nbtimes, 3);
+
+  /* Set data */
+  gsl_matrix_set_col(outmatrix, 0, timeseries->times);
+  gsl_matrix_set_col(outmatrix, 1, timeseries->h_amp);
+  gsl_matrix_set_col(outmatrix, 2, timeseries->h_phase);
+
+  /* Output */
+  int ret;
+  if(!binary) ret = Write_Text_Matrix(dir, file, outmatrix);
+  else ret = Write_Matrix(dir, file, outmatrix);
+
+  return ret;
 }

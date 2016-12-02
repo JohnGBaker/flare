@@ -12,7 +12,7 @@
 /* This program works compatibly with LISAinference, but takes a list of 9 param values (in order as below) and only
    computes the likelihood at that parameter point.
 */
-noMPI=1;
+int noMPI=1;
 
 
 int main(int argc, char *argv[])

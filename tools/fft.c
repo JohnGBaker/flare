@@ -166,17 +166,31 @@ int FFTTimeSeries(ReImFrequencySeries** freqseries, ReImTimeSeries* timeseries, 
   int nzeros = (int) pow(2, ((int) ceil(log(n)/log(2))) + nzeropad) - n; /* Here defined with ceil, but with floor in IFFT */
   int N = n + nzeros;
 
+  //
+  printf("N: %d\n", N);
+
   /* Compute input TD values, with windowing */
   int nbptswindowbeg = (int) ceil(twindowbeg/deltat) + 1;
   int nbptswindowend = (int) ceil(twindowend/deltat) + 1;
+
+  //
+  printf("twindowbeg,twindowend, deltat: %g, %g, %g\n", twindowbeg,twindowend,deltat);
+  printf("nbptswindowbeg,nbptswindowend: %d, %d\n", nbptswindowbeg,nbptswindowend);
+
   double t1windowbeg = times[0];
   double t2windowbeg = times[nbptswindowbeg-1];
   double t1windowend = times[n-nbptswindowend];
   double t2windowend = times[n-1];
   double deltatwindowbeg = t2windowbeg - t1windowbeg;
   double deltatwindowend = t2windowend - t1windowend;
+  //
+  printf("N: %d\n", N);
+
   double* htdreal = timeseries->h_real->data;
   double* htdimag = timeseries->h_imag->data;
+  //
+  printf("N: %d\n", N);
+
   fftw_complex* in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N);
   for (int i=0; i<nbptswindowbeg; i++) {
     in[i] = WindowFunctionRight(times[i], t1windowbeg, deltatwindowbeg) * (htdreal[i] + I*htdimag[i]);
@@ -188,6 +202,9 @@ int FFTTimeSeries(ReImFrequencySeries** freqseries, ReImTimeSeries* timeseries, 
     in[i] = WindowFunctionLeft(times[i], t2windowend, deltatwindowend) * (htdreal[i] + I*htdimag[i]);
   }
 
+  //
+  printf("N: %d\n", N);
+
   /* FFT - uses flipped convention (i.e. h(f) = int e^(+2ipift)h(t)) */
   /* Represented here by the use of FFTW_BACKWARD (plus sign in the exp) */
   fftw_plan p;
@@ -196,8 +213,14 @@ int FFTTimeSeries(ReImFrequencySeries** freqseries, ReImTimeSeries* timeseries, 
   p = fftw_plan_dft_1d(N, in, out, FFTW_BACKWARD, FFTW_ESTIMATE);
   fftw_execute(p);
 
+  //
+  printf("N: %d\n", N);
+
   /* Initialize output structure */
   ReImFrequencySeries_Init(freqseries, N/2); /* NOTE: N/2 first elements of output of fftw are positive freqs, we eliminate negative frequency (the second half of the series) */
+
+  //
+  printf("N: %d\n", N);
 
   /* Extracting and converting data from FFTW output */
   double deltaf = 1./(N*deltat);
@@ -215,6 +238,9 @@ int FFTTimeSeries(ReImFrequencySeries** freqseries, ReImTimeSeries* timeseries, 
     himag[i] = cimag(hcomplex);
   }
 
+  //
+  printf("N: %d\n", N);
+
   /* Clean up */
   fftw_destroy_plan(p);
   fftw_free(in);
@@ -228,6 +254,12 @@ int FFTTimeSeries(ReImFrequencySeries** freqseries, ReImTimeSeries* timeseries, 
 /* Note: FFT uses flipped convention (i.e. h(f) = int e^(+2ipift)h(t)) */
 int IFFTFrequencySeriesReal(RealTimeSeries** timeseries, ReImFrequencySeries* freqseries, double f1windowbeg, double f2windowbeg, double f1windowend, double f2windowend, int nzeropad)
 {
+  /* Checking sanity of windowing frequencies */
+  if(!((f1windowbeg<f2windowbeg)&&(f1windowend<f2windowend)&&(f2windowbeg<f1windowend))) {
+    printf("Error in IFFTFrequencySeriesReal: inconsistent windowing frequencies.\n");
+    printf("(f1windowbeg, f2windowbeg, f1windowend, f2windowend) = (%g, %g, %g, %g)\n", f1windowbeg, f2windowbeg, f1windowend, f2windowend);
+  }
+
   /* deltaf of frequency series */
   /* Warning: assumes linear sampling in frequency */
   double* freq = freqseries->freq->data;
@@ -303,6 +335,12 @@ int IFFTFrequencySeriesReal(RealTimeSeries** timeseries, ReImFrequencySeries* fr
 /* Note: FFT uses flipped convention (i.e. h(f) = int e^(+2ipift)h(t)) */
 int IFFTFrequencySeries(ReImTimeSeries** timeseries, ReImFrequencySeries* freqseries, double f1windowbeg, double f2windowbeg, double f1windowend, double f2windowend, int nzeropad)
 {
+  /* Checking sanity of windowing frequencies */
+  if(!((f1windowbeg<f2windowbeg)&&(f1windowend<f2windowend)&&(f2windowbeg<f1windowend))) {
+    printf("Error in IFFTFrequencySeries: inconsistent windowing frequencies.\n");
+    printf("(f1windowbeg, f2windowbeg, f1windowend, f2windowend) = (%g, %g, %g, %g)\n", f1windowbeg, f2windowbeg, f1windowend, f2windowend);
+  }
+
   /* deltaf of frequency series */
   /* Warning: assumes linear sampling in frequency */
   double* freq = freqseries->freq->data;

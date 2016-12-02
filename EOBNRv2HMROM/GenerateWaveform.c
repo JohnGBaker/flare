@@ -42,15 +42,17 @@ Arguments are as follows:\n\
 --------------------------------------------------\n\
 ----- Generation Parameters ----------------------\n\
 --------------------------------------------------\n\
- --nbmode              Number of modes of radiation to generate (1-5, default=5)\n\
+ --nbmode              Number of modes of radiation to generate (1-5, default=1)\n\
  --minf                Minimal frequency, ignore if 0 (Hz, default=0) - will use first frequency covered by the ROM if higher\n\
  --maxf                Maximal frequency, ignore if 0 (Hz, default=0) - will use last frequency covered by the ROM if lower\n\
  --deltatobs           Observation duration (years, default=2)\n\
  --tagextpn            Tag to allow PN extension of the waveform at low frequencies (default=1)\n\
  --Mfmatch             When PN extension allowed, geometric matching frequency: will use ROM above this value. If <=0, use ROM down to the lowest covered frequency (default=0.)\n\
  --taggenwave          Tag choosing the wf format: hlm (default: downsampled modes, Amp/Phase form),  h22TD (IFFT of h22, Amp/Phase form - currently not supported for higher modes), hphcFD (hlm interpolated and summed, Re/Im form), hphcTD (IFFT of hphcFD, Re/Im form)\n\
- --f1windowend         If generating h22TD/hphcTD, start frequency for windowing at the end - set to 0 to ignore and use 0.995*fHighROM, where fHighROM is the highest frequency covered by the ROM (Hz, default=0)\n\
- --f2windowend         If generating h22TD/hphcTD, stop frequency for windowing at the end - set to 0 to ignore and use fHighROM, where fHighROM is the highest frequency covered by the ROM (Hz, default=0)\n\
+ --f1windowbeg         If generating h22TD/hphcTD, start frequency for windowing at the beginning - set to 0 to ignore and use max(fstartobs, fLowROM, minf), where fLowROM is either the lowest frequency covered by the ROM or simply minf if PN extension is used (Hz, default=0)\n\
+ --f2windowbeg         If generating h22TD/hphcTD, stop frequency for windowing at the beginning - set to 0 to ignore and use 1.1*f1windowbeg (Hz, default=0)\n\
+ --f1windowend         If generating h22TD/hphcTD, start frequency for windowing at the end - set to 0 to ignore and use 0.995*f2windowend (Hz, default=0)\n\
+ --f2windowend         If generating h22TD/hphcTD, stop frequency for windowing at the end - set to 0 to ignore and use min(maxf, fHighROM), where fHighROM is the highest frequency covered by the ROM (Hz, default=0)\n\
  --binaryout           Tag for outputting the data in gsl binary form instead of text (default false)\n\
  --outdir              Output directory\n\
  --outfile             Output file name\n\
@@ -68,13 +70,15 @@ Arguments are as follows:\n\
     params->inclination = PI/3;
 
     /* set default values for the generation params */
-    params->nbmode = 5;
+    params->nbmode = 1;
     params->minf = 0.;
     params->maxf = 0.;
     params->deltatobs = 2.;
     params->tagextpn = 1;
     params->Mfmatch = 0.;
     params->taggenwave = hlm;
+    params->f1windowbeg = 0.;
+    params->f2windowbeg = 0.;
     params->f1windowend = 0.;
     params->f2windowend = 0.;
     params->binaryout = 0;
@@ -114,7 +118,11 @@ Arguments are as follows:\n\
           params->Mfmatch = atof(argv[++i]);
         } else if (strcmp(argv[i], "--taggenwave") == 0) {
           params->taggenwave = ParseGenWavetag(argv[++i]);
-        } else if (strcmp(argv[i], "--f1windowend") == 0) {
+        } else if (strcmp(argv[i], "--f1windowbeg") == 0) {
+          params->f1windowbeg = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--f2windowbeg") == 0) {
+          params->f2windowbeg = atof(argv[++i]);
+        }  else if (strcmp(argv[i], "--f1windowend") == 0) {
           params->f1windowend = atof(argv[++i]);
         } else if (strcmp(argv[i], "--f2windowend") == 0) {
           params->f2windowend = atof(argv[++i]);
@@ -211,23 +219,16 @@ static void Write_Wave_hphcTD(const char dir[], const char file[], RealTimeSerie
 }
 /* Output waveform in frequency series form,Re/Im for hplus and hcross */
     // Output Re/Im because difference between numpy and C unwrapping
-//static void Write_Wave_h22TD(const char dir[], const char file[], AmpPhaseTimeSeries* h22, int binary)
-static void Write_Wave_h22TD(const char dir[], const char file[], ReImTimeSeries* h22, int binary)
+static void Write_Wave_h22TD(const char dir[], const char file[], AmpPhaseTimeSeries* h22, int binary)
 {
-
   /* Initialize output */
   int nbtimes = h22->times->size;
   gsl_matrix* outmatrix = gsl_matrix_alloc(nbtimes, 3);
 
-  //
-//printf("nbtimes, h_amp, h_phase %d %d %d\n", nbtimes, (int) h22->h_amp->size, (int) h22->h_phase->size);
-
   /* Set output matrix */
   gsl_matrix_set_col(outmatrix, 0, h22->times);
-  //gsl_matrix_set_col(outmatrix, 1, h22->h_amp);
-  //gsl_matrix_set_col(outmatrix, 2, h22->h_phase);
-  gsl_matrix_set_col(outmatrix, 1, h22->h_real);
-  gsl_matrix_set_col(outmatrix, 2, h22->h_imag);
+  gsl_matrix_set_col(outmatrix, 1, h22->h_amp);
+  gsl_matrix_set_col(outmatrix, 2, h22->h_phase);
 
   /* Output */
   if (!binary) Write_Text_Matrix(dir, file, outmatrix);
@@ -247,22 +248,34 @@ int main(int argc, char *argv[])
   /* Parse commandline to read parameters */
   parse_args_GenerateWaveform(argc, argv, params);
 
-  /* Starting frequency - takes into account the duration of observation deltatobs and the arg minf */
+  /* Starting frequency corresponding to duration of observation deltatobs */
   double fstartobs = 0.;
   if(!(params->deltatobs==0.)) fstartobs = Newtonianfoft(params->m1, params->m2, params->deltatobs);
-  double fLow = fmax(params->minf, fstartobs);
 
   /* Generate Fourier-domain waveform as a list of hlm modes */
   /* Use TF2 extension, if required to, to arbitrarily low frequencies */
-  /* NOTE: at this stage, if no extension is performed, deltatobs and minf are ignored - will start at MfROM*/
+  /* NOTE: at this stage, if no extension is performed, deltatobs and minf are ignored - will start at MfROM */
+  /* If extending, taking into account both fstartobs and minf */
   ListmodesCAmpPhaseFrequencySeries* listROM = NULL;
   if(!(params->tagextpn)){
     //printf("Not Extending signal waveform.  mfmatch=%g\n",globalparams->mfmatch);
     ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef, params->phiRef, params->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
   } else {
     //printf("Extending signal waveform.  mfmatch=%g\n",globalparams->mfmatch);
-    ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, params->Mfmatch, fLow, 0, params->tRef, params->phiRef, params->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+    ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, params->Mfmatch, fmax(params->minf, fstartobs), 0, params->tRef, params->phiRef, params->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
   }
+
+  /* Determine highest and lowest frequency to cover */
+  /* Takes into account limited duration of obsevation, frequencies covered by the ROM and input-given minf, maxf */
+  double fLowROM = ListmodesCAmpPhaseFrequencySeries_minf(listROM);
+  double fHighROM = ListmodesCAmpPhaseFrequencySeries_maxf(listROM);
+  double fLow = fmax(fLowROM, fmax(params->minf, fstartobs));
+  double fHigh = fmin(params->maxf, fHighROM);
+  /* Window frequencies - used in case of an IFFT */
+  double f1windowbeg = 0.;
+  double f2windowbeg = 0.;
+  double f1windowend = 0.;
+  double f2windowend = 0.;
 
   if(params->taggenwave==hlm) {
     Write_Wave_hlm(params->outdir, params->outfile, listROM, params->nbmode, params->binaryout);
@@ -293,14 +306,15 @@ int main(int argc, char *argv[])
 
     else {
 
-      /* Determine frequency windows - min,max frequencies determined directly from the Amp/Phase hlm's */
-      /* The ROM output has possibly been PN-extended */
-      double fLowROM = ListmodesCAmpPhaseFrequencySeries_minf(listROM);
-      double fHighROM = ListmodesCAmpPhaseFrequencySeries_maxf(listROM);
-      double f1windowbeg = fmax(fLow, fLowROM);
-      double f2windowbeg = 1.1 * f1windowbeg; /* Here hardcoded relative width of the window */
-      double f2windowend = fHighROM;
-      double f1windowend = 0.995 * f2windowend; /* Here hardcoded relative width of the window */
+      /* Determine frequency windows */
+      if(params->f1windowbeg==0.) f1windowbeg = fLow;
+      else f1windowbeg = params->f1windowbeg;
+      if(params->f2windowbeg==0.) f2windowbeg = 1.1*f1windowbeg;
+      else f2windowbeg = params->f2windowbeg;
+      if(params->f2windowend==0.) f2windowend = fHigh;
+      else f2windowend = params->f2windowend;
+      if(params->f1windowend==0.) f1windowend = 0.995*f2windowend;
+      else f1windowend = params->f1windowend;
 
       /* Compute hplus, hcross TD */
       RealTimeSeries* hp = NULL;
@@ -317,12 +331,19 @@ int main(int argc, char *argv[])
   }
   else if(params->taggenwave==h22TD) {
 
+    /* Check that */
+    if(!(params->nbmode==1)) {
+      printf("Error in GenerateWaveform: for taggenwave=h22TD, nbmode must be 1 (22-only waveform).\n");
+      exit(1);
+    }
+
     /* Determine deltaf so that N deltat = 1/deltaf > 2*tc where tc is the time to coalescence estimated from Psi22 */
     /* NOTE: assumes the TD waveform ends around t=0 */
     /* NOTE: estimate based on the 22 mode - see comments above for hphcFD when higher modes are included */
     double tc = EstimateInitialTime(listROM, fLow);
 
-    double deltaf = 0.5 * 1./(2*(-tc)); /* Extra factor of 1/2 corresponding to 0-padding in TD by factor of 2 */
+    //double deltaf = 0.5 * 1./(2*(-tc)); /* Extra factor of 1/2 corresponding to 0-padding in TD by factor of 2 */
+    double deltaf = 0.8 * 1./(2*(-tc)); /* Extra factor of 0.8 security margin for possible inaccuray of tf */
 
     //
     printf("tc, deltaf: %g, %g\n", tc, deltaf);
@@ -335,15 +356,19 @@ int main(int argc, char *argv[])
     //
     printf("length h22tilde: %d \n", h22tilde->freq->size);
 
-    /* Determine frequency windows - min,max frequencies determined from the Amp/Phase h22 */
-    /* The ROM output has possibly been PN-extended */
-    CAmpPhaseFrequencySeries* h22 = ListmodesCAmpPhaseFrequencySeries_GetMode(listROM, 2, 2)->freqseries;
-    double fLowROM22 = gsl_vector_get(h22->freq, 0);
-    double fHighROM22 = gsl_vector_get(h22->freq, h22->freq->size - 1);
-    double f1windowbeg = fmax(fLow, fLowROM22);
-    double f2windowbeg = 1.1 * f1windowbeg; /* Here hardcoded relative width of the window */
-    double f2windowend = fHighROM22;
-    double f1windowend = 0.995 * f2windowend; /* Here hardcoded relative width of the window */
+    /* Determine frequency windows */
+    if(params->f1windowbeg==0.) f1windowbeg = fLow;
+    else f1windowbeg = params->f1windowbeg;
+    if(params->f2windowbeg==0.) f2windowbeg = 1.1*f1windowbeg;
+    else f2windowbeg = params->f2windowbeg;
+    if(params->f2windowend==0.) f2windowend = fHigh;
+    else f2windowend = params->f2windowend;
+    if(params->f1windowend==0.) f1windowend = 0.995*f2windowend;
+    else f1windowend = params->f1windowend;
+
+//
+printf("(%g, %g, %g, %g)\n", f1windowbeg, f2windowbeg, f1windowend, f2windowend);
+//exit(0);
 
     /* Compute h22 TD by IFFT */
     ReImTimeSeries* h22TD = NULL;
@@ -354,13 +379,11 @@ int main(int argc, char *argv[])
     //exit(0);
 
     /* Convert to Amp/Phase representation */
-    // Output Re/Im because difference between numpy and C unwrapping
-    //AmpPhaseTimeSeries* h22TDAmpPhase = NULL;
-    //ReImTimeSeries_ToAmpPhase(&h22TDAmpPhase, h22TD);
+    AmpPhaseTimeSeries* h22TDAmpPhase = NULL;
+    ReImTimeSeries_ToAmpPhase(&h22TDAmpPhase, h22TD);
 
     /* Output */
-    //Write_Wave_h22TD(params->outdir, params->outfile, h22TDAmpPhase, params->binaryout);
-    Write_Wave_h22TD(params->outdir, params->outfile, h22TD, params->binaryout);
+    Write_Wave_h22TD(params->outdir, params->outfile, h22TDAmpPhase, params->binaryout);
     exit(0);
   }
 }

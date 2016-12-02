@@ -139,6 +139,10 @@ int UnwrapPhase(
 int ReImTimeSeries_ToAmpPhase(
   AmpPhaseTimeSeries** timeseriesout,             /* Output: Amp/Phase time series */
   ReImTimeSeries* timeseriesin);                  /* Input: Re/Im time series */
+/* Function to convert a time series from Amp/Phase form to Re/Im form */
+int AmpPhaseTimeSeries_ToReIm(
+  ReImTimeSeries** timeseriesout,                 /* Output: Re/Im time series */
+  AmpPhaseTimeSeries* timeseriesin);              /* Input: Amp/Phase time series */
 
 /***************** Spin weighted spherical harmonics ****************/
 
