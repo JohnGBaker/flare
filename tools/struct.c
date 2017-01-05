@@ -506,6 +506,30 @@ void ListmodesCAmpPhaseSpline_Destroy(
 /***********************************************************************/
 /**************** I/O functions for internal structures ****************/
 
+/* Read waveform Real time series */
+int Read_RealTimeSeries(RealTimeSeries** timeseries, const char dir[], const char file[], const int nblines, const int binary)
+{
+  /* Initalize and read input */
+  int ret;
+  gsl_matrix* inmatrix =  gsl_matrix_alloc(nblines, 2);
+  if(!binary) ret = Read_Text_Matrix(dir, file, inmatrix);
+  else ret = Read_Matrix(dir, file, inmatrix);
+
+  /* Initialize structures */
+  RealTimeSeries_Init(timeseries, nblines);
+
+  /* Set values */
+  gsl_vector_view timesview = gsl_matrix_column(inmatrix, 0);
+  gsl_vector_view hview = gsl_matrix_column(inmatrix, 1);
+  gsl_vector_memcpy((*timeseries)->times, &timesview.vector);
+  gsl_vector_memcpy((*timeseries)->h, &hview.vector);
+
+  /* Clean up */
+  gsl_matrix_free(inmatrix);
+
+  return ret;
+}
+
 /* Read waveform Amp/Phase time series */
 int Read_AmpPhaseTimeSeries(AmpPhaseTimeSeries** timeseries, const char dir[], const char file[], const int nblines, const int binary)
 {
@@ -551,30 +575,6 @@ int Read_ReImTimeSeries(ReImTimeSeries** timeseries, const char dir[], const cha
   gsl_vector_memcpy((*timeseries)->times, &timesview.vector);
   gsl_vector_memcpy((*timeseries)->h_real, &hrealview.vector);
   gsl_vector_memcpy((*timeseries)->h_imag, &himagview.vector);
-
-  /* Clean up */
-  gsl_matrix_free(inmatrix);
-
-  return ret;
-}
-
-/* Read waveform Real time series */
-int Read_RealTimeSeries(RealTimeSeries** timeseries, const char dir[], const char file[], const int nblines, const int binary)
-{
-  /* Initalize and read input */
-  int ret;
-  gsl_matrix* inmatrix =  gsl_matrix_alloc(nblines, 2);
-  if(!binary) ret = Read_Text_Matrix(dir, file, inmatrix);
-  else ret = Read_Matrix(dir, file, inmatrix);
-
-  /* Initialize structures */
-  RealTimeSeries_Init(timeseries, nblines);
-
-  /* Set values */
-  gsl_vector_view timesview = gsl_matrix_column(inmatrix, 0);
-  gsl_vector_view hview = gsl_matrix_column(inmatrix, 1);
-  gsl_vector_memcpy((*timeseries)->times, &timesview.vector);
-  gsl_vector_memcpy((*timeseries)->h, &hview.vector);
 
   /* Clean up */
   gsl_matrix_free(inmatrix);
@@ -633,6 +633,26 @@ int Write_AmpPhaseTimeSeries(const char dir[], const char file[], AmpPhaseTimeSe
   gsl_matrix_set_col(outmatrix, 0, timeseries->times);
   gsl_matrix_set_col(outmatrix, 1, timeseries->h_amp);
   gsl_matrix_set_col(outmatrix, 2, timeseries->h_phase);
+
+  /* Output */
+  int ret;
+  if(!binary) ret = Write_Text_Matrix(dir, file, outmatrix);
+  else ret = Write_Matrix(dir, file, outmatrix);
+
+  return ret;
+}
+
+/* Output Re/Im time series */
+int Write_ReImTimeSeries(const char dir[], const char file[], ReImTimeSeries* timeseries, int binary)
+{
+  /* Initialize output */
+  int nbtimes = timeseries->times->size;
+  gsl_matrix* outmatrix = gsl_matrix_alloc(nbtimes, 3);
+
+  /* Set data */
+  gsl_matrix_set_col(outmatrix, 0, timeseries->times);
+  gsl_matrix_set_col(outmatrix, 1, timeseries->h_real);
+  gsl_matrix_set_col(outmatrix, 2, timeseries->h_imag);
 
   /* Output */
   int ret;

@@ -69,6 +69,11 @@ typedef struct tagGenWaveParams {
   double f2windowbeg;        /* If generating h22TD/hphcTD, stop frequency for windowing at the beginning - set to 0 to ignore and use 1.1*f1windowbeg (Hz, default=0) */
   double f1windowend;        /* If generating h22TD/hphcTD, start frequency for windowing at the end - set to 0 to ignore and use 0.995*f2windowend (Hz, default=0) */
   double f2windowend;        /* If generating h22TD/hphcTD, stop frequency for windowing at the end - set to 0 to ignore and use min(maxf, fHighROM), where fHighROM is the highest frequency covered by the ROM (Hz, default=0) */
+  int tagh22fromfile;        /* Tag choosing wether to load h22 FD downsampled Amp/Phase from file (default 0) */
+  int nsamplesinfile;        /* Number of lines of inputs file */
+  int binaryin;              /* Tag for loading the data in gsl binary form instead of text (default false) */
+  char indir[256];           /* Input directory */
+  char infile[256];          /* Input file name */
   int binaryout;             /* Tag for outputting the data in gsl binary form instead of text (default 0) */
   char outdir[256];          /* Path for the output directory */
   char outfile[256];         /* Path for the output file */

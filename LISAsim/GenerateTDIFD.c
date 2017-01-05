@@ -50,16 +50,17 @@ Arguments are as follows:\n\
  --nbmode              Number of modes of radiation to generate (1-5, default=5)\n\
  --minf                Minimal frequency (Hz, default=0) - when set to 0, use the lowest frequency where the detector noise model is trusted __LISASimFD_Noise_fLow (set somewhat arbitrarily)\n\
  --maxf                Maximal frequency (Hz, default=0) - when set to 0, use the highest frequency where the detector noise model is trusted __LISASimFD_Noise_fHigh (set somewhat arbitrarily)\n\
- --deltatobs           Observation duration (years, default=2)\n\
+ --deltatobs           Observation duration (years), ignore if 0 (default=0)\n\
  --tagextpn            Tag to allow PN extension of the waveform at low frequencies (default=1)\n\
  --Mfmatch             When PN extension allowed, geometric matching frequency: will use ROM above this value. If <=0, use ROM down to the lowest covered frequency (default=0.)\n\
  --deltaf              When generating frequency series from the mode contributions, deltaf for the output (0 to set automatically at 1/2*1/(2T))\n\
  --twindowbeg          When generating frequency series from file by FFT, twindowbeg (0 to set automatically at 0.05*duration)\n\
  --twindowend          When generating frequency series from file by FFT, twindowend (0 to set automatically at 0.01*duration)\n\
+ --tagh22fromfile      Tag choosing wether to load h22 FD downsampled Amp/Phase from file (default 0)\n\
  --tagtdi              Tag choosing the set of TDI variables to use (default TDIAETXYZ)\n\
  --taggenwave          Tag choosing the wf format: TDIhlm (default: downsampled mode contributions to TDI in Amp/Phase form), TDIFD (hlm interpolated and summed accross modes), h22FFT and yslrFFT (used with fomrtditdfile -- loads time series and FFT)\n\
  --restorescaledfactor Option to restore the factors scaled out of TDI observables (default: false)\n	\
- --fromtdfile          Option for loading time series and FFTing (default: false)\n\
+ --FFTfromtdfile       Option for loading time series and FFTing (default: false)\n\
  --nsamplesinfile      Number of lines of input file when loading TDI time series from file\n\
  --binaryin            Tag for loading the data in gsl binary form instead of text (default false)\n\
  --binaryout           Tag for outputting the data in gsl binary form instead of text (default false)\n\
@@ -87,16 +88,17 @@ Arguments are as follows:\n\
     params->nbmode = 5;
     params->minf = 0.;
     params->maxf = 0.;
-    params->deltatobs = 2.;
+    params->deltatobs = 0.;
     params->tagextpn = 1;
     params->Mfmatch = 0.;
     params->deltaf = 0.;
     params->twindowbeg = 0.;
     params->twindowend = 0.;
+    params->tagh22fromfile = 0;
     params->tagtdi = TDIXYZ;
     params->taggenwave = TDIhlm;
     params->restorescaledfactor = 0;
-    params->fromtdfile = 0;
+    params->FFTfromtdfile = 0;
     params->nsamplesinfile = 0;    /* No default; has to be provided */
     strcpy(params->indir, "");   /* No default; has to be provided */
     strcpy(params->infile, "");  /* No default; has to be provided */
@@ -146,14 +148,16 @@ Arguments are as follows:\n\
             params->twindowbeg = atof(argv[++i]);
         } else if (strcmp(argv[i], "--twindowend") == 0) {
             params->twindowend = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--tagh22fromfile") == 0) {
+          params->tagh22fromfile = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--tagtdi") == 0) {
 	  params->tagtdi = ParseTDItag(argv[++i]);
         } else if (strcmp(argv[i], "--taggenwave") == 0) {
 	  params->taggenwave = ParseGenTDIFDtag(argv[++i]);
         } else if (strcmp(argv[i], "--restorescaledfactor") == 0) {
             params->restorescaledfactor = 1;
-        } else if (strcmp(argv[i], "--fromtdfile") == 0) {
-            params->fromtdfile = 1;
+        } else if (strcmp(argv[i], "--FFTfromtdfile") == 0) {
+            params->FFTfromtdfile = 1;
         } else if (strcmp(argv[i], "--nsamplesinfile") == 0) {
             params->nsamplesinfile = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--binaryin") == 0) {
@@ -195,6 +199,13 @@ static char* TDIFilePostfix(TDItag tditag, int channel, int binary)
         case 3: return "_null3.txt"; break;
       }
     }
+    else if(tditag==y12L) {
+      switch(channel) {
+        case 1: return "_y12L.txt"; break;
+        case 2: return "_null2.txt"; break;
+        case 3: return "_null3.txt"; break;
+      }
+    }
     else if(tditag==TDIXYZ) {
       switch(channel) {
         case 1: return "_TDIX.txt"; break;
@@ -222,6 +233,13 @@ static char* TDIFilePostfix(TDItag tditag, int channel, int binary)
         case 3: return "_null3.dat"; break;
       }
     }
+    else if(tditag==y12L) {
+      switch(channel) {
+        case 1: return "_y12L.dat"; break;
+        case 2: return "_null2.dat"; break;
+        case 3: return "_null3.dat"; break;
+      }
+    }
     else if(tditag==TDIXYZ) {
       switch(channel) {
         case 1: return "_TDIX.dat"; break;
@@ -245,6 +263,29 @@ static char* TDIFilePostfix(TDItag tditag, int channel, int binary)
 
 /************ Functions to write waveforms to file ************/
 
+/* Input waveform in downsampled form, FD Amp/Pase - for now supports only single-mode h22 waveform */
+/* NOTE: assumes Amp/Phase format in the file, i.e. no complex amplitude */
+static void Read_Wave_h22(const char dir[], const char file[], ListmodesCAmpPhaseFrequencySeries** listhlm, int nsamples, int binary)
+{
+  /* Initalize and read input */
+  gsl_matrix* inmatrix =  gsl_matrix_alloc(nsamples, 3);
+  if (!binary) Read_Text_Matrix(dir, file, inmatrix);
+  else Read_Matrix(dir, file, inmatrix);
+  gsl_vector_view freqview = gsl_matrix_column(inmatrix, 0);
+  gsl_vector_view ampview = gsl_matrix_column(inmatrix, 1);
+  gsl_vector_view phaseview = gsl_matrix_column(inmatrix, 2);
+
+  /* Copy in frequency series */
+  CAmpPhaseFrequencySeries* h22 = NULL;
+  CAmpPhaseFrequencySeries_Init(&h22, nsamples);
+  gsl_vector_memcpy(h22->freq, &freqview.vector);
+  gsl_vector_memcpy(h22->amp_real, &ampview.vector);
+  gsl_vector_memcpy(h22->phase, &phaseview.vector);
+  gsl_vector_set_zero(h22->amp_imag);
+
+  /* Output */
+  (*listhlm) = ListmodesCAmpPhaseFrequencySeries_AddModeNoCopy((*listhlm), h22, 2, 2);
+}
 /* Read waveform time series in Re/Im form for hpTD and hcTD a single file */
 /* NOTE: assumes the same number of points is used to represent each mode */
 static void Read_TDITD3Chan( RealTimeSeries** TDI1, RealTimeSeries** TDI2, RealTimeSeries** TDI3, const char dir[], const char file[], const int nblines, const int binary)
@@ -310,9 +351,9 @@ int main(int argc, char *argv[])
   /* Parse commandline to read parameters */
   parse_args_GenerateTDIFD(argc, argv, params);
 
-  if(params->fromtdfile) {
+  if(params->FFTfromtdfile) {
 
-    if(params->taggenwave==TDIFD) {
+    if(params->taggenwave==TDIFFT) {
       /* Load TD TDI from file */
       RealTimeSeries* TDI1 = NULL;
       RealTimeSeries* TDI2 = NULL;
@@ -363,17 +404,11 @@ int main(int argc, char *argv[])
       /* Load Amp/Phase h22 from file */
       AmpPhaseTimeSeries* h22tdampphase = NULL;
 
-      //
-      printf("aaa\n");
-      
       Read_AmpPhaseTimeSeries(&h22tdampphase, params->indir, params->infile, params->nsamplesinfile, params->binaryin);
 
       /* Convert to Re/Im form */
       ReImTimeSeries* h22td = NULL;
       AmpPhaseTimeSeries_ToReIm(&h22td, h22tdampphase);
-
-//
-printf("aaa\n");
 
       /* Compute FFT */
       ReImFrequencySeries* h22FFT = NULL;
@@ -391,28 +426,17 @@ printf("aaa\n");
       else {
         twindowend = params->twindowend;
       }
-      //
-      printf("aaa\n");
 
       FFTTimeSeries(&h22FFT, h22td, twindowbeg, twindowend, 2); /* Here hardcoded 0-padding */
-
-      //
-      printf("aaa\n");
 
       /* Output */
       Write_ReImFrequencySeries(params->outdir, params->outfileprefix, h22FFT, params->binaryout);
     }
     else if(params->taggenwave==yslrFFT) {
-      //
-      printf("a\n");
 
       /* Load Re/Im h22 from file */
       RealTimeSeries* yslrtd = NULL;
       Read_RealTimeSeries(&yslrtd, params->indir, params->infile, params->nsamplesinfile, params->binaryin);
-
-      //
-      printf("a\n");
-      printf("times[0,1] %g, %g\n", gsl_vector_get(yslrtd->times, 0), gsl_vector_get(yslrtd->times, 1));
 
       /* Compute FFT */
       ReImFrequencySeries* yslrFFT = NULL;
@@ -431,8 +455,6 @@ printf("aaa\n");
         twindowend = params->twindowend;
       }
 
-        //
-        printf("aa\n");
       FFTRealTimeSeries(&yslrFFT, yslrtd, twindowbeg, twindowend, 2); /* Here hardcoded 0-padding */
 
       /* Output */
@@ -444,28 +466,50 @@ printf("aaa\n");
     /* Set geometric coefficients */
     SetCoeffsG(params->lambda, params->beta, params->polarization);
 
-    /* Starting frequency - takes into account the duration of observation deltatobs and the arg minf */
+    /* Generate waveform hlm FD, downsampled in amp/phase form */
+    double fLowhlm = 0.;
+    double fHighhlm = 0.;
     double fstartobs = 0.;
-    if(!(params->deltatobs==0)) fstartobs = Newtonianfoft(params->m1, params->m2, params->deltatobs);
-    double fLow = fmax(params->minf, fstartobs);
+    ListmodesCAmpPhaseFrequencySeries* listhlm = NULL;
+    /* If not loading h22 DS amp/phase from file, generate hlm FD */
+    if(!(params->tagh22fromfile)) {
+      /* Starting frequency corresponding to duration of observation deltatobs */
+      if(!(params->deltatobs==0.)) fstartobs = Newtonianfoft(params->m1, params->m2, params->deltatobs);
 
-    /* Generate Fourier-domain waveform as a list of hlm modes */
-    /* Use TF2 extension, if required to, to arbitrarily low frequencies */
-    /* NOTE: at this stage, if no extension is performed, deltatobs and minf are ignored - will start at MfROM*/
-    ListmodesCAmpPhaseFrequencySeries* listROM = NULL;
-    if(!(params->tagextpn)){
-      //printf("Not Extending signal waveform.  mfmatch=%g\n",globalparams->mfmatch);
-      SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef, params->phiRef, params->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
-    } else {
-      //printf("Extending signal waveform.  mfmatch=%g\n",globalparams->mfmatch);
-      SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, params->Mfmatch, fLow, 0, params->tRef, params->phiRef, params->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+      /* Generate Fourier-domain waveform as a list of hlm modes */
+      /* Use TF2 extension, if required to, to arbitrarily low frequencies */
+      /* NOTE: at this stage, if no extension is performed, deltatobs and minf are ignored - will start at MfROM */
+      /* If extending, taking into account both fstartobs and minf */
+      int ret;
+      if(!(params->tagextpn)){
+        //printf("Not Extending signal waveform.  mfmatch=%g\n",globalparams->mfmatch);
+        ret = SimEOBNRv2HMROM(&listhlm, params->nbmode, params->tRef, params->phiRef, params->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+      } else {
+        //printf("Extending signal waveform.  mfmatch=%g\n",globalparams->mfmatch);
+        ret = SimEOBNRv2HMROMExtTF2(&listhlm, params->nbmode, params->Mfmatch, fmax(params->minf, fstartobs), 0, params->tRef, params->phiRef, params->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+      }
     }
+    /* Read h22 from file - here fstartobs is ignored, use the starting frequency in the file */
+    else {
+      if(!(params->deltatobs==0)) {
+        printf("Warning in GenerateWaveform: loading h22 FD from file, ignoring deltatobs.");
+      }
+      Read_Wave_h22(params->indir, params->infile, &listhlm, params->nsamplesinfile, params->binaryin);
+    }
+
+    /* Determine highest and lowest frequency to cover */
+    /* Takes into account limited duration of obsevation, frequencies covered by the ROM and input-given minf, maxf */
+    fLowhlm = ListmodesCAmpPhaseFrequencySeries_minf(listhlm);
+    fHighhlm = ListmodesCAmpPhaseFrequencySeries_maxf(listhlm);
+    /* If we read h22 from file, deltatobs is ignored and fstartobs is simply 0 */
+    double fLow = fmax(fLowhlm, fmax(params->minf, fstartobs));
+    double fHigh = fmin(fHighhlm, params->maxf);
 
     /* Process through the Fourier-domain response for TDI observables */
     ListmodesCAmpPhaseFrequencySeries* listTDI1= NULL;
     ListmodesCAmpPhaseFrequencySeries* listTDI2= NULL;
     ListmodesCAmpPhaseFrequencySeries* listTDI3= NULL;
-    LISASimFDResponseTDI3Chan(&listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->maxf, params->tagtdi);
+    LISASimFDResponseTDI3Chan(&listhlm, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->maxf, params->tagtdi);
 
     /* If asked for it, rescale the complex amplitudes to include the factors that were scaled out of TDI observables */
     if(params->restorescaledfactor) {
@@ -482,7 +526,7 @@ printf("aaa\n");
       char *outfileTDI3hlm = malloc(256);
       sprintf(outfileTDI1hlm, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 1, params->binaryout));
       Write_TDIhlm(params->outdir, outfileTDI1hlm, listTDI1, params->nbmode, params->binaryout);
-      if(!(params->tagtdi==y12)) {
+      if(!((params->tagtdi==y12)||(params->tagtdi==y12L)||(params->tagtdi==delayO))) {
         sprintf(outfileTDI2hlm, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 2, params->binaryout));
         sprintf(outfileTDI3hlm, "%s%s", params->outfileprefix, TDIFilePostfix(params->tagtdi, 3, params->binaryout));
         Write_TDIhlm(params->outdir, outfileTDI2hlm, listTDI2, params->nbmode, params->binaryout);
@@ -495,14 +539,14 @@ printf("aaa\n");
       exit(0);
     }
 
-    else {
+    else if(params->taggenwave==TDIFD) {
 
       double deltaf = 0.;
       if(params->deltaf==0.) {
         /* Determine deltaf so that N deltat = 1/deltaf > 2*tc where tc is the time to coalescence estimated from Psi22 */
         /* NOTE: assumes the TD waveform ends around t=0 */
         /* NOTE: estimate based on the 22 mode - fstartobs will be scaled from mode to mode to ensure the same deltatobs for all (except for the 21 mode, which will turn on after the others) */
-        double tc = EstimateInitialTime(listROM, fLow);
+        double tc = EstimateInitialTime(listhlm, fLow);
         double deltaf = 0.5 * 1./(2*(-tc)); /* Extra factor of 1/2 corresponding to 0-padding in TD by factor of 2 */
       }
       else deltaf = params->deltaf;
@@ -535,6 +579,10 @@ printf("aaa\n");
       free(outfileTDI3FD);
 
       exit(0);
+    }
+    else {
+      printf("Error in GenerateTDIFD: taggenwave not recognized.\n");
+      exit(1);
     }
   }
 }

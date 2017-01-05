@@ -65,7 +65,8 @@ double ListmodesCAmpPhaseFrequencySeries_minf(ListmodesCAmpPhaseFrequencySeries*
   CAmpPhaseFrequencySeries* hlm;
   while(listelementhlm) {
     hlm = listelementhlm->freqseries;
-    minf = fmin(minf, gsl_vector_get(hlm->freq, 0));
+    if(minf==0) minf = gsl_vector_get(hlm->freq, 0);
+    else minf = fmin(minf, gsl_vector_get(hlm->freq, 0));
     listelementhlm = listelementhlm->next;
   }
   return minf;
@@ -98,9 +99,6 @@ void ReImFrequencySeries_AddCAmpPhaseFrequencySeries(
   int sizein = (int) freqin->size;
   int sizeout = (int) freqout->size;
 
-  //
-  printf("sizeout %d\n", sizeout);
-
   /* Input, Output vectors */
   gsl_vector* vecampreal = freqseriesCAmpPhase->amp_real;
   gsl_vector* vecampimag = freqseriesCAmpPhase->amp_imag;
@@ -128,9 +126,6 @@ void ReImFrequencySeries_AddCAmpPhaseFrequencySeries(
   double maxfmode =  0.;
   if(fHigh==0.) maxfmode = gsl_vector_get(freqin, sizein - 1);
   else maxfmode = fmin(fHigh, gsl_vector_get(freqin, sizein - 1));
-  //
-  printf("maxfmode %g jstop %d\n", maxfmode, jStop);
-  printf("gsl_vector_get(freqout, jStop) %g \n", gsl_vector_get(freqout, jStop));
   while(jStart<sizeout && gsl_vector_get(freqout, jStart) < minfmode) jStart++;
   while( jStop > -1 && gsl_vector_get(freqout, jStop) > maxfmode ) jStop--; /* allow continuing all the way to an impossible value to make the later loop empty if need be */
   if(jStop <= jStart) {
@@ -470,14 +465,9 @@ int GenerateFDReImFrequencySeriesSingleMode(
     f = i*deltaf;
     gsl_vector_set(freq, i, f);
   }
-  //
-  printf("nbpts %d \n", nbpts);
 
   /* Copy frequencies */
   gsl_vector_memcpy((*freqseries)->freq, freq);
-
-  //
-  printf("freqseries->freq->size %d\n", (*freqseries)->freq->size);
 
   /* Take the chosen mode, interpolate it and add this single mode to the output */
   ReImFrequencySeries_AddCAmpPhaseFrequencySeries((*freqseries), hlm, fLow, fHigh, fstartobs);
@@ -542,7 +532,7 @@ int UnwrapPhase(
   double d = 0.;
   for(int i=1; i<N; i++) {
     d = pmod[i] - pmod[i-1];
-    if(d<PI) jumps[i] = 1;
+    if(d<-PI) jumps[i] = 1;
     else if(d>PI) jumps[i] = -1;
     else jumps[i] = 0;
   }

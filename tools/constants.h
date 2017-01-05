@@ -67,10 +67,10 @@ extern "C" {
 #define MTSUN_SI 4.9254923218988636432342917247829673e-6
 #define PC_SI 3.0856775807e16
 #define AU_SI 1.4959787066e11
-#define YRSID_SI 31558149.8 /* Sideral year */
+#define YRSID_SI 3.15581497635e7 /* Sideral year as found on http://hpiers.obspm.fr/eop-pc/models/constants.html */
 
-#define Omega_SI 1.99098659e-7 /* Orbital pulsation: 2pi/year */
-#define f0_SI 3.168753575e-8 /* Orbital fequency: 1/year */
+#define Omega_SI 1.99098659277e-7 /* Orbital pulsation: 2pi/year - use sidereal year as found on http://hpiers.obspm.fr/eop-pc/models/constants.html */
+#define f0_SI 3.168753575e-8 /* Orbital frequency: 1/year */
 //#define L_SI 5.0e9 /* Arm length of the detector (in m): (Standard LISA) */
 #define L_SI 2.5e9 /* Arm length of the detector (in m): (L3 reference LISA) */
 #define R_SI 1.4959787066e11 /* Radius of the orbit around the sun: 1AU */
@@ -86,7 +86,7 @@ extern "C" {
 
 #ifndef NAN
 # define NAN (INFINITY-INFINITY)
-#endif 
+#endif
 
 #if 0
 { /* so that editors will match succeeding brace */

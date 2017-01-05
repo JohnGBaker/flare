@@ -48,8 +48,13 @@ extern "C" {
 /************************************************************************/
 /****** Global variables storing min and max f for the noise PSD  *******/
 
-#define __LISASimFD_Noise_fLow 1.e-5
-#define __LISASimFD_Noise_fHigh 1.
+/* Defines bounds in frequency beyond which we don't trust the instrument model anymore - all waveforms will be cut to this range */
+/* Here extended range - allows for instance to taper the FD signal for f>1Hz */
+#define __LISASimFD_Noise_fLow 1.e-6
+#define __LISASimFD_Noise_fHigh 5.
+/* Original, more conservative bounds */
+//#define __LISASimFD_Noise_fLow 1.e-5
+//#define __LISASimFD_Noise_fHigh 1.
 
 /**************************************************************/
 /****** Prototypes: functions evaluating the noise PSD  *******/

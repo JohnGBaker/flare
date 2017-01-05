@@ -58,9 +58,6 @@ double WindowFunctionRight(double x, double xi, double deltaxi)
 /* Note: FFT uses flipped convention (i.e. h(f) = int e^(+2ipift)h(t)) */
 int FFTRealTimeSeries(ReImFrequencySeries** freqseries, RealTimeSeries* timeseries, double twindowbeg, double twindowend, int nzeropad)
 {
-  //
-  printf("aaa\n");
-  printf("%g, %g\n", twindowbeg, twindowend);
 
   /* deltat of time series */
   /* Warning: assumes linear sampling in time */
@@ -74,18 +71,9 @@ int FFTRealTimeSeries(ReImFrequencySeries** freqseries, RealTimeSeries* timeseri
   gsl_vector* hvalues = gsl_vector_alloc(n + nzeros);
   gsl_vector_set_zero(hvalues);
 
-  //
-  printf("aaa\n");
-  printf("deltat %g\n", deltat);
-
   /* Compute input TD values, with windowing */
   int nbptswindowbeg = (int) ceil(twindowbeg/deltat) + 1;
   int nbptswindowend = (int) ceil(twindowend/deltat) + 1;
-
-
-    //
-    printf("aaa\n");
-    printf("%d, %d\n", nbptswindowbeg, nbptswindowend);
   double t1windowbeg = times[0];
   double t2windowbeg = times[nbptswindowbeg-1];
   double t1windowend = times[n-nbptswindowend];
@@ -94,9 +82,6 @@ int FFTRealTimeSeries(ReImFrequencySeries** freqseries, RealTimeSeries* timeseri
   double deltatwindowend = t2windowend - t1windowend;
   double* h = timeseries->h->data;
   double* hval = hvalues->data;
-
-  //
-  printf("aaa\n");
 
   for (int i=0; i<nbptswindowbeg; i++) {
     hval[i] = WindowFunctionRight(times[i], t1windowbeg, deltatwindowbeg) * h[i];
@@ -108,9 +93,6 @@ int FFTRealTimeSeries(ReImFrequencySeries** freqseries, RealTimeSeries* timeseri
     hval[i] = WindowFunctionLeft(times[i], t2windowend, deltatwindowend) * h[i];
   }
 
-  //
-  printf("aaa\n");
-
   /* FFT - uses flipped convention (i.e. h(f) = int e^(+2ipift)h(t)) */
   int N = (int) hvalues->size;
   fftw_plan p;
@@ -119,9 +101,6 @@ int FFTRealTimeSeries(ReImFrequencySeries** freqseries, RealTimeSeries* timeseri
   out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * (N/2+1)); /* Note: N/2+1 elements */
   p = fftw_plan_dft_r2c_1d(N, in, out, FFTW_ESTIMATE);
   fftw_execute(p);
-
-  //
-  printf("aaa\n");
 
   /* Initialize output structure */
   ReImFrequencySeries_Init(freqseries, N/2); /* Note: N/2+1 elements as output of fftw, we drop the last one (at Nyquist frequency) */
@@ -166,30 +145,17 @@ int FFTTimeSeries(ReImFrequencySeries** freqseries, ReImTimeSeries* timeseries, 
   int nzeros = (int) pow(2, ((int) ceil(log(n)/log(2))) + nzeropad) - n; /* Here defined with ceil, but with floor in IFFT */
   int N = n + nzeros;
 
-  //
-  printf("N: %d\n", N);
-
   /* Compute input TD values, with windowing */
   int nbptswindowbeg = (int) ceil(twindowbeg/deltat) + 1;
   int nbptswindowend = (int) ceil(twindowend/deltat) + 1;
-
-  //
-  printf("twindowbeg,twindowend, deltat: %g, %g, %g\n", twindowbeg,twindowend,deltat);
-  printf("nbptswindowbeg,nbptswindowend: %d, %d\n", nbptswindowbeg,nbptswindowend);
-
   double t1windowbeg = times[0];
   double t2windowbeg = times[nbptswindowbeg-1];
   double t1windowend = times[n-nbptswindowend];
   double t2windowend = times[n-1];
   double deltatwindowbeg = t2windowbeg - t1windowbeg;
   double deltatwindowend = t2windowend - t1windowend;
-  //
-  printf("N: %d\n", N);
-
   double* htdreal = timeseries->h_real->data;
   double* htdimag = timeseries->h_imag->data;
-  //
-  printf("N: %d\n", N);
 
   fftw_complex* in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N);
   for (int i=0; i<nbptswindowbeg; i++) {
@@ -202,9 +168,6 @@ int FFTTimeSeries(ReImFrequencySeries** freqseries, ReImTimeSeries* timeseries, 
     in[i] = WindowFunctionLeft(times[i], t2windowend, deltatwindowend) * (htdreal[i] + I*htdimag[i]);
   }
 
-  //
-  printf("N: %d\n", N);
-
   /* FFT - uses flipped convention (i.e. h(f) = int e^(+2ipift)h(t)) */
   /* Represented here by the use of FFTW_BACKWARD (plus sign in the exp) */
   fftw_plan p;
@@ -213,14 +176,8 @@ int FFTTimeSeries(ReImFrequencySeries** freqseries, ReImTimeSeries* timeseries, 
   p = fftw_plan_dft_1d(N, in, out, FFTW_BACKWARD, FFTW_ESTIMATE);
   fftw_execute(p);
 
-  //
-  printf("N: %d\n", N);
-
   /* Initialize output structure */
   ReImFrequencySeries_Init(freqseries, N/2); /* NOTE: N/2 first elements of output of fftw are positive freqs, we eliminate negative frequency (the second half of the series) */
-
-  //
-  printf("N: %d\n", N);
 
   /* Extracting and converting data from FFTW output */
   double deltaf = 1./(N*deltat);
@@ -237,9 +194,6 @@ int FFTTimeSeries(ReImFrequencySeries** freqseries, ReImTimeSeries* timeseries, 
     hreal[i] = creal(hcomplex);
     himag[i] = cimag(hcomplex);
   }
-
-  //
-  printf("N: %d\n", N);
 
   /* Clean up */
   fftw_destroy_plan(p);

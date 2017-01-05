@@ -215,12 +215,13 @@ void RealTimeSeries_Cleanup(RealTimeSeries* timeseries);
 /**************** I/O functions for internal structures ****************/
 
 /* Note: at the moment, requires external input for the number of lines in the data */
+int Read_RealTimeSeries(RealTimeSeries** timeseries, const char dir[], const char file[], const int nblines, const int binary);
 int Read_AmpPhaseTimeSeries(AmpPhaseTimeSeries** timeseries, const char dir[], const char file[], const int nblines, const int binary);
 int Read_ReImTimeSeries(ReImTimeSeries** timeseries, const char dir[], const char file[], const int nblines, const int binary);
-int Read_RealTimeSeries(RealTimeSeries** timeseries, const char dir[], const char file[], const int nblines, const int binary);
 int Write_ReImFrequencySeries(const char dir[], const char file[], ReImFrequencySeries* freqseries, const int binary);
 int Write_RealTimeSeries(const char dir[], const char file[], RealTimeSeries* timeseries, int binary);
 int Write_AmpPhaseTimeSeries(const char dir[], const char file[], AmpPhaseTimeSeries* timeseries, int binary);
+int Write_ReImTimeSeries(const char dir[], const char file[], ReImTimeSeries* timeseries, int binary);
 
 
 #if 0

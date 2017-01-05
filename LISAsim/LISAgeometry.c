@@ -570,10 +570,11 @@ int EvaluateGABmode(
   double complex factorcexp12 = cexp(I*prefactor * (1.+kp1plusp2));
   double complex factorcexp23 = cexp(I*prefactor * (1.+kp2plusp3));
   double complex factorcexp31 = cexp(I*prefactor * (1.+kp3plusp1));
-  /* The tag tagdelayR aloows choose to include or not the R-delay phase term (here leading order) */
+  /* The tag tagdelayR allows to choose to include or not the R-delay phase term (here leading order) */
   double complex factorcexpkR;
   if(tagdelayR) factorcexpkR = cexp(I*prefactorR * kR);
   else factorcexpkR = 1.;
+
   /* Output result */
   *G12 = I*prefactor * factorcexpkR * factn3Pn3 * sinc( prefactor * (1.-kn3)) * factorcexp12;
   *G21 = I*prefactor * factorcexpkR * factn3Pn3 * sinc( prefactor * (1.+kn3)) * factorcexp12;
@@ -609,9 +610,14 @@ int EvaluateTDIfactor3Chan(
   double complex z = cexp(2*I*x);
   double sin2x = sin(2*x);
   switch(tditag) {
-    /* For testing purposes: basic yAB observable */
-    /* With x=pifL, factors scaled out: A,E I*sqrt2*sin2x*e2ix - T 2*sqrt2*sin2x*sinx*e3ix */
+    /* For testing purposes: basic yAB observable - no factor */
   case y12:
+    *factor1 = G12;
+    *factor2 = 0.;
+    *factor3 = 0.;
+    break;
+    /* For testing purposes: basic yABL observable - no factor, same as for yAB */
+  case y12L:
     *factor1 = G12;
     *factor2 = 0.;
     *factor3 = 0.;
@@ -909,12 +915,14 @@ double hOTDAmpPhase(
 }
 
 /* Functions evaluating yAB observables in time domain */
+/* Note: includes both h22 and h2m2 contributions, assuming planar orbits so that h2-2 = h22* */
 double y12LTDfromh22AmpPhase(
   gsl_spline* splineamp,                   /* Input spline for h22 TD amp */
   gsl_spline* splinephase,                 /* Input spline for h22 TD phase */
   gsl_interp_accel* accelamp,              /* Accelerator for amp spline */
   gsl_interp_accel* accelphase,            /* Accelerator for phase spline */
   double complex Y22,                      /* Y22 factor needed to convert h22 to hplus, hcross */
+  double complex Y2m2,                     /* Y2-2 factor needed to convert h2-2 to hplus, hcross */
   const double t)                          /* Time */
 {
   /* Precompute array of sine/cosine */
@@ -944,13 +952,20 @@ double y12LTDfromh22AmpPhase(
   double firstdelay = -((kp1 + 1)*L_SI)/C_SI;
   double seconddelay = -(kp2*L_SI)/C_SI;
 
-  /* Values of Y22*h22 at 1 and 2 with delays, and hplus, hcross */
-  double complex Y22h22at1 = Y22 * gsl_spline_eval(splineamp, t+firstdelay, accelamp) * cexp(I*gsl_spline_eval(splinephase, t+firstdelay, accelphase));
-  double complex Y22h22at2 = Y22 * gsl_spline_eval(splineamp, t+seconddelay, accelamp) * cexp(I*gsl_spline_eval(splinephase, t+seconddelay, accelphase));
-  double hp1 = creal(Y22h22at1);
-  double hc1 = -cimag(Y22h22at1);
-  double hp2 = creal(Y22h22at2);
-  double hc2 = -cimag(Y22h22at2);
+  /* Values of Y22*h22 + Y2-2*h2-2 at 1 and 2 with delays, and hplus, hcross */
+  /* Note: includes both h22 and h2m2 contributions, assuming planar orbits so that h2-2 = h22* */
+  double A22at1 = gsl_spline_eval(splineamp, t+firstdelay, accelamp);
+  double phi22at1 = gsl_spline_eval(splinephase, t+firstdelay, accelphase);
+  double A22at2 = gsl_spline_eval(splineamp, t+seconddelay, accelamp);
+  double phi22at2 = gsl_spline_eval(splinephase, t+seconddelay, accelphase);
+  double complex Y22h22at1 = Y22 * A22at1 * cexp(I*phi22at1);
+  double complex Y22h22at2 = Y22 * A22at2 * cexp(I*phi22at2);
+  double complex Y2m2h2m2at1 = Y2m2 * A22at1 * cexp(-I*phi22at1);
+  double complex Y2m2h2m2at2 = Y2m2 * A22at2 * cexp(-I*phi22at2);
+  double hp1 = creal(Y22h22at1 + Y2m2h2m2at1);
+  double hc1 = -cimag(Y22h22at1 + Y2m2h2m2at1);
+  double hp2 = creal(Y22h22at2 + Y2m2h2m2at2);
+  double hc2 = -cimag(Y22h22at2 + Y2m2h2m2at2);
 
   /* Result */
   double y12 = factorp*(hp1 - hp2) + factorc*(hc1 - hc2);
@@ -1347,12 +1362,14 @@ int Generateh22TDO(
 }
 
 /* Generate y12L from orbital-delayed h22 in amp/phase form */
+/* Note: includes both h22 and h2m2 contributions, assuming planar orbits so that h2-2 = h22* */
+/* BEWARE: this ignores the fact that processing through orbital delay breaks the h2-2 = h22* symmetry */
 int Generatey12LTD(
   RealTimeSeries** y12Ltd,                 /* Output: real time series for y12L */
-  gsl_spline* splineamp,                   /* Input spline for TD mode amplitude */
-  gsl_spline* splinephase,                 /* Input spline for TD mode phase */
-  gsl_interp_accel* accelamp,              /* Accelerator for amp spline */
-  gsl_interp_accel* accelphase,            /* Accelerator for phase spline */
+  gsl_spline* splineamp,                   /* Input spline for h22 TD amplitude */
+  gsl_spline* splinephase,                 /* Input spline for h22 TD phase */
+  gsl_interp_accel* accelamp,              /* Accelerator for h22 amp spline */
+  gsl_interp_accel* accelphase,            /* Accelerator for h22 phase spline */
   gsl_vector* times,                       /* Vector of times to evaluate */
   double Theta,                            /* Inclination */
   double Phi,                              /* Phase */
@@ -1364,8 +1381,9 @@ int Generatey12LTD(
   gsl_vector_memcpy((*y12Ltd)->times, times);
   gsl_vector_set_zero((*y12Ltd)->h);
 
-  /* Spin-weighted spherical harmonic Y22 */
+  /* Spin-weighted spherical harmonic Y22 and Y2-2 */
   double complex Y22 = SpinWeightedSphericalHarmonic(Theta, Phi, -2, 2, 2);
+  double complex Y2m2 = SpinWeightedSphericalHarmonic(Theta, Phi, -2, 2, -2);
 
   /* Loop over time samples - we take a margin to avoid problems with the domain */
   double t;
@@ -1375,7 +1393,7 @@ int Generatey12LTD(
   /* Loop over time samples */
   for(int i=nbptmargin; i<nbpt-nbptmargin; i++) {
     t = tval[i];
-    y12val[i] = y12LTDfromh22AmpPhase(splineamp, splinephase, accelamp, accelphase, Y22, t);
+    y12val[i] = y12LTDfromh22AmpPhase(splineamp, splinephase, accelamp, accelphase, Y22, Y2m2, t);
   }
 
   return SUCCESS;
