@@ -1,3 +1,6 @@
+#Usage:
+#python corner-fisher.py chainfile_1 chainfile_2 ... chainfile_N fisherfile_1 fisherfile_2 ... fisherfile_N
+
 import numpy as np
 import corner_with_covar as corner
 import matplotlib.pyplot as plt
@@ -82,11 +85,20 @@ for chainfile,fishfile in zip(chainfiles,fishfiles):
     cov=readCovar(fishfile)
     pars,snr=read_injection(injfile)
     print "SNR=",snr
-    print "pars=",pars
     Npar=len(pars)
     data=np.loadtxt(chainfile,usecols=range(Npar))
     names=[r"$m_1$",r"$m_2$",r"$t_0$",r"$D$",r"$\phi_0$",r"$\iota$",r"$\lambda$",r"$\beta$",r"$\psi$"]
-
+    #Sylvain:Here crop down to a limited parameter set for a smaller plot
+    #the overlaid text is added with the "annotate" commands below
+    istart=4;iend=7
+    data=data[:,istart:iend]
+    pars=pars[istart:iend]
+    names=names[istart:iend]
+    cov=cov[istart:iend,istart:iend]
+    Npar=len(pars)
+    fontscale=0.1+Npar/9.0
+    print "pars=",pars
+    print "cov=",cov
     # Plot it.
     levels = 1.0 - np.exp(-0.5 * np.linspace(1.0, 3.0, num=3) ** 2)
     print "levels=",levels
@@ -95,9 +107,9 @@ for chainfile,fishfile in zip(chainfiles,fishfiles):
                              title_args={"fontsize": 35},title_fmt='.2e',smooth1d=1,smooth=1,label_kwargs={"fontsize":30})
     figure.gca().annotate(run+"  SNR="+str(snr)+modes+res+mmodal, xy=(0.5, 1.0), xycoords="figure fraction",
                           xytext=(0, -5), textcoords="offset points",
-                          ha="center", va="top",fontsize=30)
+                          ha="center", va="top",fontsize=30*fontscale)
     for i in range(Npar):
-        figure.gca().annotate(names[i]+"= %.3e"%+pars[i], xy=(0.75, 0.9-i/20.0), xycoords="figure fraction",fontsize=30)
+        figure.gca().annotate(names[i]+"= %.3e"%+pars[i], xy=(0.75, 0.9-i/20.0), xycoords="figure fraction",fontsize=30*fontscale)
     figure.savefig(outpath)
 
 '''

@@ -138,8 +138,8 @@ def SNRrun(Mtot,q,snr):
         print "distance =",dist
     return float(dist)
 
-def SNRstudy(MtotList,qList,SNRList,Navg):
-    pp = PdfPages('SNRstudy.pdf')
+def SNRstudy(outlabel,MtotList,qList,SNRList,Navg):
+    pp = PdfPages(str(outlabel)+'-SNRstudy.pdf')
     for q in qList:
         tags=[]
         labels=[]
@@ -324,9 +324,9 @@ def readCovarFile(file):
             
               
         
-def FisherStudy(MtotList,qList,SNRList,deltalist,Navg,Nthreads):
-    pp = PdfPages('FisherStudy.pdf')
-    datafile = open('FisherStudy.dat','w')
+def FisherStudy(outlabel,MtotList,qList,SNRList,deltalist,Navg,Nthreads):
+    pp = PdfPages(str(outlabel)+'-FisherStudy.pdf')
+    datafile = open(outlabel+'-FisherStudy.dat','w')
     for q in qList:
         tags=[]
         labels=[]

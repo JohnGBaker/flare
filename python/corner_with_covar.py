@@ -382,17 +382,6 @@ def corner(xs, bins=20, range=None, weights=None, cov=None, color="k",
             cy=truths[i]
             #ang=math.acos(cov[0,1]/math.sqrt(cov[0,0]*cov[1,1]))*180/math.pi
             print (j,i,labels[j],labels[i],"center=",cx,cy)
-            ##Ellipse approach
-            #elips=Ellipse(xy=(cx,cy),width=cov[0,0],height=cov[1,1],angle=ang,color='r')
-            ##contour approach
-            #N_contour_grid=25
-            #Xrange=np.arange(cx-2*deltax,cx+2*deltax,4*deltax/N_contour_grid)
-            #Yrange=np.arange(cy-2*deltay,cy+2*deltay,4*deltax/N_contour_grid)
-            #X,Y=np.meshgrid(Xrange,Yrange)
-            #Z=np.array([(cov[1,1]*(xx-cx)**2-cov[0,1]*(xx-cx)*(yy-cy)+cov[0,0]*(yy-cy)**2)/(cov[1,1]*cov[0,0]-cov[0,1]*cov[0,1]) for xx,yy in zip(X,Y)])
-            #print ("X=",X,"Y=",Y,"Z=",Z)
-            #ax.contour(X,Y,Z,levels=[1.0],colors="r")
-            ##curve approach
             N_thetas=60
             dtheta=2.0*math.pi/(N_thetas-1)
             thetas=np.arange(0,(2.0*math.pi+dtheta),dtheta)
