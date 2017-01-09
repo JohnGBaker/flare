@@ -30,6 +30,7 @@ shared_ptr<Random> globalRNG;//used for some debugging...
 const int Npar=9;
 int output_precision;
 double fisher_err_target=0.001;
+bool allow_m2gtm1=false;
 
 //First we define the all-in-one likelihood function object
 class flare_likelihood : public bayes_likelihood {
@@ -61,6 +62,9 @@ public:
     double tstart=omp_get_wtime();
     LISAParams templateparams =state2LISAParams(s);
     double result=0;
+
+    //First (if --allow_m2gtm1 is not specified) we enforce mass ordering
+    if(not allow_m2gtm1)if(templateparams.m1<templateparams.m2)return -INFINITY;
 
     /* Note: context points to a LISAContext structure containing a LISASignal* */
     if(globalparams->tagint==0) {
@@ -360,6 +364,7 @@ int main(int argc, char*argv[]){
   opt.add(Option("rng_seed","Pseudo random number grenerator seed in [0,1). (Default=-1, use clock to seed.)","-1"));
   opt.add(Option("precision","Set output precision digits. (Default 13).","13"));
   opt.add(Option("noFisher","Skip Fisher computation."));
+  opt.add(Option("allow_m2gtm1","Unless this is set, reject cases with m2>m1."));
   opt.add(Option("Fisher_err_target","Set target for Fisher error measure. (Default 0.001).","0.001"));
   opt.add(Option("help","Print help message."));
   //First we parse the ptmcmc-related parameters like un gleam. 
@@ -394,6 +399,7 @@ int main(int argc, char*argv[]){
   istringstream(opt.value("info_every"))>>info_every;
   istringstream(opt.value("Fisher_err_target"))>>fisher_err_target;
   bool doFisher=not opt.set("noFisher");
+  allow_m2gtm1=opt.set("allow_m2gtm1");
   
   //if seed<0 set seed from clock
   if(seed<0)seed=fmod(time(NULL)/3.0e7,1);

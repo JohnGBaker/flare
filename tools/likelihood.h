@@ -105,6 +105,8 @@ double FDOverlapReImvsListmodesCAmpPhase(
   struct tagReImFrequencySeries *freqseries1,            /* First waveform, in Re/Im form */
   struct tagListmodesCAmpPhaseFrequencySeries *list2,    /* Second waveform, list of modes in amplitude/phase form */
   gsl_vector* noisevalues,                               /* Vector for the noise values on the freq of h1 */
+  double fLow,                                           /* Minimal frequency - set to 0 to ignore */
+  double fHigh,                                          /* Maximal frequency - set to 0 to ignore */
   double fstartobs2);                                    /* Starting frequency for the 22 mode of wf 2 - as determined from a limited duration of the observation - set to 0 to ignore */
 
 

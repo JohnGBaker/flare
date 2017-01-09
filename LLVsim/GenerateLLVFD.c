@@ -264,9 +264,9 @@ int main(int argc, char *argv[])
     gsl_vector* times = LLV1->times;
     double twindowbeg = 0.05 * (gsl_vector_get(times, times->size - 1) - gsl_vector_get(times, 0)); /* Here hardcoded relative window lengths */
     double twindowend = 0.01 * (gsl_vector_get(times, times->size - 1) - gsl_vector_get(times, 0)); /* Here hardcoded relative window lengths */
-    FFTTimeSeries(&LLV1FFT, LLV1, twindowbeg, twindowend, 2); /* Here hardcoded 0-padding */
-    FFTTimeSeries(&LLV2FFT, LLV2, twindowbeg, twindowend, 2); /* Here hardcoded 0-padding */
-    FFTTimeSeries(&LLV3FFT, LLV3, twindowbeg, twindowend, 2); /* Here hardcoded 0-padding */
+    FFTRealTimeSeries(&LLV1FFT, LLV1, twindowbeg, twindowend, 2); /* Here hardcoded 0-padding */
+    FFTRealTimeSeries(&LLV2FFT, LLV2, twindowbeg, twindowend, 2); /* Here hardcoded 0-padding */
+    FFTRealTimeSeries(&LLV3FFT, LLV3, twindowbeg, twindowend, 2); /* Here hardcoded 0-padding */
 
     /* Output */
     char *outfileLLV1 = malloc(256);
@@ -317,19 +317,27 @@ int main(int argc, char *argv[])
 
     else {
 
-      /* Determine deltaf so that N deltat = 1/deltaf > 2*tc where tc is the time to coalescence estimated from Psi22 */
-      /* Assumes the TD waveform ends around t=0 */
-      /* Note: the phase differs for the three detectors, and the signal can be shifted in time at worst by ~40 ms - should be ok as we take some margin */
-      double tc = EstimateInitialTime(listLLV1, params->minf);
-      double deltaf = 0.5 * 1./(2*(-tc)); /* Extra factor of 1/2 corresponding to 0-padding in TD by factor of 2 */
+      double deltaf = 0.;
+      if(params->deltaf==0.) {
+        /* Determine deltaf so that N deltat = 1/deltaf > 2*tc where tc is the time to coalescence estimated from Psi22 */
+        /* NOTE: assumes the TD waveform ends around t=0 */
+        /* NOTE: estimate based on the 22 mode - fstartobs will be scaled from mode to mode to ensure the same deltatobs for all (except for the 21 mode, which will turn on after the others) */
+        /* NOTE: the phase differs for the three detectors, and the signal can be shifted in time at worst by ~40 ms - should be ok as we take some margin */
+        double tc = EstimateInitialTime(listROM, params->minf);
+        double deltaf = 0.5 * 1./(2*(-tc)); /* Extra factor of 1/2 corresponding to 0-padding in TD by factor of 2 */
+      }
+      else deltaf = params->deltaf;
+
+      /* Compute TDI FD */
+      /* NOTE: we do note use deltatobs and fstartobs */
 
       /* Generate FD frequency series by summing mode contributions */
       ReImFrequencySeries* LLV1FD = NULL;
       ReImFrequencySeries* LLV2FD = NULL;
       ReImFrequencySeries* LLV3FD = NULL;
-      GenerateFDReImFrequencySeries(&LLV1FD, listLLV1, params->minf, deltaf, 0, params->nbmode); /* Here determines the number of points from deltaf and max frequency in input list of modes */
-      GenerateFDReImFrequencySeries(&LLV2FD, listLLV2, params->minf, deltaf, 0, params->nbmode); /* Here determines the number of points from deltaf and max frequency in input list of modes */
-      GenerateFDReImFrequencySeries(&LLV3FD, listLLV3, params->minf, deltaf, 0, params->nbmode); /* Here determines the number of points from deltaf and max frequency in input list of modes */
+      GenerateFDReImFrequencySeries(&LLV1FD, listLLV1, params->minf, params->maxf, 0., deltaf, 0); /* Here determines the number of points from deltaf and max frequency in input list of modes */
+      GenerateFDReImFrequencySeries(&LLV2FD, listLLV2, params->minf, params->maxf, 0., deltaf, 0); /* Here determines the number of points from deltaf and max frequency in input list of modes */
+      GenerateFDReImFrequencySeries(&LLV3FD, listLLV3, params->minf, params->maxf, 0., deltaf, 0); /* Here determines the number of points from deltaf and max frequency in input list of modes */
 
       /* Output */
       char *outfileLLV1FD = malloc(256);

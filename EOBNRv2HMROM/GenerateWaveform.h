@@ -43,9 +43,10 @@
 /********************************** Structures ******************************************/
 
 typedef enum GenWavetag {
-  hphcTD,
+  hlm,
+  h22TD,
   hphcFD,
-  hlm
+  hphcTD
 } GenWavetag;
 
 /* Parameters for the generation of a LISA waveform (in the form of a list of modes) */
@@ -57,17 +58,26 @@ typedef struct tagGenWaveParams {
   double m2;                 /* mass of companion 2 (solar masses, default 1e6) */
   double distance;           /* distance of source (Mpc, default 1e3) */
   double inclination;        /* inclination of source (rad, default pi/3) */
-  double minf;               /* Minimal frequency (Hz) - when set to 0 (default), use the first frequency covered by the ROM */
+  double minf;               /* Minimal frequency, ignore if 0 (Hz, default=0) - will use first frequency covered by the ROM if higher */
+  double maxf;               /* Maximal frequency, ignore if 0 (Hz, default=0) - will use last frequency covered by the ROM if lower */
   double deltatobs;          /* Observation duration (years, default=2) */
   int tagextpn;              /* Tag to allow PN extension of the waveform at low frequencies */
   double Mfmatch;            /* When PN extension allowed, geometric matching frequency: will use ROM above this value. If <=0, use ROM down to the lowest covered frequency */
-  int nbmode;                /* number of modes to generate (starting with 22) - defaults to 5 (all modes) */
+  int nbmode;                /* Number of modes to generate (starting with 22) - defaults to 1 (22 only) */
   int taggenwave;            /* Tag selecting the desired output format */
+  double f1windowbeg;        /* If generating h22TD/hphcTD, start frequency for windowing at the beginning - set to 0 to ignore and use max(fstartobs, fLowROM, minf), where fLowROM is either the lowest frequency covered by the ROM or simply minf if PN extension is used (Hz, default=0) */
+  double f2windowbeg;        /* If generating h22TD/hphcTD, stop frequency for windowing at the beginning - set to 0 to ignore and use 1.1*f1windowbeg (Hz, default=0) */
+  double f1windowend;        /* If generating h22TD/hphcTD, start frequency for windowing at the end - set to 0 to ignore and use 0.995*f2windowend (Hz, default=0) */
+  double f2windowend;        /* If generating h22TD/hphcTD, stop frequency for windowing at the end - set to 0 to ignore and use min(maxf, fHighROM), where fHighROM is the highest frequency covered by the ROM (Hz, default=0) */
+  int tagh22fromfile;        /* Tag choosing wether to load h22 FD downsampled Amp/Phase from file (default 0) */
+  int nsamplesinfile;        /* Number of lines of inputs file */
+  int binaryin;              /* Tag for loading the data in gsl binary form instead of text (default false) */
+  char indir[256];           /* Input directory */
+  char infile[256];          /* Input file name */
   int binaryout;             /* Tag for outputting the data in gsl binary form instead of text (default 0) */
   char outdir[256];          /* Path for the output directory */
   char outfile[256];         /* Path for the output file */
 } GenWaveParams;
-
 
 #if 0
 { /* so that editors will match succeeding brace */

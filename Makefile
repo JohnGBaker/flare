@@ -1,6 +1,6 @@
 MESSAGE="Specify which machine to compile for in the Makefile."
-#MACHINE="sylvainsmac"
-MACHINE="johnsmac"
+MACHINE="sylvainsmac"
+#MACHINE="discover"
 
 ifeq ($(MACHINE),"sylvainsmac")
   MESSAGE="Compiling for Sylvain's Mac"
@@ -45,10 +45,10 @@ else ifeq ($(MACHINE),"discover")
   GSLROOT = /usr/local/other/SLES11.1/gsl/1.16/intel-13.0.1.117
   BAMBIROOT = /discover/nobackup/jgbaker/sw/bambi/
   FFTWROOT = /usr/local/other/SLES11.1/fftw/3.3.3/intel-12.1.0.233/
-  FC = mpif90 -DPARALLEL
-  CC = mpicc -DPARALLEL
-  CXX = mpiicpc -DPARALLEL
-  CPP = mpiicpc -DPARALLEL
+  FC = mpif90 -DPARALLEL -traceback
+  CC = mpicc -DPARALLEL -traceback
+  CXX = mpiicpc -DPARALLEL -traceback
+  CPP = mpiicpc -DPARALLEL -traceback
   LAPACKLIB = -lmkl_intel_lp64 -lmkl_intel_thread -liomp5 -lpthread -lm -lmkl_core -lmkl_lapack95_lp64
   CFLAGS += -g -O3 -fopenmp -I $(GSLROOT)/include -I $(FFTWROOT)/include -L$(FFTWROOT)/lib -L$(GSLROOT)/lib
   CXXFLAGS = -g -O3 -fopenmp
@@ -149,10 +149,16 @@ ptmcmc:
 	@echo "Do we need to check out ptmcmc from github?:";\
 	if [ \! -d ptmcmc ]; then git clone https://github.com/JohnGBaker/ptmcmc.git; fi;
 	@echo "INCLUDE="$(INCLUDE)
-	$(MAKE) CFLAGS="$(CPPFLAGS) $(CXXFLAGS)" INCLUDE="$(PTMCMC)/include" -C ptmcmc 
+	@$(MAKE) CFLAGS="$(CPPFLAGS) $(CXXFLAGS)" INCLUDE="$(PTMCMC)/include" -C ptmcmc
 endif
 
 clean: $(SUBCLEAN)
 
+ifdef PTMCMC
 $(SUBCLEAN): %.clean:
 	$(MAKE) -C $* clean
+	$(MAKE) -C ptmcmc INCLUDE="$(PTMCMC)/include" clean
+else
+$(SUBCLEAN): %.clean:
+	$(MAKE) -C $* clean
+endif

@@ -269,23 +269,24 @@ double FDListmodesLogLinearOverlap(
   double minf1, maxf1, minf2, maxf2, minf, maxf;
   ListmodesCAmpPhaseFrequencySeries* listelement1mode22 = ListmodesCAmpPhaseFrequencySeries_GetMode(list1, 2, 2);
   ListmodesCAmpPhaseFrequencySeries* listelement2mode22 = ListmodesCAmpPhaseFrequencySeries_GetMode(list2, 2, 2);
-  minf1 = fmax(gsl_vector_get(listelement1mode22->freqseries->freq, 0), fstartobs1);
-  minf2 = fmax(gsl_vector_get(listelement2mode22->freqseries->freq, 0), fstartobs2);
-  maxf1 = gsl_vector_get(list1->freqseries->freq, (int) list1->freqseries->freq->size - 1);
-  maxf2 = gsl_vector_get(list2->freqseries->freq, (int) list2->freqseries->freq->size - 1);
-  ListmodesCAmpPhaseFrequencySeries* listelement1 = list1;
-  ListmodesCAmpPhaseFrequencySeries* listelement2 = list2;
-  while(listelement1) {
-    maxf1 = fmax(maxf1, gsl_vector_get(listelement1->freqseries->freq, (int) listelement1->freqseries->freq->size - 1));
-    listelement1 = listelement1->next;
+  minf1 = gsl_vector_get(listelement1mode22->freqseries->freq, 0);
+  minf2 = gsl_vector_get(listelement2mode22->freqseries->freq, 0);
+  maxf1 = ListmodesCAmpPhaseFrequencySeries_maxf(list1);
+  maxf2 = ListmodesCAmpPhaseFrequencySeries_maxf(list2);
+  /* Taking into account fLow, fHigh -- fstartobs, determined from 22 mode, is also used as a fLow */
+  if(!(fHigh==0.)) {
+    maxf1 = fmin(maxf1, fHigh);
+    maxf2 = fmin(maxf2, fHigh);
   }
-  while(listelement2) {
-    maxf2 = fmax(maxf2, gsl_vector_get(listelement2->freqseries->freq, (int) listelement2->freqseries->freq->size - 2));
-    listelement2 = listelement2->next;
+  if(!(fLow==0.)) {
+    minf1 = fmax(minf1, fLow);
+    minf2 = fmax(minf2, fLow);
   }
-  /* Actual boundaries to be used in the overlap - also cuts what is not covered by the noise data */
-  minf = fmax(fmax(minf1, minf2), fLow);
-  maxf = fmin(fmin(maxf1, maxf2), fHigh);
+  if(!(fstartobs1==0.)) minf1 = fmax(minf1, fstartobs1);
+  if(!(fstartobs2==0.)) minf1 = fmax(minf2, fstartobs2);
+  /* Actual boundaries to be used in the overlap - intersection of freqs covered by wf 1 and 2 */
+  minf = fmax(minf1, minf2);
+  maxf = fmin(maxf1, maxf2);
 
   /* Vector of frequencies used for the overlap */
   gsl_vector* freqoverlap = gsl_vector_alloc(nbpts);
@@ -294,10 +295,10 @@ double FDListmodesLogLinearOverlap(
   /* Evaluating each frequency series by interpolating and summing the mode contributions */
   ReImFrequencySeries* freqseries1 = NULL;
   ReImFrequencySeries_Init(&freqseries1, nbpts);
-  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(freqseries1, list1, freqoverlap, fstartobs1);
+  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(freqseries1, list1, freqoverlap, fLow, fHigh, fstartobs1);
   ReImFrequencySeries* freqseries2 = NULL;
   ReImFrequencySeries_Init(&freqseries2, nbpts);
-  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(freqseries2, list2, freqoverlap, fstartobs2);
+  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(freqseries2, list2, freqoverlap, fLow, fHigh, fstartobs2);
 
   /* Compute the integrand */
   gsl_vector* valuesoverlap = gsl_vector_alloc(nbpts);
@@ -327,6 +328,8 @@ double FDOverlapReImvsListmodesCAmpPhase(
   struct tagReImFrequencySeries *freqseries1,            /* First waveform, in Re/Im form */
   struct tagListmodesCAmpPhaseFrequencySeries *list2,    /* Second waveform, list of modes in amplitude/phase form */
   gsl_vector* noisevalues,                               /* Vector for the noise values on the freq of h1 */
+  double fLow,                                           /* Minimal frequency - set to 0 to ignore */
+  double fHigh,                                          /* Maximal frequency - set to 0 to ignore */
   double fstartobs2)                                     /* Starting frequency for the 22 mode of wf 2 - as determined from a limited duration of the observation - set to 0 to ignore */
 {
   /* Check the lengths */
@@ -342,7 +345,7 @@ double FDOverlapReImvsListmodesCAmpPhase(
   /* Evaluating frequency series 2 by interpolating and summing the mode contributions */
   ReImFrequencySeries* freqseries2 = NULL;
   ReImFrequencySeries_Init(&freqseries2, nbpts);
-  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(freqseries2, list2, freqoverlap, fstartobs2);
+  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(freqseries2, list2, freqoverlap, fLow, fHigh, fstartobs2);
 
   /* Compute the integrand */
   gsl_vector* valuesoverlap = gsl_vector_alloc(nbpts);
@@ -393,8 +396,8 @@ double FDOverlapReImvsReIm(
   }
 
   //
-  Write_Text_Vector("/Users/marsat/src/flare/test/testcompareSNRtoFFT", "testfreqoverlap.txt", freqoverlap);
-  Write_Text_Vector("/Users/marsat/src/flare/test/testcompareSNRtoFFT", "testvaluesoverlap.txt", valuesoverlap);
+  //Write_Text_Vector("/Users/marsat/src/flare/test/testcompareSNRtoFFT", "testfreqoverlap.txt", freqoverlap);
+  //Write_Text_Vector("/Users/marsat/src/flare/test/testcompareSNRtoFFT", "testvaluesoverlap.txt", valuesoverlap);
 
   /* Final trapeze integration */
   double overlap = TrapezeIntegrate(freqoverlap, valuesoverlap);
@@ -624,7 +627,7 @@ gsl_set_error_handler(&Err_Handler);
   double minf = fmax(f1[imin1], f2min);
   double maxf = fmin(f1[imax1], f2max);
   if(fLow>0) {minf = fmax(fLow, minf);}
-  if(fHigh>0) {maxf = fmin(fHigh,maxf);}
+  if(fHigh>0) {maxf = fmin(fHigh, maxf);}
   while(f1[imin1+1]<=minf) imin1++;
   while(f1[imax1-1]>=maxf) imax1--;
   /* Estimate locally values for freqseries1 at the boundaries */
@@ -635,7 +638,7 @@ gsl_set_error_handler(&Err_Handler);
   double aimag1maxf = EstimateBoundaryLegendreQuad(freq1, freqseries1->amp_imag, imax1-2, maxf); /* Note the imax1-2 */
   double phi1maxf = EstimateBoundaryLegendreQuad(freq1, freqseries1->phase, imax1-2, maxf); /* Note the imax1-2 */
 
-  
+
   /* Initializing output structure */
   int nbpts = imax1 + 1 - imin1;
   CAmpPhaseFrequencySeries_Init(integrand, nbpts);
@@ -732,7 +735,7 @@ void ComputeIntegrandValues3Chan(
   if(fHigh>0) {maxf = fmin(fHigh, maxf);}
   while(f1[imin1+1]<=minf) imin1++;
   while(f1[imax1-1]>=maxf) imax1--;
-  /* Estimate locally values for freqseries1 at the boundaries - phase vectors assumed to be the same for channels 1,2,3 */
+  /* Estimate locally values for freqseries1 at the boundaries - phase vectors assumed to be the same for channels 1,2,3 - this is still true now that the response-processed phase includes the signal phase + R-delay phase, which is the same for all channels */
   double areal1chan1minf = EstimateBoundaryLegendreQuad(freq1, freqseries1chan1->amp_real, imin1, minf);
   double aimag1chan1minf = EstimateBoundaryLegendreQuad(freq1, freqseries1chan1->amp_imag, imin1, minf);
   double areal1chan2minf = EstimateBoundaryLegendreQuad(freq1, freqseries1chan2->amp_real, imin1, minf);
@@ -893,6 +896,17 @@ double FDSinglemodeFresnelOverlap3Chan(
   CAmpPhaseFrequencySeries* integrand = NULL;
   ComputeIntegrandValues3Chan(&integrand, freqseries1chan1, freqseries1chan2, freqseries1chan3, splines2chan1, splines2chan2, splines2chan3, Snoisechan1, Snoisechan2, Snoisechan3, fLow, fHigh);
 
+  /*
+  Write_Text_Vector("/Users/marsat/src/flare/test/testlikelihoodlowM", "temp_freq_chanE.txt", freqseries1chan1->freq);
+  Write_Text_Vector("/Users/marsat/src/flare/test/testlikelihoodlowM", "temp_ampreal_chanE.txt", freqseries1chan1->amp_real);
+  Write_Text_Vector("/Users/marsat/src/flare/test/testlikelihoodlowM", "temp_ampimag_chanE.txt", freqseries1chan1->amp_imag);
+  Write_Text_Vector("/Users/marsat/src/flare/test/testlikelihoodlowM", "temp_phase_chanE.txt", freqseries1chan1->phase);
+  //
+  Write_Text_Matrix("/Users/marsat/src/flare/test/testlikelihoodlowM", "inj_ampreal_spline_chanE.txt", splines2chan1->spline_amp_real);
+  Write_Text_Matrix("/Users/marsat/src/flare/test/testlikelihoodlowM", "inj_ampimag_spline_chanE.txt", splines2chan1->spline_amp_imag);
+  Write_Text_Matrix("/Users/marsat/src/flare/test/testlikelihoodlowM", "inj_phase_spline_chanE.txt", splines2chan1->quadspline_phase);
+  */
+
   /* Rescaling the integrand */
   double scaling = 10./gsl_vector_get(integrand->freq, integrand->freq->size-1);
   gsl_vector_scale(integrand->freq, scaling);
@@ -976,6 +990,8 @@ double FDListmodesFresnelOverlap3Chan(
       int mmax2 = max(2, listelementsplines2chan1->m);
       double fcutLow = fmax(fLow, fmax(((double) mmax1)/2. * fstartobs1, ((double) mmax2)/2. * fstartobs2));
       double overlapmode = FDSinglemodeFresnelOverlap3Chan(listelementh1chan1->freqseries, listelementh1chan2->freqseries, listelementh1chan3->freqseries, listelementsplines2chan1->splines, listelementsplines2chan2->splines, listelementsplines2chan3->splines, Snoise1, Snoise2, Snoise3, fcutLow, fHigh);
+      //
+      //printf("fcutLow, fHigh, overlapmode: %g, %g, %g\n", fcutLow, fHigh, overlapmode);
       overlap += overlapmode;
       listelementsplines2chan1 = listelementsplines2chan1->next;
     }

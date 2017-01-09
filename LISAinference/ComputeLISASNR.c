@@ -7,13 +7,14 @@
 static void parse_args_ComputeLISASNR(ssize_t argc, char **argv, ComputeLISASNRparams* params)
 {
   char help[] = "\
-GenerateWaveform by Sylvain Marsat, John Baker, and Philip Graff\n\
+ComputeLISASNR by Sylvain Marsat, John Baker, and Philip Graff\n\
 Copyright July 2015\n\
 \n\
 This program computes and prints the SNR for a LISA TDI waveform (currently only AET(XYZ) available); it will either:\n\
 (i) generate a EOBNRv2HMROM waveform, process it through the Fourier domain response, and compute SNR using accelerated Fresnel overlap, with rescaling of the noise (follows LISAinference internals)\n\
 (ii) generate a EOBNRv2HMROM waveform, process it through the Fourier domain response, and compute SNR using ordinary linear overlap, with rescaling of the noise (follows LISAinference internals)\n\
 (iii) load as input time series for 3 TDI AET observables, FFT them, and compute SNR with linear integration, without rescaling of the noise.\n\
+Parameters can be given either directly or in the form of a text file, in which case the output is in the form of a text file with the SNR appended at the end of the line.\n\
 Arguments are as follows:\n\
 \n\
 --------------------------------------------------\n\
@@ -35,7 +36,10 @@ Arguments are as follows:\n\
 ----- Generation Parameters ----------------------\n\
 --------------------------------------------------\n\
  --nbmode              Number of modes of radiation to generate (1-5, default=5)\n\
- --fLow                Minimal frequency (Hz, default=0) - when too low, use first frequency covered by the ROM\n\
+ --deltatobs           Observation duration (years, default=2)\n\
+ --minf                Minimal frequency (Hz, default=0) - when set to 0, use the lowest frequency where the detector noise model is trusted __LISASimFD_Noise_fLow (set somewhat arbitrarily)\n\
+ --maxf                Maximal frequency (Hz, default=0) - when set to 0, use the highest frequency where the detector noise model is trusted __LISASimFD_Noise_fHigh (set somewhat arbitrarily)\n\
+ --tagextpn            Tag to allow PN extension of the waveform at low frequencies (default=1)\n\
  --tagtdi              Tag choosing the set of TDI variables to use (default TDIAETXYZ)\n\
  --tagint              Tag choosing the integrator: 0 for Fresnel (default), 1 for linear integration\n\
  --nbptsoverlap        Number of points to use for linear integration (default 32768)\n\
@@ -43,6 +47,11 @@ Arguments are as follows:\n\
  --nlinesinfile        Number of lines of inputs file when loading TDI time series from file\n\
  --indir               Input directory when loading TDI time series from file\n\
  --infile              Input file name when loading TDI time series from file\n\
+ --loadparamsfile      Option to load physical parameters from file and to output result to file (default false)\n\
+ --nlinesparams        Number of lines in params file\n\
+ --paramsdir           Directory for input/output file\n\
+ --paramsfile          Input file with the parameters\n\
+ --outputfile          Output file\n\
 \n";
 
   ssize_t i;
@@ -61,7 +70,11 @@ Arguments are as follows:\n\
 
   /* Set default values for the generation params */
   params->nbmode = 5;
-  params->fLow = __LISASimFD_Noise_fLow;
+  params->deltatobs = 2.;
+  params->minf = 0.;
+  params->maxf = 0.;
+  params->tagextpn = 1;
+  params->Mfmatch = 0.;
   params->tagtdi = TDIAETXYZ;
   params->tagint = 0;
   params->nbptsoverlap = 32768;
@@ -69,9 +82,15 @@ Arguments are as follows:\n\
   params->nlinesinfile = 0;    /* No default; has to be provided */
   strcpy(params->indir, "");   /* No default; has to be provided */
   strcpy(params->infile, "");  /* No default; has to be provided */
+  params->loadparamsfile = 0;
+  params->nlinesparams = 0;
+  strcpy(params->paramsdir, "");  /* No default; has to be provided */
+  strcpy(params->paramsfile, "");  /* No default; has to be provided */
+  strcpy(params->outputfile, "");  /* No default; has to be provided */
 
   /* Consume command line */
   for (i = 1; i < argc; ++i) {
+
     if (strcmp(argv[i], "--help") == 0) {
       fprintf(stdout,"%s", help);
       exit(0);
@@ -97,8 +116,16 @@ Arguments are as follows:\n\
       params->polarization = atof(argv[++i]);
     } else if (strcmp(argv[i], "--nbmode") == 0) {
       params->nbmode = atoi(argv[++i]);
-    } else if (strcmp(argv[i], "--fLow") == 0) {
-      params->fLow = atof(argv[++i]);
+    } else if (strcmp(argv[i], "--deltatobs") == 0) {
+      params->deltatobs = atof(argv[++i]);
+    } else if (strcmp(argv[i], "--minf") == 0) {
+      params->minf = atof(argv[++i]);
+    } else if (strcmp(argv[i], "--maxf") == 0) {
+      params->maxf = atof(argv[++i]);
+    } else if (strcmp(argv[i], "--tagextpn") == 0) {
+        params->tagextpn = atoi(argv[++i]);
+    } else if (strcmp(argv[i], "--Mfmatch") == 0) {
+        params->Mfmatch = atof(argv[++i]);
     } else if (strcmp(argv[i], "--tagtdi") == 0) {
       params->tagtdi = ParseTDItag(argv[++i]);
     } else if (strcmp(argv[i], "--tagint") == 0) {
@@ -113,12 +140,26 @@ Arguments are as follows:\n\
       strcpy(params->indir, argv[++i]);
     } else if (strcmp(argv[i], "--infile") == 0) {
       strcpy(params->infile, argv[++i]);
-    } else {
+    } else if (strcmp(argv[i], "--loadparamsfile") == 0) {
+      params->loadparamsfile = 1;
+    } else if (strcmp(argv[i], "--nlinesparams") == 0) {
+      params->nlinesparams = atoi(argv[++i]);
+    } else if (strcmp(argv[i], "--paramsdir") == 0) {
+      strcpy(params->paramsdir, argv[++i]);
+    }  else if (strcmp(argv[i], "--paramsfile") == 0) {
+      strcpy(params->paramsfile, argv[++i]);
+    } else if (strcmp(argv[i], "--outputfile") == 0) {
+      strcpy(params->outputfile, argv[++i]);
+    }  else {
       printf("Error: invalid option: %s\n", argv[i]);
-      printf("argc-i=%i\n",argc-i); 
+      printf("argc-i=%i\n",argc-i);
       goto fail;
     }
   }
+
+  /* Set frequency interval to default values */
+  if(params->minf==0.) params->minf = __LISASimFD_Noise_fLow;
+  if(params->maxf==0.) params->maxf = __LISASimFD_Noise_fHigh;
 
   return;
 
@@ -193,17 +234,17 @@ int main(int argc, char *argv[])
       gsl_vector* times = TDI1->times;
       double twindowbeg = 0.05 * (gsl_vector_get(times, times->size - 1) - gsl_vector_get(times, 0)); /* Here hardcoded relative window lengths */
       double twindowend = 0.01 * (gsl_vector_get(times, times->size - 1) - gsl_vector_get(times, 0)); /* Here hardcoded relative window lengths */
-      FFTTimeSeries(&TDI1FFT, TDI1, twindowbeg, twindowend, 2); /* Here hardcoded 0-padding */
-      FFTTimeSeries(&TDI2FFT, TDI2, twindowbeg, twindowend, 2); /* Here hardcoded 0-padding */
-      FFTTimeSeries(&TDI3FFT, TDI3, twindowbeg, twindowend, 2); /* Here hardcoded 0-padding */
+      FFTRealTimeSeries(&TDI1FFT, TDI1, twindowbeg, twindowend, 2); /* Here hardcoded 0-padding */
+      FFTRealTimeSeries(&TDI2FFT, TDI2, twindowbeg, twindowend, 2); /* Here hardcoded 0-padding */
+      FFTRealTimeSeries(&TDI3FFT, TDI3, twindowbeg, twindowend, 2); /* Here hardcoded 0-padding */
 
       /* Restrict FFT on frequency interval of interest - no limitation put on the upper bound */
       ReImFrequencySeries* TDI1FFTrestr = NULL;
       ReImFrequencySeries* TDI2FFTrestr = NULL;
       ReImFrequencySeries* TDI3FFTrestr = NULL;
-      RestrictFDReImFrequencySeries(&TDI1FFTrestr, TDI1FFT, params->fLow, __LISASimFD_Noise_fHigh);
-      RestrictFDReImFrequencySeries(&TDI2FFTrestr, TDI2FFT, params->fLow, __LISASimFD_Noise_fHigh);
-      RestrictFDReImFrequencySeries(&TDI3FFTrestr, TDI3FFT, params->fLow, __LISASimFD_Noise_fHigh);
+      RestrictFDReImFrequencySeries(&TDI1FFTrestr, TDI1FFT, params->minf, __LISASimFD_Noise_fHigh);
+      RestrictFDReImFrequencySeries(&TDI2FFTrestr, TDI2FFT, params->minf, __LISASimFD_Noise_fHigh);
+      RestrictFDReImFrequencySeries(&TDI3FFTrestr, TDI3FFT, params->minf, __LISASimFD_Noise_fHigh);
 
       /* Compute SNR with linear integration, weighting with non-rescaled noise functions */
       /* Note: assumes same lengths for all FD FFT frequency seriess */
@@ -215,21 +256,25 @@ int main(int argc, char *argv[])
       gsl_vector* noisevaluesE = gsl_vector_alloc(sizeE);
       gsl_vector* noisevaluesT = gsl_vector_alloc(sizeT);
       for(int i=0; i<sizeA; i++) {
-	gsl_vector_set(noisevaluesA, i, SnAXYZNoRescaling(gsl_vector_get(TDI1FFTrestr->freq, i)));
+	       gsl_vector_set(noisevaluesA, i, SnAXYZNoRescaling(gsl_vector_get(TDI1FFTrestr->freq, i)));
       }
       for(int i=0; i<sizeE; i++) {
-	gsl_vector_set(noisevaluesE, i, SnEXYZNoRescaling(gsl_vector_get(TDI2FFTrestr->freq, i)));
+	       gsl_vector_set(noisevaluesE, i, SnEXYZNoRescaling(gsl_vector_get(TDI2FFTrestr->freq, i)));
       }
       for(int i=0; i<sizeT; i++) {
-	gsl_vector_set(noisevaluesT, i, SnTXYZNoRescaling(gsl_vector_get(TDI3FFTrestr->freq, i)));
+	       gsl_vector_set(noisevaluesT, i, SnTXYZNoRescaling(gsl_vector_get(TDI3FFTrestr->freq, i)));
       }
       double SNRA2 = FDOverlapReImvsReIm(TDI1FFTrestr, TDI1FFTrestr, noisevaluesA);
       double SNRE2 = FDOverlapReImvsReIm(TDI2FFTrestr, TDI2FFTrestr, noisevaluesE);
       double SNRT2 = FDOverlapReImvsReIm(TDI3FFTrestr, TDI3FFTrestr, noisevaluesT);
       SNR = sqrt(SNRA2 + SNRE2 + SNRT2);
+
+      /* Print SNR to stdout */
+      printf("%.8f\n", SNR);
     }
 
     else {
+
       /* Initialize the structure for LISAparams and GlobalParams and copy values */
       /* NOTE: injectedparams and globalparams are declared as extern in LISAutils.h, and used by generation functions */
       injectedparams = (LISAParams*) malloc(sizeof(LISAParams));
@@ -247,41 +292,112 @@ int main(int argc, char *argv[])
       globalparams = (LISAGlobalParams*) malloc(sizeof(LISAGlobalParams));
       memset(globalparams, 0, sizeof(LISAGlobalParams));
       globalparams->fRef = params->fRef;
-      globalparams->deltatobs = 1.; /* Default value */
-      globalparams->minf = params->fLow;
+      globalparams->deltatobs = params->deltatobs; /* Default value */
+      globalparams->minf = params->minf;
+      globalparams->maxf = params->maxf;
+      globalparams->tagextpn = params->tagextpn;
+      globalparams->Mfmatch = params->Mfmatch;
       globalparams->nbmodeinj = params->nbmode;
       globalparams->nbmodetemp = params->nbmode;
       globalparams->tagint = params->tagint;
       globalparams->tagtdi = params->tagtdi;
       globalparams->nbptsoverlap = params->nbptsoverlap;
 
-      /* Set geometric coefficients */
-      SetCoeffsG(params->lambda, params->beta, params->polarization);
+      if(params->loadparamsfile==0) {
+        /* Set geometric coefficients */
+        SetCoeffsG(params->lambda, params->beta, params->polarization);
 
-      /* Branch between the Fresnel or linear computation */
-      if(params->tagint==0) {
-	LISAInjectionCAmpPhase* injCAmpPhase = NULL;
-	LISAInjectionCAmpPhase_Init(&injCAmpPhase);
-	LISAGenerateInjectionCAmpPhase(injectedparams, injCAmpPhase);
-	SNR = sqrt(injCAmpPhase->TDI123ss);
-      }
-      else if(params->tagint==1) {
-	LISAInjectionReIm* injReIm = NULL;
-	LISAInjectionReIm_Init(&injReIm);
-	LISAGenerateInjectionReIm(injectedparams, params->fLow, params->nbptsoverlap, 0, injReIm); /* Hardcoded linear sampling */
+        /* Branch between the Fresnel or linear computation */
+        if(params->tagint==0) {
+          LISAInjectionCAmpPhase* injCAmpPhase = NULL;
+          LISAInjectionCAmpPhase_Init(&injCAmpPhase);
+          LISAGenerateInjectionCAmpPhase(injectedparams, injCAmpPhase);
+          SNR = sqrt(injCAmpPhase->TDI123ss);
+        }
+        else if(params->tagint==1) {
+          LISAInjectionReIm* injReIm = NULL;
+          LISAInjectionReIm_Init(&injReIm);
+          LISAGenerateInjectionReIm(injectedparams, params->minf, params->nbptsoverlap, 0, injReIm); /* Hardcoded linear sampling */
 
-	double SNRA2 = FDOverlapReImvsReIm(injReIm->TDI1Signal, injReIm->TDI1Signal, injReIm->noisevalues1);
-	double SNRE2 = FDOverlapReImvsReIm(injReIm->TDI2Signal, injReIm->TDI2Signal, injReIm->noisevalues2);
-	double SNRT2 = FDOverlapReImvsReIm(injReIm->TDI3Signal, injReIm->TDI3Signal, injReIm->noisevalues3);
-	SNR = sqrt(SNRA2 + SNRE2 + SNRT2);
+          double SNRA2 = FDOverlapReImvsReIm(injReIm->TDI1Signal, injReIm->TDI1Signal, injReIm->noisevalues1);
+          double SNRE2 = FDOverlapReImvsReIm(injReIm->TDI2Signal, injReIm->TDI2Signal, injReIm->noisevalues2);
+          double SNRT2 = FDOverlapReImvsReIm(injReIm->TDI3Signal, injReIm->TDI3Signal, injReIm->noisevalues3);
+          SNR = sqrt(SNRA2 + SNRE2 + SNRT2);
+        }
+        else {
+          printf("Error in ComputeLISASNR: integration tag not recognized.\n");
+          exit(1);
+        }
+
+        /* Print SNR to stdout */
+        printf("%.8f\n", SNR);
       }
       else {
-	printf("Error in ComputeLISASNR: integration tag not recognized.\n");
-	exit(1);
+
+        int nlines = params->nlinesparams;
+
+        /* Load parameters file */
+        /* Format (same as in the internals): m1, m2, tRef, dist, phase, inc, lambda, beta, pol */
+        gsl_matrix* inmatrix =  gsl_matrix_alloc(nlines, 9);
+        Read_Text_Matrix(params->paramsdir, params->paramsfile, inmatrix);
+
+        /* Initialize output matrix */
+        /* Format (same as in the internals): m1, m2, tRef, dist, phase, inc, lambda, beta, pol, SNR */
+        gsl_matrix* outmatrix =  gsl_matrix_alloc(nlines, 10);
+
+        for(int i=0; i<nlines; i++) {
+          injectedparams->m1 = gsl_matrix_get(inmatrix, i, 0);
+          injectedparams->m2 = gsl_matrix_get(inmatrix, i, 1);
+          injectedparams->tRef = gsl_matrix_get(inmatrix, i, 2);
+          injectedparams->distance = gsl_matrix_get(inmatrix, i, 3);
+          injectedparams->phiRef = gsl_matrix_get(inmatrix, i, 4);
+          injectedparams->inclination = gsl_matrix_get(inmatrix, i, 5);
+          injectedparams->lambda = gsl_matrix_get(inmatrix, i, 6);
+          injectedparams->beta = gsl_matrix_get(inmatrix, i, 7);
+          injectedparams->polarization = gsl_matrix_get(inmatrix, i, 8);
+
+          /* Set geometric coefficients */
+          SetCoeffsG(injectedparams->lambda, injectedparams->beta, injectedparams->polarization);
+
+          /* Branch between the Fresnel or linear computation */
+          double SNR = 0;
+          if(params->tagint==0) {
+            LISAInjectionCAmpPhase* injCAmpPhase = NULL;
+            LISAInjectionCAmpPhase_Init(&injCAmpPhase);
+            LISAGenerateInjectionCAmpPhase(injectedparams, injCAmpPhase);
+            SNR = sqrt(injCAmpPhase->TDI123ss);
+          }
+          else if(params->tagint==1) {
+            LISAInjectionReIm* injReIm = NULL;
+            LISAInjectionReIm_Init(&injReIm);
+            LISAGenerateInjectionReIm(injectedparams, params->minf, params->nbptsoverlap, 0, injReIm); /* Hardcoded linear sampling */
+
+            double SNRA2 = FDOverlapReImvsReIm(injReIm->TDI1Signal, injReIm->TDI1Signal, injReIm->noisevalues1);
+            double SNRE2 = FDOverlapReImvsReIm(injReIm->TDI2Signal, injReIm->TDI2Signal, injReIm->noisevalues2);
+            double SNRT2 = FDOverlapReImvsReIm(injReIm->TDI3Signal, injReIm->TDI3Signal, injReIm->noisevalues3);
+            SNR = sqrt(SNRA2 + SNRE2 + SNRT2);
+          }
+          else {
+            printf("Error in ComputeLISASNR: integration tag not recognized.\n");
+            exit(1);
+          }
+
+          /* Set values in output matrix */
+          gsl_matrix_set(outmatrix, i, 0, injectedparams->m1);
+          gsl_matrix_set(outmatrix, i, 1, injectedparams->m2);
+          gsl_matrix_set(outmatrix, i, 2, injectedparams->tRef);
+          gsl_matrix_set(outmatrix, i, 3, injectedparams->distance);
+          gsl_matrix_set(outmatrix, i, 4, injectedparams->phiRef);
+          gsl_matrix_set(outmatrix, i, 5, injectedparams->inclination);
+          gsl_matrix_set(outmatrix, i, 6, injectedparams->lambda);
+          gsl_matrix_set(outmatrix, i, 7, injectedparams->beta);
+          gsl_matrix_set(outmatrix, i, 8, injectedparams->polarization);
+          gsl_matrix_set(outmatrix, i, 9, SNR);
+        }
+
+        /* Output matrix */
+        Write_Text_Matrix(params->paramsdir, params->outputfile, outmatrix);
       }
     }
-
-    /* Print SNR to stdout */
-    printf("%.8f\n", SNR);
   }
 }

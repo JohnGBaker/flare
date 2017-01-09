@@ -16,6 +16,8 @@ Arguments are as follows:\n\
 --------------------------------------------------\n\
 ----- Physical Parameters ------------------------\n\
 --------------------------------------------------\n\
+ --phiRef              Phase (radians, default=0) -- used when input is h22\n\
+ --inclination         Inclination (radians, default=PI/3) -- used when input is h22\n\
  --lambda              First angle for the position in the sky (radians, default=0)\n\
  --beta                Second angle for the position in the sky (radians, default=0)\n\
  --polarization        Polarization of source (radians, default=0)\n\
@@ -36,6 +38,8 @@ Arguments are as follows:\n\
     ssize_t i;
 
     /* Set default values for the physical params */
+    params->phiRef = 0;
+    params->inclination = PI/3;
     params->lambda = 0;
     params->beta = 0;
     params->polarization = 0;
@@ -53,6 +57,10 @@ Arguments are as follows:\n\
         if (strcmp(argv[i], "--help") == 0) {
             fprintf(stdout,"%s", help);
             exit(0);
+        } else if (strcmp(argv[i], "--phiRef") == 0) {
+            params->phiRef = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--inclination") == 0) {
+            params->inclination = atof(argv[++i]);
         } else if (strcmp(argv[i], "--lambda") == 0) {
             params->lambda = atof(argv[++i]);
         } else if (strcmp(argv[i], "--beta") == 0) {
@@ -60,13 +68,13 @@ Arguments are as follows:\n\
         } else if (strcmp(argv[i], "--polarization") == 0) {
             params->polarization = atof(argv[++i]);
         } else if (strcmp(argv[i], "--tagtdi") == 0) {
-	  params->tagtdi = ParseTDItag(argv[++i]);
+	          params->tagtdi = ParseTDItag(argv[++i]);
         } else if (strcmp(argv[i], "--nsamplesinfile") == 0) {
             params->nsamplesinfile = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--binaryin") == 0) {
-          params->binaryin = 1;
+            params->binaryin = 1;
         } else if (strcmp(argv[i], "--binaryout") == 0) {
-          params->binaryout = 1;
+            params->binaryout = 1;
         } else if (strcmp(argv[i], "--indir") == 0) {
             strcpy(params->indir, argv[++i]);
         } else if (strcmp(argv[i], "--infile") == 0) {
@@ -114,7 +122,7 @@ static void Read_Wave_hphcTD( RealTimeSeries** hptd, RealTimeSeries** hctd, cons
   /* Clean up */
   gsl_matrix_free(inmatrix);
 }
-/* Output waveform in downsampled form, FD Amp/Pase, all hlm modes in a single file */
+/* Output TDI 3 channels TD - real time series */
 /* NOTE: assumes 3 channels with same times */
 static void Write_TDITD(const char dir[], const char file[], RealTimeSeries* TDI1, RealTimeSeries* TDI2, RealTimeSeries* TDI3, int binary)
 {
@@ -134,6 +142,7 @@ static void Write_TDITD(const char dir[], const char file[], RealTimeSeries* TDI
   else Write_Matrix(dir, file, outmatrix);
 }
 
+
 /***************** Main program *****************/
 
 int main(int argc, char *argv[])
@@ -151,37 +160,81 @@ int main(int argc, char *argv[])
   /* Set geometric coefficients */
   SetCoeffsG(params->lambda, params->beta, params->polarization);
 
-  /* Load TD hp, hc from file */
-  RealTimeSeries* hptd = NULL;
-  RealTimeSeries* hctd = NULL;
-  Read_Wave_hphcTD(&hptd, &hctd, params->indir, params->infile, params->nsamplesinfile, params->binaryin);
+  /* Set aside the cases of the orbital delay and constellation response - written with TD amp/phase */
+  /* If not using those tags, use the old processing that uses TD hplus, hcross interpolated */
+  if(!(params->tagtdi==delayO) && !(params->tagtdi==y12L)) {
 
-  /* Interpolate hp, hc with gsl spline */
-  /* NOTE: assumes indentical times vector */
-  gsl_vector* times = hptd->times;
-  int nbtimes = times->size;
-  gsl_interp_accel* accel_hp = gsl_interp_accel_alloc();
-  gsl_interp_accel* accel_hc = gsl_interp_accel_alloc();
-  gsl_spline* spline_hp = gsl_spline_alloc(gsl_interp_cspline, nbtimes);
-  gsl_spline* spline_hc = gsl_spline_alloc(gsl_interp_cspline, nbtimes);
-  gsl_spline_init(spline_hp, gsl_vector_const_ptr(hptd->times,0), gsl_vector_const_ptr(hptd->h,0), nbtimes);
-  gsl_spline_init(spline_hc, gsl_vector_const_ptr(hctd->times,0), gsl_vector_const_ptr(hctd->h,0), nbtimes);
+    /* Load TD hp, hc from file */
+    RealTimeSeries* hptd = NULL;
+    RealTimeSeries* hctd = NULL;
+    Read_Wave_hphcTD(&hptd, &hctd, params->indir, params->infile, params->nsamplesinfile, params->binaryin);
 
-  //
-  //printf("(%g, %g)\n", gsl_vector_get(times, 0), gsl_vector_get(times, 200));
-  //printf("(%g, %g)\n", gsl_vector_get(times, times->size-1), gsl_vector_get(times, times->size-1-200));
+    /* Interpolate hp, hc with gsl spline */
+    /* NOTE: assumes indentical times vector */
+    gsl_vector* times = hptd->times;
+    int nbtimes = times->size;
+    gsl_interp_accel* accel_hp = gsl_interp_accel_alloc();
+    gsl_interp_accel* accel_hc = gsl_interp_accel_alloc();
+    gsl_spline* spline_hp = gsl_spline_alloc(gsl_interp_cspline, nbtimes);
+    gsl_spline* spline_hc = gsl_spline_alloc(gsl_interp_cspline, nbtimes);
+    gsl_spline_init(spline_hp, gsl_vector_const_ptr(hptd->times,0), gsl_vector_const_ptr(hptd->h,0), nbtimes);
+    gsl_spline_init(spline_hc, gsl_vector_const_ptr(hctd->times,0), gsl_vector_const_ptr(hctd->h,0), nbtimes);
 
-  /* Evaluate TDI */
-  RealTimeSeries* TDI1 = NULL;
-  RealTimeSeries* TDI2 = NULL;
-  RealTimeSeries* TDI3 = NULL;
-  /* Here, hardcoded margin that we will set to 0 on both sides, to avoid problems with delays extending past the input values */
-  /* We take R/c as the maximum delay that can occur in the response, and adjust the margin accordingly */
-  double maxdelay = R_SI/C_SI;
-  double deltat = gsl_vector_get(times, 1) - gsl_vector_get(times, 0);
-  int nptmargin = 2 * (int)(maxdelay/deltat);
-  GenerateTDITD3Chan(&TDI1, &TDI2, &TDI3, spline_hp, spline_hc, accel_hp, accel_hc, times, nptmargin, params->tagtdi);
+    /* Here, hardcoded time margin that we will set to 0 on both sides, to avoid problems with delays extending past the input values */
+    /* We take R/c as the maximum delay that can occur in the response, and adjust the margin accordingly */
+    double maxdelay = R_SI/C_SI;
+    double deltat = gsl_vector_get(times, 1) - gsl_vector_get(times, 0);
+    int nptmargin = 2 * (int)(maxdelay/deltat);
 
-  /* Output */
-  Write_TDITD(params->outdir, params->outfile, TDI1, TDI2, TDI3, params->binaryout);
+    /* Evaluate TDI */
+    RealTimeSeries* TDI1 = NULL;
+    RealTimeSeries* TDI2 = NULL;
+    RealTimeSeries* TDI3 = NULL;
+    GenerateTDITD3Chanhphc(&TDI1, &TDI2, &TDI3, spline_hp, spline_hc, accel_hp, accel_hc, times, nptmargin, params->tagtdi);
+
+    /* Output */
+    Write_TDITD(params->outdir, params->outfile, TDI1, TDI2, TDI3, params->binaryout);
+  }
+
+  /* Set aside the cases of the orbital delay and constellation response - written with TD amp/phase */
+  /* NOTE: for now supports only single-mode (22) waveforms in amp/phase form */
+  else if((params->tagtdi==delayO) || (params->tagtdi==y12L)) {
+    /* Load 22-mode TD - can be the orbital-delayed 22 mode in the case of y12L */
+    AmpPhaseTimeSeries* h22td = NULL;
+    Read_AmpPhaseTimeSeries(&h22td, params->indir, params->infile, params->nsamplesinfile, params->binaryin);
+
+    /* Interpolate amp, phase with gsl spline */
+    gsl_vector* times = h22td->times;
+    int nbtimes = times->size;
+    gsl_interp_accel* accel_amp = gsl_interp_accel_alloc();
+    gsl_interp_accel* accel_phase = gsl_interp_accel_alloc();
+    gsl_spline* spline_amp = gsl_spline_alloc(gsl_interp_cspline, nbtimes);
+    gsl_spline* spline_phase = gsl_spline_alloc(gsl_interp_cspline, nbtimes);
+    gsl_spline_init(spline_amp, gsl_vector_const_ptr(h22td->times,0), gsl_vector_const_ptr(h22td->h_amp,0), nbtimes);
+    gsl_spline_init(spline_phase, gsl_vector_const_ptr(h22td->times,0), gsl_vector_const_ptr(h22td->h_phase,0), nbtimes);
+
+    /* Here, hardcoded time margin that we will set to 0 on both sides, to avoid problems with delays extending past the input values */
+    /* We take R/c as the maximum delay that can occur in the response, and adjust the margin accordingly */
+    double maxdelay = R_SI/C_SI;
+    double deltat = gsl_vector_get(times, 1) - gsl_vector_get(times, 0);
+    int nptmargin = 2 * (int)(maxdelay/deltat);
+
+    if(params->tagtdi==delayO) {
+      /* Evaluate orbital-delayed signal */
+      AmpPhaseTimeSeries* h22tdO = NULL;
+      Generateh22TDO(&h22tdO, spline_amp, spline_phase, accel_amp, accel_phase, times, nptmargin);
+
+      /* Output */
+      Write_AmpPhaseTimeSeries(params->outdir, params->outfile, h22tdO, params->binaryout);
+    }
+
+    else if(params->tagtdi==y12L) {
+      /* Evaluate y12 signal - constellation response only, input assumed to be h22tdO already */
+      RealTimeSeries* y12td = NULL;
+      Generatey12LTD(&y12td, spline_amp, spline_phase, accel_amp, accel_phase, times, params->inclination, params->phiRef, nptmargin);
+
+      /* Output */
+      Write_RealTimeSeries(params->outdir, params->outfile, y12td, params->binaryout);
+    }
+  }
 }

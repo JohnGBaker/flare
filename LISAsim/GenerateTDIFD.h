@@ -39,12 +39,16 @@
 #include "fft.h"
 #include "LISAgeometry.h"
 #include "LISAFDresponse.h"
+#include "LISAnoise.h"
 
 /********************************** Structures ******************************************/
 
 typedef enum GenTDIFDtag {
+  TDIhlm,
   TDIFD,
-  TDIhlm
+  TDIFFT,
+  h22FFT,
+  yslrFFT
 } GenTDIFDtag;
 
 /* Parameters for the generation of a LISA waveform (in the form of a list of modes) */
@@ -61,15 +65,19 @@ typedef struct tagGenTDIFDparams {
   double polarization;       /* polarization angle (rad, default 0) */
 
   int nbmode;                /* number of modes to generate (starting with 22) - defaults to 5 (all modes) */
-  double minf;               /* Minimal frequency (Hz) - when set to 0 (default), use the first frequency covered by the ROM */
+  double minf;               /* Minimal frequency (Hz, default=0) - when set to 0, use the lowest frequency where the detector noise model is trusted __LISASimFD_Noise_fLow (set somewhat arbitrarily)*/
+  double maxf;               /* Maximal frequency (Hz, default=0) - when set to 0, use the highest frequency where the detector noise model is trusted __LISASimFD_Noise_fHigh (set somewhat arbitrarily)*/
   double deltatobs;          /* Observation duration (years, default=2) */
   int tagextpn;              /* Tag to allow PN extension of the waveform at low frequencies (default=1) */
   double Mfmatch;            /* When PN extension allowed, geometric matching frequency: will use ROM above this value. If <=0, use ROM down to the lowest covered frequency (default=0.) */
   double deltaf;             /* When generating frequency series from the mode contributions, deltaf for the output (0 to set automatically at 1/2*1/(2T)) */
+  double twindowbeg;         /* When generating frequency series from file by FFT, twindowbeg (0 to set automatically at 0.05*duration) */
+  double twindowend;         /* When generating frequency series from file by FFT, twindowend (0 to set automatically at 0.01*duration) */
+  int tagh22fromfile;        /* Tag choosing wether to load h22 FD downsampled Amp/Phase from file (default 0) */
   int tagtdi;                /* Tag selecting the desired output format */
   int taggenwave;            /* Tag selecting the desired output format */
   int restorescaledfactor;   /* If 1, restore the factors that were scaled out of TDI observables */
-  int fromtditdfile;         /* Tag for loading time series for TDI observables and FFTing */
+  int FFTfromtdfile;         /* Option for loading time series and FFTing (default: false) */
   int nsamplesinfile;        /* Number of lines of input file */
   int binaryin;              /* Tag for loading the data in gsl binary form instead of text (default false) */
   int binaryout;             /* Tag for outputting the data in gsl binary form instead of text (default false) */

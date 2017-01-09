@@ -69,13 +69,17 @@ double EstimateInitialTime(ListmodesCAmpPhaseFrequencySeries* listhlm, double fL
 void ReImFrequencySeries_AddCAmpPhaseFrequencySeries(
   struct tagReImFrequencySeries* freqseriesReIm,              /* Output Re/Im frequency series */
   struct tagCAmpPhaseFrequencySeries* freqseriesCAmpPhase,    /* Input CAmp/Phase frequency series, to be interpolated and added to the output */
+  double fLow,                                                /* Minimal frequency - set to 0 to ignore */
+  double fHigh,                                               /* Maximal frequency - set to 0 to ignore */
   double fstartobsmode);                                      /* Starting frequency in case of limited duration of observations- assumed to have been scaled with the proper factor m/2 for this mode - set to 0 to ignore */
 /* Function evaluating a ReImFrequencySeries by interpolating wach mode of a ListmodesCAmpPhaseFrequencySeries and summing them, given a set of frequencies */
 void ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(
   struct tagReImFrequencySeries* freqseriesReIm,                    /* Output Re/Im frequency series - already initialized */
   struct tagListmodesCAmpPhaseFrequencySeries* listmodesCAmpPhase,  /* Input CAmp/Phase frequency series, to be interpolated */
   gsl_vector* freq,                                                 /* Input set of frequencies on which evaluating */
-  double fstartobs);                                                /* Starting frequency in case of limited duration of observations - set to 0 to ignore */
+  double fLow,                                                      /* Minimal frequency - set to 0 to ignore */
+  double fHigh,                                                     /* Maximal frequency - set to 0 to ignore */
+  double fstartobs);                                                /* For limited duration of observation, starting frequency for the 22 mode - set to 0 to ignore */
 /* Helper function to add a mode to hplus, hcross in Fourier domain
  * - copies the function XLALSimAddMode, which was done only for TD structures */
 int FDAddMode(
@@ -92,27 +96,53 @@ int GeneratehphcFDReImFrequencySeries(
   ReImFrequencySeries** hptilde,                 /* Output: frequency series for hplus */
   ReImFrequencySeries** hctilde,                 /* Output: frequency series for hcross */
   ListmodesCAmpPhaseFrequencySeries* listhlm,    /* Input: frequency series for the mode hlm  */
-  double fLow,                                   /* Minimal frequency */
+  double fLow,                                   /* Minimal frequency - set to 0 to ignore */
+  double fHigh,                                  /* Maximal frequency - set to 0 to ignore */
+  double fstartobs,                              /* For limited duration of observation, starting frequency for the 22 mode - set to 0 to ignore */
   double deltaf,                                 /* Frequency step */
   int nbpt,                                      /* Number of points of output - if 0, determined from deltaF and maximal frequency in input */
   int nbmode,                                    /* Number of modes to add */
   double theta,                                  /* First angle for position in the sky of observer */
   double phi,                                    /* Second angle for position in the sky of observer */
   int sym);                                      /* If 1, assume planar symmetry and add also mode l,-m. Do not if set to 0. */
-/* NOTE: nbmode as arg here is a bit deceiptive, only used for max frequency */
+/* Function evaluating the FD frequency series by summing mode contributions from each hlm */
 int GenerateFDReImFrequencySeries(
   ReImFrequencySeries** freqseries,              /* Output: frequency series */
   ListmodesCAmpPhaseFrequencySeries* listhlm,    /* Input: FD modes hlm in the form AmpReal/AmpIm/Phase  */
-  double fLow,                                   /* Minimal frequency */
+  double fLow,                                   /* Minimal frequency - set to 0 to ignore */
+  double fHigh,                                  /* Maximal frequency - set to 0 to ignore */
+  double fstartobs,                              /* For limited duration of observation, starting frequency for the 22 mode - set to 0 to ignore */
+  double deltaf,                                 /* Frequency step */
+  int nbpt);                                     /* Number of points of output - if 0, determined from deltaf and maximal frequency in input */
+/* Function evaluating the FD frequency series for a single mode contribution (l,m) */
+int GenerateFDReImFrequencySeriesSingleMode(
+  ReImFrequencySeries** freqseries,              /* Output: frequency series */
+  ListmodesCAmpPhaseFrequencySeries* listhlm,    /* Input: FD modes hlm in the form AmpReal/AmpIm/Phase  */
+  double fLow,                                   /* Minimal frequency - set to 0 to ignore */
+  double fHigh,                                  /* Maximal frequency - set to 0 to ignore */
+  double fstartobs,                              /* For limited duration of observation, starting frequency for the 22 mode - set to 0 to ignore */
   double deltaf,                                 /* Frequency step */
   int nbpt,                                      /* Number of points of output - if 0, determined from deltaf and maximal frequency in input */
-  int nbmode);                                   /* Number of modes - used only to determine the highest frequency */
+  int l,                                         /* Mode index l */
+  int m);                                        /* Mode index m */
 /* Function to restrict a frequency series (typically output of a FFT) to a given frequency range */
 int RestrictFDReImFrequencySeries(
   ReImFrequencySeries** freqseriesout,           /* Output: truncated frequency series */
   ReImFrequencySeries* freqseriesin,             /* Input: frequency series */
   double fLow,                                   /* Minimal frequency */
   double fHigh);                                 /* Maximal frequency */
+/* Function to unwrap the phase mod 2pi  - acts directly on the gsl_vector representing the phase */
+int UnwrapPhase(
+  gsl_vector*  phaseout,   /* Output: unwrapped phase vector - already allocated */
+  gsl_vector*  phasein);   /* Input: phase vector */
+/* Function to convert a time series from Re/Im form to Amp/Phase form - unwrapping the phase */
+int ReImTimeSeries_ToAmpPhase(
+  AmpPhaseTimeSeries** timeseriesout,             /* Output: Amp/Phase time series */
+  ReImTimeSeries* timeseriesin);                  /* Input: Re/Im time series */
+/* Function to convert a time series from Amp/Phase form to Re/Im form */
+int AmpPhaseTimeSeries_ToReIm(
+  ReImTimeSeries** timeseriesout,                 /* Output: Re/Im time series */
+  AmpPhaseTimeSeries* timeseriesin);              /* Input: Amp/Phase time series */
 
 /***************** Spin weighted spherical harmonics ****************/
 

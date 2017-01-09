@@ -763,12 +763,12 @@ int LLVGenerateSignalReIm(
   ReImFrequencySeries_Init(&freqseriesDet2, nbpts);
   ReImFrequencySeries_Init(&freqseriesDet3, nbpts);
 
-  /* Compute the Re/Im frequency series - we ignore fstartobs */
+  /* Compute the Re/Im frequency series - we ignore fstartobs, minf, maxf */
   //TESTING
   //tbeg = clock();
-  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(freqseriesDet1, listDet1, freq, 0.);
-  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(freqseriesDet2, listDet2, freq, 0.);
-  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(freqseriesDet3, listDet3, freq, 0.);
+  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(freqseriesDet1, listDet1, freq, 0., 0., 0.);
+  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(freqseriesDet2, listDet2, freq, 0., 0., 0.);
+  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(freqseriesDet3, listDet3, freq, 0., 0., 0.);
   //tend = clock();
   //printf("time ReIm: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
@@ -833,9 +833,9 @@ int LLVGenerateInjectionReIm(
   /* We ignore fstartobs */
   //TESTING
   //tbeg = clock();
-  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(freqseriesDet1, listDet1, freq, 0.);
-  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(freqseriesDet2, listDet2, freq, 0.);
-  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(freqseriesDet3, listDet3, freq, 0.);
+  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(freqseriesDet1, listDet1, freq, 0., 0., 0.);
+  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(freqseriesDet2, listDet2, freq, 0., 0., 0.);
+  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(freqseriesDet3, listDet3, freq, 0., 0., 0.);
   //tend = clock();
   //printf("time ReIm: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //

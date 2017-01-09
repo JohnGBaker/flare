@@ -470,6 +470,12 @@ int EOBNRv2HMROMCore(
     double totaltwopishifttime = twopishifttime - 2*PI*tpeak22estimate + 2*PI*deltatRef_geom;
     double constphaseshift = (double) m/listmode[0][1] * phase_change_ref + shiftphase;
 
+    //
+    //printf("deltatRef_geom: %g\n", deltatRef_geom);
+    //printf("freq_ds 0: %g\n", gsl_vector_get(freq_ds, 0));
+
+    //printf("2*PI*deltatRef_geom * gsl_vector_get(freq_ds, 0), phase_change_ref: %g, %g\n", 2*PI*deltatRef_geom * gsl_vector_get(freq_ds, 0), phase_change_ref);
+
     /* Initialize the complex series for the mode */
     CAmpPhaseFrequencySeries *modefreqseries = NULL;
     int len = (int) freq_ds->size;
@@ -488,6 +494,11 @@ int EOBNRv2HMROMCore(
     gsl_blas_daxpy(totaltwopishifttime, freq_ds, phi_f); /*Beware: here freq_ds must still be in geometric units*/
     gsl_vector_add_constant(phi_f, constphaseshift);
     gsl_vector_memcpy(modefreqseries->phase, phi_f);
+
+//
+//printf("first phi_f: %g\n", gsl_vector_get(phi_f, 0 ));
+//printf("last phi_f: %g\n", gsl_vector_get(phi_f, phi_f->size -1 ));
+
     /* Scale (to physical units) and set the frequencies */
     gsl_vector_scale(freq_ds, 1./Mtot_sec);
     gsl_vector_memcpy(modefreqseries->freq, freq_ds);
@@ -532,7 +543,7 @@ int SimEOBNRv2HMROM(
   double Mtot_sec = Mtot * MTSUN_SI; /* Total mass in seconds */
 
   if ( q > q_max ) {
-    printf( "Error - %s: q out of range!\nEOBNRv2HMROM is only available for a mass ratio in the range q <= %g.\n", __func__, q_max); 
+    //printf( "Error - %s: q out of range!\nEOBNRv2HMROM is only available for a mass ratio in the range q <= %g.\n", __func__, q_max); 
     return FAILURE;
   }
 
@@ -733,13 +744,18 @@ int SimEOBNRv2HMROMExtTF2(
   int nbmode,                                    /* Number of modes to generate (starting with the 22) */
   double Mf_match,                               /* Minimum frequency using EOBNRv2HMROM in inverse total mass units*/
   double minf,                                   /* Minimum frequency required */
+  int tagexthm,                                  /* Tag to decide whether or not to extend the higher modes as well */
   double deltatRef,                              /* Time shift so that the peak of the 22 mode occurs at deltatRef */
   double phiRef,                                 /* Phase at reference frequency */
   double fRef,                                   /* Reference frequency (Hz); 0 defaults to fLow */
   double m1SI,                                   /* Mass of companion 1 (kg) */
   double m2SI,                                   /* Mass of companion 2 (kg) */
   double distance)                               /* Distance of source (m) */
-{
+{//
+  //printf("calling SimEOBNRv2HMROMExtTF2 with minf=%g\n", minf);
+  //printf("params: %d %g %g %g %g %g %g %g %g\n", nbmode, Mf_match, minf, deltatRef, phiRef, fRef, m1SI, m2SI, distance);
+
+
   int ret,i;
   ListmodesCAmpPhaseFrequencySeries* listROM = NULL;
   //int lout=-1,mout=-1;
@@ -749,7 +765,7 @@ int SimEOBNRv2HMROMExtTF2(
   ret = SimEOBNRv2HMROM(&listROM, nbmode, deltatRef, phiRef, fRef, m1SI, m2SI, distance);
 
   /* If the ROM waveform generation failed (e.g. parameters were out of bounds) return FAILURE */
-  if(ret==FAILURE)printf("SimEOBNRv2HMROMExtTF2: Generation of ROM for injection failed!\n");
+  //if(ret==FAILURE)printf("SimEOBNRv2HMROMExtTF2: Generation of ROM for injection failed!\n");
   if(ret==FAILURE) return FAILURE;
 
   /* Main loop over the modes (as linked list) to perform the extension */
@@ -763,6 +779,10 @@ int SimEOBNRv2HMROMExtTF2(
     /* Definitions: l,m, frequency series and length */
     int l = listelement->l;
     int m = listelement->m;
+
+    //NOTE: temporary hack to allow avoiding power-law extension of higher modes which seems problematic
+    //    if((l==2&&m==2) || tagexthm) {
+
     /* First we must compute a new frequency grid including a possible extension to lower frequencies*/
     gsl_vector *freq_new;
     gsl_vector* freq = listelement->freqseries->freq;
@@ -858,7 +878,10 @@ int SimEOBNRv2HMROMExtTF2(
       double dphase0=dphase0eob-dphase0tf2;
       double phase0=ph0 - phase0tf2 - f0*dphase0;
       double amp0bcoeff = amp / freqseries_new->amp_real->data[len_add] - 1.0; //Compute correction for continuity matching.
-      double amp0ccoeff = ((amp1/freqseries_new->amp_real->data[len_add+1]-1.0)/amp0bcoeff/(f1*f1/f0/f0)-1.0)/(f1/f0-1.0); //Compute correction for continuity matching.
+      double amp0ccoeff = ((amp1/freqseries_new->amp_real->data[len_add+1]-1.0)/amp0bcoeff/(f1*f1/f0/f0)-1.0)/(f1/f0-1.0);
+      //TESTING
+      //printf("%g, %g\n", amp0bcoeff, amp0ccoeff);
+      //Compute correction for continuity matching.
       /*
       printf("ph0eob,dph0eob= %g,  %g\n",ph0,dphase0eob);
       printf("ph0tf2,dph0tf2= %g,  %g\n",phase0tf2,dphase0tf2);
@@ -898,7 +921,7 @@ int SimEOBNRv2HMROMExtTF2(
       //double dphfac = exp(-log( (gsl_vector_get(freqseries->phase,imatch+Navg)-phref)
       //			/(gsl_vector_get(freqseries->phase,imatch) -phref)) / Navg);
       double ldphfac = (log( (gsl_vector_get(freqseries->phase,imatch+Navg)-phref)
-			      /(gsl_vector_get(freqseries->phase,imatch) -phref)) / 
+			      /(gsl_vector_get(freqseries->phase,imatch) -phref)) /
 			log( gsl_vector_get(freqseries->freq,imatch+Navg)
 			     /gsl_vector_get(freqseries->freq,imatch) )  );
       if(1&&l==lout&&m==mout)printf("ldphfac(%i,%i)=%g\n",l,m,ldphfac);
@@ -917,22 +940,31 @@ int SimEOBNRv2HMROMExtTF2(
     //delete the old content data and replace with the new
     CAmpPhaseFrequencySeries_Cleanup(freqseries);
     listelement->freqseries=freqseries_new;
+
+//TESTING
+//printf("In ext: len freqseries: %d\n", freqseries_new->freq->size);
+//for(int i=0; i<freqseries_new->freq->size; i++) {
+  //printf("%g %g %g %g\n", gsl_vector_get(freqseries_new->freq, i), gsl_vector_get(freqseries_new->amp_real, i), gsl_vector_get(freqseries_new->amp_imag, i), gsl_vector_get(freqseries_new->phase, i));
+//}
+
     //debugging
-    freqseries=listelement->freqseries;
-    if(1&&l==lout&&m==mout){  //write to file for debugging
-      FILE *f = fopen("waveform.dat", "w");
-      for(i=0;i<freqseries->freq->size;i++){
-	fprintf(f,"%i %i %g  %g %g  %g %i\n",l,m,
-		freqseries->freq->data[i],
-		freqseries->amp_real->data[i],
-		freqseries->amp_imag->data[i],
-		freqseries->phase->data[i],
-		i);
-      }
-      fclose(f);
-    }
-    listelement=listelement->next;
+  //   freqseries=listelement->freqseries;
+  //   if(1&&l==lout&&m==mout){  //write to file for debugging
+  //     FILE *f = fopen("waveform.dat", "w");
+  //     for(i=0;i<freqseries->freq->size;i++){
+	// fprintf(f,"%i %i %g  %g %g  %g %i\n",l,m,
+	// 	freqseries->freq->data[i],
+	// 	freqseries->amp_real->data[i],
+	// 	freqseries->amp_imag->data[i],
+	// 	freqseries->phase->data[i],
+	// 	i);
+  //     }
+  //     fclose(f);
+  //   }
+
     gsl_vector_free(freq_new);
+    //}
+    listelement=listelement->next;
   }
   *listhlm=listROM;
   /*

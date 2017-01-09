@@ -266,7 +266,7 @@ void dumper(int *nSamples, int *nlive, int *nPar, double **physLive, double **po
 int main(int argc, char *argv[])
 {
   int myid = 0;
-  noMPI=0;
+  noMPI = 0;
 #ifdef PARALLEL
  	MPI_Init(&argc,&argv);
 	MPI_Comm_rank(MPI_COMM_WORLD,&myid);
@@ -328,7 +328,7 @@ int main(int argc, char *argv[])
 	    /* Phys live points */
 	    fprintf(fphyslivepoints, "    %.18E", injectedparams->m1);
 	    fprintf(fphyslivepoints, "    %.18E", injectedparams->m2);
-	    fprintf(fphyslivepoints, "    %.18E", 0.); /* For templates, tRef is defined relatively to the injected value */
+	    fprintf(fphyslivepoints, "    %.18E", injectedparams->tRef);
 	    fprintf(fphyslivepoints, "    %.18E", injectedparams->distance);
 	    fprintf(fphyslivepoints, "    %.18E", injectedparams->phiRef);
 	    fprintf(fphyslivepoints, "    %.18E", injectedparams->inclination);

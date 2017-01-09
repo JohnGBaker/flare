@@ -61,7 +61,9 @@ typedef struct tagGenLLVFDparams {
   double polarization;       /* polarization angle (rad, default 0) */
 
   int nbmode;                /* number of modes to generate (starting with 22) - defaults to 5 (all modes) */
-  double minf;               /* Minimal frequency (Hz) - when set to 0 (default), use the first frequency covered by the ROM */
+  double minf;               /* Minimal frequency, ignore if 0 (Hz, default=0) - will use first frequency covered by the ROM if higher */
+  double maxf;               /* Maximal frequency, ignore if 0 (Hz, default=0) - will use last frequency covered by the ROM if lower */
+  double deltaf;             /* When generating frequency series from the mode contributions, deltaf for the output (0 to set automatically at 1/2*1/(2T)) */
   int tagnetwork;            /* Tag selecting the desired output format */
   int taggenwave;            /* Tag selecting the desired output format */
   int fromLLVtdfile;         /* Tag for loading time series for LLV detectors and FFTing */

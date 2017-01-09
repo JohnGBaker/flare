@@ -47,7 +47,9 @@ extern "C" {
 /**************** TDI variables **********************/
 
 typedef enum TDItag {
-  y12,
+  delayO,                  /* Orbital delay */
+  y12L,                    /* Constellation-only response y12L */
+  y12,                     /* Complete response y12 (includees orbital delay) */
   TDIXYZ,
   TDIalphabetagamma,
   TDIAETXYZ,
@@ -137,6 +139,18 @@ int RestoreInPlaceScaledFactorTDI(
   int nchannel);                                  /* TDI channel number */
 
 /* Functions for the response in time domain */
+
+/* Processing single mode in amp/phase form through orbital time delay */
+double hOTDAmpPhase(
+  double* amp,                             /* Output: amplitude */
+  double* phase,                           /* Output: phase */
+  gsl_spline* splineamp,                   /* Input spline for TD mode amplitude */
+  gsl_spline* splinephase,                 /* Input spline for TD mode phase */
+  gsl_interp_accel* accelamp,              /* Accelerator for amp spline */
+  gsl_interp_accel* accelphase,            /* Accelerator for phase spline */
+  const double t);                         /* Time */
+
+/* Basic yslr observables (including orbital delay) from hplus, hcross */
 double y12TD(
   gsl_spline* splinehp,                    /* Input spline for TD hplus */
   gsl_spline* splinehc,                    /* Input spline for TD hcross */
@@ -173,7 +187,8 @@ double y13TD(
   gsl_interp_accel* accelhp,               /* Accelerator for hp spline */
   gsl_interp_accel* accelhc,               /* Accelerator for hc spline */
   const double t);                         /* Time */
-int EvaluateTDIXYZTD(
+/* TDI observables (including orbital delay) from hplus, hcross */
+int EvaluateTDIXYZTDhphc(
   double* TDIX,                            /* Output: value of TDI observable X */
   double* TDIY,                            /* Output: value of TDI observable Y */
   double* TDIZ,                            /* Output: value of TDI observable Z */
@@ -182,7 +197,7 @@ int EvaluateTDIXYZTD(
   gsl_interp_accel* accelhp,               /* Accelerator for hp spline */
   gsl_interp_accel* accelhc,               /* Accelerator for hc spline */
   const double t);                         /* Time */
-int EvaluateTDIAETXYZTD(
+int EvaluateTDIAETXYZTDhphc(
   double* TDIA,                            /* Output: value of TDI observable X */
   double* TDIE,                            /* Output: value of TDI observable Y */
   double* TDIT,                            /* Output: value of TDI observable Z */
@@ -191,7 +206,48 @@ int EvaluateTDIAETXYZTD(
   gsl_interp_accel* accelhp,               /* Accelerator for hp spline */
   gsl_interp_accel* accelhc,               /* Accelerator for hc spline */
   const double t);                         /* Time */
-int GenerateTDITD3Chan(
+
+/* Generate hO orbital-delayed for one mode contribution from amp, phase */
+int Generateh22TDO(
+  AmpPhaseTimeSeries** h22tdO,             /* Output: amp/phase time series for h22TDO */
+  gsl_spline* splineamp,                   /* Input spline for TD mode amplitude */
+  gsl_spline* splinephase,                 /* Input spline for TD mode phase */
+  gsl_interp_accel* accelamp,              /* Accelerator for amp spline */
+  gsl_interp_accel* accelphase,            /* Accelerator for phase spline */
+  gsl_vector* times,                       /* Vector of times to evaluate */
+  int nbptmargin);                         /* Margin set to 0 on both side to avoid problems with delays out of the domain */
+/* Generate y12L from orbital-delayed h22 in amp/phase form */
+int Generatey12LTD(
+  RealTimeSeries** y12Ltd,                 /* Output: real time series for y12L */
+  gsl_spline* splineamp,                   /* Input spline for TD mode amplitude */
+  gsl_spline* splinephase,                 /* Input spline for TD mode phase */
+  gsl_interp_accel* accelamp,              /* Accelerator for amp spline */
+  gsl_interp_accel* accelphase,            /* Accelerator for phase spline */
+  gsl_vector* times,                       /* Vector of times to evaluate */
+  double Theta,                            /* Inclination */
+  double Phi,                              /* Phase */
+  int nbptmargin);                         /* Margin set to 0 on both side to avoid problems with delays out of the domain */
+
+
+/* Generate TDI observables (including orbital delay) for one mode contritbution from amp, phase */
+/* NOTE: developed for testing purposes, so far supports only dO and y12L */
+int GenerateTDITD3Chanhlm(
+  AmpPhaseTimeSeries** hlm,                /* Output: real time series for TDI channel 1 */
+  RealTimeSeries** TDI2,                   /* Output: real time series for TDI channel 2 */
+  RealTimeSeries** TDI3,                   /* Output: real time series for TDI channel 3 */
+  gsl_spline* splineamp,                   /* Input spline for TD mode amplitude */
+  gsl_spline* splinephase,                 /* Input spline for TD mode phase */
+  gsl_interp_accel* accelamp,              /* Accelerator for amp spline */
+  gsl_interp_accel* accelphase,            /* Accelerator for phase spline */
+  gsl_vector* times,                       /* Vector of times to evaluate */
+  int nbptsmargin,                         /* Margin set to 0 on both side to avoid problems with delays out of the domain */
+  double theta,                            /* Inclination angle - used to convert hlm to hplus, hcross for y12L - ignored for dO */
+  double phi,                              /* Observer phase - used to convert hlm to hplus, hcross for y12L - ignored for dO */
+  TDItag tditag);                          /* Tag selecting the TDI observables */
+
+
+/* Generate TDI observables (including orbital delay) for one mode contritbution from hplus, hcross */
+int GenerateTDITD3Chanhphc(
   RealTimeSeries** TDI1,                   /* Output: real time series for TDI channel 1 */
   RealTimeSeries** TDI2,                   /* Output: real time series for TDI channel 2 */
   RealTimeSeries** TDI3,                   /* Output: real time series for TDI channel 3 */

@@ -65,7 +65,8 @@ double ListmodesCAmpPhaseFrequencySeries_minf(ListmodesCAmpPhaseFrequencySeries*
   CAmpPhaseFrequencySeries* hlm;
   while(listelementhlm) {
     hlm = listelementhlm->freqseries;
-    minf = fmin(minf, gsl_vector_get(hlm->freq, hlm->freq->size - 1));
+    if(minf==0) minf = gsl_vector_get(hlm->freq, 0);
+    else minf = fmin(minf, gsl_vector_get(hlm->freq, 0));
     listelementhlm = listelementhlm->next;
   }
   return minf;
@@ -88,6 +89,8 @@ double EstimateInitialTime(ListmodesCAmpPhaseFrequencySeries* listhlm, double fL
 void ReImFrequencySeries_AddCAmpPhaseFrequencySeries(
   struct tagReImFrequencySeries* freqseriesReIm,              /* Output Re/Im frequency series */
   struct tagCAmpPhaseFrequencySeries* freqseriesCAmpPhase,    /* Input CAmp/Phase frequency series, to be interpolated and added to the output */
+  double fLow,                                                /* Minimal frequency - set to 0 to ignore */
+  double fHigh,                                               /* Maximal frequency - set to 0 to ignore */
   double fstartobsmode)                                       /* Starting frequency in case of limited duration of observations- assumed to have been scaled with the proper factor m/2 for this mode - set to 0 to ignore */
 {
   /* Frequency vectors, and sizes */
@@ -95,6 +98,7 @@ void ReImFrequencySeries_AddCAmpPhaseFrequencySeries(
   gsl_vector* freqout = freqseriesReIm->freq;
   int sizein = (int) freqin->size;
   int sizeout = (int) freqout->size;
+
   /* Input, Output vectors */
   gsl_vector* vecampreal = freqseriesCAmpPhase->amp_real;
   gsl_vector* vecampimag = freqseriesCAmpPhase->amp_imag;
@@ -115,18 +119,18 @@ void ReImFrequencySeries_AddCAmpPhaseFrequencySeries(
   gsl_spline_init(phase, gsl_vector_const_ptr(freqin,0), gsl_vector_const_ptr(vecphase,0), sizein);
 
   /* First and last index of the output frequency vector that are covered by the CAmpPhase data */
+  /* Takes into account fLow, fHigh and fstartobs */
   int jStart = 0;
   int jStop = sizeout - 1;
-  double minfmode = fmax(gsl_vector_get(freqin, 0), fstartobsmode); /* Takes into account fstartobsmode here */
-  double maxfmode = gsl_vector_get(freqin, sizein - 1);
-  while(jStart<sizeout && gsl_vector_get(freqout, jStart) < minfmode && jStart) jStart++;
-  while( jStop > -1 && gsl_vector_get(freqout, jStop) > maxfmode ) jStop--;//allow continuing all the way to an impossible value to may the later loop empty if need be
-  //printf("%g < fout < %g, %g < fin <%g, jStart=%i, jStop=%i\n",freqout->data[0],freqout->data[sizeout-1],freqin->data[0],freqin->data[sizein-1],jStart,jStop);
-  //printf("sizeout=%i, sizein=%i, jStart=%i, jStop=%i\n",sizeout,sizein,jStart,jStop);
+  double minfmode = fmax(fLow, fmax(gsl_vector_get(freqin, 0), fstartobsmode));
+  double maxfmode =  0.;
+  if(fHigh==0.) maxfmode = gsl_vector_get(freqin, sizein - 1);
+  else maxfmode = fmin(fHigh, gsl_vector_get(freqin, sizein - 1));
+  while(jStart<sizeout && gsl_vector_get(freqout, jStart) < minfmode) jStart++;
+  while( jStop > -1 && gsl_vector_get(freqout, jStop) > maxfmode ) jStop--; /* allow continuing all the way to an impossible value to make the later loop empty if need be */
   if(jStop <= jStart) {
-    printf("Error: empty range of frequencies in ReImFrequencySeries_AddCAmpPhaseFrequencySeries.\n");
-    printf(" ...maybe this is OK, continuing with jStart=%i, jStop=%i\n",jStart,jStop);
-    //exit(1);
+    printf("Warning: empty range of frequencies in ReImFrequencySeries_AddCAmpPhaseFrequencySeries.\n");
+    printf(" ...maybe this is OK, continuing with jStart=%i, jStop=%i\n", jStart, jStop);
   }
 
   /* Main loop - evaluating the interpolating splines and adding to the output data */
@@ -137,7 +141,6 @@ void ReImFrequencySeries_AddCAmpPhaseFrequencySeries(
   double* hrealdata = vechreal->data;
   double* himagdata = vechimag->data;
   for(int j=jStart; j<=jStop; j++) { /* Note: loop to jStop included */
-    //printf(" j=%i, jStart=%i, jStop=%i\n",j,jStart,jStop);
     f = freqoutdata[j];
     A = gsl_spline_eval(ampreal, f, accel_ampreal) + I*gsl_spline_eval(ampimag, f, accel_ampimag);
     phi = gsl_spline_eval(phase, f, accel_phase);
@@ -160,6 +163,8 @@ void ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(
   struct tagReImFrequencySeries* freqseriesReIm,                    /* Output Re/Im frequency series - already initialized */
   struct tagListmodesCAmpPhaseFrequencySeries* listmodesCAmpPhase,  /* Input CAmp/Phase frequency series, to be interpolated */
   gsl_vector* freq,                                                 /* Input set of frequencies on which evaluating */
+  double fLow,                                                      /* Minimal frequency - set to 0 to ignore */
+  double fHigh,                                                     /* Maximal frequency - set to 0 to ignore */
   double fstartobs)                                                 /* Starting frequency in case of limited duration of observations - set to 0 to ignore */
 {
   /* Check the sizes */
@@ -178,7 +183,7 @@ void ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(
   double fstartobsmode;
   while(listelement) {
     double fstartobsmode = fmax(fstartobs, ((double) listelement->m)/2. * fstartobs);
-    ReImFrequencySeries_AddCAmpPhaseFrequencySeries(freqseriesReIm, listelement->freqseries, fstartobsmode);
+    ReImFrequencySeries_AddCAmpPhaseFrequencySeries(freqseriesReIm, listelement->freqseries, fLow, fHigh, fstartobsmode);
     listelement = listelement->next;
   }
 }
@@ -238,11 +243,16 @@ int FDAddMode(
 }
 
 /* Function evaluating the FD frequency series for hplus, hcross from the modes hlm */
+/* If nbpt is specified, use (nbpt-1)*deltaf as the maximal frequency of output */
+/* If not, use the last n*deltaf below min(fHigh, fHighROM) as the maximal frequency to be generated */
+/* Values will be set to 0 outside [fLow, fHigh] */
 int GeneratehphcFDReImFrequencySeries(
   ReImFrequencySeries** hptilde,                 /* Output: frequency series for hplus */
   ReImFrequencySeries** hctilde,                 /* Output: frequency series for hcross */
   ListmodesCAmpPhaseFrequencySeries* listhlm,    /* Input: frequency series for the mode hlm  */
-  double fLow,                                   /* Minimal frequency */
+  double fLow,                                   /* Minimal frequency - set to 0 to ignore */
+  double fHigh,                                  /* Maximal frequency - set to 0 to ignore */
+  double fstartobs,                              /* For limited duration of observation, starting frequency for the 22 mode - set to 0 to ignore */
   double deltaf,                                 /* Frequency step */
   int nbpt,                                      /* Number of points of output - if 0, determined from deltaf and maximal frequency in input */
   int nbmode,                                    /* Number of modes to add */
@@ -253,16 +263,14 @@ int GeneratehphcFDReImFrequencySeries(
   ListmodesCAmpPhaseFrequencySeries* hlm;
 
   /* Determine total size of frequency series if nbpt is not set */
-  int nbpts;
+  int nbpts = 0;
+  double maxf = 0.;
   if(nbpt==0) {
-    double fHigh = 0;
-    for(int i=0; i<nbmode; i++) {
-      int l = listmode[i][0];
-      int m = listmode[i][1];
-      hlm = ListmodesCAmpPhaseFrequencySeries_GetMode(listhlm, l, m);
-      fHigh = fmax(fHigh, gsl_vector_get(hlm->freqseries->freq, hlm->freqseries->freq->size - 1));
-    }
-    nbpts = (int) ceil(fHigh/deltaf);
+    double fHighROM = ListmodesCAmpPhaseFrequencySeries_maxf(listhlm);
+    // NOTE : there were problems with using int for the size of very long frequency series for very low mass signals - switch to size_t ? how to get reasonable size ?
+    if(fHigh==0.) maxf = fHighROM;
+    else maxf = fmin(fHigh, fHighROM);
+    nbpts = ceil(maxf/deltaf);
   }
   else nbpts = nbpt;
 
@@ -314,8 +322,13 @@ int GeneratehphcFDReImFrequencySeries(
     gsl_spline_init(spline_amp_imag, gsl_vector_const_ptr(freq_ds,0), gsl_vector_const_ptr(amp_imag,0), nbfreq);
 
     /* Interval in frequency covered by the ROM */
-    double fLow_mode = fmax(fLow, gsl_vector_get(freq_ds, 0));
-    double fHigh_mode = fmin(deltaf*(nbpts-1), gsl_vector_get(freq_ds, nbfreq-1));
+    double fLow_mode = 0.;
+    double fHigh_mode = 0.;
+    double fstartobsmode = fmax(fstartobs, m/2. * fstartobs); /* note: does not fetch frequencies < fstartobs22 for m=1*/
+    if(fLow==0.) fLow_mode = fmax(fstartobsmode, gsl_vector_get(freq_ds, 0));
+    else fLow_mode = fmax(fstartobsmode, fmax(fLow, gsl_vector_get(freq_ds, 0)));
+    if(fHigh==0.) fHigh_mode = gsl_vector_get(freq_ds, nbfreq-1);
+    else fHigh_mode = fmin(fHigh, gsl_vector_get(freq_ds, nbfreq-1));
     /* Initialize the loop - values outside this range in j are 0 by default */
     int jStart = ceil(fLow_mode / deltaf);
     int jStop = ceil(fHigh_mode / deltaf);
@@ -371,33 +384,74 @@ int GeneratehphcFDReImFrequencySeries(
 }
 
 /* Function evaluating the FD frequency series by summing mode contributions from each hlm */
-/* NOTE: nbmode as arg here is a bit deceiptive, only used for max frequency */
+/* If nbpt is specified, use (nbpt-1)*deltaf as the maximal frequency of output */
+/* If not, use the last n*deltaf below min(fHigh, fHighROM) as the maximal frequency to be generated */
+/* Values will be set to 0 outside [fLow, fHigh] */
 int GenerateFDReImFrequencySeries(
   ReImFrequencySeries** freqseries,              /* Output: frequency series */
   ListmodesCAmpPhaseFrequencySeries* listhlm,    /* Input: FD modes hlm in the form AmpReal/AmpIm/Phase  */
   double fLow,                                   /* Minimal frequency */
+  double fHigh,                                  /* Maximal frequency */
+  double fstartobs,                              /* For limited duration of observation, starting frequency for the 22 mode - set to 0 to ignore */
   double deltaf,                                 /* Frequency step */
-  int nbpt,                                      /* Number of points of output - if 0, determined from deltaf and maximal frequency in input */
-  int nbmode)                                    /* Number of modes - used only to determine the highest frequency */
+  int nbpt)                                      /* Number of points of output - if 0, determined from deltaf and maximal frequency in input */
 {
-  ListmodesCAmpPhaseFrequencySeries* hlm;
-
   /* Determine total size of frequency series if nbpt is not set */
-  int nbpts;
+  int nbpts = 0;
+  double maxf = 0.;
   if(nbpt==0) {
-    double fHigh = 0;
-    for(int i=0; i<nbmode; i++) {
-      int l = listmode[i][0];
-      int m = listmode[i][1];
-      hlm = ListmodesCAmpPhaseFrequencySeries_GetMode(listhlm, l, m);
-      fHigh = fmax(fHigh, gsl_vector_get(hlm->freqseries->freq, hlm->freqseries->freq->size - 1));
-    }
-    nbpts = (int) ceil(fHigh/deltaf);
+    double fHighROM = ListmodesCAmpPhaseFrequencySeries_maxf(listhlm);
+    if(fHigh==0.) maxf = fHighROM;
+    else maxf = fmin(fHigh, fHighROM);
+    nbpts = (int) ceil(maxf/deltaf);
   }
   else nbpts = nbpt;
 
-  //
-  printf("nbpt in GenerateFDReImFrequencySeries: %d\n", nbpts);
+  /* Initialize frequency series */
+  ReImFrequencySeries_Init(freqseries, nbpts);
+  /* Note: initialization of freqseries hreal and himag to 0 is done in ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries  */
+
+  /* Set values for frequency vector */
+  gsl_vector* freq = gsl_vector_alloc(nbpts);
+  double f;
+  for(int i=0; i<nbpts; i++) {
+    f = i*deltaf;
+    gsl_vector_set(freq, i, f);
+  }
+
+  /* Sum mode contributions */
+  /* NOTE: fLow is used as fstartobs here, different meaning in spirit in the rest of the code */
+  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries((*freqseries), listhlm, freq, fLow, fHigh, fstartobs);
+
+  /* Cleanup */
+  /* freq has been memcopied inside ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries */
+  gsl_vector_free(freq);
+}
+
+/* Function evaluating the FD frequency series for a single mode contribution (l,m) */
+int GenerateFDReImFrequencySeriesSingleMode(
+  ReImFrequencySeries** freqseries,              /* Output: frequency series */
+  ListmodesCAmpPhaseFrequencySeries* listhlm,    /* Input: FD modes hlm in the form AmpReal/AmpIm/Phase  */
+  double fLow,                                   /* Minimal frequency - set to 0 to ignore */
+  double fHigh,                                  /* Maximal frequency - set to 0 to ignore */
+  double fstartobs,                              /* For limited duration of observation, starting frequency for the 22 mode - set to 0 to ignore */
+  double deltaf,                                 /* Frequency step */
+  int nbpt,                                      /* Number of points of output - if 0, determined from deltaf and maximal frequency in input */
+  int l,                                         /* Mode index l */
+  int m)                                         /* Mode index m */
+{
+  /* Get relevant mode */
+  CAmpPhaseFrequencySeries* hlm = ListmodesCAmpPhaseFrequencySeries_GetMode(listhlm, l, m)->freqseries;
+  /* Determine total size of frequency series if nbpt is not set */
+  int nbpts = 0;
+  double maxf = 0.;
+  if(nbpt==0) {
+    double fHighROM = gsl_vector_get(hlm->freq, hlm->freq->size - 1);
+    if(fHigh==0.) maxf = fHighROM;
+    else maxf = fmin(fHigh, fHighROM);
+    nbpts = (int) ceil(maxf/deltaf);
+  }
+  else nbpts = nbpt;
 
   /* Initialize frequency series */
   ReImFrequencySeries_Init(freqseries, nbpts);
@@ -412,11 +466,14 @@ int GenerateFDReImFrequencySeries(
     gsl_vector_set(freq, i, f);
   }
 
-  /* Sum mode contributions */
-  /* NOTE: fLow is used as fstartobs here, different meaning in spirit in the rest of the code */
-  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries((*freqseries), listhlm, freq, fLow);
+  /* Copy frequencies */
+  gsl_vector_memcpy((*freqseries)->freq, freq);
 
-  /* Cleanup */
+  /* Take the chosen mode, interpolate it and add this single mode to the output */
+  ReImFrequencySeries_AddCAmpPhaseFrequencySeries((*freqseries), hlm, fLow, fHigh, fstartobs);
+
+  /* Clean up */
+  /* freq has been memcopied */
   gsl_vector_free(freq);
 }
 
@@ -451,6 +508,111 @@ int RestrictFDReImFrequencySeries(
   }
 
   return SUCCESS;
+}
+
+/* Function to unwrap the phase mod 2pi  - acts directly on a gsl_vector representing the phase */
+/* WARNING : found significant accumulating difference with the numpy unwrap function - to be understood */
+int UnwrapPhase(
+  gsl_vector* phaseout,    /* Output: unwrapped phase vector, already allocated */
+  gsl_vector* phasein)     /* Input: phase vector */
+{
+  size_t N = phasein->size;
+  double* p = phasein->data;
+  double* pmod = (double*) malloc(sizeof(double) * N);
+  int* jumps = (int*) malloc(sizeof(int) * N);
+  int* cumul = (int*) malloc(sizeof(int) * N);
+
+  /* Compute phase mod 2pi (shifted to be between -pi and pi) */
+  for(int i=1; i<N; i++) {
+    pmod[i] = p[i] - floor((p[i] + PI) / (2*PI))*(2*PI) - PI;
+  }
+
+  /* Identify jumps */
+  jumps[0] = 0;
+  double d = 0.;
+  for(int i=1; i<N; i++) {
+    d = pmod[i] - pmod[i-1];
+    if(d<-PI) jumps[i] = 1;
+    else if(d>PI) jumps[i] = -1;
+    else jumps[i] = 0;
+  }
+
+  /* Cumulative of the jump sequence */
+  int c = 0;
+  cumul[0] = 0;
+  for(int i=1; i<N; i++) {
+    c += jumps[i];
+    cumul[i] = c;
+  }
+
+  /* Correct original phase series by the number of 2pi factor given by the cumulative of the jumps */
+  double* pout = phaseout->data;
+  for(int i=0; i<N; i++) {
+    pout[i] = 2*PI*cumul[i] + p[i];
+  }
+
+  /* Cleanup */
+  free(pmod);
+  free(jumps);
+  free(cumul);
+}
+
+/* Function to convert a time series from Re/Im form to Amp/Phase form - unwrapping the phase */
+int ReImTimeSeries_ToAmpPhase(
+  AmpPhaseTimeSeries** timeseriesout,             /* Output: Amp/Phase time series */
+  ReImTimeSeries* timeseriesin)                   /* Input: Re/Im time series */
+{
+  /* Initialize output */
+  int npt = (int) timeseriesin->times->size;
+  AmpPhaseTimeSeries_Init(timeseriesout, npt);
+  gsl_vector_memcpy((*timeseriesout)->times, timeseriesin->times);
+
+  /* Compute amplitude and phase */
+  gsl_vector* amp = gsl_vector_alloc(npt);
+  gsl_vector* phase = gsl_vector_alloc(npt);
+  double* ampval = amp->data;
+  double* phaseval = phase->data;
+  double* hreal = timeseriesin->h_real->data;
+  double* himag = timeseriesin->h_imag->data;
+  for(int i=0; i<npt; i++) {
+    ampval[i] = cabs(hreal[i] + I*himag[i]);
+    phaseval[i] = carg(hreal[i] + I*himag[i]);
+  }
+
+  /* Unwrap phase */
+  UnwrapPhase((*timeseriesout)->h_phase, phase);
+
+  /* Copy amplitude */
+  gsl_vector_memcpy((*timeseriesout)->h_amp, amp);
+
+  /* Cleanup */
+  gsl_vector_free(amp);
+  gsl_vector_free(phase);
+}
+
+/* Function to convert a time series from Amp/Phase form to Re/Im form */
+int AmpPhaseTimeSeries_ToReIm(
+  ReImTimeSeries** timeseriesout,                 /* Output: Re/Im time series */
+  AmpPhaseTimeSeries* timeseriesin)               /* Input: Amp/Phase time series */
+{
+  /* Initialize output */
+  int npt = (int) timeseriesin->times->size;
+  ReImTimeSeries_Init(timeseriesout, npt);
+  gsl_vector_memcpy((*timeseriesout)->times, timeseriesin->times);
+  gsl_vector_set_zero((*timeseriesout)->h_real);
+  gsl_vector_set_zero((*timeseriesout)->h_imag);
+
+  /* Compute amplitude and phase */
+  gsl_vector* hreal = gsl_vector_alloc(npt);
+  gsl_vector* himag = gsl_vector_alloc(npt);
+  double* hrealval = (*timeseriesout)->h_real->data;
+  double* himagval = (*timeseriesout)->h_imag->data;
+  double* hamp = timeseriesin->h_amp->data;
+  double* hphase = timeseriesin->h_phase->data;
+  for(int i=0; i<npt; i++) {
+    hrealval[i] = hamp[i]*cos(hphase[i]);
+    himagval[i] = hamp[i]*sin(hphase[i]);
+  }
 }
 
 /***************** Other structure functions ****************/

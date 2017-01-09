@@ -43,11 +43,20 @@ double WindowFunction(double x, double xi, double xf, double deltaxi, double del
 double WindowFunctionLeft(double x, double xf, double deltaxf);
 double WindowFunctionRight(double x, double xi, double deltaxi);
 
-/* FFT of time series */
+/* FFT of real time series */
+/* Note: FFT uses flipped convention (i.e. h(f) = int e^(+2ipift)h(t)) */
+int FFTRealTimeSeries(
+  ReImFrequencySeries** freqseries,   /* Output: frequency series */
+  RealTimeSeries* timeseries,         /* Input: real time series */
+  double twindowbeg,                  /* Extent of the window at beginning (starts at the first point) */
+  double twindowend,                  /* Extent of the window at the end (end at the last point) */
+  int nzeropad);                      /* For 0-padding: length will be (upper power of 2)*2^nzeropad */
+
+/* FFT of Re/Im time series */
 /* Note: FFT uses flipped convention (i.e. h(f) = int e^(+2ipift)h(t)) */
 int FFTTimeSeries(
   ReImFrequencySeries** freqseries,   /* Output: frequency series */
-  RealTimeSeries* timeseries,         /* Input: real time series */
+  ReImTimeSeries* timeseries,         /* Input: Re/Im time series */
   double twindowbeg,                  /* Extent of the window at beginning (starts at the first point) */
   double twindowend,                  /* Extent of the window at the end (end at the last point) */
   int nzeropad);                      /* For 0-padding: length will be (upper power of 2)*2^nzeropad */
@@ -55,8 +64,20 @@ int FFTTimeSeries(
 /* IFFT of frequency series */
 /* Note: assumes frequency series is FT of real data */
 /* Note: FFT uses flipped convention (i.e. h(f) = int e^(+2ipift)h(t)) */
-int IFFTFrequencySeries(
+int IFFTFrequencySeriesReal(
   RealTimeSeries** timeseries,       /* Output: real time series*/
+  ReImFrequencySeries* freqseries,   /* Input: complex frequency series, assumed to be the FT of a real time series */
+  double f1windowbeg,                /* Start of window at the beginning */
+  double f2windowbeg,                /* End of window at the beginning */
+  double f1windowend,                /* Start of window at the end */
+  double f2windowend,                /* End of window at the end */
+  int nzeropad);                     /* For 0-padding: length will be (upper power of 2)*2^nzeropad */
+
+/* IFFT of frequency series */
+/* Note: assumes frequency series is FT of complex data - produces complex output */
+/* Note: FFT uses flipped convention (i.e. h(f) = int e^(+2ipift)h(t)) */
+int IFFTFrequencySeries(
+  ReImTimeSeries** timeseries,       /* Output: complex time series */
   ReImFrequencySeries* freqseries,   /* Input: complex frequency series, assumed to be the FT of a real time series */
   double f1windowbeg,                /* Start of window at the beginning */
   double f2windowbeg,                /* End of window at the beginning */

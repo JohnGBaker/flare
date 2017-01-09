@@ -83,7 +83,26 @@ typedef struct tagReImFrequencySeries
   gsl_vector* h_imag;
 } ReImFrequencySeries;
 
+/* Complex frequency series in real/imaginary part representation (for one mode, or their sum) */
+/* NOTE: for now, exact duplicata of ReImFrequencySeries - differentiated for readability of the code */
+typedef struct tagReImTimeSeries
+{
+  gsl_vector* times;
+  gsl_vector* h_real;
+  gsl_vector* h_imag;
+} ReImTimeSeries;
+
+/* Complex frequency series in amplitude/phase representation (representing one mode) */
+/* NOTE: for now, exact duplicata of ReImFrequencySeries - differentiated for readability of the code */
+typedef struct tagAmpPhaseTimeSeries
+{
+  gsl_vector* times;
+  gsl_vector* h_amp;
+  gsl_vector* h_phase;
+} AmpPhaseTimeSeries;
+
 /* Real time series */
+/* NOTE: could change the h to something more general, like values - also used for TD 22 amplitude, for instance  */
 typedef struct tagRealTimeSeries
 {
   gsl_vector* times;
@@ -172,17 +191,38 @@ void CAmpPhaseSpline_Init(
 	 const int n );                         /* length of the frequency series setting the splines */
 void CAmpPhaseSpline_Cleanup(CAmpPhaseSpline* splines);
 void CAmpPhaseGSLSpline_Init(
-	 CAmpPhaseGSLSpline** splines,             /* double pointer for initialization */
+	 CAmpPhaseGSLSpline** splines,          /* double pointer for initialization */
 	 const int n );                         /* length of the frequency series setting the splines */
 void CAmpPhaseGSLSpline_Cleanup(CAmpPhaseGSLSpline* splines);
 void ReImFrequencySeries_Init(
 	 ReImFrequencySeries** freqseries,      /* double pointer for initialization */
 	 const int n );                         /* length of the frequency series */
 void ReImFrequencySeries_Cleanup(ReImFrequencySeries* freqseries);
+void ReImTimeSeries_Init(
+	 ReImTimeSeries** timeseries,           /* double pointer for initialization */
+	 const int n );                         /* length of the time series */
+void ReImTimeSeries_Cleanup(ReImTimeSeries* timeseries);
+void AmpPhaseTimeSeries_Init(
+	 AmpPhaseTimeSeries** timeseries,       /* double pointer for initialization */
+	 const int n );                         /* length of the time series */
+void AmpPhaseTimeSeries_Cleanup(AmpPhaseTimeSeries* timeseries);
 void RealTimeSeries_Init(
 	 RealTimeSeries** timeseries,      /* double pointer for initialization */
 	 const int n );                /* length of the time series */
 void RealTimeSeries_Cleanup(RealTimeSeries* timeseries);
+
+/***********************************************************************/
+/**************** I/O functions for internal structures ****************/
+
+/* Note: at the moment, requires external input for the number of lines in the data */
+int Read_RealTimeSeries(RealTimeSeries** timeseries, const char dir[], const char file[], const int nblines, const int binary);
+int Read_AmpPhaseTimeSeries(AmpPhaseTimeSeries** timeseries, const char dir[], const char file[], const int nblines, const int binary);
+int Read_ReImTimeSeries(ReImTimeSeries** timeseries, const char dir[], const char file[], const int nblines, const int binary);
+int Write_ReImFrequencySeries(const char dir[], const char file[], ReImFrequencySeries* freqseries, const int binary);
+int Write_RealTimeSeries(const char dir[], const char file[], RealTimeSeries* timeseries, int binary);
+int Write_AmpPhaseTimeSeries(const char dir[], const char file[], AmpPhaseTimeSeries* timeseries, int binary);
+int Write_ReImTimeSeries(const char dir[], const char file[], ReImTimeSeries* timeseries, int binary);
+
 
 #if 0
 { /* so that editors will match succeeding brace */

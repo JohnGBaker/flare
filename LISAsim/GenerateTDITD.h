@@ -48,13 +48,15 @@ typedef enum GenWavetag {
 
 /* Parameters for the generation of a LISA waveform (in the form of a list of modes) */
 typedef struct tagGenTDITDparams {
+  double phiRef;             /* Phase (radians, default=0) -- used when input is h22 */
+  double inclination;        /* Inclination (radians, default=PI/3) -- used when input is h22 */
   double lambda;             /* first angle for the position in the sky (rad, default 0) */
   double beta;               /* second angle for the position in the sky (rad, default 0) */
   double polarization;       /* polarization angle (rad, default 0) */
   int tagtdi;                /* Tag selecting the desired output format */
   int nsamplesinfile;        /* Number of lines of input file */
   int binaryin;              /* Tag for loading the data in gsl binary form instead of text (default false) */
-  int binaryout;             /* Tag for outputting the data in gsl binary form instead of text (default false) */  
+  int binaryout;             /* Tag for outputting the data in gsl binary form instead of text (default false) */
   char indir[256];           /* Path for the input directory */
   char infile[256];          /* Path for the input file */
   char outdir[256];          /* Path for the output directory */
