@@ -317,9 +317,12 @@ int LISASimFDResponseTDI3Chan(
     int resampled = 0; /* Keeps track of wether or not we resampled and allocated new resources we need to free */
     double maxfsignal = gsl_vector_get(freq, len-1);
     double fHigh = fmin(maxf, maxfsignal);
-    double deltaflineartarget = 0.0005;
-    int imaxlogsampling = len-1; /* last index to be covered with original sampling */
-    while((gsl_vector_get(freq, imaxlogsampling)>fHigh) && imaxlogsampling>0) imaxlogsampling--;
+    double fHigh_log_samp = 0.002;
+    double deltaflineartarget = 0.00002; //1e-5 better, but slower
+    int ifmax = len-1; /* last index to be covered in original sampling overall*/
+    while((gsl_vector_get(freq, ifmax)>fHigh) && ifmax>0) ifmax--;
+    int imaxlogsampling = ifmax; /* last index to be covered with original sampling */
+    while((gsl_vector_get(freq, imaxlogsampling)>fHigh_log_samp) && imaxlogsampling>0) imaxlogsampling--;
     gsl_vector* freq_resample = NULL; /*  */
     gsl_vector* amp_real_resample = NULL;
     gsl_vector* amp_imag_resample = NULL;
@@ -327,9 +330,9 @@ int LISASimFDResponseTDI3Chan(
     int len_resample;
     //
     //printf("%d\n", imaxlogsampling);
-    //printf("%g, %g, %g\n", maxf, maxfsignal, fHigh);
-    /* We keep original logarithmic sampling below 0.1Hz */
-    if((fHigh>0.1) && ((fHigh - gsl_vector_get(freq, imaxlogsampling))/deltaflineartarget)>len-1-imaxlogsampling ) { /* condition to check if the linear sampling will add points - if not, do nothing */
+    //printf("maxf? %g, %g, %g\n", maxf, maxfsignal, fHigh);
+    //printf(" test: %g, %i\n", ((fHigh - gsl_vector_get(freq, imaxlogsampling))/deltaflineartarget),ifmax-imaxlogsampling );
+    if((fHigh>fHigh_log_samp) && ((fHigh - gsl_vector_get(freq, imaxlogsampling))/deltaflineartarget)>ifmax-imaxlogsampling ) { /* condition to check if the linear sampling will add points - if not, do nothing */
       resampled = 1;
       /* Number of pts in resampled part */
       int nbfreqlinear = ceil((fHigh - gsl_vector_get(freq, imaxlogsampling))/deltaflineartarget);

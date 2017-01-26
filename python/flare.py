@@ -18,8 +18,7 @@ ireport=9
 FisherRunFailCount=0
 noRun=False
 all_params_file=False
-#ROM_DATA_PATH="/discover/nobackup/jgbaker/GW-DA/flare/ROMdata/q1-12_Mfmin_0.0003940393857519091"
-ROM_DATA_PATH="/Users/marsat/src/flare/ROMdata/q1-12_Mfmin_0.0003940393857519091"
+ROM_DATA_PATH="ROMdata/q1-12_Mfmin_0.0003940393857519091"
 
 def set_flare_flags(snr,params):
     flags=""
@@ -31,7 +30,8 @@ def set_flare_flags(snr,params):
     #flags+=" --deltatobs 1.0" #duration in years of LISA observation
     #flags+=" --minf 1e-4" #minimun frequency included in analysis
     flags+=" --minf 3e-6" #minimun frequency included in analysis
-    flags+=" --nbmodeinj 1 --nbmodetemp 1" #for no higher modes in injection and template
+    flags+=" --maxf 0.15" #maximum frequency included in analysis
+    flags+=" --nbmodeinj 5 --nbmodetemp 5" #for no higher modes in injection and template
     if(snr>0):
         flags+=" --snr "+str(snr)+" --rescale-distprior" #fixing SNR (rescales distance)
     flags+=" --comp-min 1e5 --comp-max 1e8" #min/max for component mass prior ranges
@@ -118,20 +118,19 @@ def perform_run(name,Mtot,q,snr):
     flags+=set_flare_flags(snr,params)
     subprocess.call(cmd+" "+flags)
 
-
-def SNRrun(Mtot,q,snr):
+def SNRrun(Mtot,q,snr,name="dummy"):
     cmd   = flare_dir+"/LISAinference/LISAinference_ptmcmc"
     flags = " --nsteps=0 --noFisher"
     params=draw_params(Mtot,q)
     flags+=set_flare_flags(snr,params)
-    name="dummy"
-    flags += " --rng_seed="+str(np.random.rand())+" "
+    flags += " --rng_seed="+str(np.random.rand())+" " 
     flags += " --outroot "+str(name)+" "
     cmd += " "+flags+">"+name+".out"
     setenv=""
+
     #setenv = "export ROM_DATA_PATH=/Users/jgbaker/Projects/GWDA/LISA-type-response/flare/ROMdata/q1-12_Mfmin_0.0003940393857519091"
     #setenv="export ROM_DATA_PATH=/discover/nobackup/jgbaker/GW-DA/flare/ROMdata/q1-12_Mfmin_0.0003940393857519091"
-    setenv="export ROM_DATA_PATH="+ROM_DATA_PATH
+    setenv="export ROM_DATA_PATH="+flare_dir+"/"+ROM_DATA_PATH
 
     print "Executing '"+cmd+"'"
     code=subprocess.call(setenv+";"+cmd,shell=True)
@@ -153,7 +152,7 @@ def tSNRrun(Mtot,q,snr,name,data):
     cmd += " "+flags+">"+name+".out"
     setenv=""
     #setenv = "export ROM_DATA_PATH=/Users/jgbaker/Projects/GWDA/LISA-type-response/flare/ROMdata/q1-12_Mfmin_0.0003940393857519091"
-    setenv="export ROM_DATA_PATH="+ROM_DATA_PATH
+    setenv="export ROM_DATA_PATH="+flare_dir+"/"+ROM_DATA_PATH
 
     print "Executing '"+cmd+"'"
     code=subprocess.call(setenv+";"+cmd,shell=True)
@@ -163,7 +162,10 @@ def tSNRrun(Mtot,q,snr,name,data):
         #print lines
         dist=re.search("dist_resc:(.*)", lines).group(1)
         print "distance =",dist
-    data.append(float(dist))
+    if(not math.isnan(float(dist))):
+        data.append(float(dist))
+    else:
+        print "NAN_DIST with command:",cmd
     return
 
 def threadedSNRrun(Mtot,q,snr,label,Nruns,Nthreads,data):
@@ -186,7 +188,7 @@ def threadedSNRrun(Mtot,q,snr,label,Nruns,Nthreads,data):
         print " Batch of runs done, now irun=",irun
 
 def SNRstudy(outlabel,MtotList,qList,SNRList,Navg,Nthreads=1):
-    pp = PdfPages(str(outlabel)+'-SNRstudy.pdf')
+    pp = PdfPages(str(outlabel)+'SNRstudy.pdf')
     for q in qList:
         tags=[]
         labels=[]
@@ -200,16 +202,19 @@ def SNRstudy(outlabel,MtotList,qList,SNRList,Navg,Nthreads=1):
                 print "Running SNRrun(",Mtot,",",q,",",snr,")"
                 data=[]
                 if(multithreaded and Nthreads>1):
-                    threadedSNRrun(Mtot,q,snr,"dummy",Navg,Nthreads,data)
+                    threadedSNRrun(Mtot,q,snr,outlabel+"dummy",Navg,Nthreads,data)
                 else:
                     for i in range(Navg):
-                        dist=SNRrun(Mtot,q,snr)
-                        data.append(dist)
-                zs=np.zeros(Navg);
+                        dist=SNRrun(Mtot,q,snr,outlabel+"dummy")
+                        if(not math.isnan(dist)):
+                            data.append(dist)
+                        else:
+                            print "NAN_DIST!"
+                zs=np.zeros(0);
                 for dist in data:
                     z=z_at_value(cosmo.luminosity_distance,dist*units.Mpc,zmax=10000,ztol=1e-6)
                     print "D=",dist," z=",z
-                    zs[i]=math.log10(z)
+                    zs=np.append(zs,math.log10(z))
                     #zs[i]=math.log10(dist)
                 mean=np.mean(zs);
                 std=np.std(zs);
@@ -249,10 +254,8 @@ def FisherRunByParams(snr,params,delta,label,extrapoints=1.0):
     flags += " --rng_seed="+str(np.random.rand())+" "
     flags += " --outroot "+str(name)+" "
     cmd += " "+flags+">"+name+".out"
-    setenv=""
-    #setenv = "export ROM_DATA_PATH=/Users/jgbaker/Projects/GWDA/LISA-type-response/flare/ROMdata/q1-12_Mfmin_0.0003940393857519091"
-    #setenv="export ROM_DATA_PATH=/discover/nobackup/jgbaker/GW-DA/flare/ROMdata/q1-12_Mfmin_0.0003940393857519091"
-    setenv="export ROM_DATA_PATH="+ROM_DATA_PATH
+    setenv="export ROM_DATA_PATH="+flare_dir+"/"+ROM_DATA_PATH
+
     try:
         print "Executing '"+cmd+"'"
         dist=0
@@ -382,8 +385,8 @@ def readCovarFile(file):
 
 
 def FisherStudy(outlabel,MtotList,qList,SNRList,deltalist,Navg,Nthreads):
-    pp = PdfPages(str(outlabel)+'-FisherStudy.pdf')
-    datafile = open(outlabel+'-FisherStudy.dat','w')
+    pp = PdfPages(str(outlabel)+'FisherStudy.pdf')
+    datafile = open(outlabel+'FisherStudy.dat','w')
     for q in qList:
         tags=[]
         labels=[]
@@ -401,10 +404,10 @@ def FisherStudy(outlabel,MtotList,qList,SNRList,deltalist,Navg,Nthreads):
                     logzs=np.zeros(Navg);
                     print "Running FisherRun(",Mtot,",",q,",",snr,")"
                     if(multithreaded):
-                        threadedFisherRun(Mtot,q,snr,delta,"dummy",Navg,Nthreads,data)
+                        threadedFisherRun(Mtot,q,snr,delta,outlabel+"dummy",Navg,Nthreads,data)
                     else:
                         for i in range(Navg):
-                            FisherRun(Mtot,q,snr,delta,"dummy",data)
+                            FisherRun(Mtot,q,snr,delta,outlabel+"dummy",data)
                     if noRun: continue
                     for i in range(Navg):
                         z=z_at_value(cosmo.luminosity_distance,data[i][0]*units.Mpc,zmax=10000,ztol=1e-6)
@@ -412,7 +415,7 @@ def FisherStudy(outlabel,MtotList,qList,SNRList,deltalist,Navg,Nthreads):
                         logzs[i]=math.log10(z)
                     meanz=np.mean(logzs);
                     stdz=np.std(logzs);
-                    print "M=",Mtot," q=",q,"dist=",meanz,"+/-",stdz
+                    print "M=",Mtot," q=",q,"z=",meanz,"+/-",stdz
                     datafile.write(str(snr)+"\t"+str(delta)+"\t"+str(Mtot)+"\t"+str(q)+"\t"+str(meanz)+"\t"+str(stdz))
                     npdata=np.array(data)
                     print "data:\n",data
@@ -471,7 +474,7 @@ def FisherStudy(outlabel,MtotList,qList,SNRList,deltalist,Navg,Nthreads):
 
 
 def FisherPlot(outlabel,ipar,qList,SNRList,deltalist,datafile,scaled=False,targetSNR=None,errorNsigma=2):
-    pp = PdfPages(str(outlabel)+'-Fisher-'+par_name(ipar)+'.pdf')
+    pp = PdfPages(str(outlabel)+'Fisher-'+par_name(ipar)+'.pdf')
     #datafile = open(datafile,'r')
     tol=1e-10
     data=np.loadtxt(datafile)
@@ -554,12 +557,13 @@ def FisherPlot(outlabel,ipar,qList,SNRList,deltalist,datafile,scaled=False,targe
 def HorizonPlot(outlabel,ipar,qList,snr,delta,datafile,horizonlist,scaled=False,errorNsigma=2,show_range=False):
     rangetag=''
     if(show_range):rangetag='range-'
-    pp = PdfPages(str(outlabel)+'-Horizon-'+rangetag+par_name(ipar)+'.pdf')
+    pp = PdfPages(str(outlabel)+'Horizon-'+rangetag+par_name(ipar)+'.pdf')
     #datafile = open(datafile,'r')
     tol=1e-10
     data=np.loadtxt(datafile)
     punits=["Msun","Msun","s","Mpc","rad","rad","rad","rad","rad",r"$rad^2$",r"$rad^2$",r"$Msun^2$"]
     sunits=["m1",  "m2",  "s","D",  "rad","rad","rad","rad","rad",r"$deg^2$",r"$rad^2$",r"(m1*m2)"]
+
     if(scaled):punits=sunits
     for q in qList:
         tags=[]

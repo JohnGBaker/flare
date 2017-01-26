@@ -1,8 +1,12 @@
 *.bk*
 *.o
+<<<<<<< HEAD
+*.pyc
+=======
 #*#
 *~
 python/*.pyc
+>>>>>>> 1cca8e87477027209485031ed5eca3ff04e27d38
 LISAsim/LISAexampleSNR
 LLVinference/LLVinference
 LLVinference/LLVlikelihood

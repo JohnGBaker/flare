@@ -46,8 +46,8 @@
 static double Spm(const double f) {
   double invf2 = 1./(f*f);
   //return 2.5e-48 * invf2 * sqrt(1. + 1e-8*invf2);
-  //const double Daccel=3.0e-15; //acceleration noise in m/s^2/sqrt(Hz)
-  const double Daccel=3.0e-15/(2.5e9/L_SI); //scaled off L3LISA-v1 to for equal-SNR PE experiment
+  const double Daccel=3.0e-15; //acceleration noise in m/s^2/sqrt(Hz)
+  //const double Daccel=3.0e-15/(2.5e9/L_SI); //scaled off L3LISA-v1 to for equal-SNR PE experiment
   const double SaccelFF=Daccel*Daccel/4.0/PI/PI/C_SI/C_SI; //f^-2 coeff for fractional-freq noise PSD from accel noise; yields 2.54e-48 from 3e-15;
   double invf8=invf2*invf2*invf2*invf2;
   //Here we add an eyeball approximation based on 4yrs integration with L3LISAReferenceMission looking at a private comm from Neil Cornish 2016.11.12
@@ -55,12 +55,11 @@ static double Spm(const double f) {
   //return SaccelFF * invf2 * sqrt(1. + 1e-8*invf2) + WDWDnoise;
   return SaccelFF * invf2 * sqrt(1. + 1e-7*invf2) + WDWDnoise; //Increased reddening by factor of 10 for comparison with Neil Cornish 2015.11.15
 }
-*/
-/*
+
 static double Sop(const double f) {
   //const double Dop=2.0e-11; //Optical path noise in m/rtHz (Standard LISA)
-  //const double Dop=1.2e-11; //Optical path noise in m/rtHz (L3 LISA reference)
-  const double Dop=1.2e-11/(2.5e9/L_SI); //scaled off L3LISA-v1 to for equal-SNR PE experiment
+  const double Dop=1.2e-11; //Optical path noise in m/rtHz (L3 LISA reference)
+  //const double Dop=1.2e-11/(2.5e9/L_SI); //scaled off L3LISA-v1 to for equal-SNR PE experiment
   const double SopFF=Dop*Dop*4.0*PI*PI/C_SI/C_SI; //f^2 coeff for OP frac-freq noise PSD.  Yields 1.76e-37 for Dop=2e-11.
   //return 3.8e-38 *f*f;
   return SopFF * f * f;

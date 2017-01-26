@@ -622,7 +622,7 @@ int print_rescaleddist_to_file_LISA(
 /******** Trim modes that are out of range ********/
 int listmodesCAmpPhaseTrim(ListmodesCAmpPhaseFrequencySeries* listSeries){
   //return SUCCESS;
-  double maximum_freq=0.1;//For now we set this by hand.  May also extent to cut low-freq end as well...
+  double maximum_freq=0.2;//For now we set this by hand.  May also extent to cut low-freq end as well...
   ListmodesCAmpPhaseFrequencySeries* listelem = listSeries;
   int i;
   while(listelem){

@@ -7,7 +7,7 @@ flare.flare_dir="../flare"
 #label="test11.15"
 #label="L3LISA-v1-sens-but-5Gm-test-wide"
 #label="L3LISARef"
-label="L3LISA_Accx3"
+label="L3LISA"
 file=label+"-FisherStudy.dat"
 #flare.FisherPlot(label,9,[1.1,2.0,4.0,10.0],[10,100,1000],[0.1,0.3],file)
 #flare.FisherPlot(label,0,[1.1,2,4,10],[10,100,1000],[0.1,.3],file)
