@@ -49,7 +49,7 @@ extern "C" {
 typedef enum TDItag {
   delayO,                  /* Orbital delay */
   y12L,                    /* Constellation-only response y12L */
-  y12,                     /* Complete response y12 (includees orbital delay) */
+  y12,                     /* Complete response y12 (includes orbital delay) */
   TDIXYZ,
   TDIalphabetagamma,
   TDIAETXYZ,

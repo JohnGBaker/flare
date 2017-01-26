@@ -165,6 +165,13 @@ void getLogLike(double *Cube, int *ndim, int *npars, double *lnew, void *context
     return;
   }
 
+  /* If zerolikelihood option is activated, simply set result to 0 for all parameters choices within prior */
+  /* Useful for testing purposes, to just sample from the prior */
+  if(globalparams->zerolikelihood) {
+    *lnew = 0;
+    return;
+  }
+
   /* Cube values here have the order of the 9 physical parameters (fixed): m1, m2, tRef, dist, phase, inc, lambda, beta, pol */
   LISAParams templateparams;
   templateparams.m1 = Cube[0];

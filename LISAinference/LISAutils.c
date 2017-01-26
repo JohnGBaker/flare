@@ -144,6 +144,7 @@ Arguments are as follows:\n\
  --tagint              Tag choosing the integrator: 0 for Fresnel (default), 1 for linear integration\n\
  --tagtdi              Tag choosing the set of TDI variables to use (default TDIAETXYZ)\n\
  --nbptsoverlap        Number of points to use for linear integration (default 32768)\n\
+ --zerolikelihood      Zero out the likelihood to sample from the prior for testing purposes (default 0)\n\
 \n\
 --------------------------------------------------\n\
 ----- Prior Boundary Settings --------------------\n\
@@ -223,6 +224,7 @@ Syntax: --PARAM-min\n\
     globalparams->tagint = 0;
     globalparams->tagtdi = TDIAETXYZ;
     globalparams->nbptsoverlap = 32768;
+    globalparams->zerolikelihood = 0;
 
     /* set default values for the prior limits */
     prior->deltaT = 3600.;
@@ -326,6 +328,8 @@ Syntax: --PARAM-min\n\
             globalparams->tagtdi = ParseTDItag(argv[++i]);
         } else if (strcmp(argv[i], "--nbptsoverlap") == 0) {
             globalparams->nbptsoverlap = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "--zerolikelihood") == 0) {
+            globalparams->zerolikelihood = 1;
         } else if (strcmp(argv[i], "--deltaT") == 0) {
             prior->deltaT = atof(argv[++i]);
         } else if (strcmp(argv[i], "--comp-min") == 0) {
@@ -512,6 +516,7 @@ int print_parameters_to_file_LISA(
   fprintf(f, "tagint:       %d\n", globalparams->tagint);
   fprintf(f, "tagtdi:       %d\n", globalparams->tagtdi); //Translation back from enum to string not implemented yet
   fprintf(f, "nbptsoverlap: %d\n", globalparams->nbptsoverlap);
+  fprintf(f, "zerolikelihood: %d\n", globalparams->zerolikelihood);
   fprintf(f, "-----------------------------------------------\n");
   fprintf(f, "\n");
 
@@ -566,17 +571,17 @@ int print_parameters_to_file_LISA(
   fprintf(f, "-----------------------------------------------\n");
   fprintf(f, "Run parameters:\n");
   fprintf(f, "-----------------------------------------------\n");
-  fprintf(f, "eff:     %g\n", run->eff);
-  fprintf(f, "tol:     %g\n", run->tol);
-  fprintf(f, "nlive:   %d\n", run->nlive);
-  fprintf(f, "bambi:   %d\n", run->bambi);
-  fprintf(f, "resume:  %d\n", run->resume);
-  fprintf(f, "maxiter:  %d\n", run->maxiter);
-  fprintf(f, "mmodal:  %d\n", run->mmodal);
-  fprintf(f, "maxcls:  %d\n", run->maxcls);
-  fprintf(f, "nclspar: %d\n", run->nclspar);
-  fprintf(f, "ztol:    %g\n", run->ztol);
-  fprintf(f, "seed:    %d\n", run->seed);
+  fprintf(f, "eff:            %g\n", run->eff);
+  fprintf(f, "tol:            %g\n", run->tol);
+  fprintf(f, "nlive:          %d\n", run->nlive);
+  fprintf(f, "bambi:          %d\n", run->bambi);
+  fprintf(f, "resume:         %d\n", run->resume);
+  fprintf(f, "maxiter:        %d\n", run->maxiter);
+  fprintf(f, "mmodal:         %d\n", run->mmodal);
+  fprintf(f, "maxcls:         %d\n", run->maxcls);
+  fprintf(f, "nclspar:        %d\n", run->nclspar);
+  fprintf(f, "ztol:           %g\n", run->ztol);
+  fprintf(f, "seed:           %d\n", run->seed);
   fprintf(f, "-----------------------------------------------\n");
 
   /* Close output file */

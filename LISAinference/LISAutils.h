@@ -55,6 +55,7 @@ typedef struct tagLISAGlobalParams {
   int tagint;                /* Tag choosing the integrator: 0 for wip (default), 1 for linear integration */
   int tagtdi;                /* Tag choosing the TDI variables to use */
   int nbptsoverlap;          /* Number of points to use in loglinear overlaps (default 32768) */
+  int zerolikelihood;        /* Tag to zero out the likelihood, to sample from the prior for testing purposes (default 0) */
 } LISAGlobalParams;
 
 typedef struct tagLISASignalCAmpPhase

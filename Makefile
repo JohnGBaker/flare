@@ -8,14 +8,20 @@ ifeq ($(MACHINE),"sylvainsmac")
   BAMBIROOT = $(HOME)/build/bambi
   CC = gcc-mp-5
   CPP = g++-mp-5
+	CXX = g++-mp-5
   LD = $(CPP)
   LDFLAGS=  -L$(GSLROOT)/lib
   #Uncomment this for MPI and specify your needed MPI libraries
 	CFLAGS += -I/usr/local/include -I/opt/local/include
 	CPPFLAGS += -I/usr/local/include -I/opt/local/include
+	#Required for openmp with gcc
+	CFLAGS += -fopenmp
+	CPPFLAGS += -fopenmp
+	LDFLAGS += -fopenmp
   CC += -DPARALLEL
   CPP += -DPARALLEL
   MPILIBS = -lmpi -lmpi_cxx -lmpi_mpifh
+	PTMCMC=$(PWD)/ptmcmc
 else ifeq ($(MACHINE),"johnsmac")
   MESSAGE="Compiling for John's Mac"
   GSLROOT = /opt/local
@@ -86,9 +92,9 @@ else ifeq ($(MACHINE),"datura")
   MPILIBS += $(LAPACKLIB)
   LD = mpif90
 	LDFLAGS += -L$(FFTWLIB)
-  LDFLAGS += -cxxlib -nofor_main -g -traceback -C
-  CFLAGS += -I$(MKLINC) -I$(FFTWINC)
-  CPPFLAGS += -I$(MKLINC) -I$(FFTWINC)
+  LDFLAGS += -cxxlib -nofor_main -g -traceback -C -fopenmp
+  CFLAGS += -I$(MKLINC) -I$(FFTWINC) -fopenmp
+  CPPFLAGS += -I$(MKLINC) -I$(FFTWINC) -fopenmp
 endif
 
 GSLINC = $(GSLROOT)/include
