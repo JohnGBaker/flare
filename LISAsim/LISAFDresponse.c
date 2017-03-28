@@ -269,6 +269,9 @@ int LISASimFDResponseTDI3Chan(
     gsl_vector* amp_imag = freqseries->amp_imag;
     gsl_vector* phase = freqseries->phase;
     int len = (int) freq->size;
+
+    //
+    //printf("len: %d\n", len);
     //
     //if(l==2&&m==1) printf("no resampling 21\n");
     //      if(l==2&&m==1) {for(int i=0; i<len; i++) printf("%d, %g, %g, %g, %g\n", i, gsl_vector_get(freq, i), gsl_vector_get(amp_real, i), gsl_vector_get(amp_imag, i), gsl_vector_get(phase, i));};
@@ -317,9 +320,11 @@ int LISASimFDResponseTDI3Chan(
     int resampled = 0; /* Keeps track of wether or not we resampled and allocated new resources we need to free */
     double maxfsignal = gsl_vector_get(freq, len-1);
     double fHigh = fmin(maxf, maxfsignal);
+    /* BEWARE : as Mathematica tests show, this is way too pessimistic - normally deltaf=0.002Hz sould work */
+    /* To be investigated */
     double fHigh_log_samp = 0.002;
     double deltaflineartarget = 0.00002; //1e-5 better, but slower
-    int ifmax = len-1; /* last index to be covered in original sampling overall*/
+    int ifmax = len-1; /* last index to be covered in original sampling overall */
     while((gsl_vector_get(freq, ifmax)>fHigh) && ifmax>0) ifmax--;
     int imaxlogsampling = ifmax; /* last index to be covered with original sampling */
     while((gsl_vector_get(freq, imaxlogsampling)>fHigh_log_samp) && imaxlogsampling>0) imaxlogsampling--;
@@ -332,7 +337,9 @@ int LISASimFDResponseTDI3Chan(
     //printf("%d\n", imaxlogsampling);
     //printf("maxf? %g, %g, %g\n", maxf, maxfsignal, fHigh);
     //printf(" test: %g, %i\n", ((fHigh - gsl_vector_get(freq, imaxlogsampling))/deltaflineartarget),ifmax-imaxlogsampling );
-    if((fHigh>fHigh_log_samp) && ((fHigh - gsl_vector_get(freq, imaxlogsampling))/deltaflineartarget)>ifmax-imaxlogsampling ) { /* condition to check if the linear sampling will add points - if not, do nothing */
+
+    if((fHigh>fHigh_log_samp) && ((fHigh - gsl_vector_get(freq, imaxlogsampling))/deltaflineartarget)>ifmax-imaxlogsampling) { /* condition to check if the linear sampling will add points - if not, do nothing */
+
       resampled = 1;
       /* Number of pts in resampled part */
       int nbfreqlinear = ceil((fHigh - gsl_vector_get(freq, imaxlogsampling))/deltaflineartarget);
@@ -427,6 +434,7 @@ int LISASimFDResponseTDI3Chan(
       //timingcumulativeGABmode += (double) (tendGAB-tbegGAB) /CLOCKS_PER_SEC;
       /**/
       EvaluateTDIfactor3Chan(&factor1, &factor2, &factor3, g12mode, g21mode, g23mode, g32mode, g31mode, g13mode, f, tditag);
+
       double complex amphtilde = gsl_vector_get(amp_real_resample, j) + I * gsl_vector_get(amp_imag_resample, j);
       camp1 = factor1 * amphtilde;
       camp2 = factor2 * amphtilde;

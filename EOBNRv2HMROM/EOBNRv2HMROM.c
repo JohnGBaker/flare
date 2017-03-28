@@ -455,6 +455,7 @@ int EOBNRv2HMROMCore(
       /* We use the SPA formula tf = -(1/2pi)*dPsi/df to estimate the correspondence between frequency and time */
       /* The frequency corresponding to the 22 peak is omega22peak/2pi, with omega22peak taken from the fit to NR in Pan&al 1106 EOBNRv2HM paper */
       double f22peak = fmin(omega22peakOfq(q)/(2*PI), Mf_ROM_max_ref); /* We ensure we evaluate the spline within its range */
+      /* Note : twopishifttime is almost 0 (order 1e-8) by construction for the 22 mode, so it does not intervene here */
       tpeak22estimate = -1./(2*PI) * gsl_spline_eval_deriv(spline_phi22, f22peak, accel_phi22);
       /* Determine the change in phase (to be propagated to all modes) required to have phi22(fRef) = 2*phiRef */
       phase_change_ref = 2*phiRef + (gsl_spline_eval(spline_phi22, fRef_geom, accel_phi22) - (twopishifttime - 2*PI*tpeak22estimate + 2*PI*deltatRef_geom) * fRef_geom - shiftphase);
@@ -543,7 +544,7 @@ int SimEOBNRv2HMROM(
   double Mtot_sec = Mtot * MTSUN_SI; /* Total mass in seconds */
 
   if ( q > q_max ) {
-    //printf( "Error - %s: q out of range!\nEOBNRv2HMROM is only available for a mass ratio in the range q <= %g.\n", __func__, q_max); 
+    //printf( "Error - %s: q out of range!\nEOBNRv2HMROM is only available for a mass ratio in the range q <= %g.\n", __func__, q_max);
     return FAILURE;
   }
 

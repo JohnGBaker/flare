@@ -198,6 +198,18 @@ static void Read_Text_TDITD3Chan( RealTimeSeries** TDI1, RealTimeSeries** TDI2, 
   gsl_matrix_free(inmatrix);
 }
 
+/***************** Function to control that the TDI tag is allowed *****************/
+/* Only tdi allowed : A,E,T (built from X,Y,Z), either individually or all three together */
+static int AllowedTDItag(TDItag tag) {
+  int ret = 0;
+  if(tag==TDIAETXYZ) ret = 1;
+  else if(tag==TDIAXYZ) ret = 1;
+  else if(tag==TDIEXYZ) ret = 1;
+  else if(tag==TDITXYZ) ret = 1;
+  else ret = 0;
+  return ret;
+}
+
 /***************** Main program *****************/
 
 int main(int argc, char *argv[])
@@ -213,7 +225,7 @@ int main(int argc, char *argv[])
   parse_args_ComputeLISASNR(argc, argv, params);
 
   /* NOTE: supports only AET(XYZ) (orthogonal) */
-  if(!(params->tagtdi==TDIAETXYZ)) {
+  if(!(AllowedTDItag(params->tagtdi))) {
     printf("Error in ComputeLISASNR: TDI tag not recognized.\n");
     exit(1);
   }
@@ -247,8 +259,8 @@ int main(int argc, char *argv[])
       RestrictFDReImFrequencySeries(&TDI3FFTrestr, TDI3FFT, params->minf, __LISASimFD_Noise_fHigh);
 
       /* Compute SNR with linear integration, weighting with non-rescaled noise functions */
-      /* Note: assumes same lengths for all FD FFT frequency seriess */
-      /* Note: not-rescaled noise functions */
+      /* Note: assumes same lengths for all FD FFT frequency series */
+      /* Note: non-rescaled noise functions */
       int sizeA = TDI1FFTrestr->freq->size;
       int sizeE = TDI2FFTrestr->freq->size;
       int sizeT = TDI3FFTrestr->freq->size;
