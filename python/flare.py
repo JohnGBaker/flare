@@ -26,12 +26,14 @@ def set_flare_flags(snr,params):
     #flags += " --tagextpn 0" #Don't extend waveforms at low freq to allow lower masses
     #flags+=" --tagint 0" #1 for Fresnel integration(default), vs gridded quadrature"
     #flags+=" --tagint 1" --nbptsoverlap 8192" #gridded quadrature
-    flags+=" --deltatobs 5.0" #duration in years of LISA observation
-    #flags+=" --deltatobs 1.0" #duration in years of LISA observation
+    #flags+=" --deltatobs 5.0" #duration in years of LISA observation
+    flags+=" --deltatobs 1.0" #duration in years of LISA observation
     #flags+=" --minf 1e-4" #minimun frequency included in analysis
     flags+=" --minf 3e-6" #minimun frequency included in analysis
-    flags+=" --maxf 0.15" #maximum frequency included in analysis
-    flags+=" --nbmodeinj 5 --nbmodetemp 5" #for no higher modes in injection and template
+    #flags+=" --maxf 0.15" #maximum frequency included in analysis
+    flags+=" --maxf 5." #maximum frequency included in analysis
+    #flags+=" --nbmodeinj 5 --nbmodetemp 5" #for no higher modes in injection and template
+    flags+=" --nbmodeinj 1 --nbmodetemp 1" #for no higher modes in injection and template
     if(snr>0):
         flags+=" --snr "+str(snr)+" --rescale-distprior" #fixing SNR (rescales distance)
     flags+=" --comp-min 1e5 --comp-max 1e8" #min/max for component mass prior ranges
@@ -63,6 +65,7 @@ def set_flare_flags(snr,params):
     flags += " --beta "+str(beta)
     flags += " --inclination "+str(inc)
     flags += " --polarization "+str(pol)
+    print "flags : \n" + flags
     return flags
 
 def set_mcmc_flags(outroot,ptN):
@@ -123,7 +126,7 @@ def SNRrun(Mtot,q,snr,name="dummy"):
     flags = " --nsteps=0 --noFisher"
     params=draw_params(Mtot,q)
     flags+=set_flare_flags(snr,params)
-    flags += " --rng_seed="+str(np.random.rand())+" " 
+    flags += " --rng_seed="+str(np.random.rand())+" "
     flags += " --outroot "+str(name)+" "
     cmd += " "+flags+">"+name+".out"
     setenv=""
@@ -266,6 +269,8 @@ def FisherRunByParams(snr,params,delta,label,extrapoints=1.0):
             with open(name+"params.txt",'r') as file:
                 lines=file.read()
                 #print lines
+                ##
+                print name+"params.txt"
                 dist=re.search("dist_resc:(.*)", lines).group(1)
                 print "distance =",dist
             time.sleep(1)#pause to make sure file is ready to read.

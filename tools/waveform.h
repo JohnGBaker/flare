@@ -49,11 +49,23 @@ extern "C" {
 
 /***************** Function estimating frequency corresponding to a given time to coalescence ****************/
 
+/* Function computing the chirp mass */
+double ChirpMass(
+  const double m1,   /* Mass 1 */
+  const double m2);  /* Mass 2 */
+
 /* Newtonian estimate of the relation Mf(deltat/M) (for the 22 mode) - gives the starting geometric frequency for a given mass ratio and a given geometric duration of the observations */
 double NewtonianfoftGeom(const double q, const double t); /* t here is t/M */
-
 /* Newtonian estimate of the relation f(deltat) (for the 22 mode) - gives the starting frequency in Hz for a given mass ratio and a given geometric duration of the observations */
 double Newtonianfoft(const double m1, const double m2, const double t); /* t here is in years, m1-m2 in solar masses */
+/* Newtonian estimate of the relation f(deltat) (for the 22 mode freq) - gives the starting geometric frequency for a given time to merger and chirp mass - output in Hz */
+double Newtonianfoftchirp(
+  const double mchirp,                 /* Chirp mass (solar masses) */
+  const double t);                     /* Time in years */
+/* Newtonian estimate of the relation deltat(f) (for the 22 mode freq) - gives the time to merger from a starting frequency for a given chirp mass - output in years */
+double Newtoniantoffchirp(
+  const double mchirp,                 /* Chirp mass (solar masses) */
+  const double t);                     /* Freq in Hz */
 
 /***************** Function estimating time to coalescence and min/max frequency ****************/
 
@@ -143,6 +155,25 @@ int ReImTimeSeries_ToAmpPhase(
 int AmpPhaseTimeSeries_ToReIm(
   ReImTimeSeries** timeseriesout,                 /* Output: Re/Im time series */
   AmpPhaseTimeSeries* timeseriesin);              /* Input: Amp/Phase time series */
+/* Function to compute a linear resampling at high frequencies to enforce a maximal deltaf */
+/* NOTE: Assumes input frequencies are logarithmic (except maybe first interval) to evaluate when to resample */
+int SetMaxdeltafResampledFrequencies(
+  gsl_vector** freqr,              /* Output: resampled frequencies */
+  gsl_vector* freq,                /* Input: original frequencies */
+  const double maxf,               /* Input: maximal frequency - set to 0. to ignore */
+  const double deltaf);            /* Input: maximal deltaf aimed for - 0.002Hz appropriate for LISA */
+/* Function to compute a linear-in-time resampling at low frequencies to enforce a maximal deltat */
+int SetMaxdeltatResampledFrequencies(
+  gsl_vector** freqr,              /* Output: resampled frequencies */
+  gsl_vector* freq,                /* Input: original frequencies */
+  const double deltat,             /* Input: maximal deltat aimed for - fraction of a year, 1/24 (half month) appropriate for 1e-4 interpolation errors */
+  const double mchirp,             /* Input: chirp mass, used for approximate t-f correspondence */
+  const int m);                    /* Input: chirp mass, used for approximate t-f correspondence */
+/* Function to resample a CAmp/Phase frequency series on the specified frequencies */
+int CAmpPhaseFrequencySeries_Resample(
+  CAmpPhaseFrequencySeries** freqseriesout,         /* Output: CAmp/Phase freq series */
+  CAmpPhaseFrequencySeries* freqseriesin,           /* Input: CAmp/Phase freq series */
+  gsl_vector* freqr);                                 /* Input: freq vector to resample on */
 
 /***************** Spin weighted spherical harmonics ****************/
 

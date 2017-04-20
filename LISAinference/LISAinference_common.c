@@ -22,13 +22,15 @@ void addendum(int argc, char *argv[],LISARunParams *runParams, int *ndim, int *n
   memset(globalparams, 0, sizeof(LISAGlobalParams));
   priorParams = (LISAPrior*) malloc(sizeof(LISAPrior));
   memset(priorParams, 0, sizeof(LISAPrior));
+  addparams = (LISAAddParams*) malloc(sizeof(LISAAddParams));
+  memset(addparams, 0, sizeof(LISAAddParams));
 
   /* Parse commandline to read parameters of injection - copy the number of modes demanded for the injection */
-  parse_args_LISA(argc, argv, injectedparams, globalparams, priorParams, runParams);
+  parse_args_LISA(argc, argv, injectedparams, globalparams, priorParams, runParams, addparams);
   injectedparams->nbmode = globalparams->nbmodeinj;
 
-  int notLISAlike=strstr(argv[0],"LISAlike")==0;
-  if(myid == 0 && notLISAlike) print_parameters_to_file_LISA(injectedparams, globalparams, priorParams, runParams);
+  //int notLISAlike=strstr(argv[0],"LISAlike")==0;
+  if(myid == 0 && runParams->writeparams /*&& notLISAlike*/) print_parameters_to_file_LISA(injectedparams, globalparams, priorParams, runParams);
   /* Initialize the data structure for the injection */
   LISAInjectionCAmpPhase* injectedsignalCAmpPhase = NULL;
   LISAInjectionReIm* injectedsignalReIm = NULL;
@@ -62,6 +64,8 @@ void addendum(int argc, char *argv[],LISARunParams *runParams, int *ndim, int *n
   }
 
   /* Rescale distance to match SNR */
+  //
+  printf("isnan(priorParams->snr_target) : %d\n", isnan(priorParams->snr_target));
   if (!isnan(priorParams->snr_target)) {
     printf("SNR=%g\n",SNR123);
     if (myid == 0) printf("Rescaling the distance to obtain a network SNR of %g\n", priorParams->snr_target);
@@ -72,7 +76,7 @@ void addendum(int argc, char *argv[],LISARunParams *runParams, int *ndim, int *n
       priorParams->dist_max *= SNR123 / priorParams->snr_target;
       if (myid == 0) printf("Distance prior (dist_min, dist_max) = (%g, %g) Mpc\n", priorParams->dist_min, priorParams->dist_max);
     }
-    if (myid == 0 && notLISAlike) print_rescaleddist_to_file_LISA(injectedparams, globalparams, priorParams, runParams);
+    if (myid == 0 && runParams->writeparams /*&& notLISAlike*/) print_rescaleddist_to_file_LISA(injectedparams, globalparams, priorParams, runParams);
     if(globalparams->tagint==0) {
       LISAGenerateInjectionCAmpPhase(injectedparams, injectedsignalCAmpPhase);
       SNR123 = sqrt(injectedsignalCAmpPhase->TDI123ss);
@@ -107,8 +111,8 @@ void addendum(int argc, char *argv[],LISARunParams *runParams, int *ndim, int *n
   else if(globalparams->tagint==1) {
     *logZtrue = CalculateLogLReIm(injectedparams, injectedsignalReIm);
   }
-  printf("Compared params\n");
-  report_LISAParams(injectedparams);
+  /* printf("Compared params\n");
+  report_LISAParams(injectedparams); */
   if (myid == 0) printf("logZtrue = %lf\n", *logZtrue-logZdata);
 
   /* Set the context pointer */
@@ -147,15 +151,15 @@ void addendum(int argc, char *argv[],LISARunParams *runParams, int *ndim, int *n
   /* Order of the 9 cube parameters (modified for clustering): lambda, beta, tRef, phase, pol, inc, dist, m1, m2 */
   int mapcubetophys[9] = {6, 7, 2, 4, 8, 5, 3, 0, 1};
   int freecubeparams[9] = {1, 1, 1, 1, 1, 1, 1, 1, 1};
-  if (!isnan(priorParams->fix_lambda)) { *ndim--; freecubeparams[0] = 0; }
-  if (!isnan(priorParams->fix_beta))   { *ndim--; freecubeparams[1] = 0; }
-  if (!isnan(priorParams->fix_time))   { *ndim--; freecubeparams[2] = 0; }
-  if (!isnan(priorParams->fix_phase))  { *ndim--; freecubeparams[3] = 0; }
-  if (!isnan(priorParams->fix_pol))    { *ndim--; freecubeparams[4] = 0; }
-  if (!isnan(priorParams->fix_inc))    { *ndim--; freecubeparams[5] = 0; }
-  if (!isnan(priorParams->fix_dist))   { *ndim--; freecubeparams[6] = 0; }
-  if (!isnan(priorParams->fix_m1))     { *ndim--; freecubeparams[7] = 0; }
-  if (!isnan(priorParams->fix_m2))     { *ndim--; freecubeparams[8] = 0; }
+  if (!isnan(priorParams->fix_lambda)) { (*ndim)--; freecubeparams[0] = 0; }
+  if (!isnan(priorParams->fix_beta))   { (*ndim)--; freecubeparams[1] = 0; }
+  if (!isnan(priorParams->fix_time))   { (*ndim)--; freecubeparams[2] = 0; }
+  if (!isnan(priorParams->fix_phase))  { (*ndim)--; freecubeparams[3] = 0; }
+  if (!isnan(priorParams->fix_pol))    { (*ndim)--; freecubeparams[4] = 0; }
+  if (!isnan(priorParams->fix_inc))    { (*ndim)--; freecubeparams[5] = 0; }
+  if (!isnan(priorParams->fix_dist))   { (*ndim)--; freecubeparams[6] = 0; }
+  if (!isnan(priorParams->fix_m1))     { (*ndim)--; freecubeparams[7] = 0; }
+  if (!isnan(priorParams->fix_m2))     { (*ndim)--; freecubeparams[8] = 0; }
 
   int *freeparamsmap = malloc(*ndim*sizeof(int));
 

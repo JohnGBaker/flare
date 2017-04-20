@@ -139,6 +139,7 @@ typedef struct tagLISARunParams {
   double eff;                /* target efficiency (default 0.1) */
   double tol;                /* logZ tolerance (default 0.5) */
   int    nlive;              /* number of live points (default 1000) */
+  int    writeparams;        /* Write params - if 1, write run parameters to file (default 1) */
   char   outroot[200];       /* output root (default "chains/LISAinference_") */
   int    bambi;              /* run BAMBI? (default 0) */
   int    resume;             /* resume form previous run? (default 0) */
@@ -151,6 +152,25 @@ typedef struct tagLISARunParams {
   int    seed;               /* seed the inference by setting one of the live points to the injection ? */
 } LISARunParams;
 
+/* Parameters for the generation of a LISA waveform (in the form of a list of modes) */
+typedef struct tagLISAAddParams {
+  double tRef;               /* reference time (s) - GPS time at the frequency representing coalescence */
+  double phiRef;             /* reference phase (rad) - phase at the frequency representing coalescence (or at fRef if specified) */
+  double m1;                 /* mass of companion 1 (solar masses, default 2e6) */
+  double m2;                 /* mass of companion 2 (solar masses, default 1e6) */
+  double distance;           /* distance of source (Mpc, default 1e3) */
+  double lambda;             /* first angle for the position in the sky (rad, default 0) */
+  double beta;               /* second angle for the position in the sky (rad, default 0) */
+  double inclination;        /* inclination of L relative to line of sight (rad, default PI/3) */
+  double polarization;       /* polarization angle (rad, default 0) */
+  int loadparamsfile;        /* Option to load physical parameters from file for LISAlikelihood and to output resulting likelihoods to file (default 0) */
+  int nlinesparams;          /* Number of lines in params file for LISAlikelihood */
+  char indir[256];           /* Input directory for LISAlikelihood */
+  char infile[256];          /* Input file for LISAlikelihood */
+  char outdir[256];          /* Output directory for LISAlikelihood */
+  char outfile[256];         /* Output file for LISAlikelihood */
+} LISAAddParams;
+
 /************ Functions for LISA parameters, injection, likelihood, prior ************/
 
 /* Parse command line to initialize LISAParams, LISAGlobalParams, LISAPrior, and LISARunParams objects */
@@ -159,7 +179,8 @@ void parse_args_LISA(ssize_t argc, char **argv,
   LISAParams* params,
   LISAGlobalParams* globalparams,
   LISAPrior* prior,
-  LISARunParams* run);
+  LISARunParams* run,
+  LISAAddParams* addparams);
 
 /* Functions to print the parameters of the run in files for reference */
 int print_parameters_to_file_LISA(
@@ -269,6 +290,7 @@ double CalculateLogLReIm(LISAParams *params, LISAInjectionReIm* injection);
 extern LISAParams* injectedparams;
 extern LISAGlobalParams* globalparams;
 extern LISAPrior* priorParams;
+extern LISAAddParams* addparams;
 double logZdata;
 
 #if 0

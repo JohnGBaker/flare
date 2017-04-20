@@ -5,6 +5,7 @@
 LLVParams* injectedparams = NULL;
 LLVGlobalParams* globalparams = NULL;
 LLVPrior* priorParams = NULL;
+LLVParams* addparams = NULL;
 
 /************ Functions to initalize and clean up structure for the signals ************/
 

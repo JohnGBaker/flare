@@ -19,6 +19,15 @@
 
 /***************** Function estimating frequency corresponding to a given time to coalescence ****************/
 
+/* Function computing the chirp mass */
+double ChirpMass(
+  const double m1,   /* Mass 1 */
+  const double m2)   /* Mass 2 */
+{
+  return pow(m1*m2, 3./5) / pow(m1+m2, 1./5);
+}
+
+/* NOTE: these are base on Newtonian estimates, and are not accurate */
 /* Newtonian estimate of the relation Mf(deltat/M) (for the 22 mode) - gives the starting geometric frequency for a given mass ratio and a given geometric duration of the observations */
 double NewtonianfoftGeom(
   const double q,                      /* Mass ratio m1/m2 */
@@ -28,7 +37,6 @@ double NewtonianfoftGeom(
   double nu = q/(1.+q)/(1.+q);
   return 1./PI * pow(256*nu/5. * t, -3./8);
 }
-
 /* Newtonian estimate of the relation f(deltat) (for the 22 mode) - gives the starting geometric frequency for a given mass ratio and a given geometric duration of the observations - output in Hz */
 double Newtonianfoft(
   const double m1,                     /* Mass 1 (solar masses) */
@@ -39,6 +47,21 @@ double Newtonianfoft(
   double mtot = m1 + m2;
   double q = m1/m2;
   return NewtonianfoftGeom(q, t*YRSID_SI / (mtot*MTSUN_SI)) / (mtot*MTSUN_SI);
+}
+/* Newtonian estimate of the relation f(deltat) (for the 22 mode freq) - gives the starting geometric frequency for a given time to merger and chirp mass - output in Hz */
+double Newtonianfoftchirp(
+  const double mchirp,                 /* Chirp mass (solar masses) */
+  const double t)                      /* Time in years */
+{
+  if(t<=0.) return 0.;
+  return 1./PI * pow(mchirp*MTSUN_SI, -5./8) * pow(256.*t*YRSID_SI/5, -3./8);
+}
+/* Newtonian estimate of the relation deltat(f) (for the 22 mode freq) - gives the time to merger from a starting frequency for a given chirp mass - output in years */
+double Newtoniantoffchirp(
+  const double mchirp,                 /* Chirp mass (solar masses) */
+  const double f)                      /* Freq in Hz */
+{
+  return 5./256 * pow(mchirp*MTSUN_SI, -5./3) * pow(PI*f, -8./3) / YRSID_SI;
 }
 
 /***************** Function estimating time to coalescence ****************/
@@ -613,6 +636,191 @@ int AmpPhaseTimeSeries_ToReIm(
     hrealval[i] = hamp[i]*cos(hphase[i]);
     himagval[i] = hamp[i]*sin(hphase[i]);
   }
+
+  return SUCCESS;
+}
+
+/* Function to compute a linear resampling at high frequencies to enforce a maximal deltaf */
+/* Useful to resolve the high-f structure in the LISA response */
+/* NOTE: Assumes input frequencies are logarithmic (except maybe first interval) to evaluate when to resample */
+int SetMaxdeltafResampledFrequencies(
+  gsl_vector** freqr,              /* Output: resampled frequencies */
+  gsl_vector* freq,                /* Input: original frequencies */
+  const double maxf,               /* Input: maximal frequency - set to 0. to ignore */
+  const double deltaf)             /* Input: maximal deltaf aimed for - 0.002Hz appropriate for LISA */
+{
+  int npt = (int) freq->size;
+  double* f =  freq->data;
+  double ratio = f[2]/f[1]; /* The first interval might be shorter than the other ones - ignore it */
+  double minf1 = f[1];
+  double fHigh = 0;
+  if(maxf<=0.) fHigh = f[npt-1];
+  else if(maxf<f[0]) {
+    printf("Error in MaxdeltafResampledFrequencies: maxf lower than first frequency present.\n");
+    exit(1);
+  }
+  else fHigh = fmin(maxf, f[npt-1]);
+  int indexrs = floor(log(deltaf/(ratio-1.)/minf1)/log(ratio) + 1);
+  if((indexrs>npt-1) || (f[indexrs]>=fHigh)) { /* here no need to resample - include all samples up to and including fHigh */
+    int index = 0;
+    while((index+1<npt) && (f[index+1]<=fHigh)) index++;
+    if(f[index]<fHigh) { /* append fHigh - note that we have fHigh<=f[npt-1] */
+      *freqr = gsl_vector_alloc(index+2);
+      double* fr = (*freqr)->data;
+      for(int j=0; j<=index; j++) fr[j] = f[j];
+      fr[index+1] = fHigh;
+    }
+    else { /* f[index] is already fHigh */
+      *freqr = gsl_vector_alloc(index+1);
+      double* fr = (*freqr)->data;
+      for(int j=0; j<=index; j++) fr[j] = f[j];
+    }
+  }
+  else { /* here f[indexrs]<fHigh, we keep original frequencies up to indexrs-1, and extend with a linspace(f[indexrs], fHigh, nrs) with nrs chosen so that the linear deltaf meets the requirement */
+    int nrs = ceil((fHigh - f[indexrs])/deltaf) + 1;
+    int ntot = indexrs + nrs;
+    *freqr = gsl_vector_alloc(ntot);
+    double* fr = (*freqr)->data;
+    for(int j=0; j<indexrs; j++) fr[j] = f[j];
+    double r = 1./(ntot-1-indexrs) * (fHigh - f[indexrs]);
+    for(int j=indexrs; j<ntot; j++) fr[j] = fmin(f[indexrs] + (j-indexrs) * r, fHigh); /* ensure that we do not go beyond fHigh due to numerical errors */
+  }
+
+  return SUCCESS;
+}
+
+// Mathematica:
+// FrequenciesLinearResampling[freqs_, deltaf_] :=
+//   Module[{ratio, fmin2, fmax, indexrs, nrs},
+//    ratio = freqs[[3]]/freqs[[2]];
+//    fmin2 = freqs[[2]];
+//    fmax = freqs[[-1]];
+//    indexrs = Floor[Log[deltaf/(ratio - 1)/fmin2]/Log[ratio] + 2];
+//    If[indexrs >= Length@freqs, Return@freqs];
+//    nrs = Ceiling[(freqs[[-1]] - freqs[[indexrs]])/deltaf];
+//    Return[
+//     Join[freqs[[;; indexrs - 1]],
+//      Linspace[freqs[[indexrs]], fmax, nrs]]];
+//    ];
+
+/* Function to compute a linear-in-time resampling at low frequencies to enforce a maximal deltat */
+/* Useful to resolve the low-f structure in the LISA response when accumulating signal over several years */
+/* Assumes input frequencies correspond to decreasing deltat */
+/* Uses Newtonian estimates for t<->f, only approximate  */
+/* Requires to be passed the chirpmass, as well as mode number m */
+int SetMaxdeltatResampledFrequencies(
+  gsl_vector** freqr,              /* Output: resampled frequencies */
+  gsl_vector* freq,                /* Input: original frequencies */
+  const double deltat,             /* Input: maximal deltat aimed for - fraction of a year, 1/24 (half month) appropriate for 1e-4 interpolation errors */
+  const double mchirp,             /* Input: chirp mass, used for approximate t-f correspondence */
+  const int m)                     /* Input: chirp mass, used for approximate t-f correspondence */
+{
+  /* Computed the t(f) according to Newtonian estimate */
+  /* NOTE : computing at highf is wasted computation, but we try to be generic */
+  int npt = (int) freq->size;
+  double* f = freq->data;
+  gsl_vector* times = gsl_vector_alloc(npt);
+  double* t = times->data;
+  for(int j=0; j<npt; j++) t[j] = Newtoniantoffchirp(mchirp, f[j]*2./m); /* include rescaling for modes other than 22 */
+
+  /* Determine where to resample */
+  int indexrs = 0;
+  while((indexrs+1<npt) && ((t[indexrs] - t[indexrs+1])>deltat)) indexrs++;
+
+  if(indexrs==0) { /* No resampling */
+    *freqr = gsl_vector_alloc(npt);
+    gsl_vector_memcpy(*freqr, freq);
+  }
+  else {
+    int nrs = floor((t[0] - t[indexrs]) / deltat);
+    int ntot = nrs + npt - indexrs;
+    *freqr = gsl_vector_alloc(ntot);
+    double* fr = (*freqr)->data;
+    double r = (t[indexrs] - t[0])/nrs;
+    fr[0] = f[0]; /* avoid changing the boundary by numerical errors */
+    for(int j=1; j<nrs; j++) fr[j] = m/2. * Newtonianfoftchirp(mchirp, t[0] + j*r); /* include rescaling for modes other than 22 */
+    for(int j=nrs; j<ntot; j++) fr[j] = f[j - nrs + indexrs];
+  }
+
+  return SUCCESS;
+}
+
+//Mathematica
+// funcTimeResampling[freqs_, deltat_, funct_, funcf_] :=
+//   Module[{times, indexrs, nrs, timesprepend, freqsprepend},
+//    times = funct /@ freqs;
+//    indexrs = 1;
+//    While[indexrs <
+//       Length@freqs && (times[[indexrs]] - times[[indexrs + 1]] >
+//        deltat), indexrs += 1];
+//    If[indexrs == 1, Return@freqs];(* No need to resample *)
+//
+//    nrs = Floor[(times[[1]] - times[[indexrs]])/deltat];
+//    timesprepend = Linspace[times[[1]], times[[indexrs]], nrs + 1];
+//    freqsprepend = Drop[funcf /@ timesprepend, -1];
+//    freqsprepend[[1]] = freqs[[1]];(*
+//    avoid problems with numerical error *)
+//
+//    Return[Join[freqsprepend, freqs[[indexrs ;;]]]];
+//    ];
+
+/* Function to resample a CAmp/Phase frequency series on the specified frequencies */
+int CAmpPhaseFrequencySeries_Resample(
+  CAmpPhaseFrequencySeries** freqseriesout,         /* Output: CAmp/Phase freq series */
+  CAmpPhaseFrequencySeries* freqseriesin,           /* Input: CAmp/Phase freq series */
+  gsl_vector* freqr)                                  /* Input: freq vector to resample on */
+{
+  /* Definitions */
+  gsl_vector* freq = freqseriesin->freq;
+  gsl_vector* amp_real = freqseriesin->amp_real;
+  gsl_vector* amp_imag = freqseriesin->amp_imag;
+  gsl_vector* phase = freqseriesin->phase;
+  int npt = (int) freq->size;
+  int nptr = (int) freqr->size;
+
+  /* Check boundaries */
+  if((gsl_vector_get(freqr, 0)<gsl_vector_get(freq, 0)) || (gsl_vector_get(freqr, nptr-1)>gsl_vector_get(freq, npt-1))) {
+    printf("Error in CAmpPhaseFrequencySeries_Resample: resampling exceeding bounds.\n");
+    exit(1);
+  }
+
+  /* Initialize gsl splines */
+  gsl_spline* spline_amp_real = gsl_spline_alloc(gsl_interp_cspline, npt);
+  gsl_spline* spline_amp_imag = gsl_spline_alloc(gsl_interp_cspline, npt);
+  gsl_spline* spline_phase = gsl_spline_alloc(gsl_interp_cspline, npt);
+  gsl_interp_accel* accel_amp_real = gsl_interp_accel_alloc();
+  gsl_interp_accel* accel_amp_imag = gsl_interp_accel_alloc();
+  gsl_interp_accel* accel_phase = gsl_interp_accel_alloc();
+  gsl_spline_init(spline_amp_real, gsl_vector_const_ptr(freq, 0), gsl_vector_const_ptr(amp_real, 0), npt);
+  gsl_spline_init(spline_amp_imag, gsl_vector_const_ptr(freq, 0), gsl_vector_const_ptr(amp_imag, 0), npt);
+  gsl_spline_init(spline_phase, gsl_vector_const_ptr(freq, 0), gsl_vector_const_ptr(phase, 0), npt);
+
+  /* Initialize output frequency series */
+  CAmpPhaseFrequencySeries_Init(freqseriesout, nptr);
+  gsl_vector_memcpy((*freqseriesout)->freq, freqr);
+  double* areal = (*freqseriesout)->amp_real->data;
+  double* aimag = (*freqseriesout)->amp_imag->data;
+  double* phi = (*freqseriesout)->phase->data;
+
+  /* Evaluate on the new frequencies */
+  /* NOTE: with resampling, some of the frequency samples are repeats of the original frequency series - so we could save some spline evaluations here */
+  double f;
+  for(int j=0; j<nptr; j++) {
+    f = gsl_vector_get(freqr, j);
+    areal[j] = gsl_spline_eval(spline_amp_real, f, accel_amp_real);
+    aimag[j] = gsl_spline_eval(spline_amp_imag, f, accel_amp_imag);
+    phi[j] = gsl_spline_eval(spline_phase, f, accel_phase);
+  }
+
+  /* Cleanup */
+  gsl_spline_free(spline_amp_real);
+  gsl_spline_free(spline_amp_imag);
+  gsl_spline_free(spline_phase);
+  gsl_interp_accel_free(accel_amp_real);
+  gsl_interp_accel_free(accel_amp_imag);
+  gsl_interp_accel_free(accel_phase);
+
+  return SUCCESS;
 }
 
 /***************** Other structure functions ****************/

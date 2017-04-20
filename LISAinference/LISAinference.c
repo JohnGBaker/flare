@@ -284,7 +284,7 @@ int main(int argc, char *argv[])
 	int *freeparamsmap = NULL;
 	void *context = NULL;
 	double logZtrue;
-	addendum(argc,argv,&runParams,&ndim,&nPar,&freeparamsmap,&context,&logZtrue);
+	addendum(argc, argv, &runParams, &ndim, &nPar, &freeparamsmap, &context, &logZtrue);
 
 	/* If the seed option is activated, seed the initial population of live points with the injection */
 	if(myid==0 && runParams.seed) {

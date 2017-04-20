@@ -1,6 +1,6 @@
 //Written by John G Baker NASA-GSFC (2014-16)
 //This is jointly based on the gleam.cc ptmcmc-based gravitational-lens code
-//and the bambi-based LISAinterface.c 
+//and the bambi-based LISAinterface.c
 
 #ifdef PARALLEL
 #include "mpi.h"
@@ -24,7 +24,7 @@ using namespace std;
 typedef initializer_list<double> dlist;
 typedef initializer_list<int> ilist;
 
-shared_ptr<Random> globalRNG;//used for some debugging... 
+shared_ptr<Random> globalRNG;//used for some debugging...
 
 //Global Control parameters (see more in main())
 const int Npar=9;
@@ -77,7 +77,7 @@ public:
       LISAInjectionReIm* injection = ((LISAInjectionReIm*) context);
       result = CalculateLogLReIm(&templateparams, injection) - logZdata;
     }
-    
+
     double post=result;
     double lpriorval=0;
     if(prior)lpriorval=prior->evaluate_log(s);
@@ -85,7 +85,7 @@ public:
     double tend=omp_get_wtime();
     double eval_time = tend-tstart;
 #pragma omp critical
-    {     
+    {
       total_eval_time+=eval_time;
       count++;
       if(nevery>0&&0==count%nevery){
@@ -96,7 +96,7 @@ public:
 	best_post=post;
 	best=state(s);
       }
-      //cout<<"loglike="<<result<<"<="<<maxLike<<endl;   
+      //cout<<"loglike="<<result<<"<="<<maxLike<<endl;
       if(!isfinite(result)){
 	cout<<"Whoa dude, loglike is NAN! What's up with that?"<<endl;
 	cout<<"params="<<s.get_string()<<endl;
@@ -105,7 +105,7 @@ public:
     }
     return result;
   };
-  
+
   LISAParams state2LISAParams(const state &s){
     valarray<double>params=s.get_params();
 
@@ -123,7 +123,7 @@ public:
     templateparams.beta = params[7];
     templateparams.polarization = params[8];
     templateparams.nbmode = globalparams->nbmodetemp; /* Using the global parameter for the number of modes in templates */
-    
+
     return templateparams;
   };
 
@@ -192,31 +192,31 @@ public:
 	      = CalculateOverlapReIm(state2LISAParams( sPlusi), state2LISAParams( sPlusj), injectedsignalReIm)
 	      - CalculateOverlapReIm(state2LISAParams( sPlusi), state2LISAParams(sMinusj), injectedsignalReIm)
 	      - CalculateOverlapReIm(state2LISAParams(sMinusi), state2LISAParams( sPlusj), injectedsignalReIm)
-	      + CalculateOverlapReIm(state2LISAParams(sMinusi), state2LISAParams(sMinusj), injectedsignalReIm);	 
+	      + CalculateOverlapReIm(state2LISAParams(sMinusi), state2LISAParams(sMinusj), injectedsignalReIm);
 	  } else {
 	    fisher_matrix[i][j]
 	      = CalculateOverlapCAmpPhase(state2LISAParams( sPlusi), state2LISAParams( sPlusj), injectedsignalCAmpPhase)
 	      - CalculateOverlapCAmpPhase(state2LISAParams( sPlusi), state2LISAParams(sMinusj), injectedsignalCAmpPhase)
 	      - CalculateOverlapCAmpPhase(state2LISAParams(sMinusi), state2LISAParams( sPlusj), injectedsignalCAmpPhase)
-	      + CalculateOverlapCAmpPhase(state2LISAParams(sMinusi), state2LISAParams(sMinusj), injectedsignalCAmpPhase);	 
-	  }	  
-	  fisher_matrix[i][j]/=4*hi*hj;	  
+	      + CalculateOverlapCAmpPhase(state2LISAParams(sMinusi), state2LISAParams(sMinusj), injectedsignalCAmpPhase);
+	  }
+	  fisher_matrix[i][j]/=4*hi*hj;
 	  fisher_matrix[j][i] = fisher_matrix[i][j];
 	}
       }
-      
+
       //estimate error
       olderr=err;
       err=0;
       double square=0;
-      for(int i=0;i<dim;i++)for(int j=0;j<(finish?dim:i+1);j++){//neglecting offdiagonals until finish 
+      for(int i=0;i<dim;i++)for(int j=0;j<(finish?dim:i+1);j++){//neglecting offdiagonals until finish
 	  double delta=(fisher_matrix[i][j]-last_fisher_matrix[i][j]);///scales[i]/scales[j];
 	  square+=fisher_matrix[i][j]*fisher_matrix[i][j];
 	  err+=delta*delta;
 	  if(std::isnan(delta)||delta*delta>tol/10)cout<<"delta["<<i<<","<<j<<"]="<<delta*delta<<endl;
 	}
       cout<<"oldscales = ";for(int i=0;i<dim;i++)cout<<scales[i]<<"\t";cout<<endl;
-      
+
       if(std::isnan(err)){
 	for(int i=0;i<dim;i++)scales[i]/=3;
 	err=1e100;
@@ -253,17 +253,17 @@ public:
     //cout<<"err="<<err<<endl;
     //cout<<"tol="<<tol<<endl;
     if(err<tol)return tol;
-    return err; 
+    return err;
   };
 
   double CalculateOverlapReIm(LISAParams params1, LISAParams params2, LISAInjectionReIm * injection)
   {
     double overlap = -DBL_MAX;
     int ret;
-    
+
     /* Frequency vector - assumes common to A,E,T, i.e. identical fLow, fHigh in all channels */
     gsl_vector* freq = injection->freq;
-    
+
     /* Generating the signal in the three detectors for the input parameters */
     LISASignalReIm* signal1 = NULL;
     LISASignalReIm* signal2 = NULL;
@@ -284,7 +284,7 @@ public:
       double loglikelihoodTDI3 = FDLogLikelihoodReIm(signal1->TDI3Signal, signal2->TDI3Signal, injection->noisevalues3);
       overlap = loglikelihoodTDI1 + loglikelihoodTDI2 + loglikelihoodTDI3;
     }
-    
+
     /* Clean up */
     LISASignalReIm_Cleanup(signal1);
     LISASignalReIm_Cleanup(signal2);
@@ -298,10 +298,10 @@ public:
     double overlap = -DBL_MAX;
     int ret;
 
-    
+
     /* Frequency vector - assumes common to A,E,T, i.e. identical fLow, fHigh in all channels */
     //gsl_vector* freq = injection->freq; FIXME
-    
+
     /* Generating the signal in the three detectors for the input parameters */
     LISASignalCAmpPhase* signal1 = NULL;
     LISASignalCAmpPhase* signal2 = NULL;
@@ -317,7 +317,7 @@ public:
       overlap = -DBL_MAX;
     }
     else if(ret==SUCCESS) {
-      
+
       /* Now we compute the differences*/
       //Probably based on ComputeIntegrandValues3Chan in tools/likelihood.c which is non-trival
 
@@ -330,7 +330,7 @@ public:
       overlap = loglikelihoodTDI1 + loglikelihoodTDI2 + loglikelihoodTDI3;
       */
     }
-    
+
     /* Clean up */
     LISASignalCAmpPhase_Cleanup(signal1);
     LISASignalCAmpPhase_Cleanup(signal2);
@@ -350,7 +350,7 @@ int main(int argc, char*argv[]){
   noMPI=1;
 
   //string datafile;
-  const int NparRead=Npar; 
+  const int NparRead=Npar;
 
   //Create the sampler
   ptmcmc_sampler mcmc;
@@ -367,9 +367,9 @@ int main(int argc, char*argv[]){
   opt.add(Option("allow_m2gtm1","Unless this is set, reject cases with m2>m1."));
   opt.add(Option("Fisher_err_target","Set target for Fisher error measure. (Default 0.001).","0.001"));
   opt.add(Option("help","Print help message."));
-  //First we parse the ptmcmc-related parameters like un gleam. 
+  //First we parse the ptmcmc-related parameters like un gleam.
   opt.parse(argc,argv,false);
-  
+
   //Next we perform the initializations from LISAinference.c
   LISARunParams runParams={};
   int ndim=0,nPar=0;
@@ -400,7 +400,7 @@ int main(int argc, char*argv[]){
   istringstream(opt.value("Fisher_err_target"))>>fisher_err_target;
   bool doFisher=not opt.set("noFisher");
   allow_m2gtm1=opt.set("allow_m2gtm1");
-  
+
   //if seed<0 set seed from clock
   if(seed<0)seed=fmod(time(NULL)/3.0e7,1);
   istringstream(opt.value("precision"))>>output_precision;
@@ -412,20 +412,20 @@ int main(int argc, char*argv[]){
   ostringstream ss("");
   ss<<outname;
   string base=ss.str();
-  
+
 
   //report
   cout.precision(output_precision);
   cout<<"\noutname = '"<<outname<<"'"<<endl;
-  cout<<"seed="<<seed<<endl; 
+  cout<<"seed="<<seed<<endl;
   cout<<"Running on "<<omp_get_max_threads()<<" thread"<<(omp_get_max_threads()>1?"s":"")<<"."<<endl;
 
   //Set up the parameter space
   stateSpace space(Npar);
-  /* Note: here we output physical values in the cube (overwriting), and we keep the original order for physical parameters */ 
+  /* Note: here we output physical values in the cube (overwriting), and we keep the original order for physical parameters */
   string names[]={"m1","m2","tRef","dist","phase","inc","lambda","beta","pol"};
   if(!priorParams->flat_distprior)names[3]="s(D)";
-  space.set_names(names);  
+  space.set_names(names);
   space.set_bound(4,boundary(boundary::wrap,boundary::wrap,0,2*M_PI));//set 2-pi-wrapped space for phi.
   space.set_bound(6,boundary(boundary::wrap,boundary::wrap,0,2*M_PI));//set 2-pi-wrapped space for lambda.
   space.set_bound(8,boundary(boundary::wrap,boundary::wrap,0,M_PI));//set pi-wrapped space for pol.
@@ -433,7 +433,7 @@ int main(int argc, char*argv[]){
 
   //Set the prior:
   //Eventually this should move to the relevant constitutent code elements where the params are given meaning.
-  const int uni=mixed_dist_product::uniform, gauss=mixed_dist_product::gaussian, polar=mixed_dist_product::polar, copol=mixed_dist_product::copolar; 
+  const int uni=mixed_dist_product::uniform, gauss=mixed_dist_product::gaussian, polar=mixed_dist_product::polar, copol=mixed_dist_product::copolar;
   double lambda0=(priorParams->lambda_min+priorParams->lambda_max)/2,dlambda=(priorParams->lambda_max-priorParams->lambda_min)/2;
   double beta0=(priorParams->beta_min+priorParams->beta_max)/2,dbeta=(priorParams->beta_max-priorParams->beta_min)/2;//Note: these are ignored by co-polar prior
   double tref0=injectedparams->tRef,dtref=priorParams->deltaT;
@@ -469,7 +469,7 @@ int main(int argc, char*argv[]){
     dist0=(smax+smin)/2;
     ddist=(smax-smin)/2;
   }
-  //                                     m1      m2     tRef     dist   phase    inc    lambda    beta     pol  
+  //                                     m1      m2     tRef     dist   phase    inc    lambda    beta     pol
   valarray<double>    centers((dlist){  m10,    m20,   tref0,  dist0,  phase0,  inc0, lambda0,  beta0,   pol0  });
   valarray<double> halfwidths((dlist){  dm1,    dm2,   dtref,  ddist,  dphase,  dinc, dlambda,  dbeta,   dpol  });
   //valarray<int>         types((ilist){  uni,    uni,     uni,     uni,    uni, polar,     uni,  copol,    uni  });
@@ -477,13 +477,13 @@ int main(int argc, char*argv[]){
   if (!std::isnan(priorParams->fix_beta))types[7]=uni;//"fixed" parameter set to narrow uniform range
   if (!std::isnan(priorParams->fix_inc)) types[5]=uni;//"fixed" parameter set to narrow uniform range
   if(priorParams->logflat_massprior)types[0]=types[1]=mixed_dist_product::log;
-  sampleable_probability_function *prior;  
+  sampleable_probability_function *prior;
   prior=new mixed_dist_product(&space,types,centers,halfwidths);
   cout<<"Prior is:\n"<<prior->show()<<endl;
-  
+
   //test the prior:
   //for(int i=0;i<5;i++){state s=prior->drawSample(*globalRNG);cout<<"test state "<<i<<"="<<s.show()<<endl;}
-  
+
   //Set the likelihood
   bayes_likelihood *like=nullptr;
   flare_likelihood fl(&space, context, prior);
@@ -509,7 +509,7 @@ int main(int argc, char*argv[]){
   //restore likelihood states
   like->reset();
   if(info_every>0)fl.info_every(info_every);
-  
+
   if(doFisher){
     //Next compute the Fisher matrix at the injected state.
     ss.str("");ss<<base<<"_fishcov.dat";
@@ -562,7 +562,7 @@ int main(int argc, char*argv[]){
     double fishnorm=0;for(int i=0;i<Npar;i++)for(int j=0;j<Npar;j++)fishnorm+=fim[i][j]*fim[i][j];
     cout<< "Norm of Fisher="<<fishnorm<<endl;
     if(false){
-      for(int i=0;i<Npar;i++)for(int j=0;j<=i;j++)gsl_matrix_set(fishcov,i,j,fim[i][j]);//Don't need upper triangle for GSLs routine 
+      for(int i=0;i<Npar;i++)for(int j=0;j<=i;j++)gsl_matrix_set(fishcov,i,j,fim[i][j]);//Don't need upper triangle for GSLs routine
       if(gsl_linalg_cholesky_decomp(fishcov))cout<<"Fisher matrix Cholesky decomposition failed."<<endl;
       else if(gsl_linalg_cholesky_invert(fishcov))cout<<"Fisher matrix Cholesky inverse failed."<<endl;
       else bad=false;
@@ -570,7 +570,7 @@ int main(int argc, char*argv[]){
 	int s;
 	gsl_permutation * p = gsl_permutation_alloc (Npar);
 	gsl_matrix * fishLU=gsl_matrix_alloc(Npar,Npar);
-	for(int i=0;i<Npar;i++)for(int j=0;j<Npar;j++)gsl_matrix_set(fishLU,i,j,fim[i][j]); 
+	for(int i=0;i<Npar;i++)for(int j=0;j<Npar;j++)gsl_matrix_set(fishLU,i,j,fim[i][j]);
 	if(gsl_linalg_LU_decomp(fishLU,p,&s))cout<<"Fisher matrix LU decomposition failed."<<endl;
 	else if (gsl_linalg_LU_invert(fishLU,p,fishcov))cout<<"Fisher matrix LU inverse failed."<<endl;
 	else bad=false;
@@ -579,7 +579,7 @@ int main(int argc, char*argv[]){
       }
     } else {
       for(int i=0;i<Npar;i++)for(int j=0;j<=i;j++)gsl_matrix_set(fishcov,i,j,sfim[i][j]);//Here we invert the scaled Fisher
-      if(gsl_linalg_cholesky_decomp(fishcov))cout<<"Fisher matrix Cholesky decomposition failed."<<endl; 
+      if(gsl_linalg_cholesky_decomp(fishcov))cout<<"Fisher matrix Cholesky decomposition failed."<<endl;
       else if(gsl_linalg_cholesky_invert(fishcov))cout<<"Fisher matrix Cholesky inverse failed."<<endl;
       else bad=false;
       //try LU decomposition, eliminating vars as needed until success
@@ -605,7 +605,7 @@ int main(int argc, char*argv[]){
 	    for(int j=0;j<=i;j++)cout<<"\t"<<gsl_matrix_get(fishcov,i,j);
 	    cout<<endl;
 	  }
-	  for(int i=0;i<dim;i++)for(int j=0;j<dim;j++)gsl_matrix_set(fishLU,i,j,gsl_matrix_get(fishcov,i,j)); 
+	  for(int i=0;i<dim;i++)for(int j=0;j<dim;j++)gsl_matrix_set(fishLU,i,j,gsl_matrix_get(fishcov,i,j));
 	  if(gsl_linalg_LU_decomp(fishLU,p,&s))cout<<"Fisher matrix LU decomposition failed."<<endl;
 	  else if (gsl_linalg_LU_invert(fishLU,p,covLU))cout<<"Fisher matrix LU inverse failed."<<endl;
 	  else {
@@ -664,7 +664,7 @@ int main(int argc, char*argv[]){
 	    gsl_vector_free (evals);
 	    gsl_matrix_free (evecs);
 	  }
-	  if(not bad){	  //If done construct the full inverted matrix in fishcov with inf for the degenerate bits. 
+	  if(not bad){	  //If done construct the full inverted matrix in fishcov with inf for the degenerate bits.
 	    for(int i=0;i<Npar;i++)for(int j=0;j<=i;j++){
 		int iLU=idxmap[i];
 		int jLU=idxmap[j];
@@ -720,14 +720,14 @@ int main(int argc, char*argv[]){
     outfish.close();
     cout<<"Wrote file '"<<base<<"_fishcov.dat"<<"'"<<endl;
   }
-  
+
   if(stoi(opt.value("nsteps"))<=0){
     cout<<"No MCMC steps requested"<<endl;
     exit(0);
   }
 
   //assuming mcmc:
-  //Set the proposal distribution 
+  //Set the proposal distribution
   int Ninit;
   proposal_distribution *prop=ptmcmc_sampler::new_proposal_distribution(Npar,Ninit,opt,prior,&halfwidths);
   cout<<"Proposal distribution is:\n"<<prop->show()<<endl;
@@ -742,10 +742,8 @@ int main(int argc, char*argv[]){
     s->analyze(base,ic,Nsigma,Nbest,*like);
     delete s;
   }
-  
+
   //Dump summary info
   cout<<"best_post "<<like->bestPost()<<", state="<<like->bestState().get_string()<<endl;
   fl.print_info();
 }
-
-

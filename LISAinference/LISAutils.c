@@ -6,6 +6,7 @@
 LISAParams* injectedparams = NULL;
 LISAGlobalParams* globalparams = NULL;
 LISAPrior* priorParams = NULL;
+LISAAddParams* addparams = NULL;
 
 /************ Functions to initalize and clean up structure for the signals ************/
 
@@ -105,7 +106,8 @@ void parse_args_LISA(ssize_t argc, char **argv,
   LISAParams* params,
   LISAGlobalParams* globalparams,
   LISAPrior* prior,
-  LISARunParams* run)
+  LISARunParams* run,
+  LISAAddParams* addparams)
 {
     char help[] = "\
 LISAInference by Sylvain Marsat, John Baker, and Philip Graff\n\
@@ -136,7 +138,7 @@ Arguments are as follows:\n\
  --fRef                Reference frequency where phiRef is set (Hz, default=0, interpreted as Mf=0.14)\n\
  --deltatobs           Observation duration (years, default=2)\n\
  --minf                Minimal frequency (Hz, default=0) - when set to 0, use the lowest frequency where the detector noise model is trusted __LISASimFD_Noise_fLow (set somewhat arbitrarily)\n\
- --maxf                Maximal frequency (Hz, default=0) - when set to 0, use the highest frequency where the detector noise model is trusted __LISASimFD_Noise_fHigh (set somewhat arbitrarily)\n\
+ --maxf                Maximal frequency (Hz, default=1Hz) - when set to 0, use the highest frequency where the detector noise model is trusted __LISASimFD_Noise_fHigh (set somewhat arbitrarily)\n\
  --tagextpn            Tag to allow PN extension of the waveform at low frequencies (default=1)\n\
  --Mfmatch             When PN extension allowed, geometric matching frequency: will use ROM above this value. If <=0, use ROM down to the lowest covered frequency (default=0.)\n\
  --nbmodeinj           Number of modes of radiation to use for the injection (1-5, default=5)\n\
@@ -189,6 +191,7 @@ Syntax: --PARAM-min\n\
  --bambi               Use BAMBI's neural network logL learning (no option, default off)\n\
  --resume              Resume from a previous run (no option, default off)\n\
  --maxiter             Maximum number of iterations - if 0, use convergence criterion to stop (default 0)\n\
+ --writeparams         Write params - if 1, write run parameters to file (default 1)\n\
  --outroot             Root for output files (default='chains/LISAinference_')\n\
  --netfile             Neural network settings file if using --bambi (default='LISAinference.inp')\n\
  --mmodal              Use multimodal decomposition (no option, default off)\n\
@@ -196,6 +199,16 @@ Syntax: --PARAM-min\n\
  --nclspar             Number of parameters to use for multimodal decomposition - in the order of the cube (default 1)\n\
  --ztol                In multimodal decomposition, modes with lnZ lower than ztol are ignored (default -1e90)\n\
  --seed                Seed the inference by setting one of the live points to the injection (no option, default off)\n\
+-----------------------------------------------------------------\n\
+----- Additional Parameters -------------------------------------\n\
+-----------------------------------------------------------------\n\
+ --addparams           To be followed by the value of parameters: m1 m2 tRef distance phiRef inclination lambda beta polarization. Used to compute a likelihood for these parameters in LISAlikelihood. Not used in LISAinference.\n\
+ --loadparamsfile      Option to load a list of template parameters from file and to output results to file (default false).\n\
+ --nlinesparams        Number of lines in input params file.\n\
+ --indir               Input directory when loading input parameters file from file for LISAlikelihood.\n\
+ --infile              Input file name when loading input parameters file from file for LISAlikelihood.\n\
+ --outdir              Directory for input/output file.\n\
+ --outfile             Input file with the parameters.\n\
 \n";
 
     ssize_t i;
@@ -216,7 +229,7 @@ Syntax: --PARAM-min\n\
     globalparams->fRef = 0.;
     globalparams->deltatobs = 2.;
     globalparams->minf = 0.;
-    globalparams->maxf = 0.;
+    globalparams->maxf = 1.;
     globalparams->tagextpn = 1;
     globalparams->Mfmatch = 0.;
     globalparams->nbmodeinj = 5;
@@ -272,6 +285,7 @@ Syntax: --PARAM-min\n\
     run->eff = 0.1;
     run->tol = 0.5;
     run->nlive = 1000;
+    run->writeparams = 1;
     strcpy(run->outroot, "chains/LISAinference_");
     run->bambi = 0;
     run->resume = 0;
@@ -282,6 +296,24 @@ Syntax: --PARAM-min\n\
     run->nclspar = 1;
     run->ztol = -1e90;
     run->seed = 0;
+
+    /* set default values for the additional params */
+    addparams->tRef = 0.;
+    addparams->phiRef = 0.;
+    addparams->m1 = 2*1e6;
+    addparams->m2 = 1*1e6;
+    addparams->distance = 40*1e3;
+    addparams->lambda = 0.;
+    addparams->beta = 0.;
+    addparams->inclination = PI/3.;
+    addparams->polarization = 0.;
+    /* Note: nbmode used is nbmodetemp from globalparams */
+    addparams->loadparamsfile = 0;
+    addparams->nlinesparams = 0;    /* No default; has to be provided */
+    strcpy(addparams->indir, "");   /* No default; has to be provided */
+    strcpy(addparams->infile, "");  /* No default; has to be provided */
+    strcpy(addparams->outdir, "");  /* No default; has to be provided */
+    strcpy(addparams->outfile, ""); /* No default; has to be provided */
 
     /* Consume command line */
     for (i = 1; i < argc; ++i) {
@@ -404,11 +436,11 @@ Syntax: --PARAM-min\n\
             prior->pin_pol = 1;
         } else if (strcmp(argv[i], "--snr") == 0) {
             prior->snr_target = atof(argv[++i]);
-	} else if (strcmp(argv[i], "--rescale-distprior") == 0) {
+	      } else if (strcmp(argv[i], "--rescale-distprior") == 0) {
             prior->rescale_distprior = 1;
-	} else if (strcmp(argv[i], "--flat-distprior") == 0) {
+	      } else if (strcmp(argv[i], "--flat-distprior") == 0) {
             prior->flat_distprior = 1;
-	} else if (strcmp(argv[i], "--logflat-massprior") == 0) {
+	      } else if (strcmp(argv[i], "--logflat-massprior") == 0) {
             prior->logflat_massprior = 1;
         } else if (strcmp(argv[i], "--eff") == 0) {
             run->eff = atof(argv[++i]);
@@ -422,6 +454,8 @@ Syntax: --PARAM-min\n\
             run->resume = 1;
         } else if (strcmp(argv[i], "--maxiter") == 0) {
             run->maxiter = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "--writeparams") == 0) {
+            run->writeparams = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--outroot") == 0) {
             strcpy(run->outroot, argv[++i]);
         } else if (strcmp(argv[i], "--netfile") == 0) {
@@ -436,6 +470,29 @@ Syntax: --PARAM-min\n\
             run->ztol = atof(argv[++i]);
         } else if (strcmp(argv[i], "--seed") == 0) {
             run->seed = 1;
+        } else if (strcmp(argv[i], "--addparams") == 0) {
+            /* Must be followed by the values of m1 m2 tRef distance phiRef inclination lambda beta polarization */
+            addparams->m1 = atof(argv[++i]);
+            addparams->m2 = atof(argv[++i]);
+            addparams->tRef = atof(argv[++i]);
+            addparams->distance = atof(argv[++i]);
+            addparams->phiRef = atof(argv[++i]);
+            addparams->inclination = atof(argv[++i]);
+            addparams->lambda = atof(argv[++i]);
+            addparams->beta = atof(argv[++i]);
+            addparams->polarization = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--loadparamsfile") == 0) {
+          addparams->loadparamsfile = 1;
+        } else if (strcmp(argv[i], "--nlinesparams") == 0) {
+          addparams->nlinesparams = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "--indir") == 0) {
+          strcpy(addparams->indir, argv[++i]);
+        } else if (strcmp(argv[i], "--infile") == 0) {
+          strcpy(addparams->infile, argv[++i]);
+        } else if (strcmp(argv[i], "--outdir") == 0) {
+          strcpy(addparams->outdir, argv[++i]);
+        } else if (strcmp(argv[i], "--outfile") == 0) {
+          strcpy(addparams->outfile, argv[++i]);
         } else {
             printf("Error: invalid option: %s\n", argv[i]);
             goto fail;
@@ -675,27 +732,31 @@ int LISAGenerateSignalCAmpPhase(
     printf("Error: when calling LISAGenerateSignal, injectedparams points to NULL.\n");
     exit(1);
   }
-  /* Should add more error checking ? */
+
+  /* Starting frequency corresponding to duration of observation deltatobs */
+  double fstartobs = 0.;
+  if(!(globalparams->deltatobs==0.)) fstartobs = Newtonianfoft(params->m1, params->m2, globalparams->deltatobs);
+
   /* Generate the waveform with the ROM */
   /* NOTE: SimEOBNRv2HMROM accepts masses and distances in SI units, whereas LISA params is in solar masses and Mpc */
-  /* NOTE: minf is taken into account if extension is allowed, but not maxf - restriction to the relevant frequency interval will occur in both the response prcessing and overlap computation */
+  /* NOTE: minf and deltatobs are taken into account if extension is allowed, but not maxf - restriction to the relevant frequency interval will occur in both the response prcessing and overlap computation */
+  /* If extending, taking into account both fstartobs and minf */
   if(!(globalparams->tagextpn)) {
     //printf("Not Extending signal waveform.  Mfmatch=%g\n",globalparams->Mfmatch);
     ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
   } else {
     //printf("Extending signal waveform.  Mfmatch=%g\n",globalparams->Mfmatch);
-    ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, globalparams->Mfmatch, globalparams->minf, 0, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+    ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, globalparams->Mfmatch, fmax(fstartobs, globalparams->minf), 0, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
   }
   if(ret==FAILURE){
     //printf("LISAGenerateSignalCAmpPhase: Generation of ROM for injection failed!\n");
     return FAILURE;
   }
 
-  listmodesCAmpPhaseTrim(listROM);//Eliminate parts of the wf our of range
+  //listmodesCAmpPhaseTrim(listROM);//Eliminate parts of the wf our of range
 
-  ListmodesCAmpPhaseFrequencySeries* listelem = listROM;
+  /*ListmodesCAmpPhaseFrequencySeries* listelem = listROM;
   while(listelem){
-    /*
     printf("Result....\n");
     printf("listelem: %i %i %i\n",listelem->freqseries->amp_real->size,listelem->l,listelem->m);
     for(i=0;i<listelem->freqseries->freq->size;i++){
@@ -712,9 +773,9 @@ int LISAGenerateSignalCAmpPhase(
 	printf("   fdot: %g\n", ( (yp-y0)/(fp-f0)-(ym-y0)/(fm-f0) ) * 2 / (fp-f0) * f0 *f0);
       }
     }
-    */
+
     listelem=listelem->next;
-  }
+  }*/
   //
   //printf("%d|%g|%g|%g|%g|%g|%g\n", params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
 
@@ -728,9 +789,10 @@ int LISAGenerateSignalCAmpPhase(
   //tbeg = clock();
 
   //#pragma omp critical(LISAgensig)
-  LISASimFDResponseTDI3Chan(&listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, globalparams->maxf, globalparams->tagtdi);
+  LISASimFDResponseTDI3Chan(&listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, globalparams->maxf, globalparams->tagtdi);
   //tend = clock();
   //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
+  //exit(0);
   //
 
   /* Pre-interpolate the injection, building the spline matrices */
@@ -742,7 +804,6 @@ int LISAGenerateSignalCAmpPhase(
   BuildListmodesCAmpPhaseSpline(&listsplinesgen3, listTDI3);
 
   /* Precompute the inner product (h|h) - takes into account the length of the observation with deltatobs */
-  double fstartobs = Newtonianfoft(params->m1, params->m2, globalparams->deltatobs);
   double fLow = fmax(__LISASimFD_Noise_fLow, globalparams->minf);
   double fHigh = fmin(__LISASimFD_Noise_fHigh, globalparams->maxf);
   RealFunctionPtr NoiseSn1 = NoiseFunction(globalparams->tagtdi, 1);
@@ -753,6 +814,8 @@ int LISAGenerateSignalCAmpPhase(
   double TDI123hh = FDListmodesFresnelOverlap3Chan(listTDI1, listTDI2, listTDI3, listsplinesgen1, listsplinesgen2, listsplinesgen3, NoiseSn1, NoiseSn2, NoiseSn3, fLow, fHigh, fstartobs, fstartobs);
   //tend = clock();
   //printf("time SNRs: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
+  //exit(0);
+  //
 
   /* Output and clean up */
   signal->TDI1Signal = listTDI1;
@@ -778,16 +841,20 @@ int LISAGenerateInjectionCAmpPhase(
   ListmodesCAmpPhaseFrequencySeries* listTDI2 = NULL;
   ListmodesCAmpPhaseFrequencySeries* listTDI3 = NULL;
 
-  /* Should add more error checking ? */
+  /* Starting frequency corresponding to duration of observation deltatobs */
+  double fstartobs = 0.;
+  if(!(globalparams->deltatobs==0.)) fstartobs = Newtonianfoft(params->m1, params->m2, globalparams->deltatobs);
+
   /* Generate the waveform with the ROM */
   /* NOTE: SimEOBNRv2HMROM accepts masses and distances in SI units, whereas LISA params is in solar masses and Mpc */
-  /* NOTE: minf is taken into account if extension is allowed, but not maxf - restriction to the relevant frequency interval will occur in both the response prcessing and overlap computation */
-  if(!(globalparams->tagextpn)){
-    //printf("Not Extending injection waveform.  Mfmatch=%g\n",globalparams->Mfmatch);
+  /* NOTE: minf and deltatobs are taken into account if extension is allowed, but not maxf - restriction to the relevant frequency interval will occur in both the response prcessing and overlap computation */
+  /* If extending, taking into account both fstartobs and minf */
+  if(!(globalparams->tagextpn)) {
+    //printf("Not Extending signal waveform.  Mfmatch=%g\n",globalparams->Mfmatch);
     ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
   } else {
-    //printf("Extending injection waveform.  Mfmatch=%g\n",globalparams->Mfmatch);
-    ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, globalparams->Mfmatch, globalparams->minf, 0, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+    //printf("Extending signal waveform.  Mfmatch=%g\n",globalparams->Mfmatch);
+    ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, globalparams->Mfmatch, fmax(fstartobs, globalparams->minf), 0, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
   }
   /* If the ROM waveform generation failed (e.g. parameters were out of bounds) return FAILURE */
   if(ret==FAILURE){
@@ -795,7 +862,7 @@ int LISAGenerateInjectionCAmpPhase(
     return FAILURE;
   }
 
-  listmodesCAmpPhaseTrim(listROM);//Eliminate parts of the wf our of range
+  //listmodesCAmpPhaseTrim(listROM);//Eliminate parts of the wf our of range
 
   /*
   printf("Result....\n");
@@ -819,7 +886,7 @@ int LISAGenerateInjectionCAmpPhase(
   //TESTING
   //clock_t tbeg, tend;
   //tbeg = clock();
-  LISASimFDResponseTDI3Chan(&listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, globalparams->maxf, globalparams->tagtdi);
+  LISASimFDResponseTDI3Chan(&listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, globalparams->maxf, globalparams->tagtdi);
   //tend = clock();
   //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
@@ -833,7 +900,6 @@ int LISAGenerateInjectionCAmpPhase(
   BuildListmodesCAmpPhaseSpline(&listsplinesinj3, listTDI3);
 
   /* Precompute the inner product (h|h) - takes into account the length of the observation with deltatobs */
-  double fstartobs = Newtonianfoft(injectedparams->m1, injectedparams->m2, globalparams->deltatobs);
   double fLow = fmax(__LISASimFD_Noise_fLow, globalparams->minf);
   double fHigh = fmin(__LISASimFD_Noise_fHigh, globalparams->maxf);
   RealFunctionPtr NoiseSn1 = NoiseFunction(globalparams->tagtdi, 1);
@@ -877,29 +943,34 @@ int LISAGenerateSignalReIm(
     printf("Error: when calling LISAGenerateSignalReIm, injectedparams points to NULL.\n");
     exit(1);
   }
-  /* Should add more error checking ? */
+
+  /* Starting frequency corresponding to duration of observation deltatobs */
+  double fstartobs = 0.;
+  if(!(globalparams->deltatobs==0.)) fstartobs = Newtonianfoft(params->m1, params->m2, globalparams->deltatobs);
+
   /* Generate the waveform with the ROM */
   /* NOTE: SimEOBNRv2HMROM accepts masses and distances in SI units, whereas LISA params is in solar masses and Mpc */
-  /* NOTE: minf is taken into account if extension is allowed, but not maxf - restriction to the relevant frequency interval will occur in both the response prcessing and overlap computation */
-  if(!(globalparams->tagextpn)){
+  /* NOTE: minf and deltatobs are taken into account if extension is allowed, but not maxf - restriction to the relevant frequency interval will occur in both the response prcessing and overlap computation */
+  /* If extending, taking into account both fstartobs and minf */
+  if(!(globalparams->tagextpn)) {
     //printf("Not Extending signal waveform.  Mfmatch=%g\n",globalparams->Mfmatch);
     ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
   } else {
     //printf("Extending signal waveform.  Mfmatch=%g\n",globalparams->Mfmatch);
-    ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, globalparams->Mfmatch, globalparams->minf, 0, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+    ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, globalparams->Mfmatch, fmax(fstartobs, globalparams->minf), 0, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
   }
 
   /* If the ROM waveform generation failed (e.g. parameters were out of bounds) return FAILURE */
   if(ret==FAILURE) return FAILURE;
 
-  listmodesCAmpPhaseTrim(listROM);//Eliminate parts of the wf our of range
+  //listmodesCAmpPhaseTrim(listROM);//Eliminate parts of the wf our of range
 
   /* Process the waveform through the LISA response */
   //WARNING: tRef is ignored for now, i.e. set to 0
   //TESTING
   //clock_t tbeg, tend;
   //tbeg = clock();
-  LISASimFDResponseTDI3Chan(&listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, globalparams->maxf, globalparams->tagtdi);
+  LISASimFDResponseTDI3Chan(&listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, globalparams->maxf, globalparams->tagtdi);
   //tend = clock();
   //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
@@ -914,7 +985,6 @@ int LISAGenerateSignalReIm(
   ReImFrequencySeries_Init(&TDI3, nbpts);
 
   /* Compute the Re/Im frequency series - takes into account the length of the observation with deltatobs */
-  double fstartobs = Newtonianfoft(params->m1, params->m2, globalparams->deltatobs);
   double fLow = fmax(__LISASimFD_Noise_fLow, globalparams->minf);
   double fHigh = fmin(__LISASimFD_Noise_fHigh, globalparams->maxf);
   //TESTING
@@ -952,19 +1022,20 @@ int LISAGenerateInjectionReIm(
   ListmodesCAmpPhaseFrequencySeries* listTDI2 = NULL;
   ListmodesCAmpPhaseFrequencySeries* listTDI3 = NULL;
 
-  /* Should add more error checking ? */
+  /* Starting frequency corresponding to duration of observation deltatobs */
+  double fstartobs = 0.;
+  if(!(globalparams->deltatobs==0.)) fstartobs = Newtonianfoft(params->m1, params->m2, globalparams->deltatobs);
+
   /* Generate the waveform with the ROM */
-  /* Note: SimEOBNRv2HMROM accepts masses and distances in SI units, whereas LISA params is in solar masses and Mpc */
-  if(!(globalparams->tagextpn)){
+  /* NOTE: SimEOBNRv2HMROM accepts masses and distances in SI units, whereas LISA params is in solar masses and Mpc */
+  /* NOTE: minf and deltatobs are taken into account if extension is allowed, but not maxf - restriction to the relevant frequency interval will occur in both the response prcessing and overlap computation */
+  /* If extending, taking into account both fstartobs and minf */
+  if(!(globalparams->tagextpn)) {
     //printf("Not Extending signal waveform.  Mfmatch=%g\n",globalparams->Mfmatch);
     ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
-    if(ret==FAILURE)
-      printf("LISAGenerateInjectionReIm: Generation of ROM for injection failed!\n");
   } else {
     //printf("Extending signal waveform.  Mfmatch=%g\n",globalparams->Mfmatch);
-    ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, globalparams->Mfmatch, globalparams->minf, 0, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
-    if(ret==FAILURE)
-      printf("LISAGenerateInjectionReIm: Generation of ROMExtTF2 model for injection failed!\n");
+    ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, globalparams->Mfmatch, fmax(fstartobs, globalparams->minf), 0, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
   }
 
   /* If the ROM waveform generation failed (e.g. parameters were out of bounds) return FAILURE */
@@ -973,21 +1044,20 @@ int LISAGenerateInjectionReIm(
     return FAILURE;
   }
 
-  listmodesCAmpPhaseTrim(listROM);//Eliminate parts of the wf our of range
+  //listmodesCAmpPhaseTrim(listROM);//Eliminate parts of the wf our of range
 
   /* Process the waveform through the LISA response */
   //WARNING: tRef is ignored for now, i.e. set to 0
   //TESTING
   //clock_t tbeg, tend;
   //tbeg = clock();
-  LISASimFDResponseTDI3Chan(&listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, globalparams->maxf, globalparams->tagtdi);
+  LISASimFDResponseTDI3Chan(&listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, globalparams->maxf, globalparams->tagtdi);
   //tend = clock();
   //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
 
   /* Determine the frequency vector - uses the fact that the detector limiting frequencies are the same in all channels - takes into account the length of the observation with deltatobs */
   gsl_vector* freq = gsl_vector_alloc(nbpts);
-  double fstartobs = Newtonianfoft(injectedparams->m1, injectedparams->m2, globalparams->deltatobs);
   double fLowCut = fmax(fmax(__LISASimFD_Noise_fLow, fLow), fstartobs);
   double fHigh = fmin(__LISASimFD_Noise_fHigh, globalparams->maxf);
   ListmodesSetFrequencies(listROM, fLowCut, fHigh, nbpts, tagsampling, freq);
@@ -1085,8 +1155,8 @@ double CalculateLogLCAmpPhase(LISAParams *params, LISAInjectionCAmpPhase* inject
     /* Output: value of the loglikelihood for the combined signals, assuming noise independence */
     logL = overlapTDI123 - 1./2*(injection->TDI123ss) - 1./2*(generatedsignal->TDI123hh);
     if(logL>0){
-      printf("logL=%g, params =\n",logL);
-      printf("overlapTDI123=%g, injection->TDI123ss=%g, generatedsignal->TDI123hh=%g",overlapTDI123, injection->TDI123ss, generatedsignal->TDI123hh);
+      printf("logL=%g\n",logL);
+      printf("overlapTDI123=%g, injection->TDI123ss=%g, generatedsignal->TDI123hh=%g\n", overlapTDI123, injection->TDI123ss, generatedsignal->TDI123hh);
       report_LISAParams(params);
     }
   }
