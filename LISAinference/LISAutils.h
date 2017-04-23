@@ -26,6 +26,16 @@ extern "C" {
 } /* so that editors will match preceding brace */
 #endif
 
+/***************** Enumerator to choose what masses set to sample for *****************/
+
+typedef enum SampleMassParamstag {
+  m1m2,
+  Mchirpeta
+} SampleMassParamstag;
+
+/* Function to convert string input SampleMassParams to tag */
+TDItag ParseSampleMassParamstag(char* string);
+
 /***************** Structure definitions *****************/
 
 /* Parameters for the generation of a LISA waveform (in the form of a list of modes) */
@@ -93,12 +103,17 @@ typedef struct tagLISAInjectionReIm /* Storing the vectors of frequencies and no
 } LISAInjectionReIm;
 
 typedef struct tagLISAPrior {
+  SampleMassParamstag samplemassparams;   /* Choose the set of mass params to sample from - options are m1m2 and Mchirpeta (default m1m2) */
   double deltaT;             /* width of time prior centered on injected value (s) (default 1e5) */
   double comp_min;           /* minimum component mass (solar masses) (default 1e4) */
   double comp_max;           /* maximum component mass (solar masses) (default 1e8) */
   double mtot_min;           /* minimum total mass (solar masses) (default 5*1e4) */
   double mtot_max;           /* maximum total mass (solar masses) (default 1e8) */
   double qmax;               /* maximum asymmetric mass ratio (>=1) (default 11.98) */
+  double Mchirp_min;         /* Minimum chirp mass in Solar masses - when sampling Mchirpeta (default=2e4) */
+  double Mchirp_max;         /* Maximum chirp mass in Solar masses - when sampling Mchirpeta (default=4e7) */
+  double eta_min;            /* Minimum symmetric mass ratio eta - when sampling Mchirpeta (default=0.072) */
+  double eta_max;            /* Maximum symmetric mass ratio eta - when sampling Mchirpeta (default=0.25) */
   double dist_min;           /* minimum distance of source (Mpc) (default 100) */
   double dist_max;           /* maximum distance of source (Mpc) (default 40*1e3) */
   double lambda_min;         /* minimum lambda (rad, default 0) - for testing */
@@ -113,6 +128,8 @@ typedef struct tagLISAPrior {
   double inc_max;            /* maximum inclination (rad, default pi) - for testing */
   double fix_m1;
   double fix_m2;
+  double fix_Mchirp;
+  double fix_eta;
   double fix_time;
   double fix_lambda;
   double fix_beta;
@@ -122,6 +139,8 @@ typedef struct tagLISAPrior {
   double fix_inc;
   int pin_m1;
   int pin_m2;
+  int pin_Mchirp;
+  int pin_eta;
   int pin_time;
   int pin_lambda;
   int pin_beta;
@@ -261,7 +280,8 @@ void TaylorF2nonspin(
 		     );
 
 /* checks prior boundaires */
-int PriorBoundaryCheck(LISAPrior *prior, double *Cube);
+int PriorBoundaryCheckm1m2(LISAPrior *prior, double *Cube);
+int PriorBoundaryCheckMchirpeta(LISAPrior *prior, double *Cube);
 
 /* Prior functions from Cube to physical parameters
    x1 is min, x2 is max when specified

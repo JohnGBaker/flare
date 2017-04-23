@@ -259,7 +259,7 @@ int LISASimFDResponseTDI3Chan(
   //printf("Set Coeffs time: %g s\n", (double)(endsetcoeffs - begsetcoeffs) / CLOCKS_PER_SEC);
 
   /* Chirp mass for resampling */
-  double mchirp = ChirpMass(m1, m2);
+  double mchirp = Mchirpofm1m2(m1, m2);
 
   /* Main loop over the modes - goes through all the modes present, stopping when encountering NULL */
   ListmodesCAmpPhaseFrequencySeries* listelement = *list;

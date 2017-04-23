@@ -49,10 +49,19 @@ extern "C" {
 
 /***************** Function estimating frequency corresponding to a given time to coalescence ****************/
 
-/* Function computing the chirp mass */
-double ChirpMass(
+/* Functions computing relations between chirp mass, eta, m1, m2*/
+double Mchirpofm1m2(
   const double m1,   /* Mass 1 */
   const double m2);  /* Mass 2 */
+double etaofm1m2(
+  const double m1,   /* Mass 1 */
+  const double m2);  /* Mass 2 */
+double m1ofMchirpeta(
+  const double Mchirp,   /* Chirp mass */
+  const double eta);     /* Symmetric mass ratio */
+double m2ofMchirpeta(
+  const double Mchirp,   /* Chirp mass */
+  const double eta);     /* Symmetric mass ratio */
 
 /* Newtonian estimate of the relation Mf(deltat/M) (for the 22 mode) - gives the starting geometric frequency for a given mass ratio and a given geometric duration of the observations */
 double NewtonianfoftGeom(const double q, const double t); /* t here is t/M */

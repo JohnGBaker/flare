@@ -383,8 +383,9 @@ int main(int argc, char*argv[]){
     LISAGlobalParams arg4;
     LISAPrior arg5;
     LISARunParams arg6;
+    LISAAddParams arg7;
     char* tmpargv[2]={argv[0],(char*)"--help"};
-    parse_args_LISA(2, tmpargv, &arg3, &arg4, &arg5, &arg6);
+    parse_args_LISA(2, tmpargv, &arg3, &arg4, &arg5, &arg6, &arg7);
   } else cout<<"ptmcmc flags=\n"<<opt.report()<<endl;
 
   addendum(argc,argv,&runParams,&ndim,&nPar,&freeparamsmap,&context,&logZtrue);

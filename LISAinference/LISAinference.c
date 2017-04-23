@@ -7,7 +7,7 @@
 void getphysparams(double *Cube, int *ndim) /* Note: ndim not used here */
 {
   int i = 0;
-  double m1=0., m2=0., tRef=0., dist=0., phase=0., inc=0., lambda=0., beta=0., pol=0.;
+  double m1=0., m2=0., tRef=0., dist=0., phase=0., inc=0., lambda=0., beta=0., pol=0., Mchirp=0., eta=0.;
 
   /* Note: we use here the order for the cube parameters */
   /* Order of the 9 original parameters (fixed): m1, m2, tRef, dist, phase, inc, lambda, beta, pol */
@@ -66,32 +66,51 @@ void getphysparams(double *Cube, int *ndim) /* Note: ndim not used here */
     dist = priorParams->fix_dist;
   }
 
-  /* Mass - two priors allowed: flat log-flat */
-  double (*mass_prior)(double r, double x1, double x2);
-  mass_prior=&CubeToFlatPrior;
-  if(priorParams->logflat_massprior)mass_prior=&CubeToLogFlatPrior;
+  /* Mass - two priors allowed: flat or log-flat */
+  double (*mass_prior) (double r, double x1, double x2);
+  mass_prior = &CubeToFlatPrior;
+  if(priorParams->logflat_massprior) mass_prior = &CubeToLogFlatPrior;
 
   /* Component masses */
-  if (isnan(priorParams->fix_m1)) {
-    if (isnan(priorParams->fix_m2)) {
-      m1 = mass_prior(Cube[i++], priorParams->comp_min, priorParams->comp_max);
-      m2 = mass_prior(Cube[i++], priorParams->comp_min, priorParams->comp_max);
-      /*if (m2 > m1) {
-        double tmp = m1;
-        m1 = m2;
-        m2 = tmp;
-      }*/
+  /* Branch between sampling in m1/m2 or Mchirp/eta */
+  if(priorParams->samplemassparams==m1m2) {
+    if (isnan(priorParams->fix_m1)) {
+      if (isnan(priorParams->fix_m2)) {
+        m1 = mass_prior(Cube[i++], priorParams->comp_min, priorParams->comp_max);
+        m2 = mass_prior(Cube[i++], priorParams->comp_min, priorParams->comp_max);
     } else {
-      m2 = priorParams->fix_m2;
-      m1 = mass_prior(Cube[i++], fmax(priorParams->comp_min,m2), priorParams->comp_max);
-    }
-  } else {
-    m1 = priorParams->fix_m1;
-    if (isnan(priorParams->fix_m2)) {
-      m2 = mass_prior(Cube[i++], priorParams->comp_min, fmin(m1,priorParams->comp_max));
+        m2 = priorParams->fix_m2;
+        m1 = mass_prior(Cube[i++], priorParams->comp_min, priorParams->comp_max);
+      }
     } else {
-      m2 = priorParams->fix_m2;
+      m1 = priorParams->fix_m1;
+      if (isnan(priorParams->fix_m2)) {
+        m2 = mass_prior(Cube[i++], priorParams->comp_min, priorParams->comp_max);
+      } else {
+        m2 = priorParams->fix_m2;
+      }
     }
+  }
+  else if(priorParams->samplemassparams==Mchirpeta) {
+    if (isnan(priorParams->fix_Mchirp)) {
+      if (isnan(priorParams->fix_eta)) {
+        Mchirp = mass_prior(Cube[i++], priorParams->Mchirp_min, priorParams->Mchirp_max);
+        eta = CubeToFlatPrior(Cube[i++], priorParams->eta_min, priorParams->eta_max);
+      } else {
+        eta = priorParams->fix_eta;
+        Mchirp = mass_prior(Cube[i++], priorParams->Mchirp_min, priorParams->Mchirp_max);
+      }
+    } else {
+      Mchirp = priorParams->fix_Mchirp;
+      if (isnan(priorParams->fix_eta)) {
+        eta = CubeToFlatPrior(Cube[i++], priorParams->eta_min, priorParams->eta_max);
+      } else {
+        eta = priorParams->fix_eta;
+      }
+    }
+    /* Convert Mchirp/eta to m1/m2 */
+    m1 = m1ofMchirpeta(Mchirp, eta);
+    m2 = m2ofMchirpeta(Mchirp, eta);
   }
 
   /* Note: here we output physical values in the cube (overwriting), and we keep the original order for physical parameters */
@@ -119,12 +138,36 @@ void getcubeparams(double* Cube, int ndim, LISAParams* params, int* freeparamsma
   double beta = params->beta;
   double pol = params->polarization;
 
+  /* This is used only if sampling uses Mchirpeta */
+  double Mchirp = Mchirpofm1m2(m1, m2);
+  double eta = etaofm1m2(m1, m2);
+
   /* Note: freeparamsmap has indices in the order of the (free) cube parameters, and values in the indices of physical parameters */
   for(int i=0; i<ndim; i++) {
-    if(freeparamsmap[i]==0) Cube[i] = FlatPriorToCube(m1, priorParams->comp_min, priorParams->comp_max);
-    if(freeparamsmap[i]==1) Cube[i] = FlatPriorToCube(m2, priorParams->comp_min, priorParams->comp_max);
+    if(freeparamsmap[i]==0) {
+      if(priorParams->samplemassparams==m1m2) {
+        if(!(priorParams->logflat_massprior)) Cube[i] = FlatPriorToCube(m1, priorParams->comp_min, priorParams->comp_max);
+        else Cube[i] = LogFlatPriorToCube(m1, priorParams->comp_min, priorParams->comp_max);
+      }
+      else if(priorParams->samplemassparams==Mchirpeta) {
+        if(!(priorParams->logflat_massprior)) Cube[i] = FlatPriorToCube(Mchirp, priorParams->Mchirp_min, priorParams->Mchirp_max);
+        else Cube[i] = LogFlatPriorToCube(Mchirp, priorParams->Mchirp_min, priorParams->Mchirp_max);
+      }
+    }
+    if(freeparamsmap[i]==1) {
+      if(priorParams->samplemassparams==m1m2) {
+        if(!(priorParams->logflat_massprior)) Cube[i] = FlatPriorToCube(m2, priorParams->comp_min, priorParams->comp_max);
+        else Cube[i] = LogFlatPriorToCube(m2, priorParams->comp_min, priorParams->comp_max);
+      }
+      else if(priorParams->samplemassparams==Mchirpeta) {
+        Cube[i] = FlatPriorToCube(eta, priorParams->eta_min, priorParams->eta_max);
+      }
+    }
     if(freeparamsmap[i]==2) Cube[i] = FlatPriorToCube(tRef, injectedparams->tRef - priorParams->deltaT, injectedparams->tRef + priorParams->deltaT);
-    if(freeparamsmap[i]==3) Cube[i] = PowerPriorToCube(2., dist, priorParams->dist_min, priorParams->dist_max);
+    if(freeparamsmap[i]==3) {
+      if(priorParams->flat_distprior) Cube[i] = FlatPriorToCube(dist, priorParams->dist_min, priorParams->dist_max);
+      else Cube[i] = PowerPriorToCube(2., dist, priorParams->dist_min, priorParams->dist_max);
+    }
     if(freeparamsmap[i]==4) Cube[i] = FlatPriorToCube(phase, priorParams->phase_min, priorParams->phase_max);
     if(freeparamsmap[i]==5) Cube[i] = SinPriorToCube(inc, priorParams->inc_min, priorParams->inc_max);
     if(freeparamsmap[i]==6) Cube[i] = FlatPriorToCube(lambda, priorParams->lambda_min, priorParams->lambda_max);
@@ -159,8 +202,13 @@ void getallparams(double *Cube, int *ndim)
 void getLogLike(double *Cube, int *ndim, int *npars, double *lnew, void *context)
 {
   /* Convert Cube to physical parameters and check prior boundary */
-  getallparams(Cube,ndim);
-  if (PriorBoundaryCheck(priorParams, Cube)) {
+  /* Branch between two different checks for m1/m2 or Mchirp/eta */
+  getallparams(Cube, ndim);
+  if (priorParams->samplemassparams==m1m2 && PriorBoundaryCheckm1m2(priorParams, Cube)) {
+    *lnew = -DBL_MAX;
+    return;
+  }
+  if (priorParams->samplemassparams==Mchirpeta && PriorBoundaryCheckMchirpeta(priorParams, Cube)) {
     *lnew = -DBL_MAX;
     return;
   }

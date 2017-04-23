@@ -8,6 +8,20 @@ LISAGlobalParams* globalparams = NULL;
 LISAPrior* priorParams = NULL;
 LISAAddParams* addparams = NULL;
 
+/***************** Pasring string to choose what masses set to sample for *****************/
+
+/* Function to convert string input SampleMassParams to tag */
+TDItag ParseSampleMassParamstag(char* string) {
+  SampleMassParamstag tag;
+  if(strcmp(string, "m1m2")==0) tag = m1m2;
+  else if(strcmp(string, "Mchirpeta")==0) tag = Mchirpeta;
+  else {
+    printf("Error in ParseSampleMassParamstag: string not recognized.\n");
+    exit(1);
+  }
+  return tag;
+}
+
 /************ Functions to initalize and clean up structure for the signals ************/
 
 void LISASignalCAmpPhase_Cleanup(LISASignalCAmpPhase* signal) {
@@ -151,17 +165,22 @@ Arguments are as follows:\n\
 --------------------------------------------------\n\
 ----- Prior Boundary Settings --------------------\n\
 --------------------------------------------------\n\
+ --samplemassparams    Choose the set of mass params to sample from - options are m1m2 and Mchirpeta (default m1m2)\n\
  --deltaT              Half-width of time prior (sec, default=1e5)\n\
- --comp-min            Minimum component mass in Solar masses (default=1e4)\n\
- --comp-max            Maximum component mass in Solar masses (default=1e8)\n\
- --mtot-min            Minimum total mass in Solar masses (default=5e4)\n\
- --mtot-max            Maximum total mass in Solar masses (default=1e8)\n\
- --q-max               Maximum mass ratio, m1/m2 (default=11.98, minimum is 1)\n\
+ --comp-min            Minimum component mass in Solar masses - when sampling m1m2 (default=1e4)\n\
+ --comp-max            Maximum component mass in Solar masses - when sampling m1m2 (default=1e8)\n\
+ --mtot-min            Minimum total mass in Solar masses - when sampling m1m2 (default=5e4)\n\
+ --mtot-max            Maximum total mass in Solar masses - when sampling m1m2 (default=1e8)\n\
+ --q-max               Maximum mass ratio, m1/m2 - when sampling m1m2 (default=11.98, minimum is 1)\n\
+ --Mchirp-min          Minimum chirp mass in Solar masses - when sampling Mchirpeta (default=2e4)\n\
+ --Mchirp-max          Maximum chirp mass in Solar masses - when sampling Mchirpeta (default=4e7)\n\
+ --eta-min             Minimum symmetric mass ratio eta - when sampling Mchirpeta (default=0.072)\n\
+ --eta-max             Maximum symmetric mass ratio eta - when sampling Mchirpeta (default=0.25)\n\
  --dist-min            Minimum distance to source (Mpc, default=100)\n\
  --dist-max            Maximum distance to source (Mpc, default=40*1e3)\n\
  --rescale-distprior   In case a target SNR is given with --snr, rescale dist-min and dist-max accordingly\n\
- --logflat-massprior   Uses uniform (natural) log M, rather than uniform M\n\
- --flat-distprior      Uses uniform linear scaled dist, rather than ~ R^2\n\
+ --logflat-massprior   Uses uniform (natural) log M, rather than uniform M - applies to m1/m2 or Mchirp (default false)\n\
+ --flat-distprior      Uses uniform linear scaled distance, rather than ~ DL^2\n\
 Parameters lambda, beta, phase, pol, inc can also ge given min and max values (for testing)\n\
 Syntax: --PARAM-min\n\
 \n\
@@ -171,8 +190,10 @@ Syntax: --PARAM-min\n\
  --pin-PARAM           Pin indicated parameter to injected value\n\
  --fix-PARAM           Fix indicated parameter to specified value\n\
  Available parameter names are:\n\
-   m1          Mass 1 (MSol)\n\
-   m2          Mass 2 (MSol)\n\
+   m1          Mass 1 (MSol) - used only when sampling masses as m1/m2\n\
+   m2          Mass 2 (MSol) - used only when sampling masses as m1/m2\n\
+   Mchirp      Chirp mass (MSol) - used only when sampling masses as Mchirp/eta\n\
+   eta         Symmetric mass ratio - used only when sampling masses as Mchirp/eta\n\
    dist        Distance (luminosity, Mpc)\n\
    time        Reference time (GPS sec)\n\
    phase       Reference orbital phase (rad)\n\
@@ -240,12 +261,17 @@ Syntax: --PARAM-min\n\
     globalparams->zerolikelihood = 0;
 
     /* set default values for the prior limits */
+    prior->samplemassparams = m1m2;
     prior->deltaT = 3600.;
     prior->comp_min = 1e4;
     prior->comp_max = 1e8;
     prior->mtot_min = 5e4;
     prior->mtot_max = 1e8;
     prior->qmax = 11.98;
+    prior->Mchirp_min = 2e4;
+    prior->Mchirp_max = 4e7;
+    prior->eta_min = 0.072;
+    prior->eta_max = 0.25;
     prior->dist_min = 1e3;
     prior->dist_max = 400*1e3;
     prior->lambda_min = 0.;
@@ -260,6 +286,8 @@ Syntax: --PARAM-min\n\
     prior->inc_max = PI;
     prior->fix_m1 = NAN;
     prior->fix_m2 = NAN;
+    prior->fix_Mchirp = NAN;
+    prior->fix_eta = NAN;
     prior->fix_dist = NAN;
     prior->fix_time = NAN;
     prior->fix_phase = NAN;
@@ -269,6 +297,8 @@ Syntax: --PARAM-min\n\
     prior->fix_inc = NAN;
     prior->pin_m1 = 0;
     prior->pin_m2 = 0;
+    prior->pin_Mchirp = 0;
+    prior->pin_eta = 0;
     prior->pin_dist = 0;
     prior->pin_time = 0;
     prior->pin_phase = 0;
@@ -362,6 +392,8 @@ Syntax: --PARAM-min\n\
             globalparams->nbptsoverlap = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--zerolikelihood") == 0) {
             globalparams->zerolikelihood = 1;
+        } else if (strcmp(argv[i], "--samplemassparams") == 0) {
+            prior->samplemassparams = ParseSampleMassParamstag(argv[++i]);
         } else if (strcmp(argv[i], "--deltaT") == 0) {
             prior->deltaT = atof(argv[++i]);
         } else if (strcmp(argv[i], "--comp-min") == 0) {
@@ -374,6 +406,14 @@ Syntax: --PARAM-min\n\
             prior->mtot_max = atof(argv[++i]);
         } else if (strcmp(argv[i], "--q-max") == 0) {
             prior->qmax = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--Mchirp-min") == 0) {
+            prior->Mchirp_min = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--Mchirp-max") == 0) {
+            prior->Mchirp_max = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--eta-min") == 0) {
+            prior->eta_min = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--eta-max") == 0) {
+            prior->eta_max = atof(argv[++i]);
         } else if (strcmp(argv[i], "--dist-min") == 0) {
             prior->dist_min = atof(argv[++i]);
         } else if (strcmp(argv[i], "--dist-max") == 0) {
@@ -402,6 +442,10 @@ Syntax: --PARAM-min\n\
             prior->fix_m1 = atof(argv[++i]);
         } else if (strcmp(argv[i], "--fix-m2") == 0) {
             prior->fix_m2 = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--fix-Mchirp") == 0) {
+            prior->fix_Mchirp = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--fix-eta") == 0) {
+            prior->fix_eta = atof(argv[++i]);
         } else if (strcmp(argv[i], "--fix-dist") == 0) {
             prior->fix_dist = atof(argv[++i]);
         } else if (strcmp(argv[i], "--fix-lambda") == 0) {
@@ -420,6 +464,10 @@ Syntax: --PARAM-min\n\
             prior->pin_m1 = 1;
         } else if (strcmp(argv[i], "--pin-m2") == 0) {
             prior->pin_m2 = 1;
+        } else if (strcmp(argv[i], "--pin-Mchirp") == 0) {
+            prior->pin_Mchirp = 1;
+        } else if (strcmp(argv[i], "--pin-eta") == 0) {
+            prior->pin_eta = 1;
         } else if (strcmp(argv[i], "--pin-dist") == 0) {
             prior->pin_dist = 1;
         } else if (strcmp(argv[i], "--pin-lambda") == 0) {
@@ -502,6 +550,12 @@ Syntax: --PARAM-min\n\
     /* Set frequency interval to default values */
     if(globalparams->minf==0.) globalparams->minf = __LISASimFD_Noise_fLow;
     if(globalparams->maxf==0.) globalparams->maxf = __LISASimFD_Noise_fHigh;
+    /* Enforce eta_max <= 0.25 */
+    prior->eta_max = fmin(0.25, prior->eta_max);
+    /* If fixing one of the masses, adjust the prior range according to q>=1 */
+    /* Avoids drawing past the boundary - but PriorBoundaryCheck would also reject all these draws */
+    if(!isnan(priorParams->fix_m1)) priorParams->comp_max = fmax(priorParams->comp_max, priorParams->fix_m1);
+    if(!isnan(priorParams->fix_m2)) priorParams->comp_min = fmax(priorParams->comp_min, priorParams->fix_m2);
 
     return;
 
@@ -562,17 +616,17 @@ int print_parameters_to_file_LISA(
   fprintf(f, "-----------------------------------------------\n");
   fprintf(f, "Global parameters:\n");
   fprintf(f, "-----------------------------------------------\n");
-  fprintf(f, "fRef:         %.16e\n", globalparams->fRef);
-  fprintf(f, "deltatobs:    %.16e\n", globalparams->deltatobs);
-  fprintf(f, "minf:         %.16e\n", globalparams->minf);
-  fprintf(f, "maxf:         %.16e\n", globalparams->maxf);
-  fprintf(f, "tagextpn:     %.16e\n", globalparams->tagextpn);
-  fprintf(f, "Mfmatch:      %.16e\n", globalparams->Mfmatch);
-  fprintf(f, "nbmodeinj:    %d\n", globalparams->nbmodeinj);
-  fprintf(f, "nbmodetemp:   %d\n", globalparams->nbmodetemp);
-  fprintf(f, "tagint:       %d\n", globalparams->tagint);
-  fprintf(f, "tagtdi:       %d\n", globalparams->tagtdi); //Translation back from enum to string not implemented yet
-  fprintf(f, "nbptsoverlap: %d\n", globalparams->nbptsoverlap);
+  fprintf(f, "fRef:           %.16e\n", globalparams->fRef);
+  fprintf(f, "deltatobs:      %.16e\n", globalparams->deltatobs);
+  fprintf(f, "minf:           %.16e\n", globalparams->minf);
+  fprintf(f, "maxf:           %.16e\n", globalparams->maxf);
+  fprintf(f, "tagextpn:       %.16e\n", globalparams->tagextpn);
+  fprintf(f, "Mfmatch:        %.16e\n", globalparams->Mfmatch);
+  fprintf(f, "nbmodeinj:      %d\n", globalparams->nbmodeinj);
+  fprintf(f, "nbmodetemp:     %d\n", globalparams->nbmodetemp);
+  fprintf(f, "tagint:         %d\n", globalparams->tagint);
+  fprintf(f, "tagtdi:         %d\n", globalparams->tagtdi); //Translation back from enum to string not implemented yet
+  fprintf(f, "nbptsoverlap:   %d\n", globalparams->nbptsoverlap);
   fprintf(f, "zerolikelihood: %d\n", globalparams->zerolikelihood);
   fprintf(f, "-----------------------------------------------\n");
   fprintf(f, "\n");
@@ -581,12 +635,17 @@ int print_parameters_to_file_LISA(
   fprintf(f, "-----------------------------------------------\n");
   fprintf(f, "Prior parameters:\n");
   fprintf(f, "-----------------------------------------------\n");
+  fprintf(f, "samplemassparams:  %.16e\n", prior->samplemassparams);
   fprintf(f, "deltaT:            %.16e\n", prior->deltaT);
   fprintf(f, "comp_min:          %.16e\n", prior->comp_min);
   fprintf(f, "comp_max:          %.16e\n", prior->comp_max);
   fprintf(f, "mtot_min:          %.16e\n", prior->mtot_min);
   fprintf(f, "mtot_max:          %.16e\n", prior->mtot_max);
   fprintf(f, "qmax:              %.16e\n", prior->qmax);
+  fprintf(f, "Mchirp_min:        %.16e\n", prior->Mchirp_min);
+  fprintf(f, "Mchirp_max:        %.16e\n", prior->Mchirp_max);
+  fprintf(f, "eta_min:           %.16e\n", prior->eta_min);
+  fprintf(f, "eta_max:           %.16e\n", prior->eta_max);
   fprintf(f, "dist_min:          %.16e\n", prior->dist_min);
   fprintf(f, "dist_max:          %.16e\n", prior->dist_max);
   fprintf(f, "lambda_min:        %.16e\n", prior->lambda_min);
@@ -601,6 +660,8 @@ int print_parameters_to_file_LISA(
   fprintf(f, "inc_max:           %.16e\n", prior->inc_max);
   fprintf(f, "fix_m1:            %.16e\n", prior->fix_m1);
   fprintf(f, "fix_m2:            %.16e\n", prior->fix_m2);
+  fprintf(f, "fix_Mchirp:        %.16e\n", prior->fix_Mchirp);
+  fprintf(f, "fix_eta:           %.16e\n", prior->fix_eta);
   fprintf(f, "fix_dist:          %.16e\n", prior->fix_dist);
   fprintf(f, "fix_time:          %.16e\n", prior->fix_time);
   fprintf(f, "fix_phase:         %.16e\n", prior->fix_phase);
@@ -610,6 +671,8 @@ int print_parameters_to_file_LISA(
   fprintf(f, "fix_inc:           %.16e\n", prior->fix_inc);
   fprintf(f, "pin_m1:            %d\n", prior->pin_m1);
   fprintf(f, "pin_m2:            %d\n", prior->pin_m2);
+  fprintf(f, "pin_Mchirp:        %d\n", prior->pin_Mchirp);
+  fprintf(f, "pin_eta:           %d\n", prior->pin_eta);
   fprintf(f, "pin_dist:          %d\n", prior->pin_dist);
   fprintf(f, "pin_time:          %d\n", prior->pin_time);
   fprintf(f, "pin_phase:         %d\n", prior->pin_phase);
@@ -620,7 +683,7 @@ int print_parameters_to_file_LISA(
   fprintf(f, "snr_target:        %.16e\n", prior->snr_target);
   fprintf(f, "rescale_distprior: %d\n", prior->rescale_distprior);
   fprintf(f, "flat-distprior:    %d\n", prior->flat_distprior);
-  fprintf(f, "logflat-massprior:    %d\n", prior->logflat_massprior);
+  fprintf(f, "logflat-massprior: %d\n", prior->logflat_massprior);
   fprintf(f, "-----------------------------------------------\n");
   fprintf(f, "\n");
 
@@ -694,11 +757,11 @@ int listmodesCAmpPhaseTrim(ListmodesCAmpPhaseFrequencySeries* listSeries){
     if(len_new<len){//Trim
       CAmpPhaseFrequencySeries *freqseries_new = 0;
       CAmpPhaseFrequencySeries_Init( &freqseries_new,len_new);
-      for(i=0;i<len_new;i++){
-	gsl_vector_set(freqseries_new->freq,i,gsl_vector_get(freq,i));
-	gsl_vector_set(freqseries_new->amp_real,i,gsl_vector_get(amp_real,i));
-	gsl_vector_set(freqseries_new->amp_imag,i,gsl_vector_get(amp_imag,i));
-	gsl_vector_set(freqseries_new->phase,i,gsl_vector_get(phase,i));
+      for(i=0;i<len_new;i++) {
+      	gsl_vector_set(freqseries_new->freq, i, gsl_vector_get(freq,i));
+      	gsl_vector_set(freqseries_new->amp_real, i, gsl_vector_get(amp_real,i));
+      	gsl_vector_set(freqseries_new->amp_imag, i, gsl_vector_get(amp_imag,i));
+      	gsl_vector_set(freqseries_new->phase, i, gsl_vector_get(phase,i));
       }
 
       //printf("Trimming frequencies:\n %g<f[i<%i]<%g -->  %g<f[i<%i]<%g\n",freq->data[0],len-1,freq->data[len-1],freqseries_new->freq->data[0],len_new-1,freqseries_new->freq->data[len_new-1]);
@@ -1213,23 +1276,46 @@ double CalculateLogLReIm(LISAParams *params, LISAInjectionReIm* injection)
 
 /***************************** Functions handling the prior ******************************/
 
-/* Function to check that returned parameter values fit in prior boundaries */
-int PriorBoundaryCheck(LISAPrior *prior, double *Cube)
+/* Functions to check that returned parameter values fit in prior boundaries */
+/* For the mass parameters (first two cube parameters) m1/m2 - uses only comp, mtot, q constraints */
+int PriorBoundaryCheckm1m2(LISAPrior *prior, double *Cube)
 {
-	if (Cube[0] < Cube[1])
-	 	return 1;
+  if (Cube[0] < Cube[1])
+  return 1;
 
-	if (Cube[0] < prior->comp_min || Cube[0] > prior->comp_max ||
-	 	Cube[1] < prior->comp_min || Cube[1] > prior->comp_max)
-	 	return 1;
+  if (Cube[0] < prior->comp_min || Cube[0] > prior->comp_max || Cube[1] < prior->comp_min || Cube[1] > prior->comp_max)
+  return 1;
 
-	if (Cube[0] + Cube[1] < prior->mtot_min || Cube[0] + Cube[1] > prior->mtot_max)
-		return 1;
+  if (Cube[0] + Cube[1] < prior->mtot_min || Cube[0] + Cube[1] > prior->mtot_max)
+  return 1;
 
-	if (Cube[0] < Cube[1] || Cube[0] / Cube[1] > prior->qmax)
-		return 1;
+  /* Always enforce qmax limit - limit of validity for the EOBNRv2HMROM model */
+  if (Cube[0] < Cube[1] || Cube[0] / Cube[1] > prior->qmax)
+  return 1;
 
-	return 0;
+  return 0;
+}
+/* For the mass parameters (first two cube parameters) Mchirp/eta - uses only Mchirp, eta constraints */
+int PriorBoundaryCheckMchirpeta(LISAPrior *prior, double *Cube)
+{
+  /* Cube contains physical parameters with m1,m2 as the first two - translate to Mchirp, eta */
+  double m1 = Cube[0];
+  double m2 = Cube[1];
+  double Mchirp = Mchirpofm1m2(m1, m2);
+  double eta = etaofm1m2(m1, m2);
+
+  if (eta > 0.25)
+  return 1;
+
+  if (Mchirp < prior->Mchirp_min || Mchirp > prior->Mchirp_max || eta < prior->eta_min || eta > prior->eta_max)
+  return 1;
+
+  /* Always enforce qmax limit - limit of validity for the EOBNRv2HMROM model */
+  double delta = sqrt(1-4.*eta);
+  if ((1.+delta)/(1.-delta) > prior->qmax)
+  return 1;
+
+  return 0;
 }
 
 /* Utility prior functions to convert from Cube to common distributions, and back */

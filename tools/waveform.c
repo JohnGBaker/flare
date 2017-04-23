@@ -19,12 +19,32 @@
 
 /***************** Function estimating frequency corresponding to a given time to coalescence ****************/
 
-/* Function computing the chirp mass */
-double ChirpMass(
+/* Functions computing relations between chirp mass, eta, m1, m2*/
+double Mchirpofm1m2(
   const double m1,   /* Mass 1 */
   const double m2)   /* Mass 2 */
 {
   return pow(m1*m2, 3./5) / pow(m1+m2, 1./5);
+}
+double etaofm1m2(
+  const double m1,   /* Mass 1 */
+  const double m2)   /* Mass 2 */
+{
+  return m1*m2 / pow(m1+m2, 2.);
+}
+double m1ofMchirpeta(
+  const double Mchirp,   /* Chirp mass */
+  const double eta)      /* Symmetric mass ratio */
+{
+  double delta = sqrt(1. - 4.*eta);
+  return Mchirp * pow(eta, -3./5) * (1.+delta)/2.;
+}
+double m2ofMchirpeta(
+  const double Mchirp,   /* Chirp mass */
+  const double eta)      /* Symmetric mass ratio */
+{
+  double delta = sqrt(1. - 4.*eta);
+  return Mchirp * pow(eta, -3./5) * (1.-delta)/2.;
 }
 
 /* NOTE: these are base on Newtonian estimates, and are not accurate */
@@ -741,6 +761,8 @@ int SetMaxdeltatResampledFrequencies(
     for(int j=1; j<nrs; j++) fr[j] = m/2. * Newtonianfoftchirp(mchirp, t[0] + j*r); /* include rescaling for modes other than 22 */
     for(int j=nrs; j<ntot; j++) fr[j] = f[j - nrs + indexrs];
   }
+  /* Cleanup */
+  gsl_vector_free(times);
 
   return SUCCESS;
 }

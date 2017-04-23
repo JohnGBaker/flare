@@ -113,7 +113,7 @@ void addendum(int argc, char *argv[],LISARunParams *runParams, int *ndim, int *n
   }
   /* printf("Compared params\n");
   report_LISAParams(injectedparams); */
-  if (myid == 0) printf("logZtrue = %lf\n", *logZtrue-logZdata);
+  if(myid == 0) printf("logZtrue = %lf\n", *logZtrue-logZdata);
 
   /* Set the context pointer */
   if(globalparams->tagint==0) {
@@ -126,40 +126,45 @@ void addendum(int argc, char *argv[],LISARunParams *runParams, int *ndim, int *n
   *nPar = 9;	  /* Total no. of parameters including free & derived parameters */
   *ndim = 9;  /* No. of free parameters - to be changed later if some parameters are fixed */
 
-  /* check for parameters pinned to injected values */
-  if (priorParams->pin_m1)
-    priorParams->fix_m1 = injectedparams->m1;
-  if (priorParams->pin_m2)
-    priorParams->fix_m2 = injectedparams->m2;
-  if (priorParams->pin_dist)
-    priorParams->fix_dist = injectedparams->distance;
-  if (priorParams->pin_inc)
-    priorParams->fix_inc = injectedparams->inclination;
-  if (priorParams->pin_phase)
-    priorParams->fix_phase = injectedparams->phiRef;
-  if (priorParams->pin_pol)
-    priorParams->fix_pol = injectedparams->polarization;
-  if (priorParams->pin_lambda)
-    priorParams->fix_lambda = injectedparams->lambda;
-  if (priorParams->pin_beta)
-    priorParams->fix_beta = injectedparams->beta;
-  if (priorParams->pin_time)
-    priorParams->fix_time = injectedparams->tRef;
+  /* Check for parameters pinned to injected values */
+  /* Distinguish the case where we sample in Mchirp/eta instead of m1/m2 */
+  if(priorParams->samplemassparams==m1m2) {
+    if(priorParams->pin_m1) priorParams->fix_m1 = injectedparams->m1;
+    if(priorParams->pin_m2) priorParams->fix_m2 = injectedparams->m2;
+  }
+  if(priorParams->samplemassparams==Mchirpeta) {
+    if(priorParams->pin_Mchirp) priorParams->fix_Mchirp = Mchirpofm1m2(injectedparams->m1, injectedparams->m2);
+    if(priorParams->pin_eta) priorParams->fix_eta = etaofm1m2(injectedparams->m1, injectedparams->m2);
+  }
+  if(priorParams->pin_dist) priorParams->fix_dist = injectedparams->distance;
+  if(priorParams->pin_inc) priorParams->fix_inc = injectedparams->inclination;
+  if(priorParams->pin_phase) priorParams->fix_phase = injectedparams->phiRef;
+  if(priorParams->pin_pol) priorParams->fix_pol = injectedparams->polarization;
+  if(priorParams->pin_lambda) priorParams->fix_lambda = injectedparams->lambda;
+  if(priorParams->pin_beta) priorParams->fix_beta = injectedparams->beta;
+  if(priorParams->pin_time) priorParams->fix_time = injectedparams->tRef;
 
   /* Check for fixed parameters, and build the map from the free cube parameters to the orignal 9 parameters */
   /* Order of the 9 original parameters (fixed): m1, m2, tRef, dist, phase, inc, lambda, beta, pol */
   /* Order of the 9 cube parameters (modified for clustering): lambda, beta, tRef, phase, pol, inc, dist, m1, m2 */
+  /* Distinguish the case where one is sampling in Mchirp/eta instead of m1/m2 */
   int mapcubetophys[9] = {6, 7, 2, 4, 8, 5, 3, 0, 1};
   int freecubeparams[9] = {1, 1, 1, 1, 1, 1, 1, 1, 1};
-  if (!isnan(priorParams->fix_lambda)) { (*ndim)--; freecubeparams[0] = 0; }
-  if (!isnan(priorParams->fix_beta))   { (*ndim)--; freecubeparams[1] = 0; }
-  if (!isnan(priorParams->fix_time))   { (*ndim)--; freecubeparams[2] = 0; }
-  if (!isnan(priorParams->fix_phase))  { (*ndim)--; freecubeparams[3] = 0; }
-  if (!isnan(priorParams->fix_pol))    { (*ndim)--; freecubeparams[4] = 0; }
-  if (!isnan(priorParams->fix_inc))    { (*ndim)--; freecubeparams[5] = 0; }
-  if (!isnan(priorParams->fix_dist))   { (*ndim)--; freecubeparams[6] = 0; }
-  if (!isnan(priorParams->fix_m1))     { (*ndim)--; freecubeparams[7] = 0; }
-  if (!isnan(priorParams->fix_m2))     { (*ndim)--; freecubeparams[8] = 0; }
+  if(!isnan(priorParams->fix_lambda)) { (*ndim)--; freecubeparams[0] = 0; }
+  if(!isnan(priorParams->fix_beta))   { (*ndim)--; freecubeparams[1] = 0; }
+  if(!isnan(priorParams->fix_time))   { (*ndim)--; freecubeparams[2] = 0; }
+  if(!isnan(priorParams->fix_phase))  { (*ndim)--; freecubeparams[3] = 0; }
+  if(!isnan(priorParams->fix_pol))    { (*ndim)--; freecubeparams[4] = 0; }
+  if(!isnan(priorParams->fix_inc))    { (*ndim)--; freecubeparams[5] = 0; }
+  if(!isnan(priorParams->fix_dist))   { (*ndim)--; freecubeparams[6] = 0; }
+  if(priorParams->samplemassparams==m1m2) {
+    if (!isnan(priorParams->fix_m1))     { (*ndim)--; freecubeparams[7] = 0; }
+    if (!isnan(priorParams->fix_m2))     { (*ndim)--; freecubeparams[8] = 0; }
+  }
+  if(priorParams->samplemassparams==Mchirpeta) {
+    if (!isnan(priorParams->fix_Mchirp)) { (*ndim)--; freecubeparams[7] = 0; }
+    if (!isnan(priorParams->fix_eta))    { (*ndim)--; freecubeparams[8] = 0; }
+  }
 
   int *freeparamsmap = malloc(*ndim*sizeof(int));
 
@@ -172,8 +177,16 @@ void addendum(int argc, char *argv[],LISARunParams *runParams, int *ndim, int *n
 
   if (*ndim == 0) {
     LISAParams templateparams;
-    templateparams.m1 = priorParams->fix_m1;
-    templateparams.m2 = priorParams->fix_m2;
+    if(priorParams->samplemassparams==m1m2) {
+      templateparams.m1 = priorParams->fix_m1;
+      templateparams.m2 = priorParams->fix_m2;
+    }
+    if(priorParams->samplemassparams==Mchirpeta) {
+      double Mchirp = priorParams->fix_Mchirp;
+      double eta = priorParams->fix_eta;
+      templateparams.m1 = m1ofMchirpeta(Mchirp, eta);
+      templateparams.m2 = m2ofMchirpeta(Mchirp, eta);
+    }
     templateparams.tRef = priorParams->fix_time;
     templateparams.distance = priorParams->fix_dist;
     templateparams.phiRef = priorParams->fix_phase;
