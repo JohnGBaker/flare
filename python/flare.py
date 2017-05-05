@@ -20,6 +20,7 @@ noRun=False
 all_params_file=False
 ROM_DATA_PATH="ROMdata/q1-12_Mfmin_0.0003940393857519091"
 extra_flags=""
+LISAvariant="LISA2017"
 
 def set_flare_flags(snr,params):
     flags=""
@@ -44,6 +45,7 @@ def set_flare_flags(snr,params):
     #flags+=" --dist-min 5000. --dist-max 200e4 --distance 1e5"  #prior range for distances should verify range based on distances (in Mpc).
     flags+=" --dist-min 1000. --dist-max 4e5"  #prior range for distances approx 0.2<z<33
     flags+=" --flat-distprior" #by default us a flat prior on the distance rather than as R^2
+    flags+=" --variant "+LISAvariant #by default us a flat prior on the distance rather than as R^2
     flags+=extra_flags  #Default is none, but can add at runtime...
     #set parameter flags
     m1           = params[0]
@@ -388,17 +390,10 @@ def readCovarFile(file):
         #else: print "...No execption in read covar"
             raise
     return [dm1,dm2,dtRef,dD,dphase,dinc,dlam,dbeta,dpol,dsky,dori,dmvol]
-<<<<<<< HEAD
             
               
         
 def FisherStudy(outlabel,MtotList,qList,SNRList,deltalist,Navg,Nthreads,extrapoints=1.0):
-=======
-
-
-
-def FisherStudy(outlabel,MtotList,qList,SNRList,deltalist,Navg,Nthreads):
->>>>>>> 4a907cc1743a1a5e28e29804a9b94a5c28993c96
     pp = PdfPages(str(outlabel)+'FisherStudy.pdf')
     datafile = open(outlabel+'FisherStudy.dat','w')
     for q in qList:
@@ -643,7 +638,6 @@ def HorizonPlot(outlabel,ipar,qList,snr,delta,datafile,horizonlist,scaled=False,
         pp.savefig()
         plt.clf()
     pp.close()
-<<<<<<< HEAD
 
 
 def HorizonCompare(outlabel,ipar,qList,snr,delta,datafiles,horizonlist,scaled=False,errorNsigma=2):
@@ -720,5 +714,3 @@ def HorizonCompare(outlabel,ipar,qList,snr,delta,datafiles,horizonlist,scaled=Fa
         plt.clf()
     pp.close()
 
-=======
->>>>>>> 4a907cc1743a1a5e28e29804a9b94a5c28993c96

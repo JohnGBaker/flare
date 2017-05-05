@@ -4,7 +4,7 @@ import numpy as np
 #flare.flare_dir="../../LISAstudy/flaretest/flare/"
 #label="LISA2017-Nov-flaretest/"
 flare.flare_dir="../flare"
-label="LISA2017b/"
+flare.LISAvariant="LISA2017";label="LISA2017c/"
 #label="2arm-LISA/";flare.extra_flags=" --tagtdi TDIAXYZ"
 #label="tRef-redef-LISA2017/"
 #label="fast-orbit-LISA/"
