@@ -138,13 +138,14 @@ Arguments are as follows:\n\
  --minf                Minimal frequency (Hz, default=0) - when set to 0, use the lowest frequency where the detector noise model is trusted __LISASimFD_Noise_fLow (set somewhat arbitrarily)\n\
  --maxf                Maximal frequency (Hz, default=0) - when set to 0, use the highest frequency where the detector noise model is trusted __LISASimFD_Noise_fHigh (set somewhat arbitrarily)\n\
  --tagextpn            Tag to allow PN extension of the waveform at low frequencies (default=1)\n\
+ --tagtRefatLISA         Tag to allow t0 to specify signal offset time at LISA guiding center rather than at SSB (default=0)\n\
  --Mfmatch             When PN extension allowed, geometric matching frequency: will use ROM above this value. If <=0, use ROM down to the lowest covered frequency (default=0.)\n\
  --nbmodeinj           Number of modes of radiation to use for the injection (1-5, default=5)\n\
  --nbmodetemp          Number of modes of radiation to use for the templates (1-5, default=5)\n\
  --tagint              Tag choosing the integrator: 0 for Fresnel (default), 1 for linear integration\n\
  --tagtdi              Tag choosing the set of TDI variables to use (default TDIAETXYZ)\n\
  --nbptsoverlap        Number of points to use for linear integration (default 32768)\n\
-\n\
+ --variant             String representing the variant of LISA to be applied (default LISA2017)\n\
 --------------------------------------------------\n\
 ----- Prior Boundary Settings --------------------\n\
 --------------------------------------------------\n\
@@ -217,12 +218,14 @@ Syntax: --PARAM-min\n\
     globalparams->minf = 0.;
     globalparams->maxf = 0.;
     globalparams->tagextpn = 1;
+    globalparams->tagtRefatLISA = 0;
     globalparams->Mfmatch = 0.;
     globalparams->nbmodeinj = 5;
     globalparams->nbmodetemp = 5;
     globalparams->tagint = 0;
     globalparams->tagtdi = TDIAETXYZ;
     globalparams->nbptsoverlap = 32768;
+    globalparams->variant = &LISA2017;
 
     /* set default values for the prior limits */
     prior->deltaT = 3600.;
@@ -314,6 +317,8 @@ Syntax: --PARAM-min\n\
             globalparams->maxf = atof(argv[++i]);
         } else if (strcmp(argv[i], "--tagextpn") == 0) {
             globalparams->tagextpn = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "--tagtRefatLISA") == 0) {
+            globalparams->tagtRefatLISA = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--Mfmatch") == 0) {
             globalparams->Mfmatch = atof(argv[++i]);
         } else if (strcmp(argv[i], "--nbmodeinj") == 0) {
@@ -432,6 +437,17 @@ Syntax: --PARAM-min\n\
             run->ztol = atof(argv[++i]);
         } else if (strcmp(argv[i], "--seed") == 0) {
             run->seed = 1;
+        } else if (strcmp(argv[i], "--variant") == 0) {
+	  i++;
+	  if (strcmp(argv[i], "LISA2017") == 0) globalparams->variant=&LISA2017;
+	  else if (strcmp(argv[i], "fastOrbitLISA") == 0) globalparams->variant=&fastOrbitLISA;
+	  else if (strcmp(argv[i], "slowOrbitLISA") == 0) globalparams->variant=&slowOrbitLISA;
+	  else if (strcmp(argv[i], "tinyOrbitLISA") == 0) globalparams->variant=&tinyOrbitLISA;
+	  else if (strcmp(argv[i], "bigOrbitLISA") == 0) globalparams->variant=&bigOrbitLISA;
+	  else {
+	    printf("Error: --variant option '%s' not recognized\n",argv[i]);
+	    goto fail;
+	  }
         } else {
             printf("Error: invalid option: %s\n", argv[i]);
             goto fail;
@@ -723,7 +739,7 @@ int LISAGenerateSignalCAmpPhase(
   //tbeg = clock();
 
   //#pragma omp critical(LISAgensig)
-  LISASimFDResponseTDI3Chan(&listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, globalparams->maxf, globalparams->tagtdi);
+  LISASimFDResponseTDI3Chan(globalparams->tagtRefatLISA, globalparams->variant, &listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, globalparams->maxf, globalparams->tagtdi);
   //tend = clock();
   //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
@@ -814,7 +830,7 @@ int LISAGenerateInjectionCAmpPhase(
   //TESTING
   //clock_t tbeg, tend;
   //tbeg = clock();
-  LISASimFDResponseTDI3Chan(&listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, globalparams->maxf, globalparams->tagtdi);
+  LISASimFDResponseTDI3Chan(globalparams->tagtRefatLISA, globalparams->variant, &listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, globalparams->maxf, globalparams->tagtdi);
   //tend = clock();
   //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
@@ -894,7 +910,7 @@ int LISAGenerateSignalReIm(
   //TESTING
   //clock_t tbeg, tend;
   //tbeg = clock();
-  LISASimFDResponseTDI3Chan(&listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, globalparams->maxf, globalparams->tagtdi);
+  LISASimFDResponseTDI3Chan(globalparams->tagtRefatLISA, globalparams->variant, &listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, globalparams->maxf, globalparams->tagtdi);
   //tend = clock();
   //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
@@ -975,7 +991,7 @@ int LISAGenerateInjectionReIm(
   //TESTING
   //clock_t tbeg, tend;
   //tbeg = clock();
-  LISASimFDResponseTDI3Chan(&listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, globalparams->maxf, globalparams->tagtdi);
+  LISASimFDResponseTDI3Chan(globalparams->tagtRefatLISA, globalparams->variant, &listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, globalparams->maxf, globalparams->tagtdi);
   //tend = clock();
   //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //

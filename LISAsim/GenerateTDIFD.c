@@ -343,6 +343,10 @@ static void Write_TDIhlm(const char dir[], const char file[], ListmodesCAmpPhase
 
 int main(int argc, char *argv[])
 {
+  //These are set by command line in other programs but fixed here.
+  LISAconstellation *variant=&LISA2017;
+  int tRefatLISA=0;
+    
   /* Initialize structure for parameters */
   GenTDIFDparams* params;
   params = (GenTDIFDparams*) malloc(sizeof(GenTDIFDparams));
@@ -509,13 +513,13 @@ int main(int argc, char *argv[])
     ListmodesCAmpPhaseFrequencySeries* listTDI1= NULL;
     ListmodesCAmpPhaseFrequencySeries* listTDI2= NULL;
     ListmodesCAmpPhaseFrequencySeries* listTDI3= NULL;
-    LISASimFDResponseTDI3Chan(&listhlm, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->maxf, params->tagtdi);
+    LISASimFDResponseTDI3Chan(tRefatLISA,variant,&listhlm, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->maxf, params->tagtdi);
 
     /* If asked for it, rescale the complex amplitudes to include the factors that were scaled out of TDI observables */
     if(params->restorescaledfactor) {
-      RestoreInPlaceScaledFactorTDI(listTDI1, params->tagtdi, 1);
-      RestoreInPlaceScaledFactorTDI(listTDI2, params->tagtdi, 2);
-      RestoreInPlaceScaledFactorTDI(listTDI3, params->tagtdi, 3);
+      RestoreInPlaceScaledFactorTDI(variant, listTDI1, params->tagtdi, 1);
+      RestoreInPlaceScaledFactorTDI(variant, listTDI2, params->tagtdi, 2);
+      RestoreInPlaceScaledFactorTDI(variant, listTDI3, params->tagtdi, 3);
     }
 
     if(params->taggenwave==TDIhlm) {

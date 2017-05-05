@@ -49,12 +49,14 @@ typedef struct tagLISAGlobalParams {
   double minf;               /* Minimal frequency (Hz, default=0) - when set to 0, use the lowest frequency where the detector noise model is trusted __LISASimFD_Noise_fLow (set somewhat arbitrarily)*/
   double maxf;               /* Maximal frequency (Hz, default=0) - when set to 0, use the highest frequency where the detector noise model is trusted __LISASimFD_Noise_fHigh (set somewhat arbitrarily)*/
   int tagextpn;              /* Tag to allow PN extension of the waveform at low frequencies */
+  int tagtRefatLISA;         /* Tag to signal time to be referenced to arrival at LISA rather than at SSB */
   double Mfmatch;            /* When PN extension allowed, geometric matching frequency: will use ROM above this value. If <=0, use ROM down to the lowest covered frequency */
   int nbmodeinj;             /* number of modes to include in the injection (starting with 22) - defaults to 5 (all modes) */
   int nbmodetemp;            /* number of modes to include in the templates (starting with 22) - defaults to 5 (all modes) */
   int tagint;                /* Tag choosing the integrator: 0 for wip (default), 1 for linear integration */
   int tagtdi;                /* Tag choosing the TDI variables to use */
   int nbptsoverlap;          /* Number of points to use in loglinear overlaps (default 32768) */
+  LISAconstellation *variant;  /* A structure defining the LISA constellation features */
 } LISAGlobalParams;
 
 typedef struct tagLISASignalCAmpPhase

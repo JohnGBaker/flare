@@ -51,6 +51,7 @@ extern "C" {
 
 /* Core function processing a signal (in the form of a list of modes) through the Fourier-domain LISA response, for given values of the inclination, position in the sky and polarization angle - here simplified version for just the y_21 observable */
 int LISASimFDResponse21(
+  LISAconstellation *variant,                                 /* Provides specifics on the variant of LISA */
   struct tagListmodesCAmpPhaseFrequencySeries **list,  /* Input/Output: list of modes in Frequency-domain amplitude and phase form as produced by the ROM, and output after FD response processing */
   const double inclination,                                   /* Inclination of the source */
   const double lambda,                                        /* First angle for the position in the sky */
@@ -60,6 +61,7 @@ int LISASimFDResponse21(
 //WARNING: tRef is ignored for now in the response - i.e. set to 0
 /* Core function processing a signal (in the form of a list of modes) through the Fourier-domain LISA response, for given values of the inclination, position in the sky and polarization angle */
 int LISASimFDResponsey12(
+  LISAconstellation *variant,                                 /* Provides specifics on the variant of LISA */
   struct tagListmodesCAmpPhaseFrequencySeries **list,      /* Input: list of modes in Frequency-domain amplitude and phase form as produced by the ROM */
   struct tagListmodesCAmpPhaseFrequencySeries **listy12,   /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the y12 observable */
   const double tRef,                                          /* Time at coalescence */
@@ -71,6 +73,8 @@ int LISASimFDResponsey12(
 //WARNING: tRef is ignored for now in the response - i.e. set to 0
 /* Core function processing a signal (in the form of a list of modes) through the Fourier-domain LISA response, for given values of the inclination, position in the sky and polarization angle */
 int LISASimFDResponseTDI3Chan(
+  int tagtRefatLISA,                                          /* 0 to measure Tref from SSB arrival, 1 at LISA guiding center */
+  LISAconstellation *variant,                                 /* Provides specifics on the variant of LISA */
   struct tagListmodesCAmpPhaseFrequencySeries **list,      /* Input: list of modes in Frequency-domain amplitude and phase form as produced by the ROM */
   struct tagListmodesCAmpPhaseFrequencySeries **listTDI1,  /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the TDI channel 1 */
   struct tagListmodesCAmpPhaseFrequencySeries **listTDI2,  /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the TDI channel 2 */

@@ -107,79 +107,79 @@ static double Sop(const double f) {
 
 /* Noise Sn for TDI observables - factors have been scaled out both in the response and the noise */
 /* Rescaled by 4*sin2pifL^2 */
-double SnXYZ(double f) {
-  double twopifL = 2.*PI*L_SI/C_SI*f;
+double SnXYZ(const LISAconstellation *variant, double f) {
+  double twopifL = 2.*PI*variant->ConstL/C_SI*f;
   double c2 = cos(twopifL);
   return 4*( 2*(1. + c2*c2)*Spm(f) + Sop(f) );
 }
 /* No rescaling */
-double Snalphabetagamma(double f) {
-  double pifL = PI*L_SI/C_SI*f;
+double Snalphabetagamma(const LISAconstellation *variant, double f) {
+  double pifL = PI*variant->ConstL/C_SI*f;
   double s1 = sin(pifL);
   double s3 = sin(3*pifL);
   return 2*( (4*s3*s3 + 8*s1*s1)*Spm(f) + 3*Sop(f) );
 }
 /* Rescaled by 2*sin2pifL^2 */
-double SnAXYZ(double f) {
-  double twopifL = 2.*PI*L_SI/C_SI*f;
+double SnAXYZ(const LISAconstellation *variant, double f) {
+  double twopifL = 2.*PI*variant->ConstL/C_SI*f;
   double c2 = cos(twopifL);
   double c4 = cos(2*twopifL);
   return 2*(3. + 2*c2 + c4)*Spm(f) + (2 + c2)*Sop(f);
 }
 /* Rescaled by 2*sin2pifL^2 */
-double SnEXYZ(double f) {
-  double twopifL = 2.*PI*L_SI/C_SI*f;
+double SnEXYZ(const LISAconstellation *variant, double f) {
+  double twopifL = 2.*PI*variant->ConstL/C_SI*f;
   double c2 = cos(twopifL);
   double c4 = cos(2*twopifL);
   return 2*(3. + 2*c2 + c4)*Spm(f) + (2 + c2)*Sop(f);
 }
 /* Rescaled by 8*sin2pifL^2*sinpifL^2 */
-double SnTXYZ(double f) {
-  double pifL = PI*L_SI/C_SI*f;
+double SnTXYZ(const LISAconstellation *variant, double f) {
+  double pifL = PI*variant->ConstL/C_SI*f;
   double s1 = sin(pifL);
   return 4*s1*s1*Spm(f) + Sop(f);
 }
 /* Rescaled by 8*sin2pifL^2 */
-double SnAalphabetagamma(double f) {
-  double twopifL = 2.*PI*L_SI/C_SI*f;
+double SnAalphabetagamma(const LISAconstellation *variant, double f) {
+  double twopifL = 2.*PI*variant->ConstL/C_SI*f;
   double c2 = cos(twopifL);
   double c4 = cos(2*twopifL);
   return 2*(3. + 2*c2 + c4)*Spm(f) + (2 + c2)*Sop(f);
 }
 /* Rescaled by 8*sin2pifL^2 */
-double SnEalphabetagamma(double f) {
-  double twopifL = 2.*PI*L_SI/C_SI*f;
+double SnEalphabetagamma(const LISAconstellation *variant, double f) {
+  double twopifL = 2.*PI*variant->ConstL/C_SI*f;
   double c2 = cos(twopifL);
   double c4 = cos(2*twopifL);
   return 2*(3. + 2*c2 + c4)*Spm(f) + (2 + c2)*Sop(f);
 }
 /* Rescaled by sin3pifL^2/sinpifL^2 */
-double SnTalphabetagamma(double f) {
-  double pifL = PI*L_SI/C_SI*f;
+double SnTalphabetagamma(const LISAconstellation *variant, double f) {
+  double pifL = PI*variant->ConstL/C_SI*f;
   double s1 = sin(pifL);
   return 8*s1*s1*Spm(f) + 2*Sop(f);
 }
 
 /* Noise functions for AET(XYZ) without rescaling */
 /* Scaling by 2*sin2pifL^2 put back */
-double SnAXYZNoRescaling(double f) {
-  double twopifL = 2.*PI*L_SI/C_SI*f;
+double SnAXYZNoRescaling(const LISAconstellation *variant, double f) {
+  double twopifL = 2.*PI*variant->ConstL/C_SI*f;
   double c2 = cos(twopifL);
   double c4 = cos(2*twopifL);
   double s2 = sin(twopifL);
   return 2*s2*s2 * (2*(3. + 2*c2 + c4)*Spm(f) + (2 + c2)*Sop(f));
 }
 /* Scaling by 2*sin2pifL^2 put back */
-double SnEXYZNoRescaling(double f) {
-  double twopifL = 2.*PI*L_SI/C_SI*f;
+double SnEXYZNoRescaling(const LISAconstellation *variant, double f) {
+  double twopifL = 2.*PI*variant->ConstL/C_SI*f;
   double c2 = cos(twopifL);
   double c4 = cos(2*twopifL);
   double s2 = sin(twopifL);
   return 2*s2*s2 * (2*(3. + 2*c2 + c4)*Spm(f) + (2 + c2)*Sop(f));
 }
 /* Scaling by 8*sin2pifL^2*sinpifL^2 put back*/
-double SnTXYZNoRescaling(double f) {
-  double pifL = PI*L_SI/C_SI*f;
+double SnTXYZNoRescaling(const LISAconstellation *variant, double f) {
+  double pifL = PI*variant->ConstL/C_SI*f;
   double s1 = sin(pifL);
   double s2 = sin(2*pifL);
   return 8*s1*s1*s2*s2 * (4*s1*s1*Spm(f) + Sop(f));

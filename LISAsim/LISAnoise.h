@@ -63,19 +63,19 @@ extern "C" {
 RealFunctionPtr NoiseFunction(const TDItag tditag, const int nchan);
 
 /* Noise Sn for TDI observables - factors have been scaled out both in the response and the noise */
-double SnXYZ(double f);
-double Snalphabetagamma(double f);
-double SnAXYZ(double f);
-double SnEXYZ(double f);
-double SnTXYZ(double f);
-double SnAalphabetagamma(double f);
-double SnEalphabetagamma(double f);
-double SnTalphabetagamma(double f);
+double SnXYZ(const LISAconstellation *variant, double f);
+double Snalphabetagamma(const LISAconstellation *variant, double f);
+double SnAXYZ(const LISAconstellation *variant, double f);
+double SnEXYZ(const LISAconstellation *variant, double f);
+double SnTXYZ(const LISAconstellation *variant, double f);
+double SnAalphabetagamma(const LISAconstellation *variant, double f);
+double SnEalphabetagamma(const LISAconstellation *variant, double f);
+double SnTalphabetagamma(const LISAconstellation *variant, double f);
 
 /* Noise functions for AET(XYZ) without rescaling */
-double SnAXYZNoRescaling(double f);
-double SnEXYZNoRescaling(double f);
-double SnTXYZNoRescaling(double f);
+double SnAXYZNoRescaling(const LISAconstellation *variant, double f);
+double SnEXYZNoRescaling(const LISAconstellation *variant, double f);
+double SnTXYZNoRescaling(const LISAconstellation *variant, double f);
 
 /* Function returning the relevant noise function, given a set of TDI observables and a channel */
 /* double (*NoiseFunction(const TDItag tditag, const int chan))(double); */
