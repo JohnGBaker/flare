@@ -395,10 +395,6 @@ double FDOverlapReImvsReIm(
     gsl_vector_set(valuesoverlap, i, 4.*creal( (hreal1data[i] + I*himag1data[i]) * (hreal2data[i] - I*himag2data[i]) / noisedata[i]));
   }
 
-  //
-  //Write_Text_Vector("/Users/marsat/src/flare/test/testcompareSNRtoFFT", "testfreqoverlap.txt", freqoverlap);
-  //Write_Text_Vector("/Users/marsat/src/flare/test/testcompareSNRtoFFT", "testvaluesoverlap.txt", valuesoverlap);
-
   /* Final trapeze integration */
   double overlap = TrapezeIntegrate(freqoverlap, valuesoverlap);
 
@@ -592,8 +588,6 @@ static double EstimateBoundaryLegendreQuad(
   double y2 = gsl_vector_get(vecty, j+2);
   if(!(x>=x0 && x<=x2)) {
     printf("Error: value out of bounds in EstimateBoundaryLegendreQuad.\n");
-    //
-    //printf("%.16e, %.16e, %.16e, %.16e:\n", xvalue, gsl_vector_get(vectx, j), gsl_vector_get(vectx, j+1), gsl_vector_get(vectx, j+2));
     exit(1);
   }
   return y0*(x-x1)*(x-x2)/(x0-x1)/(x0-x2) + y1*(x-x0)*(x-x2)/(x1-x0)/(x1-x2) + y2*(x-x0)*(x-x1)/(x2-x0)/(x2-x1);
@@ -608,8 +602,7 @@ void ComputeIntegrandValues(
   double fLow,                              /* Lower bound of the frequency - 0 to ignore */
   double fHigh)                             /* Upper bound of the frequency - 0 to ignore */
 {
-  //
-gsl_set_error_handler(&Err_Handler);
+  gsl_set_error_handler(&Err_Handler);
 
   /* Determining the boundaries of indices */
   gsl_vector* freq1 = freqseries1->freq;
@@ -713,7 +706,6 @@ void ComputeIntegrandValues3Chan(
   double fLow,                              /* Lower bound of the frequency - 0 to ignore */
   double fHigh)                             /* Upper bound of the frequency - 0 to ignore */
 {
-  //
   gsl_set_error_handler(&Err_Handler);
 
   /* Determining the boundaries of indices - frequency vectors assumed to be the same for channels 1,2,3 */
@@ -862,12 +854,6 @@ double FDSinglemodeFresnelOverlap(
   CAmpPhaseSpline* integrandspline = NULL;
   BuildSplineCoeffs(&integrandspline, integrand);
 
-  //
-  /* printf("Inside FDSinglemodeFresnelOverlap\n"); */
-  /* Write_Text_Matrix("/Users/marsat/src/flare/test/testlisaoverlap/temp4", "intAsplineampreal.txt", integrandspline->spline_amp_real); */
-  /* Write_Text_Matrix("/Users/marsat/src/flare/test/testlisaoverlap/temp4", "intAsplineampimag.txt", integrandspline->spline_amp_imag); */
-  /* Write_Text_Matrix("/Users/marsat/src/flare/test/testlisaoverlap/temp4", "intAsplinephase.txt", integrandspline->quadspline_phase); */
-
   /* Computing the integral - including here the factor 4 and the real part */
   double overlap = 4.*creal(ComputeInt(integrandspline->spline_amp_real, integrandspline->spline_amp_imag, integrandspline->quadspline_phase));
 
@@ -895,17 +881,6 @@ double FDSinglemodeFresnelOverlap3Chan(
   /* Computing the integrand values, on the frequency grid of h1 */
   CAmpPhaseFrequencySeries* integrand = NULL;
   ComputeIntegrandValues3Chan(&integrand, freqseries1chan1, freqseries1chan2, freqseries1chan3, splines2chan1, splines2chan2, splines2chan3, Snoisechan1, Snoisechan2, Snoisechan3, fLow, fHigh);
-
-  /*
-  Write_Text_Vector("/Users/marsat/src/flare/test/testlikelihoodlowM", "temp_freq_chanE.txt", freqseries1chan1->freq);
-  Write_Text_Vector("/Users/marsat/src/flare/test/testlikelihoodlowM", "temp_ampreal_chanE.txt", freqseries1chan1->amp_real);
-  Write_Text_Vector("/Users/marsat/src/flare/test/testlikelihoodlowM", "temp_ampimag_chanE.txt", freqseries1chan1->amp_imag);
-  Write_Text_Vector("/Users/marsat/src/flare/test/testlikelihoodlowM", "temp_phase_chanE.txt", freqseries1chan1->phase);
-  //
-  Write_Text_Matrix("/Users/marsat/src/flare/test/testlikelihoodlowM", "inj_ampreal_spline_chanE.txt", splines2chan1->spline_amp_real);
-  Write_Text_Matrix("/Users/marsat/src/flare/test/testlikelihoodlowM", "inj_ampimag_spline_chanE.txt", splines2chan1->spline_amp_imag);
-  Write_Text_Matrix("/Users/marsat/src/flare/test/testlikelihoodlowM", "inj_phase_spline_chanE.txt", splines2chan1->quadspline_phase);
-  */
 
   /* Rescaling the integrand */
   double scaling = 10./gsl_vector_get(integrand->freq, integrand->freq->size-1);
@@ -990,8 +965,6 @@ double FDListmodesFresnelOverlap3Chan(
       int mmax2 = max(2, listelementsplines2chan1->m);
       double fcutLow = fmax(fLow, fmax(((double) mmax1)/2. * fstartobs1, ((double) mmax2)/2. * fstartobs2));
       double overlapmode = FDSinglemodeFresnelOverlap3Chan(listelementh1chan1->freqseries, listelementh1chan2->freqseries, listelementh1chan3->freqseries, listelementsplines2chan1->splines, listelementsplines2chan2->splines, listelementsplines2chan3->splines, Snoise1, Snoise2, Snoise3, fcutLow, fHigh);
-      //
-      //printf("fcutLow, fHigh, overlapmode: %g, %g, %g\n", fcutLow, fHigh, overlapmode);
       overlap += overlapmode;
       listelementsplines2chan1 = listelementsplines2chan1->next;
     }

@@ -3,7 +3,7 @@ import numpy as np
 import sys
 import os
 
-#Usage: python FisherRun.py label snr param1 param2 ...
+#Usage: python FisherRun.py label snr delta param1 param2 ...
 
 flare.flare_dir= os.path.dirname(os.path.realpath(__file__))[:-7]
 

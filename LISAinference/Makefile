@@ -42,7 +42,8 @@ LISAlikelihood: LISAlikelihood.o LISAutils.o ../LISAsim/LISAFDresponse.o ../LISA
 ifdef PTMCMC
 LISAinference_ptmcmc.o:  LISAinference_ptmcmc.cc  $(PTMCMC)/lib/libptmcmc.a
 
-LISAinference_ptmcmc:  LISAinference_ptmcmc.o LISAinference_common.o LISAutils.o ../LISAsim/LISAFDresponse.o ../LISAsim/LISAnoise.o ../LISAsim/LISAgeometry.o ../tools/struct.o ../tools/waveform.o ../tools/timeconversion.o ../tools/splinecoeffs.o ../tools/fresnel.o ../tools/likelihood.o ../EOBNRv2HMROM/EOBNRv2HMROM.o ../EOBNRv2HMROM/EOBNRv2HMROMstruct.o ../integration/wip.o ../integration/spline.o ../integration/Faddeeva.o $(PTMCMC)/lib/libptmcmc.a 
+LISAinference_ptmcmc:  LISAinference_ptmcmc.o LISAinference_common.o LISAutils.o ../LISAsim/LISAFDresponse.o ../LISAsim/LISAnoise.o ../LISAsim/LISAgeometry.o ../tools/struct.o ../tools/waveform.o ../tools/timeconversion.o ../tools/splinecoeffs.o ../tools/fresnel.o ../tools/likelihood.o ../EOBNRv2HMROM/EOBNRv2HMROM.o ../EOBNRv2HMROM/EOBNRv2HMROMstruct.o ../integration/wip.o ../integration/spline.o ../integration/Faddeeva.o $(PTMCMC)/lib/libptmcmc.a
+	@echo $(LD)
 	$(LD) $(LDFLAGS) -o LISAinference_ptmcmc LISAinference_ptmcmc.o LISAinference_common.o LISAutils.o ../LISAsim/LISAFDresponse.o ../LISAsim/LISAnoise.o ../LISAsim/LISAgeometry.o ../tools/struct.o ../tools/waveform.o ../tools/timeconversion.o ../tools/splinecoeffs.o ../tools/fresnel.o ../tools/likelihood.o ../EOBNRv2HMROM/EOBNRv2HMROM.o ../EOBNRv2HMROM/EOBNRv2HMROMstruct.o ../integration/wip.o ../integration/spline.o ../integration/Faddeeva.o -L$(GSLROOT)/lib -L$(PTMCMC)/lib -lgsl -lgslcblas -lm -lptmcmc -lprobdist -I$(GSLROOT)/include -I$(PTMCMC)/include  $(MPILIBS)
 endif
 

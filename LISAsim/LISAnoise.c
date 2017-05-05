@@ -46,8 +46,8 @@
 static double Spm(const double f) {
   double invf2 = 1./(f*f);
   //return 2.5e-48 * invf2 * sqrt(1. + 1e-8*invf2);
-  const double Daccel=3.0e-15; //acceleration noise in m/s^2/sqrt(Hz)
-  //const double Daccel=3.0e-15/(2.5e9/L_SI); //scaled off L3LISA-v1 to for equal-SNR PE experiment
+  //const double Daccel=3.0e-15; //acceleration noise in m/s^2/sqrt(Hz)
+  const double Daccel=3.0e-15/(2.5e9/L_SI); //scaled off L3LISA-v1 to for equal-SNR PE experiment
   const double SaccelFF=Daccel*Daccel/4.0/PI/PI/C_SI/C_SI; //f^-2 coeff for fractional-freq noise PSD from accel noise; yields 2.54e-48 from 3e-15;
   double invf8=invf2*invf2*invf2*invf2;
   //Here we add an eyeball approximation based on 4yrs integration with L3LISAReferenceMission looking at a private comm from Neil Cornish 2016.11.12
@@ -58,8 +58,8 @@ static double Spm(const double f) {
 
 static double Sop(const double f) {
   //const double Dop=2.0e-11; //Optical path noise in m/rtHz (Standard LISA)
-  const double Dop=1.2e-11; //Optical path noise in m/rtHz (L3 LISA reference)
-  //const double Dop=1.2e-11/(2.5e9/L_SI); //scaled off L3LISA-v1 to for equal-SNR PE experiment
+  //const double Dop=1.2e-11; //Optical path noise in m/rtHz (L3 LISA reference)
+  const double Dop=1.2e-11/(2.5e9/L_SI); //scaled off L3LISA-v1 to for equal-SNR PE experiment
   const double SopFF=Dop*Dop*4.0*PI*PI/C_SI/C_SI; //f^2 coeff for OP frac-freq noise PSD.  Yields 1.76e-37 for Dop=2e-11.
   //return 3.8e-38 *f*f;
   return SopFF * f * f;
@@ -67,7 +67,7 @@ static double Sop(const double f) {
 */
 
 
-// Proof mass and optical noises - f in Hz 
+// Proof mass and optical noises - f in Hz
 // L3 Reference Mission, from Petiteau LISA-CST-TN-0001
 static double Spm(const double f) {
   double invf2 = 1./(f*f);
@@ -87,7 +87,7 @@ static double Spm(const double f) {
   //Saccel_red*=4.0;//Hack to decrease low-freq sens by fac of 2.
   double Sloc=Dloc2*ddtsq/4.0;//Factor of 1/4.0 is in Petiteau eq 2
   double S4yrWDWD=5.16e-27*exp(-pow(f,1.2)*2.9e3)*pow(f,(-7./3.))*0.5*(1.0 + tanh(-(f-2.0e-3)*1.9e3))*ddtsq;//Stas' fit for 4yr noise (converted from Sens curve to position noise by multipyling by 3*L^2/80) which looks comparable to my fit), then converted to velocity noise
-  double Spm_vel = ( Saccel_red + Sloc + S4yrWDWD );  
+  double Spm_vel = ( Saccel_red + Sloc + S4yrWDWD );
   return Spm_vel / C2;//finally convert from velocity noise to fractional-frequency doppler noise.
 }
 

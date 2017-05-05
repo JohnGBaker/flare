@@ -84,6 +84,8 @@ int LISASimFDResponseTDI3Chan(
   const double beta,                                          /* Second angle for the position in the sky */
   const double inclination,                                   /* Inclination of the source */
   const double psi,                                           /* Polarization angle */
+  const double m1,                                            /* m1 in solar masses - used for resampling */
+  const double m2,                                            /* m2 in solar masses - used for resampling */
   const double maxf,                                          /* Maximal frequency to consider - used to ignore hard-to-resolve response at f>1Hz - NOTE: for now, no recomputation of the boundary, so when not resampling can lose a bit of support between the last frequency point covered and maxf */
   const TDItag tditag);                                       /* Selector for the set of TDI observables */
 

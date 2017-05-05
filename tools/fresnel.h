@@ -49,6 +49,29 @@ double complex ComputeInt(
   gsl_matrix* splinecoeffsAimag,         /*  */
   gsl_matrix* splinecoeffsphase);        /*  */
 
+double complex ComputeIntCase1a(
+  const double complex* coeffsA,         /* */
+  const double p1,                       /* */
+  const double p2,                       /* */
+  const double scale);                   /* */
+double complex ComputeIntCase1b(
+  const double complex* coeffsA,         /* */
+  const double p1,                       /* */
+  const double p2,                       /* */
+  const double scale);                   /* */
+double complex ComputeIntCase2(
+  const double complex* coeffsA,         /* */
+  const double p1,                       /* */
+  const double p2);                      /* */
+double complex ComputeIntCase3(
+  const double complex* coeffsA,         /* */
+  const double p1,                       /* */
+  const double p2);                      /* */
+double complex ComputeIntCase4(
+  const double complex* coeffsA,         /* */
+  const double p1,                       /* */
+  const double p2);                      /* */
+
 
 #if 0
 { /* so that editors will match succeeding brace */

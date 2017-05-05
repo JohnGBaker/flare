@@ -95,7 +95,7 @@ Arguments are as follows:\n\
     params->twindowbeg = 0.;
     params->twindowend = 0.;
     params->tagh22fromfile = 0;
-    params->tagtdi = TDIXYZ;
+    params->tagtdi = TDIAETXYZ;
     params->taggenwave = TDIhlm;
     params->restorescaledfactor = 0;
     params->FFTfromtdfile = 0;
@@ -151,9 +151,9 @@ Arguments are as follows:\n\
         } else if (strcmp(argv[i], "--tagh22fromfile") == 0) {
           params->tagh22fromfile = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--tagtdi") == 0) {
-	  params->tagtdi = ParseTDItag(argv[++i]);
+	        params->tagtdi = ParseTDItag(argv[++i]);
         } else if (strcmp(argv[i], "--taggenwave") == 0) {
-	  params->taggenwave = ParseGenTDIFDtag(argv[++i]);
+	        params->taggenwave = ParseGenTDIFDtag(argv[++i]);
         } else if (strcmp(argv[i], "--restorescaledfactor") == 0) {
             params->restorescaledfactor = 1;
         } else if (strcmp(argv[i], "--FFTfromtdfile") == 0) {
@@ -513,7 +513,7 @@ int main(int argc, char *argv[])
     ListmodesCAmpPhaseFrequencySeries* listTDI1= NULL;
     ListmodesCAmpPhaseFrequencySeries* listTDI2= NULL;
     ListmodesCAmpPhaseFrequencySeries* listTDI3= NULL;
-    LISASimFDResponseTDI3Chan(tRefatLISA,variant,&listhlm, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->maxf, params->tagtdi);
+    LISASimFDResponseTDI3Chan(tRefatLISA, variant, &listhlm, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, params->maxf, params->tagtdi);
 
     /* If asked for it, rescale the complex amplitudes to include the factors that were scaled out of TDI observables */
     if(params->restorescaledfactor) {

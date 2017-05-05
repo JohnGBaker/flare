@@ -27,11 +27,14 @@ def set_flare_flags(snr,params):
     #flags += " --tagextpn 0" #Don't extend waveforms at low freq to allow lower masses
     #flags+=" --tagint 0" #1 for Fresnel integration(default), vs gridded quadrature"
     #flags+=" --tagint 1" --nbptsoverlap 8192" #gridded quadrature
-    flags+=" --deltatobs 5.0" #duration in years of LISA observation
+    #flags+=" --deltatobs 5.0" #duration in years of LISA observation
+    flags+=" --deltatobs 1.0" #duration in years of LISA observation
     #flags+=" --minf 1e-4" #minimun frequency included in analysis
     flags+=" --minf 3e-6" #minimun frequency included in analysis
-    flags+=" --maxf 0.15" #maximum frequency included in analysis
-    flags+=" --nbmodeinj 5 --nbmodetemp 5" #for no higher modes in injection and template
+    #flags+=" --maxf 0.15" #maximum frequency included in analysis
+    flags+=" --maxf 5." #maximum frequency included in analysis
+    #flags+=" --nbmodeinj 5 --nbmodetemp 5" #for no higher modes in injection and template
+    flags+=" --nbmodeinj 1 --nbmodetemp 1" #for no higher modes in injection and template
     if(snr>0):
         flags+=" --snr "+str(snr)+" --rescale-distprior" #fixing SNR (rescales distance)
     flags+=" --comp-min 1e5 --comp-max 1e8" #min/max for component mass prior ranges
@@ -64,6 +67,7 @@ def set_flare_flags(snr,params):
     flags += " --beta "+str(beta)
     flags += " --inclination "+str(inc)
     flags += " --polarization "+str(pol)
+    print "flags : \n" + flags
     return flags
 
 def set_mcmc_flags(outroot,ptN):
@@ -78,7 +82,7 @@ def set_mcmc_flags(outroot,ptN):
     if(ptN>0):
         flags += " --pt_n="+str(ptN) #else default is 20
     flags += " --pt_swap_rate=0.10"   #rate of temp swaps (or default 0.01)
-    flags += " --pt_evolve_rate=0.01" #rate at which temps are allowed to evolve 
+    flags += " --pt_evolve_rate=0.01" #rate at which temps are allowed to evolve
 
     flags += " --pt_reboot_rate=0.0001 --pt_reboot_every=10000 --pt_reboot_grace=50000" #Somewhat hacky trick to avoid chains getting stuck.  Not sure whether we need this.
     #stopping criteria
@@ -100,7 +104,7 @@ def draw_params(Mtot,q):
     m2     = Mtot/(1.0+q)
     tRef   = np.random.randn()*1e5
     phiRef = 2*math.pi*np.random.rand()
-    dist = 100*10**(np.random.rand()*math.log10(400))
+    dist   = 100*10**(np.random.rand()*math.log10(400))
     lam    = np.random.rand()*2.0*math.pi
     beta   = math.acos(np.random.rand()*2.0-1)-math.pi/2.0
     inc    = math.acos(np.random.rand()*2.0-1)
@@ -119,13 +123,12 @@ def perform_run(name,Mtot,q,snr):
     flags+=set_flare_flags(snr,params)
     subprocess.call(cmd+" "+flags)
 
-    
 def SNRrun(Mtot,q,snr,name="dummy"):
     cmd   = flare_dir+"/LISAinference/LISAinference_ptmcmc"
     flags = " --nsteps=0 --noFisher"
     params=draw_params(Mtot,q)
     flags+=set_flare_flags(snr,params)
-    flags += " --rng_seed="+str(np.random.rand())+" " 
+    flags += " --rng_seed="+str(np.random.rand())+" "
     flags += " --outroot "+str(name)+" "
     cmd += " "+flags+">"+name+".out"
     setenv=""
@@ -149,7 +152,7 @@ def tSNRrun(Mtot,q,snr,name,data):
     flags = " --nsteps=0 --noFisher"
     params=draw_params(Mtot,q)
     flags+=set_flare_flags(snr,params)
-    flags += " --rng_seed="+str(np.random.rand())+" " 
+    flags += " --rng_seed="+str(np.random.rand())+" "
     flags += " --outroot "+str(name)+" "
     cmd += " "+flags+">"+name+".out"
     setenv=""
@@ -199,7 +202,7 @@ def SNRstudy(outlabel,MtotList,qList,SNRList,Navg,Nthreads=1):
             count+=1
             y1=[]
             y2=[]
-            x=[]            
+            x=[]
             for Mtot in MtotList:
                 print "Running SNRrun(",Mtot,",",q,",",snr,")"
                 data=[]
@@ -244,15 +247,16 @@ def SNRstudy(outlabel,MtotList,qList,SNRList,Navg,Nthreads=1):
         plt.clf()
         print "Finished plot for q="+str(q)
     pp.close()
-    
+
 def FisherRunByParams(snr,params,delta,label,extrapoints=1.0):
     cmd   = flare_dir+"/LISAinference/LISAinference_ptmcmc"
-    #npts=2**int(3.5 - math.log10(delta)*6.5)  #this formula was based on a study of how many nbptsoverlap are needed for convergence to within ~5% over a range of Fisher_err_target delta values.  The study was for a case with --m1 157500.0 --m2 107500.0 --snr 100 
-    npts=extrapoints*20/delta/delta #Simplified variant, multiplied by additional factor of two to be conservative note seems we only have convergence at order (1/nbpts)^0.5 I
+    #npts=2**int(3.5 - math.log10(delta)*6.5)  #this formula was based on a study of how many nbptsoverlap are needed for convergence to within ~5% over a range of Fisher_err_target delta values.  The study was for a case with --m1 157500.0 --m2 107500.0 --snr 100
+    #npts=extrapoints*20/delta/delta #Simplified variant, multiplied by additional factor of two to be conservative note seems we only have convergence at order (1/nbpts)^0.5 I
+    npts = 32768
     flags = "--nsteps=0 --Fisher_err_target="+str(delta)+" --flat-distprior --deltaT 5000"
     flags+=set_flare_flags(snr,params)+" --tagint 1 --nbptsoverlap "+str(npts)
     name=str(label)
-    flags += " --rng_seed="+str(np.random.rand())+" " 
+    flags += " --rng_seed="+str(np.random.rand())+" "
     flags += " --outroot "+str(name)+" "
     cmd += " "+flags+">"+name+".out"
     setenv="export ROM_DATA_PATH="+flare_dir+"/"+ROM_DATA_PATH
@@ -267,6 +271,8 @@ def FisherRunByParams(snr,params,delta,label,extrapoints=1.0):
             with open(name+"params.txt",'r') as file:
                 lines=file.read()
                 #print lines
+                ##
+                print name+"params.txt"
                 dist=re.search("dist_resc:(.*)", lines).group(1)
                 print "distance =",dist
             time.sleep(1)#pause to make sure file is ready to read.
@@ -382,10 +388,17 @@ def readCovarFile(file):
         #else: print "...No execption in read covar"
             raise
     return [dm1,dm2,dtRef,dD,dphase,dinc,dlam,dbeta,dpol,dsky,dori,dmvol]
+<<<<<<< HEAD
             
               
         
 def FisherStudy(outlabel,MtotList,qList,SNRList,deltalist,Navg,Nthreads,extrapoints=1.0):
+=======
+
+
+
+def FisherStudy(outlabel,MtotList,qList,SNRList,deltalist,Navg,Nthreads):
+>>>>>>> 4a907cc1743a1a5e28e29804a9b94a5c28993c96
     pp = PdfPages(str(outlabel)+'FisherStudy.pdf')
     datafile = open(outlabel+'FisherStudy.dat','w')
     for q in qList:
@@ -431,7 +444,7 @@ def FisherStudy(outlabel,MtotList,qList,SNRList,deltalist,Navg,Nthreads,extrapoi
                     #    print "len[",i,"]=",d.size
                     #    i+=1
                     #    if not d.size==Nstats+1:
-                    #        print "wrong length for:\n ",d 
+                    #        print "wrong length for:\n ",d
                     means=[]
                     stds=[]
                     for i in range(Nstats):
@@ -475,7 +488,7 @@ def FisherStudy(outlabel,MtotList,qList,SNRList,deltalist,Navg,Nthreads,extrapoi
     pp.close()
 
 
-        
+
 def FisherPlot(outlabel,ipar,qList,SNRList,deltalist,datafile,scaled=False,targetSNR=None,errorNsigma=2):
     pp = PdfPages(str(outlabel)+'Fisher-'+par_name(ipar)+'.pdf')
     #datafile = open(datafile,'r')
@@ -556,7 +569,7 @@ def FisherPlot(outlabel,ipar,qList,SNRList,deltalist,datafile,scaled=False,targe
         plt.clf()
     pp.close()
 
-        
+
 def HorizonPlot(outlabel,ipar,qList,snr,delta,datafile,horizonlist,scaled=False,errorNsigma=2,show_range=False):
     rangetag=''
     if(show_range):rangetag='range-'
@@ -595,9 +608,9 @@ def HorizonPlot(outlabel,ipar,qList,snr,delta,datafile,horizonlist,scaled=False,
                 scales=np.full_like(subdata[:,iMtot], 2*math.log10(math.pi/180.0))
             if(ipar==11): #scale by m1*m2
                 scales=np.log10(subdata[:,iMtot]*subdata[:,iMtot]/(1+q)/(1+1/q))
-        print scales        
+        print scales
         colorcount=0
-        for horizoncut in horizonlist:                   
+        for horizoncut in horizonlist:
             colorcount+=1
             meanzarray=subdata[:,imeanz]
             stdpararray=subdata[:,istdpar]
@@ -630,6 +643,7 @@ def HorizonPlot(outlabel,ipar,qList,snr,delta,datafile,horizonlist,scaled=False,
         pp.savefig()
         plt.clf()
     pp.close()
+<<<<<<< HEAD
 
 
 def HorizonCompare(outlabel,ipar,qList,snr,delta,datafiles,horizonlist,scaled=False,errorNsigma=2):
@@ -706,3 +720,5 @@ def HorizonCompare(outlabel,ipar,qList,snr,delta,datafiles,horizonlist,scaled=Fa
         plt.clf()
     pp.close()
 
+=======
+>>>>>>> 4a907cc1743a1a5e28e29804a9b94a5c28993c96
