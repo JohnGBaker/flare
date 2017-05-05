@@ -159,7 +159,7 @@ public:
     scales[0]=s0.get_param(0)/2.0;
     scales[1]=s0.get_param(1)/2.0;
     scales[3]=s0.get_param(3)/2.0;
-    for(int i=0;i<dim;i++)minscales[i]=scales[i]*1e-7;
+    for(int i=0;i<dim;i++)minscales[i]=scales[i]*1e-10;
     double err=1e100;
     double olderr=err;
     int count=0;
@@ -210,7 +210,7 @@ public:
       err=0;
       double square=0;
       for(int i=0;i<dim;i++)for(int j=0;j<(finish?dim:i+1);j++){//neglecting offdiagonals until finish 
-	  double delta=(fisher_matrix[i][j]-last_fisher_matrix[i][j]);///scales[i]/scales[j];
+	  double delta=(fisher_matrix[i][j]-last_fisher_matrix[i][j])*scales[i]*scales[j];
 	  square+=fisher_matrix[i][j]*fisher_matrix[i][j];
 	  err+=delta*delta;
 	  if(std::isnan(delta)||delta*delta>tol/10)cout<<"delta["<<i<<","<<j<<"]="<<delta*delta<<endl;
@@ -223,10 +223,15 @@ public:
       }else if(err<olderr or err>1000){
 	//set scale estimate based on result
 	for(int i=0;i<dim;i++){
-	  if(err>olderr)minscales[i]*=1.1;//force toward convergence is deltas are small and not converging.
-	  //scales[i]=1.0/sqrt(1/scales[i]+fisher_matrix[i][i]);
-	  scales[i]=sqrt(scales[i]/sqrt(fisher_matrix[i][i]));
-	  //if(scales[i]<minscales[i])scales[i]=minscales[i];
+	  if(err>olderr){
+	    //force toward convergence if deltas are small and not converging.
+	    minscales[i]*=1.1;
+	    cout<<"minscales["<<i<<"]->"<<minscales[i]<<endl;
+	  } //else {
+	    scales[i]=sqrt(scales[i]/sqrt(fisher_matrix[i][i]));
+	    //scales[i]=exp(log(scales[i])*0.7-log(fisher_matrix[i][i])*0.3);
+	    //}
+	  if(scales[i]<minscales[i])scales[i]=minscales[i];
 	}
 	//prep for next version of fisher calc;
 	for(int i=0;i<dim;i++)for(int j=0;j<(finish?dim:i+1);j++)last_fisher_matrix[i][j]=fisher_matrix[i][j];
