@@ -19,6 +19,7 @@ FisherRunFailCount=0
 noRun=False
 all_params_file=False
 ROM_DATA_PATH="ROMdata/q1-12_Mfmin_0.0003940393857519091"
+extra_flags=""
 
 def set_flare_flags(snr,params):
     flags=""
@@ -40,6 +41,7 @@ def set_flare_flags(snr,params):
     #flags+=" --dist-min 5000. --dist-max 200e4 --distance 1e5"  #prior range for distances should verify range based on distances (in Mpc).
     flags+=" --dist-min 1000. --dist-max 4e5"  #prior range for distances approx 0.2<z<33
     flags+=" --flat-distprior" #by default us a flat prior on the distance rather than as R^2
+    flags+=extra_flags  #Default is none, but can add at runtime...
     #set parameter flags
     m1           = params[0]
     m2           = params[1]
@@ -212,7 +214,7 @@ def SNRstudy(outlabel,MtotList,qList,SNRList,Navg,Nthreads=1):
                             print "NAN_DIST!"
                 zs=np.zeros(0);
                 for dist in data:
-                    z=z_at_value(cosmo.luminosity_distance,dist*units.Mpc,zmax=10000,ztol=1e-6)
+                    z=z_at_value(cosmo.luminosity_distance,dist*units.Mpc,zmax=100000,ztol=1e-6)
                     print "D=",dist," z=",z
                     zs=np.append(zs,math.log10(z))
                     #zs[i]=math.log10(dist)
@@ -277,7 +279,7 @@ def FisherRunByParams(snr,params,delta,label,extrapoints=1.0):
         subprocess.call("echo '\n\n***********************\nFailure "+str(FisherRunFailCount)+"\n***********************\n"+cmd+"' |cat - "+name+".out "+name+"_fishcov.out >> fisher_fails.out",shell=True)
     return [float(dist)]+cov
 
-def FisherRun(Mtot,q,snr,delta,label,data):
+def FisherRun(Mtot,q,snr,delta,label,data,extrapoints=1.0):
     global FisherRunFailCount
     params=draw_params(Mtot,q)
     if(not getattr(all_params_file,"write",None)==None):
@@ -287,11 +289,11 @@ def FisherRun(Mtot,q,snr,delta,label,data):
             all_params_file.write(str(pval)+"\t")
         all_params_file.write("\n")
         threadLock.release()
-    datum=FisherRunByParams(snr,params,delta,label)
+    datum=FisherRunByParams(snr,params,delta,label,extrapoints)
     data.append( datum )
     return
 
-def threadedFisherRun(Mtot,q,snr,delta,label,Nruns,Nthreads,data):
+def threadedFisherRun(Mtot,q,snr,delta,label,Nruns,Nthreads,data,extrapoints):
     irun=0
     if(FisherRunFailCount==0):subprocess.call("echo 'Output from runs generating exceptions:' > fisher_fails.out",shell=True)
     while(irun<Nruns):
@@ -302,7 +304,7 @@ def threadedFisherRun(Mtot,q,snr,delta,label,Nruns,Nthreads,data):
         ith=0
         for t in range(count):
             ith+=1
-            thread = threading.Thread(target=FisherRun, args=(Mtot,q,snr,delta,label+str(ith),data))
+            thread = threading.Thread(target=FisherRun, args=(Mtot,q,snr,delta,label+str(ith),data,extrapoints))
             thread.start()
             threads.append(thread)
         for thread in threads:
@@ -383,7 +385,7 @@ def readCovarFile(file):
             
               
         
-def FisherStudy(outlabel,MtotList,qList,SNRList,deltalist,Navg,Nthreads):
+def FisherStudy(outlabel,MtotList,qList,SNRList,deltalist,Navg,Nthreads,extrapoints=1.0):
     pp = PdfPages(str(outlabel)+'FisherStudy.pdf')
     datafile = open(outlabel+'FisherStudy.dat','w')
     for q in qList:
@@ -403,13 +405,15 @@ def FisherStudy(outlabel,MtotList,qList,SNRList,deltalist,Navg,Nthreads):
                     logzs=np.zeros(Navg);
                     print "Running FisherRun(",Mtot,",",q,",",snr,")"
                     if(multithreaded):
-                        threadedFisherRun(Mtot,q,snr,delta,outlabel+"dummy",Navg,Nthreads,data)
+                        threadedFisherRun(Mtot,q,snr,delta,outlabel+"dummy",Navg,Nthreads,data,extrapoints)
                     else:
                         for i in range(Navg):
-                            FisherRun(Mtot,q,snr,delta,outlabel+"dummy",data)
+                            FisherRun(Mtot,q,snr,delta,outlabel+"dummy",data,extrapoints)
                     if noRun: continue
                     for i in range(Navg):
-                        z=z_at_value(cosmo.luminosity_distance,data[i][0]*units.Mpc,zmax=10000,ztol=1e-6)
+                        distance=cosmo.luminosity_distance,data[i][0]*units.Mpc
+                        print "distance=",distance
+                        z=z_at_value(cosmo.luminosity_distance,data[i][0]*units.Mpc,zmax=100000,ztol=1e-6)
                         #print "D=",dist," z=",z
                         logzs[i]=math.log10(z)
                     meanz=np.mean(logzs);
@@ -521,7 +525,7 @@ def FisherPlot(outlabel,ipar,qList,SNRList,deltalist,datafile,scaled=False,targe
                 if(not targetSNR==snr):
                     SNRrescale_factor=targetSNR/snr
                     #next make a new array of redshifts znew=z(D(z)/SNRrescale_factor)
-                    meanzarray=np.array([math.log10(z_at_value(cosmo.luminosity_distance,cosmo.luminosity_distance(10**zz/SNRrescale_factor),zmax=10000,ztol=1e-6)) for zz in meanzarray])
+                    meanzarray=np.array([math.log10(z_at_value(cosmo.luminosity_distance,cosmo.luminosity_distance(10**zz/SNRrescale_factor),zmax=100000,ztol=1e-6)) for zz in meanzarray])
                     print "Rescaling SNR by ",SNRrescale_factor," from ",snr," to ", targetSNR
                 x=[ math.log10(a/(1+10**b)) for a,b in zip(subdata[:,iMtot],meanzarray) ]
                 #print "x=",x
@@ -603,10 +607,10 @@ def HorizonPlot(outlabel,ipar,qList,snr,delta,datafile,horizonlist,scaled=False,
             if(ipar>=9):#derived quadratic scaled stats
                 SNRrescale_factors=np.sqrt(SNRrescale_factors)
                 dSNRrescale_factors=np.sqrt(dSNRrescale_factors)
-            midzarray=np.array([math.log10(z_at_value(cosmo.luminosity_distance,cosmo.luminosity_distance(10**zz/fac),zmax=10000,ztol=1e-6)) for zz,fac in zip(meanzarray,SNRrescale_factors)])
+            midzarray=np.array([math.log10(z_at_value(cosmo.luminosity_distance,cosmo.luminosity_distance(10**zz/fac),zmax=100000,ztol=1e-6)) for zz,fac in zip(meanzarray,SNRrescale_factors)])
             if(show_range):
-                topzarray=np.array([math.log10(z_at_value(cosmo.luminosity_distance,cosmo.luminosity_distance(10**zz/fac),zmax=10000,ztol=1e-6)) for zz,fac in zip(meanzarray,SNRrescale_factors/dSNRrescale_factors)])
-                botzarray=np.array([math.log10(z_at_value(cosmo.luminosity_distance,cosmo.luminosity_distance(10**zz/fac),zmax=10000,ztol=1e-6)) for zz,fac in zip(meanzarray,SNRrescale_factors*dSNRrescale_factors)])
+                topzarray=np.array([math.log10(z_at_value(cosmo.luminosity_distance,cosmo.luminosity_distance(10**zz/fac),zmax=100000,ztol=1e-6)) for zz,fac in zip(meanzarray,SNRrescale_factors/dSNRrescale_factors)])
+                botzarray=np.array([math.log10(z_at_value(cosmo.luminosity_distance,cosmo.luminosity_distance(10**zz/fac),zmax=100000,ztol=1e-6)) for zz,fac in zip(meanzarray,SNRrescale_factors*dSNRrescale_factors)])
 
             x=[ math.log10(a/(1+10**b)) for a,b in zip(subdata[:,iMtot],midzarray) ]
             color=(1.0-colorcount/(len(horizonlist)+1.0),0.8/math.sqrt(q),colorcount/(len(horizonlist)+1.0))
@@ -616,6 +620,81 @@ def HorizonPlot(outlabel,ipar,qList,snr,delta,datafile,horizonlist,scaled=False,
             plot=plt.plot(x,midzarray,color=color,alpha=1.0)
             tags.append( Rectangle((0, 0), 1, 1, fc=color,alpha=0.3) )
             labels.append(str(horizoncut)+"="+str(errorNsigma)+r"$\sigma$"+"["+par_name(ipar)+"]/"+punits[ipar])
+        plt.legend(tags,labels)
+        plt.ylim([-1,3])
+        plt.xlim([3,9])
+        plt.title("Science range for "+outlabel+" q="+str(q)+" SMBH merger")
+        plt.ylabel("log(z)")
+        plt.xlabel("log(M/Msun)")
+        #plt.show()
+        pp.savefig()
+        plt.clf()
+    pp.close()
+
+
+def HorizonCompare(outlabel,ipar,qList,snr,delta,datafiles,horizonlist,scaled=False,errorNsigma=2):
+    rangetag=''
+    pp = PdfPages(str(outlabel)+'Horizon-'+rangetag+par_name(ipar)+'.pdf')
+    #datafile = open(datafile,'r')
+    tol=1e-10
+    datalist=[]
+    for datafile in datafiles:
+        datalist.append(np.loadtxt(datafile))
+    punits=["Msun","Msun","s","Mpc","rad","rad","rad","rad","rad",r"$rad^2$",r"$rad^2$",r"$Msun^2$"]
+    sunits=["m1",  "m2",  "s","D",  "rad","rad","rad","rad","rad",r"$deg^2$",r"$rad^2$",r"(m1*m2)"]
+
+    if(scaled):punits=sunits
+    for q in qList:
+        tags=[]
+        labels=[]
+        subdatalist=[]
+        for data in datalist:
+            subdata=[]
+            for d in data:
+                if abs(d[0]/snr-1)<tol and abs(d[1]/delta-1)<tol and abs(d[3]/q-1)<tol:
+                    subdata.append(d)
+            subdatalist.append(subdata)
+        subdata=np.array(subdata)
+        print "subdata=",subdata
+        iMtot=2
+        imeanz=4
+        istdz=5
+        imeanpar=6+ipar*2
+        istdpar=7+ipar*2
+        #compute scalings, if needed
+        #scales=subdata[:,iMtot]*0 #initially set all (logs of) scales to 0.0
+        scaleslist=subdatalist[:,:,iMtot]*0 #initially set all (logs of) scales to 0.0
+        if(scaled):#note all param error data are in log-space here
+            if(ipar==0): #scale by m1
+                scaleslist=np.log10(subdatalist[:,:,iMtot]/(1+1/q))
+            if(ipar==1): #scale by m2
+                scaleslist=np.log10(subdatalist[:,:,iMtot]/(1+q))
+            if(ipar==3): #scale by distance as computed from mean z
+                scaleslist=np.array([[math.log10(cosmo.luminosity_distance(10.0**zz).value) for zz in subdata[:,imeanz]] for subdata in subdatalist])
+            if(ipar==9): #scale by arcmin^2
+                scaleslist=np.full_like(subdatalist[:,:,iMtot], 2*math.log10(math.pi/180.0))
+            if(ipar==11): #scale by m1*m2
+                scaleslist=np.log10(subdatalist[:,:,iMtot]*subdatalist[::,iMtot]/(1+q)/(1+1/q))
+        print scales        
+        colorcount=0
+        for horizoncut in horizonlist:                   
+            colorcount+=1
+            meanzarraylist=subdatalist[:,:,imeanz]
+            stdpararraylist=subdatalist[:,:,istdpar]
+            testvalueslist=10**(subdatalist[:,:,imeanpar]-scales + math.log10(1.0*errorNsigma))
+            SNRrescale_factorslist=testvalueslist/horizoncut
+            dSNRrescale_factorslist=10**stdpararraylist;
+            if(ipar>=9):#derived quadratic scaled stats
+                SNRrescale_factorslist=np.sqrt(SNRrescale_factorslist)
+                dSNRrescale_factorslist=np.sqrt(dSNRrescale_factorslist)
+            #midzarray=np.array([math.log10(z_at_value(cosmo.luminosity_distance,cosmo.luminosity_distance(10**zz/fac),zmax=100000,ztol=1e-6)) for zz,fac in zip(meanzarray,SNRrescale_factors)])
+            midzarraylist=np.array([[math.log10(z_at_value(cosmo.luminosity_distance,cosmo.luminosity_distance(10**zz/fac),zmax=100000,ztol=1e-6)) for zz,fac in pairs ] for pairs in np.dstack(meanzarray,SNRrescale_factors)])
+            x=[ [ math.log10(a/(1+10**b)) for a,b in pairs ] for pairs in np.dstack(subdata[:,iMtot],midzarray) ]
+            color=(1.0-colorcount/(len(horizonlist)+1.0),0.8/math.sqrt(q),colorcount/(len(horizonlist)+1.0))
+            for ifile in range(len(datafilelist)):
+                plt.plot(x[ifile],midzarray[ifile],color=color,alpha=1.0)
+            tags.append( Rectangle((0, 0), 1, 1, fc=color,alpha=0.3) )
+            labels.append(str(horizoncut)+"="+str(errorNsigma)+r"$\sigma$"+"["+par_name(ipar)+"]/"+punits[ipar]+" ("+datafilelist[ifile]+")" )
         plt.legend(tags,labels)
         plt.ylim([-1,3])
         plt.xlim([3,9])
