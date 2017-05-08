@@ -113,6 +113,11 @@ void getphysparams(double *Cube, int *ndim) /* Note: ndim not used here */
     m2 = m2ofMchirpeta(Mchirp, eta);
   }
 
+  /* Convert time - if sampling in tL, compute tSSB from tL using (approximate but 3e-6s accurate) inverse relation */
+  if(priorParams->sampletimeparam==tL) {
+    tRef = tSSBfromtL(tRef, lambda, beta);
+  }
+
   /* Note: here we output physical values in the cube (overwriting), and we keep the original order for physical parameters */
   Cube[0] = m1;
   Cube[1] = m2;

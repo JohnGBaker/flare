@@ -26,15 +26,21 @@ extern "C" {
 } /* so that editors will match preceding brace */
 #endif
 
-/***************** Enumerator to choose what masses set to sample for *****************/
+/***************** Enumerator to choose what masses/time set to sample for *****************/
 
 typedef enum SampleMassParamstag {
   m1m2,
   Mchirpeta
 } SampleMassParamstag;
+typedef enum SampleTimeParamtag {
+  tSSB,
+  tL
+} SampleTimeParamtag;
 
 /* Function to convert string input SampleMassParams to tag */
-TDItag ParseSampleMassParamstag(char* string);
+SampleMassParamstag ParseSampleMassParamstag(char* string);
+/* Function to convert string input SampleTimeParams to tag */
+SampleTimeParamtag ParseSampleTimeParamtag(char* string);
 
 /***************** Structure definitions *****************/
 
@@ -66,6 +72,8 @@ typedef struct tagLISAGlobalParams {
   int tagtdi;                /* Tag choosing the TDI variables to use */
   int nbptsoverlap;          /* Number of points to use in loglinear overlaps (default 32768) */
   int zerolikelihood;        /* Tag to zero out the likelihood, to sample from the prior for testing purposes (default 0) */
+  int frozenLISA;            /* Freeze the orbital configuration to the time of peak of the injection (default 0) */
+  ResponseApproxtag responseapprox;    /* Approximation in the GAB and orb response - choices are full (full response, default), lowfL (keep orbital delay frequency-dependence but simplify constellation response) and lowf (simplify constellation and orbital response) - WARNING : at the moment noises are not consistent, and TDI combinations from the GAB are unchanged */
 } LISAGlobalParams;
 
 typedef struct tagLISASignalCAmpPhase
@@ -104,6 +112,7 @@ typedef struct tagLISAInjectionReIm /* Storing the vectors of frequencies and no
 
 typedef struct tagLISAPrior {
   SampleMassParamstag samplemassparams;   /* Choose the set of mass params to sample from - options are m1m2 and Mchirpeta (default m1m2) */
+  SampleTimeParamtag sampletimeparam;     /* Choose the time param to sample from - options are tSSB and tL (default tSSB) */
   double deltaT;             /* width of time prior centered on injected value (s) (default 1e5) */
   double comp_min;           /* minimum component mass (solar masses) (default 1e4) */
   double comp_max;           /* maximum component mass (solar masses) (default 1e8) */

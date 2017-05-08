@@ -33,6 +33,7 @@ Arguments are as follows:\n\
 ----- Physical Parameters ------------------------\n\
 --------------------------------------------------\n\
  --tRef                Time at reference frequency (sec, default=0)\n\
+ --torb                Reference orbital time (sec, default=0)\n\
  --phiRef              Orbital phase at reference frequency (radians, default=0)\n\
  --fRef                Reference frequency (Hz, default=0, interpreted as Mf=0.14)\n\
  --m1                  Component mass 1 in Solar masses (larger, default=2e6)\n\
@@ -74,6 +75,7 @@ Arguments are as follows:\n\
 
     /* Set default values for the physical params */
     params->tRef = 0.;
+    params->torb = 0.;
     params->phiRef = 0.;
     params->fRef = 0.;
     params->m1 = 2*1e6;
@@ -112,6 +114,8 @@ Arguments are as follows:\n\
             exit(0);
         } else if (strcmp(argv[i], "--tRef") == 0) {
             params->tRef = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--torb") == 0) {
+            params->torb = atof(argv[++i]);
         } else if (strcmp(argv[i], "--phiRef") == 0) {
             params->phiRef = atof(argv[++i]);
         } else if (strcmp(argv[i], "--fRef") == 0) {
@@ -480,6 +484,7 @@ int main(int argc, char *argv[])
       /* Use TF2 extension, if required to, to arbitrarily low frequencies */
       /* NOTE: at this stage, if no extension is performed, deltatobs and minf are ignored - will start at MfROM */
       /* If extending, taking into account both fstartobs and minf */
+      /* Note : generate FD hlm with time shift with respect to orbital reference time (role played by injection tRef in the inference) */
       int ret;
       if(!(params->tagextpn)){
         //printf("Not Extending signal waveform.  mfmatch=%g\n",globalparams->mfmatch);
@@ -509,7 +514,9 @@ int main(int argc, char *argv[])
     ListmodesCAmpPhaseFrequencySeries* listTDI1= NULL;
     ListmodesCAmpPhaseFrequencySeries* listTDI2= NULL;
     ListmodesCAmpPhaseFrequencySeries* listTDI3= NULL;
-    LISASimFDResponseTDI3Chan(&listhlm, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, params->maxf, params->tagtdi);
+    /* torb is the orbital reference time (role played by injection tRef in the inference) */
+    /* By default, do not freeze the LISA orbital configuration and use full response */
+    LISASimFDResponseTDI3Chan(&listhlm, &listTDI1, &listTDI2, &listTDI3, params->torb, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, params->maxf, params->tagtdi, 0, full);
 
     /* If asked for it, rescale the complex amplitudes to include the factors that were scaled out of TDI observables */
     if(params->restorescaledfactor) {

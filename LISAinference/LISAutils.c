@@ -11,12 +11,23 @@ LISAAddParams* addparams = NULL;
 /***************** Pasring string to choose what masses set to sample for *****************/
 
 /* Function to convert string input SampleMassParams to tag */
-TDItag ParseSampleMassParamstag(char* string) {
+SampleMassParamstag ParseSampleMassParamstag(char* string) {
   SampleMassParamstag tag;
   if(strcmp(string, "m1m2")==0) tag = m1m2;
   else if(strcmp(string, "Mchirpeta")==0) tag = Mchirpeta;
   else {
     printf("Error in ParseSampleMassParamstag: string not recognized.\n");
+    exit(1);
+  }
+  return tag;
+}
+/* Function to convert string input SampleTimeParam to tag */
+SampleTimeParamtag ParseSampleTimeParamtag(char* string) {
+  SampleTimeParamtag tag;
+  if(strcmp(string, "tSSB")==0) tag = tSSB;
+  else if(strcmp(string, "tL")==0) tag = tL;
+  else {
+    printf("Error in ParseSampleTimeParamtag: string not recognized.\n");
     exit(1);
   }
   return tag;
@@ -161,11 +172,14 @@ Arguments are as follows:\n\
  --tagtdi              Tag choosing the set of TDI variables to use (default TDIAETXYZ)\n\
  --nbptsoverlap        Number of points to use for linear integration (default 32768)\n\
  --zerolikelihood      Zero out the likelihood to sample from the prior for testing purposes (default 0)\n\
+ --frozenLISA          Freeze the orbital configuration to the time of peak of the injection (default 0)\n\
+ --responseapprox      Approximation in the GAB and orb response - choices are full (full response, default), lowfL (keep orbital delay frequency-dependence but simplify constellation response) and lowf (simplify constellation and orbital response) - WARNING : at the moment noises are not consistent, and TDI combinations from the GAB are unchanged\n\
 \n\
 --------------------------------------------------\n\
 ----- Prior Boundary Settings --------------------\n\
 --------------------------------------------------\n\
  --samplemassparams    Choose the set of mass params to sample from - options are m1m2 and Mchirpeta (default m1m2)\n\
+ --sampletimeparam     Choose the time param to sample from - options are tSSB and tL (default tSSB)\n\
  --deltaT              Half-width of time prior (sec, default=1e5)\n\
  --comp-min            Minimum component mass in Solar masses - when sampling m1m2 (default=1e4)\n\
  --comp-max            Maximum component mass in Solar masses - when sampling m1m2 (default=1e8)\n\
@@ -259,9 +273,12 @@ Syntax: --PARAM-min\n\
     globalparams->tagtdi = TDIAETXYZ;
     globalparams->nbptsoverlap = 32768;
     globalparams->zerolikelihood = 0;
+    globalparams->frozenLISA = 0;
+    globalparams->responseapprox = full;
 
     /* set default values for the prior limits */
     prior->samplemassparams = m1m2;
+    prior->sampletimeparam = tSSB;
     prior->deltaT = 3600.;
     prior->comp_min = 1e4;
     prior->comp_max = 1e8;
@@ -392,8 +409,14 @@ Syntax: --PARAM-min\n\
             globalparams->nbptsoverlap = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--zerolikelihood") == 0) {
             globalparams->zerolikelihood = 1;
+        } else if (strcmp(argv[i], "--frozenLISA") == 0) {
+            globalparams->frozenLISA = 1;
+        } else if (strcmp(argv[i], "--responseapprox") == 0) {
+            globalparams->responseapprox = ParseResponseApproxtag(argv[++i]);
         } else if (strcmp(argv[i], "--samplemassparams") == 0) {
             prior->samplemassparams = ParseSampleMassParamstag(argv[++i]);
+        } else if (strcmp(argv[i], "--sampletimeparam") == 0) {
+            prior->sampletimeparam = ParseSampleTimeParamtag(argv[++i]);
         } else if (strcmp(argv[i], "--deltaT") == 0) {
             prior->deltaT = atof(argv[++i]);
         } else if (strcmp(argv[i], "--comp-min") == 0) {
@@ -852,7 +875,7 @@ int LISAGenerateSignalCAmpPhase(
   //tbeg = clock();
 
   //#pragma omp critical(LISAgensig)
-  LISASimFDResponseTDI3Chan(&listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, globalparams->maxf, globalparams->tagtdi);
+  LISASimFDResponseTDI3Chan(&listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, globalparams->maxf, globalparams->tagtdi, globalparams->frozenLISA, globalparams->responseapprox);
   //tend = clock();
   //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //exit(0);
@@ -949,7 +972,7 @@ int LISAGenerateInjectionCAmpPhase(
   //TESTING
   //clock_t tbeg, tend;
   //tbeg = clock();
-  LISASimFDResponseTDI3Chan(&listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, globalparams->maxf, globalparams->tagtdi);
+  LISASimFDResponseTDI3Chan(&listROM, &listTDI1, &listTDI2, &listTDI3, injectedparams->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, globalparams->maxf, globalparams->tagtdi, globalparams->frozenLISA, globalparams->responseapprox);
   //tend = clock();
   //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
@@ -1033,7 +1056,7 @@ int LISAGenerateSignalReIm(
   //TESTING
   //clock_t tbeg, tend;
   //tbeg = clock();
-  LISASimFDResponseTDI3Chan(&listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, globalparams->maxf, globalparams->tagtdi);
+  LISASimFDResponseTDI3Chan(&listROM, &listTDI1, &listTDI2, &listTDI3, injectedparams->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, globalparams->maxf, globalparams->tagtdi, globalparams->frozenLISA, globalparams->responseapprox);
   //tend = clock();
   //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
@@ -1114,7 +1137,7 @@ int LISAGenerateInjectionReIm(
   //TESTING
   //clock_t tbeg, tend;
   //tbeg = clock();
-  LISASimFDResponseTDI3Chan(&listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, globalparams->maxf, globalparams->tagtdi);
+  LISASimFDResponseTDI3Chan(&listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, globalparams->maxf, globalparams->tagtdi, globalparams->frozenLISA, globalparams->responseapprox);
   //tend = clock();
   //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
@@ -1262,6 +1285,15 @@ double CalculateLogLReIm(LISAParams *params, LISAInjectionReIm* injection)
     //tend = clock();
     //printf("time Overlaps: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
     //
+
+    //TEST
+    // Write_Text_Vector("/Users/marsat/data/flare/test/testlnLlist_v2", "test_reim_inj_freq.txt", injection->TDI1Signal->freq);
+    // Write_Text_Vector("/Users/marsat/data/flare/test/testlnLlist_v2", "test_reim_inj_hreal.txt", injection->TDI1Signal->h_real);
+    // Write_Text_Vector("/Users/marsat/data/flare/test/testlnLlist_v2", "test_reim_inj_himag.txt", injection->TDI1Signal->h_imag);
+    // Write_Text_Vector("/Users/marsat/data/flare/test/testlnLlist_v2", "test_reim_temp_freq.txt", generatedsignal->TDI1Signal->freq);
+    // Write_Text_Vector("/Users/marsat/data/flare/test/testlnLlist_v2", "test_reim_temp_hreal.txt", generatedsignal->TDI1Signal->h_real);
+    // Write_Text_Vector("/Users/marsat/data/flare/test/testlnLlist_v2", "test_reim_temp_himag.txt", generatedsignal->TDI1Signal->h_imag);
+    // Write_Text_Vector("/Users/marsat/data/flare/test/testlnLlist_v2", "test_reim_noise.txt", injection->noisevalues1);
 
     /* Output: value of the loglikelihood for the combined signals, assuming noise independence */
     logL = loglikelihoodTDI1 + loglikelihoodTDI2 + loglikelihoodTDI3;

@@ -64,14 +64,27 @@ typedef enum TDItag {
   TDITalphabetagamma
 } TDItag;
 
+/* Enumerator to choose what level of low-f approximation to do in the response */
+typedef enum ResponseApproxtag {
+  full,
+  lowfL,
+  lowf
+} ResponseApproxtag;
+
 /**************************************************/
 /**************** Prototypes **********************/
 
 /* Function to convert string input TDI string to TDItag */
 TDItag ParseTDItag(char* string);
 
+/* Function to convert string input ResponseApprox to tag */
+ResponseApproxtag ParseResponseApproxtag(char* string);
+
 /* Function cardinal sine */
 double sinc(const double x);
+
+/* Compute Solar System Barycenter time tSSB from retarded time at the center of the LISA constellation tL */
+double tSSBfromtL(const double tL, const double lambda, const double beta);
 
 /* Function to compute, given a value of a sky position and polarization, all the complicated time-independent trigonometric coefficients entering the response */
 void SetCoeffsG(const double lambda, const double beta, const double psi);
@@ -94,7 +107,8 @@ int EvaluateGABmode(
   const double t,                          /* Time */
   const double complex Yfactorplus,        /* Spin-weighted spherical harmonic factor for plus */
   const double complex Yfactorcross,       /* Spin-weighted spherical harmonic factor for cross */
-  int tagdelayR);                          /* Tag: when 1, include the phase term of the R-delay */
+  const int tagdelayR,                     /* Tag: when 1, include the phase term of the R-delay */
+  const ResponseApproxtag responseapprox); /* Tag to select possible low-f approximation level in FD response */
 
 /* Functions evaluating the Fourier-domain factors (combinations of the GAB's) for TDI observables */
 /* NOTE: factors have been scaled out, in parallel of what is done for the noise function */

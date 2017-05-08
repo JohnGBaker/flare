@@ -137,11 +137,13 @@ int LISASimFDResponse21(
 int LISASimFDResponsey12(
   struct tagListmodesCAmpPhaseFrequencySeries **list,      /* Input: list of modes in Frequency-domain amplitude and phase form as produced by the ROM */
   struct tagListmodesCAmpPhaseFrequencySeries **listy12,   /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the y12 observable */
-  const double tRef,                                          /* Time at coalescence */
+  const double torb,                                       /* Reference orbital time - tf as read from the hlm gives t-tinj, this arg allows to pass tinj to the response */
   const double lambda,                                        /* First angle for the position in the sky */
   const double beta,                                          /* Second angle for the position in the sky */
   const double inclination,                                   /* Inclination of the source */
-  const double psi)                                           /* Polarization angle */
+  const double psi,                                           /* Polarization angle */
+  const int tagfrozenLISA,                                    /* Tag to treat LISA as frozen at its torb configuration  */
+  const ResponseApproxtag responseapprox)                     /* Tag to select possible low-f approximation level in FD response */
 {
   /* Computing the complicated trigonometric coefficients */
   //clock_t begsetcoeffs = clock();
@@ -162,7 +164,7 @@ int LISASimFDResponsey12(
     gsl_vector* amp_imag = freqseries->amp_imag;
     gsl_vector* phase = freqseries->phase;
     int len = (int) freq->size;
-    double f, tf;
+    double f, tf, tforb;
     double complex g12mode = 0.;
     double complex g21mode = 0.;
     double complex g23mode = 0.;
@@ -203,8 +205,14 @@ int LISASimFDResponsey12(
     for(int j=0; j<len; j++) {
       f = gsl_vector_get(freq, j);
       tf = (gsl_spline_eval_deriv(spline_phi, f, accel_phi))/(2*PI);
+      /* tf read from hlm is t-tinj - here convert to orbital time */
+      if(!(tagfrozenLISA)) {
+        tforb = tf + torb;
+      } else {
+        tforb = torb;
+      }
       //clock_t tbegGAB = clock();
-      EvaluateGABmode(&g12mode, &g21mode, &g23mode, &g32mode, &g31mode, &g13mode, f, tf, Yfactorplus, Yfactorcross, 1); /* does include the R-delay term */
+      EvaluateGABmode(&g12mode, &g21mode, &g23mode, &g32mode, &g31mode, &g13mode, f, tforb, Yfactorplus, Yfactorcross, 1, responseapprox); /* does include the R-delay term */
       //clock_t tendGAB = clock();
       //timingcumulativeGABmode += (double) (tendGAB-tbegGAB) /CLOCKS_PER_SEC;
       /**/
@@ -242,7 +250,7 @@ int LISASimFDResponseTDI3Chan(
   struct tagListmodesCAmpPhaseFrequencySeries **listTDI1,  /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the TDI channel 1 */
   struct tagListmodesCAmpPhaseFrequencySeries **listTDI2,  /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the TDI channel 2 */
   struct tagListmodesCAmpPhaseFrequencySeries **listTDI3,  /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the TDI channel 3 */
-  const double tRef,                                       /* Time at coalescence */
+  const double torb,                                       /* Reference orbital time - tf as read from the hlm gives t-tinj, this arg allows to pass tinj to the response */
   const double lambda,                                     /* First angle for the position in the sky */
   const double beta,                                       /* Second angle for the position in the sky */
   const double inclination,                                /* Inclination of the source */
@@ -250,7 +258,9 @@ int LISASimFDResponseTDI3Chan(
   const double m1,                                         /* m1 in solar masses - used for resampling */
   const double m2,                                         /* m2 in solar masses - used for resampling */
   const double maxf,                                       /* Maximal frequency to consider - used to ignore hard-to-resolve response at f>1Hz - NOTE: for now, no recomputation of the boundary, so when not resampling can lose a bit of support between the last frequency point covered and maxf */
-  const TDItag tditag)                                     /* Selector for the set of TDI observables */
+  const TDItag tditag,                                     /* Selector for the set of TDI observables */
+  const int tagfrozenLISA,                                 /* Tag to treat LISA as frozen at its torb configuration  */
+  const ResponseApproxtag responseapprox)                  /* Tag to select possible low-f approximation level in FD response */
 {
   /* Computing the complicated trigonometric coefficients */
   //clock_t begsetcoeffs = clock();
@@ -281,7 +291,7 @@ int LISASimFDResponseTDI3Chan(
     //if(l==2&&m==1) printf("no resampling 21\n");
     //      if(l==2&&m==1) {for(int i=0; i<len; i++) printf("%d, %g, %g, %g, %g\n", i, gsl_vector_get(freq, i), gsl_vector_get(amp_real, i), gsl_vector_get(amp_imag, i), gsl_vector_get(phase, i));};
 
-    double f, tf;
+    double f, tf, tforb;
     double complex g21mode = 0.;
     double complex g12mode = 0.;
     double complex g32mode = 0.;
@@ -441,8 +451,14 @@ int LISASimFDResponseTDI3Chan(
     for(int j=0; j<len_resample; j++) {
       f = gsl_vector_get(freq_resample, j);
       tf = (gsl_spline_eval_deriv(spline_phi, f, accel_phi))/(2*PI);
+      /* tf read from hlm is t-tinj - here convert to orbital time using torb - ignore tf if orbit is frozen */
+      if(!(tagfrozenLISA)) {
+        tforb = tf + torb;
+      } else {
+        tforb = torb;
+      }
       //clock_t tbegGAB = clock();
-      EvaluateGABmode(&g12mode, &g21mode, &g23mode, &g32mode, &g31mode, &g13mode, f, tf, Yfactorplus, Yfactorcross, 0); /* does not include the R-delay term */
+      EvaluateGABmode(&g12mode, &g21mode, &g23mode, &g32mode, &g31mode, &g13mode, f, tforb, Yfactorplus, Yfactorcross, 0, responseapprox); /* does not include the R-delay term */
       //clock_t tendGAB = clock();
       //timingcumulativeGABmode += (double) (tendGAB-tbegGAB) /CLOCKS_PER_SEC;
       /**/
@@ -453,7 +469,7 @@ int LISASimFDResponseTDI3Chan(
       camp2 = factor2 * amphtilde;
       camp3 = factor3 * amphtilde;
       /* Phase term due to the R-delay, including correction to first order */
-      double phaseRdelay = -2*PI*R_SI/C_SI*f*cos(beta)*cos(Omega_SI*tf - lambda) * (1 + R_SI/C_SI*Omega_SI*sin(Omega_SI*tf - lambda));
+      double phaseRdelay = -2*PI*R_SI/C_SI*f*cos(beta)*cos(Omega_SI*tforb - lambda) * (1 + R_SI/C_SI*Omega_SI*sin(Omega_SI*tforb - lambda));
       double phasewithRdelay = gsl_vector_get(phase_resample, j) + phaseRdelay;
 
       /**/

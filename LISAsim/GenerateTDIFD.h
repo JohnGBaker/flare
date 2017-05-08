@@ -54,6 +54,7 @@ typedef enum GenTDIFDtag {
 /* Parameters for the generation of a LISA waveform (in the form of a list of modes) */
 typedef struct tagGenTDIFDparams {
   double tRef;               /* reference time (s) - GPS time at the frequency representing coalescence */
+  double torb;               /* reference orbital time entering orbital response (s) */
   double phiRef;             /* reference phase (rad) - phase at the frequency representing coalescence (or at fRef if specified) */
   double fRef;               /* reference frequency at which phiRef is set (Hz, default 0 which is interpreted as Mf=0.14) */
   double m1;                 /* mass of companion 1 (solar masses, default 2e6) */
