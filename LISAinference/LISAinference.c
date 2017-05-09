@@ -26,11 +26,22 @@ void getphysparams(double *Cube, int *ndim) /* Note: ndim not used here */
   }
 
   /* Time */
+  /* If sampling in tL, convert tinj SSB to tLinj */
   if (isnan(priorParams->fix_time)) {
-    tRef = CubeToFlatPrior(Cube[i++], injectedparams->tRef - priorParams->deltaT,
-           injectedparams->tRef + priorParams->deltaT);
-  } else {
-    tRef = priorParams->fix_time;
+    if(priorParams->sampletimeparam==tSSB) {
+      tRef = CubeToFlatPrior(Cube[i++], injectedparams->tRef - priorParams->deltaT, injectedparams->tRef + priorParams->deltaT);
+    }
+    else if(priorParams->sampletimeparam==tL) {
+      double injectedtL = tLfromtSSB(injectedparams->tRef, injectedparams->lambda, injectedparams->beta);
+      tRef = CubeToFlatPrior(Cube[i++], injectedtL - priorParams->deltaT, injectedtL + priorParams->deltaT);
+    }
+  } else { /* fix_time, if defined, has the sense of a SSB time */
+    if(priorParams->sampletimeparam==tSSB) {
+      tRef = priorParams->fix_time;
+    }
+    else if(priorParams->sampletimeparam==tL) {
+      tRef = tLfromtSSB(priorParams->fix_time, lambda, beta);
+    }
   }
 
   /* Orbital phase */
@@ -114,6 +125,7 @@ void getphysparams(double *Cube, int *ndim) /* Note: ndim not used here */
   }
 
   /* Convert time - if sampling in tL, compute tSSB from tL using (approximate but 3e-6s accurate) inverse relation */
+  /* The tRef we output has always the meaning of a SSB time */
   if(priorParams->sampletimeparam==tL) {
     tRef = tSSBfromtL(tRef, lambda, beta);
   }

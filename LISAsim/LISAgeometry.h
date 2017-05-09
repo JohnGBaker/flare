@@ -85,6 +85,7 @@ double sinc(const double x);
 
 /* Compute Solar System Barycenter time tSSB from retarded time at the center of the LISA constellation tL */
 double tSSBfromtL(const double tL, const double lambda, const double beta);
+double tLfromtSSB(const double tSSB, const double lambda, const double beta);
 
 /* Function to compute, given a value of a sky position and polarization, all the complicated time-independent trigonometric coefficients entering the response */
 void SetCoeffsG(const double lambda, const double beta, const double psi);

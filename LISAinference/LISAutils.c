@@ -651,6 +651,8 @@ int print_parameters_to_file_LISA(
   fprintf(f, "tagtdi:         %d\n", globalparams->tagtdi); //Translation back from enum to string not implemented yet
   fprintf(f, "nbptsoverlap:   %d\n", globalparams->nbptsoverlap);
   fprintf(f, "zerolikelihood: %d\n", globalparams->zerolikelihood);
+  fprintf(f, "frozenLISA:     %d\n", globalparams->frozenLISA);
+  fprintf(f, "responseapprox: %d\n", globalparams->responseapprox);
   fprintf(f, "-----------------------------------------------\n");
   fprintf(f, "\n");
 
@@ -659,6 +661,7 @@ int print_parameters_to_file_LISA(
   fprintf(f, "Prior parameters:\n");
   fprintf(f, "-----------------------------------------------\n");
   fprintf(f, "samplemassparams:  %.16e\n", prior->samplemassparams);
+  fprintf(f, "sampletimeparam:   %.16e\n", prior->sampletimeparam);
   fprintf(f, "deltaT:            %.16e\n", prior->deltaT);
   fprintf(f, "comp_min:          %.16e\n", prior->comp_min);
   fprintf(f, "comp_max:          %.16e\n", prior->comp_max);

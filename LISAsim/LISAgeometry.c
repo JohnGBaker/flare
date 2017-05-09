@@ -131,7 +131,10 @@ ResponseApproxtag ParseResponseApproxtag(char* string) {
 
 /* Compute Solar System Barycenter time tSSB from retarded time at the center of the LISA constellation tL */
 double tSSBfromtL(const double tL, const double lambda, const double beta) {
-  return tL - R_SI/C_SI*cos(beta)*cos(Omega_SI*tL - lambda) - 1./2*Omega_SI*pow(R_SI/C_SI*cos(beta), 2)*sin(2.*(Omega_SI*tL - lambda));
+  return tL + R_SI/C_SI*cos(beta)*cos(Omega_SI*tL - lambda) - 1./2*Omega_SI*pow(R_SI/C_SI*cos(beta), 2)*sin(2.*(Omega_SI*tL - lambda));
+}
+double tLfromttSSB(const double tSSB, const double lambda, const double beta) {
+  return tSSB - R_SI/C_SI*cos(beta)*cos(Omega_SI*tSSB - lambda);
 }
 
 /* Function cardinal sine */
