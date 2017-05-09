@@ -21,6 +21,7 @@ all_params_file=False
 ROM_DATA_PATH="ROMdata/q1-12_Mfmin_0.0003940393857519091"
 extra_flags=""
 LISAvariant="LISA2017"
+deltatobs=1.0
 
 def set_flare_flags(snr,params):
     flags=""
@@ -29,7 +30,7 @@ def set_flare_flags(snr,params):
     #flags+=" --tagint 0" #1 for Fresnel integration(default), vs gridded quadrature"
     #flags+=" --tagint 1" --nbptsoverlap 8192" #gridded quadrature
     #flags+=" --deltatobs 5.0" #duration in years of LISA observation
-    flags+=" --deltatobs 1.0" #duration in years of LISA observation
+    flags+=" --deltatobs "+str(deltatobs) #duration in years of LISA observation
     #flags+=" --minf 1e-4" #minimun frequency included in analysis
     flags+=" --minf 3e-6" #minimun frequency included in analysis
     #flags+=" --maxf 0.15" #maximum frequency included in analysis
