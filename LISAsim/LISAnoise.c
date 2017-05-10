@@ -137,7 +137,10 @@ double SnEXYZ(const LISAconstellation *variant, double f) {
 double SnTXYZ(const LISAconstellation *variant, double f) {
   double pifL = PI*variant->ConstL/C_SI*f;
   double s1 = sin(pifL);
+  //printf("L=%g, C=%g, PI=%g\n",variant->ConstL,C_SI,PI);
+  //printf("f=%g,s1=%g,pfl=%g,sop=%g -> SnTXYZ=%g\n",f,s1,pifL,Sop(f),4*s1*s1*Spm(f) + Sop(f));
   return 4*s1*s1*Spm(f) + Sop(f);
+
 }
 /* Rescaled by 8*sin2pifL^2 */
 double SnAalphabetagamma(const LISAconstellation *variant, double f) {
@@ -207,25 +210,25 @@ double SnTXYZNoRescaling(const LISAconstellation *variant, double f) {
 /* } */
 
 /* Function returning the relevant noise function, given a set of TDI observables and a channel */
-RealFunctionPtr NoiseFunction(const TDItag tditag, const int nchan)
+ObjectFunction NoiseFunction(const LISAconstellation *variant, const TDItag tditag, const int nchan)
 {
-  RealFunctionPtr ptr = NULL;
+  ObjectFunction fn;
   switch(tditag) {
   case TDIXYZ:
   case TDIX: {
     switch(nchan) {
-    case 1: ptr = &SnXYZ; break;
-    case 2: ptr = &SnXYZ; break;
-    case 3: ptr = &SnXYZ; break;
+    case 1: fn = (ObjectFunction){variant,(RealObjectFunctionPtr)SnXYZ}; break;
+    case 2: fn = (ObjectFunction){variant,(RealObjectFunctionPtr)SnXYZ}; break;
+    case 3: fn = (ObjectFunction){variant,(RealObjectFunctionPtr)SnXYZ}; break;
     }
     break;
   }
   case TDIalphabetagamma:
   case TDIalpha: {
     switch(nchan) {
-    case 1: ptr = &Snalphabetagamma; break;
-    case 2: ptr = &Snalphabetagamma; break;
-    case 3: ptr = &Snalphabetagamma; break;
+    case 1: fn = (ObjectFunction){variant,(RealObjectFunctionPtr)Snalphabetagamma}; break;
+    case 2: fn = (ObjectFunction){variant,(RealObjectFunctionPtr)Snalphabetagamma}; break;
+    case 3: fn = (ObjectFunction){variant,(RealObjectFunctionPtr)Snalphabetagamma}; break;
     }
     break;
   }
@@ -234,9 +237,9 @@ RealFunctionPtr NoiseFunction(const TDItag tditag, const int nchan)
   case TDIEXYZ:
   case TDITXYZ: {
     switch(nchan) {
-    case 1: ptr = &SnAXYZ; break;
-    case 2: ptr = &SnEXYZ; break;
-    case 3: ptr = &SnTXYZ; break;
+    case 1: fn = (ObjectFunction){variant,(RealObjectFunctionPtr)SnAXYZ}; break;
+    case 2: fn = (ObjectFunction){variant,(RealObjectFunctionPtr)SnEXYZ}; break;
+    case 3: fn = (ObjectFunction){variant,(RealObjectFunctionPtr)SnTXYZ}; break;
     }
     break;
   }
@@ -245,18 +248,18 @@ RealFunctionPtr NoiseFunction(const TDItag tditag, const int nchan)
   case TDIEalphabetagamma:
   case TDITalphabetagamma: {
     switch(nchan) {
-    case 1: ptr = &SnAalphabetagamma; break;
-    case 2: ptr = &SnEalphabetagamma; break;
-    case 3: ptr = &SnTalphabetagamma; break;
+    case 1: fn = (ObjectFunction){variant,(RealObjectFunctionPtr)SnAalphabetagamma}; break;
+    case 2: fn = (ObjectFunction){variant,(RealObjectFunctionPtr)SnEalphabetagamma}; break;
+    case 3: fn = (ObjectFunction){variant,(RealObjectFunctionPtr)SnTalphabetagamma}; break;
     }
     break;
   }
   }
-  if(ptr==NULL) {
+  if(fn.object==NULL) {
     printf("Error in NoiseFunction: incorrect argument.\n");
     exit(1);
   }
-  return ptr;
+  return fn;
 }
 
 //Previous version - we had put a noise floor to mitigate cancellation lines
