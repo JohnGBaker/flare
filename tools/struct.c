@@ -34,6 +34,9 @@
 #include "struct.h"
 
 
+/* Call a function that references an object */
+double ObjectFunctionCall(const ObjectFunction* this,double f){return this->function(this->object,f);};
+  
 /**************************************************************/
 /* Functions computing the max and min between two int */
 int max (int a, int b) { return a > b ? a : b; }
