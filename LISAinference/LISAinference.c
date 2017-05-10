@@ -31,7 +31,7 @@ void getphysparams(double *Cube, int *ndim) /* Note: ndim not used here */
     if(priorParams->sampletimeparam==tSSB) {
       tRef = CubeToFlatPrior(Cube[i++], injectedparams->tRef - priorParams->deltaT, injectedparams->tRef + priorParams->deltaT);
     }
-    else if(priorParams->sampletimeparam==tL) {
+    else if(priorParams->sampletimeparam==tL) { /* Here tRef has the meaning of tL */
       double injectedtL = tLfromtSSB(injectedparams->tRef, injectedparams->lambda, injectedparams->beta);
       tRef = CubeToFlatPrior(Cube[i++], injectedtL - priorParams->deltaT, injectedtL + priorParams->deltaT);
     }
@@ -39,8 +39,8 @@ void getphysparams(double *Cube, int *ndim) /* Note: ndim not used here */
     if(priorParams->sampletimeparam==tSSB) {
       tRef = priorParams->fix_time;
     }
-    else if(priorParams->sampletimeparam==tL) {
-      tRef = tLfromtSSB(priorParams->fix_time, lambda, beta);
+    else if(priorParams->sampletimeparam==tL) { /* Set tRef (meaning tL) to the injected tL (with injected sky position) */
+      tRef = tLfromtSSB(priorParams->fix_time, injectedparams->lambda, injectedparams->beta);
     }
   }
 
