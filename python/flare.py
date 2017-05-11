@@ -22,6 +22,7 @@ ROM_DATA_PATH="ROMdata/q1-12_Mfmin_0.0003940393857519091"
 extra_flags=""
 LISAvariant="LISA2017"
 deltatobs=1.0
+only22=False;
 
 def set_flare_flags(snr,params):
     flags=""
@@ -33,10 +34,14 @@ def set_flare_flags(snr,params):
     flags+=" --deltatobs "+str(deltatobs) #duration in years of LISA observation
     #flags+=" --minf 1e-4" #minimun frequency included in analysis
     flags+=" --minf 3e-6" #minimun frequency included in analysis
+    flags+=" --maxf 0.5" #maximum frequency included in analysis
     #flags+=" --maxf 0.15" #maximum frequency included in analysis
-    flags+=" --maxf 5." #maximum frequency included in analysis
-    #flags+=" --nbmodeinj 5 --nbmodetemp 5" #for no higher modes in injection and template
-    flags+=" --nbmodeinj 1 --nbmodetemp 1" #for no higher modes in injection and template
+    #flags+=" --maxf 5." #maximum frequency included in analysis
+    if(only22):
+        flags+=" --nbmodeinj 1 --nbmodetemp 1" #for no higher modes in injection and template
+    else:
+        flags+=" --nbmodeinj 5 --nbmodetemp 5" #for no higher modes in injection and template
+
     if(snr>0):
         flags+=" --snr "+str(snr)+" --rescale-distprior" #fixing SNR (rescales distance)
     flags+=" --comp-min 1e5 --comp-max 1e8" #min/max for component mass prior ranges
