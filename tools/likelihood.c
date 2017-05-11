@@ -65,7 +65,7 @@ void EvaluateNoise(
   }
 
   /* Checking the boundary frequencies */
-  if( gsl_vector_get(freq, 0) - fLow < -1e-15 || gsl_vector_get(freq, nbpts-1) > fHigh ) {
+  if( gsl_vector_get(freq, 0) - fLow < -1e-15 || gsl_vector_get(freq, nbpts-1) > fHigh + 1e-15 ) {
     printf("Error: incompatible frequency range in EvaluateNoise.\n");
     printf("freq[0]=%g vs fLow=%g, freq[max]=%g vs fHigh=%g\n",gsl_vector_get(freq, 0), fLow, gsl_vector_get(freq, nbpts-1), fHigh);
     printf(" %i, %i\n",gsl_vector_get(freq, 0) < fLow , gsl_vector_get(freq, nbpts-1) > fHigh);
