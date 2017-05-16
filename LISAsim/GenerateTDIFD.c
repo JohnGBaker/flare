@@ -161,7 +161,7 @@ Arguments are as follows:\n\
         } else if (strcmp(argv[i], "--tagtdi") == 0) {
 	          params->tagtdi = ParseTDItag(argv[++i]);
         } else if (strcmp(argv[i], "--frozenLISA") == 0) {
-            paramsparams->frozenLISA = 1;
+            params->frozenLISA = 1;
         } else if (strcmp(argv[i], "--responseapprox") == 0) {
             params->responseapprox = ParseResponseApproxtag(argv[++i]);
         } else if (strcmp(argv[i], "--taggenwave") == 0) {
