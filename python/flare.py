@@ -27,11 +27,11 @@ def set_flare_flags(snr,params):
     #flags+=" --tagint 0" #1 for Fresnel integration(default), vs gridded quadrature"
     #flags+=" --tagint 1" --nbptsoverlap 8192" #gridded quadrature
     #flags+=" --deltatobs 5.0" #duration in years of LISA observation
-    flags+=" --deltatobs 1.0" #duration in years of LISA observation
+    flags+=" --deltatobs 10.0" #duration in years of LISA observation
     #flags+=" --minf 1e-4" #minimun frequency included in analysis
     flags+=" --minf 3e-6" #minimun frequency included in analysis
     #flags+=" --maxf 0.15" #maximum frequency included in analysis
-    flags+=" --maxf 5." #maximum frequency included in analysis
+    flags+=" --maxf 1." #maximum frequency included in analysis
     #flags+=" --nbmodeinj 5 --nbmodetemp 5" #for no higher modes in injection and template
     flags+=" --nbmodeinj 1 --nbmodetemp 1" #for no higher modes in injection and template
     if(snr>0):

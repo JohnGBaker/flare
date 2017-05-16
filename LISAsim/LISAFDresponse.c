@@ -462,7 +462,7 @@ int LISASimFDResponseTDI3Chan(
       //clock_t tendGAB = clock();
       //timingcumulativeGABmode += (double) (tendGAB-tbegGAB) /CLOCKS_PER_SEC;
       /**/
-      EvaluateTDIfactor3Chan(&factor1, &factor2, &factor3, g12mode, g21mode, g23mode, g32mode, g31mode, g13mode, f, tditag);
+      EvaluateTDIfactor3Chan(&factor1, &factor2, &factor3, g12mode, g21mode, g23mode, g32mode, g31mode, g13mode, f, tditag, responseapprox);
 
       double complex amphtilde = gsl_vector_get(amp_real_resample, j) + I * gsl_vector_get(amp_imag_resample, j);
       camp1 = factor1 * amphtilde;

@@ -647,12 +647,17 @@ int EvaluateTDIfactor3Chan(
   const double complex G31,                      /* Input for G31 */
   const double complex G13,                      /* Input for G13 */
   const double f,                                /* Frequency */
-  const TDItag tditag)                           /* Selector for the TDI observables */
+  const TDItag tditag,                           /* Selector for the TDI observables */
+  const ResponseApproxtag responseapprox)        /* Tag to select possible low-f approximation level in FD response */
 {
   /* Notation: x=pifL, z=e^2ix*/
   double x = PI*f*L_SI/C_SI;
   double complex z = cexp(2*I*x);
-  double sin2x = sin(2*x);
+  /* In both lowf and lowf-L approximations, ignore z factors - consitently ignore all TDI delays */
+  if((responseapprox==lowf)||(responseapprox==lowfL)) {
+    x = 0.;
+    z = 1.;
+  }
   switch(tditag) {
     /* For testing purposes: basic yAB observable - no factor */
   case y12:

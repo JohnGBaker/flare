@@ -59,6 +59,8 @@ Arguments are as follows:\n\
  --twindowend          When generating frequency series from file by FFT, twindowend (0 to set automatically at 0.01*duration)\n\
  --tagh22fromfile      Tag choosing wether to load h22 FD downsampled Amp/Phase from file (default 0)\n\
  --tagtdi              Tag choosing the set of TDI variables to use (default TDIAETXYZ)\n\
+ --frozenLISA          Freeze the orbital configuration to the time of peak of the injection (default 0)\n\
+ --responseapprox      Approximation in the GAB and orb response - choices are full (full response, default), lowfL (keep orbital delay frequency-dependence but simplify constellation response) and lowf (simplify constellation and orbital response) - WARNING : at the moment noises are not consistent, and TDI combinations from the GAB are unchanged\n\
  --taggenwave          Tag choosing the wf format: TDIhlm (default: downsampled mode contributions to TDI in Amp/Phase form), TDIFD (hlm interpolated and summed accross modes), h22FFT and yslrFFT (used with fomrtditdfile -- loads time series and FFT)\n\
  --restorescaledfactor Option to restore the factors scaled out of TDI observables (default: false)\n	\
  --FFTfromtdfile       Option for loading time series and FFTing (default: false)\n\
@@ -98,6 +100,8 @@ Arguments are as follows:\n\
     params->twindowend = 0.;
     params->tagh22fromfile = 0;
     params->tagtdi = TDIAETXYZ;
+    params->frozenLISA = 0;
+    params->responseapprox = full;
     params->taggenwave = TDIhlm;
     params->restorescaledfactor = 0;
     params->FFTfromtdfile = 0;
@@ -155,9 +159,13 @@ Arguments are as follows:\n\
         } else if (strcmp(argv[i], "--tagh22fromfile") == 0) {
           params->tagh22fromfile = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--tagtdi") == 0) {
-	        params->tagtdi = ParseTDItag(argv[++i]);
+	          params->tagtdi = ParseTDItag(argv[++i]);
+        } else if (strcmp(argv[i], "--frozenLISA") == 0) {
+            paramsparams->frozenLISA = 1;
+        } else if (strcmp(argv[i], "--responseapprox") == 0) {
+            params->responseapprox = ParseResponseApproxtag(argv[++i]);
         } else if (strcmp(argv[i], "--taggenwave") == 0) {
-	        params->taggenwave = ParseGenTDIFDtag(argv[++i]);
+	          params->taggenwave = ParseGenTDIFDtag(argv[++i]);
         } else if (strcmp(argv[i], "--restorescaledfactor") == 0) {
             params->restorescaledfactor = 1;
         } else if (strcmp(argv[i], "--FFTfromtdfile") == 0) {
@@ -515,8 +523,7 @@ int main(int argc, char *argv[])
     ListmodesCAmpPhaseFrequencySeries* listTDI2= NULL;
     ListmodesCAmpPhaseFrequencySeries* listTDI3= NULL;
     /* torb is the orbital reference time (role played by injection tRef in the inference) */
-    /* By default, do not freeze the LISA orbital configuration and use full response */
-    LISASimFDResponseTDI3Chan(&listhlm, &listTDI1, &listTDI2, &listTDI3, params->torb, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, params->maxf, params->tagtdi, 0, full);
+    LISASimFDResponseTDI3Chan(&listhlm, &listTDI1, &listTDI2, &listTDI3, params->torb, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, params->maxf, params->tagtdi, params->frozenLISA, params->responseapprox);
 
     /* If asked for it, rescale the complex amplitudes to include the factors that were scaled out of TDI observables */
     if(params->restorescaledfactor) {

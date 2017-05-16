@@ -76,6 +76,8 @@ typedef struct tagGenTDIFDparams {
   double twindowend;         /* When generating frequency series from file by FFT, twindowend (0 to set automatically at 0.01*duration) */
   int tagh22fromfile;        /* Tag choosing wether to load h22 FD downsampled Amp/Phase from file (default 0) */
   int tagtdi;                /* Tag selecting the desired output format */
+  int frozenLISA;            /* Freeze the orbital configuration to the time of peak of the injection (default 0) */
+  ResponseApproxtag responseapprox;    /* Approximation in the GAB and orb response - choices are full (full response, default), lowfL (keep orbital delay frequency-dependence but simplify constellation response) and lowf (simplify constellation and orbital response) - WARNING : at the moment noises are not consistent, and TDI combinations from the GAB are unchanged */
   int taggenwave;            /* Tag selecting the desired output format */
   int restorescaledfactor;   /* If 1, restore the factors that were scaled out of TDI observables */
   int FFTfromtdfile;         /* Option for loading time series and FFTing (default: false) */

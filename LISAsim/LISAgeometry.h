@@ -126,7 +126,8 @@ int EvaluateTDIfactor3Chan(
   const double complex G31,                      /* Input for G31 */
   const double complex G13,                      /* Input for G13 */
   const double f,                                /* Frequency */
-  const TDItag tditag);                          /* Selector for the TDI observables */
+  const TDItag tditag,                           /* Selector for the TDI observables */
+  const ResponseApproxtag responseapprox);       /* Tag to select possible low-f approximation level in FD response */
 /* int EvaluateTDIfactor1Chan( */
 /*   double complex* factor,                       /\* Output for factor for TDI channel *\/ */
 /*   const double complex G12,                      /\* Input for G12 *\/ */
