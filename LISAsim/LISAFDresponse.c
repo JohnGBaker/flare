@@ -470,6 +470,9 @@ int LISASimFDResponseTDI3Chan(
       camp3 = factor3 * amphtilde;
       /* Phase term due to the R-delay, including correction to first order */
       double phaseRdelay = -2*PI*R_SI/C_SI*f*cos(beta)*cos(Omega_SI*tforb - lambda) * (1 + R_SI/C_SI*Omega_SI*sin(Omega_SI*tforb - lambda));
+      if(responseapprox==lowf) { /* In the full low-f approximation, ignore this delay term */
+        phaseRdelay = 0.
+      }
       double phasewithRdelay = gsl_vector_get(phase_resample, j) + phaseRdelay;
 
       /**/
