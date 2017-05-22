@@ -548,12 +548,14 @@ double FDLogLikelihoodReIm(
 
 /***************************** Functions for overlaps using amplitude/phase (Fresnel) ******************************/
 
-/* Note: for the spines in matrix form, the first column contains the x values, so the coeffs start at 1 */
+/*  Moved these to splinecoeffs.c
+ 
+// Note: for the spines in matrix form, the first column contains the x values, so the coeffs start at 1 
 static double EvalCubic(
-  gsl_vector* coeffs,  /**/
-  double eps,          /**/
-  double eps2,         /**/
-  double eps3)         /**/
+  gsl_vector* coeffs,  
+  double eps,          
+  double eps2,         
+  double eps3)         
 {
   double p0 = gsl_vector_get(coeffs, 1);
   double p1 = gsl_vector_get(coeffs, 2);
@@ -562,15 +564,16 @@ static double EvalCubic(
   return p0 + p1*eps + p2*eps2 + p3*eps3;
 }
 static double EvalQuad(
-  gsl_vector* coeffs,  /**/
-  double eps,          /**/
-  double eps2)         /**/
+  gsl_vector* coeffs,  
+  double eps,          
+  double eps2)         
 {
   double p0 = gsl_vector_get(coeffs, 1);
   double p1 = gsl_vector_get(coeffs, 2);
   double p2 = gsl_vector_get(coeffs, 3);
   return p0 + p1*eps + p2*eps2;
 }
+*/
 
 /* Quadratic Legendre approximation to compute values at minf and maxf when they do not fall on the grid of a freqseries, using the two first/last intervals */
 static double EstimateBoundaryLegendreQuad(
@@ -989,3 +992,4 @@ double FDListmodesFresnelOverlap3Chan(
 
   return overlap;
 }
+
