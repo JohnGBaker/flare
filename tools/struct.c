@@ -225,6 +225,7 @@ void CAmpPhaseFrequencySeries_Init(CAmpPhaseFrequencySeries **freqseries, const 
   else
   {
     CAmpPhaseFrequencySeries_Cleanup(*freqseries);
+    *freqseries=malloc(sizeof(CAmpPhaseFrequencySeries));
   }
   gsl_set_error_handler(&Err_Handler);
   (*freqseries)->freq = gsl_vector_alloc(n);
