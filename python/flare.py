@@ -24,6 +24,7 @@ LISAvariant="LISA2017"
 deltatobs=1.0
 only22=False;
 FisherReIm=True;
+ReIm_npts=32768;
 
 def set_flare_flags(snr,params):
     flags=""
@@ -261,7 +262,8 @@ def FisherRunByParams(snr,params,delta,label,extrapoints=1.0):
     cmd   = flare_dir+"/LISAinference/LISAinference_ptmcmc"
     #npts=2**int(3.5 - math.log10(delta)*6.5)  #this formula was based on a study of how many nbptsoverlap are needed for convergence to within ~5% over a range of Fisher_err_target delta values.  The study was for a case with --m1 157500.0 --m2 107500.0 --snr 100
     #npts=extrapoints*20/delta/delta #Simplified variant, multiplied by additional factor of two to be conservative note seems we only have convergence at order (1/nbpts)^0.5 I
-    npts = 32768
+    #npts = 32768
+    npts = ReIm_npts
     flags = "--nsteps=0 --Fisher_err_target="+str(delta)+" --flat-distprior --deltaT 5000"
     flags+=set_flare_flags(snr,params)
     if(FisherReIm):
