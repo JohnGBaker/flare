@@ -23,6 +23,7 @@ extra_flags=""
 LISAvariant="LISA2017"
 deltatobs=1.0
 only22=False;
+FisherReIm=True;
 
 def set_flare_flags(snr,params):
     flags=""
@@ -262,7 +263,9 @@ def FisherRunByParams(snr,params,delta,label,extrapoints=1.0):
     #npts=extrapoints*20/delta/delta #Simplified variant, multiplied by additional factor of two to be conservative note seems we only have convergence at order (1/nbpts)^0.5 I
     npts = 32768
     flags = "--nsteps=0 --Fisher_err_target="+str(delta)+" --flat-distprior --deltaT 5000"
-    flags+=set_flare_flags(snr,params)+" --tagint 1 --nbptsoverlap "+str(npts)
+    flags+=set_flare_flags(snr,params)
+    if(FisherReIm):
+        flags+=" --tagint 1 --nbptsoverlap "+str(npts)
     name=str(label)
     flags += " --rng_seed="+str(np.random.rand())+" "
     flags += " --outroot "+str(name)+" "
@@ -574,7 +577,9 @@ def FisherPlot(outlabel,ipar,qList,SNRList,deltalist,datafile,scaled=False,targe
 def HorizonPlot(outlabel,ipar,qList,snr,delta,datafile,horizonlist,scaled=False,errorNsigma=2,show_range=False):
     rangetag=''
     if(show_range):rangetag='range-'
-    pp = PdfPages(str(outlabel)+'Horizon-'+rangetag+par_name(ipar)+'.pdf')
+    name=str(outlabel)+'Horizon-'+rangetag+par_name(ipar)+'.pdf'
+    print "Making plot: "+name
+    pp = PdfPages(name);
     #datafile = open(datafile,'r')
     tol=1e-10
     data=np.loadtxt(datafile)
@@ -586,6 +591,7 @@ def HorizonPlot(outlabel,ipar,qList,snr,delta,datafile,horizonlist,scaled=False,
         tags=[]
         labels=[]
         subdata=[]
+        print "finding data with SNR="+str(snr)+", delta="+str(delta)+", q="+str(q)
         for d in data:
             if abs(d[0]/snr-1)<tol and abs(d[1]/delta-1)<tol and abs(d[3]/q-1)<tol:
                 subdata.append(d)
