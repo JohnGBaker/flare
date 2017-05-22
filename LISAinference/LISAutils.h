@@ -64,7 +64,7 @@ typedef struct tagLISAGlobalParams {
   int nbmodeinj;             /* number of modes to include in the injection (starting with 22) - defaults to 5 (all modes) */
   int nbmodetemp;            /* number of modes to include in the templates (starting with 22) - defaults to 5 (all modes) */
   int tagint;                /* Tag choosing the integrator: 0 for wip (default), 1 for linear integration */
-  int tagtdi;                /* Tag choosing the TDI variables to use */
+  TDItag tagtdi;                /* Tag choosing the TDI variables to use */
   int nbptsoverlap;          /* Number of points to use in loglinear overlaps (default 32768) */
   LISAconstellation *variant;  /* A structure defining the LISA constellation features */
   int zerolikelihood;        /* Tag to zero out the likelihood, to sample from the prior for testing purposes (default 0) */
