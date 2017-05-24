@@ -26,11 +26,22 @@ void getphysparams(double *Cube, int *ndim) /* Note: ndim not used here */
   }
 
   /* Time */
+  /* If sampling in tL, convert tinj SSB to tLinj */
   if (isnan(priorParams->fix_time)) {
-    tRef = CubeToFlatPrior(Cube[i++], injectedparams->tRef - priorParams->deltaT,
-           injectedparams->tRef + priorParams->deltaT);
-  } else {
-    tRef = priorParams->fix_time;
+    if(priorParams->sampletimeparam==tSSB) {
+      tRef = CubeToFlatPrior(Cube[i++], injectedparams->tRef - priorParams->deltaT, injectedparams->tRef + priorParams->deltaT);
+    }
+    else if(priorParams->sampletimeparam==tL) { /* Here tRef has the meaning of tL */
+      double injectedtL = tLfromtSSB(globalparams->variant, injectedparams->tRef, injectedparams->lambda, injectedparams->beta);
+      tRef = CubeToFlatPrior(Cube[i++], injectedtL - priorParams->deltaT, injectedtL + priorParams->deltaT);
+    }
+  } else { /* fix_time, if defined, has the sense of a SSB time */
+    if(priorParams->sampletimeparam==tSSB) {
+      tRef = priorParams->fix_time;
+    }
+    else if(priorParams->sampletimeparam==tL) { /* Set tRef (meaning tL) to the injected tL (with injected sky position) */
+      tRef = tLfromtSSB(globalparams->variant, priorParams->fix_time, injectedparams->lambda, injectedparams->beta);
+    }
   }
 
   /* Orbital phase */
@@ -111,6 +122,12 @@ void getphysparams(double *Cube, int *ndim) /* Note: ndim not used here */
     /* Convert Mchirp/eta to m1/m2 */
     m1 = m1ofMchirpeta(Mchirp, eta);
     m2 = m2ofMchirpeta(Mchirp, eta);
+  }
+
+  /* Convert time - if sampling in tL, compute tSSB from tL using (approximate but 3e-6s accurate) inverse relation */
+  /* The tRef we output has always the meaning of a SSB time */
+  if(priorParams->sampletimeparam==tL) {
+    tRef = tSSBfromtL(globalparams->variant, tRef, lambda, beta);
   }
 
   /* Note: here we output physical values in the cube (overwriting), and we keep the original order for physical parameters */

@@ -166,6 +166,31 @@ TDItag ParseTDItag(char* string) {
   return tag;
 }
 
+/* Function to convert string input ResponseApprox to tag */
+ResponseApproxtag ParseResponseApproxtag(char* string) {
+  ResponseApproxtag tag;
+  if(strcmp(string, "full")==0) tag = full;
+  else if(strcmp(string, "lowfL")==0) tag = lowfL;
+  else if(strcmp(string, "lowf")==0) tag = lowf;
+  else {
+    printf("Error in ParseResponseApproxtag: string not recognized.\n");
+    exit(1);
+  }
+  return tag;
+}
+
+/* Compute Solar System Barycenter time tSSB from retarded time at the center of the LISA constellation tL */
+double tSSBfromtL(const LISAconstellation *variant, const double tL, const double lambda, const double beta) {
+  double phase=variant->ConstOmega*tL + variant->ConstPhi0 - lambda;
+  double RoC=variant->OrbitR/C_SI;
+ return tL + RoC*cos(beta)*cos(phase) - 1./2*variant->ConstOmega*pow(RoC*cos(beta), 2)*sin(2.*phase);
+}
+double tLfromtSSB(const LISAconstellation *variant, const double tSSB, const double lambda, const double beta) {
+  double phase=variant->ConstOmega*tSSB + variant->ConstPhi0 - lambda;
+  double RoC=variant->OrbitR/C_SI;
+  return tSSB - RoC*cos(beta)*cos(phase);
+}
+
 /* Function cardinal sine */
 double sinc(const double x) {
   if (x==0)
@@ -585,7 +610,8 @@ int EvaluateGABmode(
   const double t,                          /* Time */
   const double complex Yfactorplus,        /* Spin-weighted spherical harmonic factor for plus */
   const double complex Yfactorcross,       /* Spin-weighted spherical harmonic factor for cross */
-  int tagdelayR)                           /* Tag: when 1, include the phase term of the R-delay */
+  const int tagdelayR,                     /* Tag: when 1, include the phase term of the R-delay */
+  const ResponseApproxtag responseapprox)  /* Tag to select possible low-f approximation level in FD response */
 {
   double phase=variant->ConstOmega*t + variant->ConstPhi0;
 
@@ -635,18 +661,40 @@ int EvaluateGABmode(
   double complex factorcexp12 = cexp(I*prefactor * (1.+kp1plusp2));
   double complex factorcexp23 = cexp(I*prefactor * (1.+kp2plusp3));
   double complex factorcexp31 = cexp(I*prefactor * (1.+kp3plusp1));
+  double factorsinc12 = sinc( prefactor * (1.-kn3));
+  double factorsinc21 = sinc( prefactor * (1.+kn3));
+  double factorsinc23 = sinc( prefactor * (1.-kn1));
+  double factorsinc32 = sinc( prefactor * (1.+kn1));
+  double factorsinc31 = sinc( prefactor * (1.-kn2));
+  double factorsinc13 = sinc( prefactor * (1.+kn2));
   /* The tag tagdelayR allows to choose to include or not the R-delay phase term (here leading order) */
   double complex factorcexpkR;
   if(tagdelayR) factorcexpkR = cexp(I*prefactorR * kR);
   else factorcexpkR = 1.;
 
+  /* Take into account level of approximation in for low-f response - choices are full, lowfL or lowf */
+  if(responseapprox==lowf) {
+    factorcexpkR = 1.;
+  }
+  if((responseapprox==lowfL)||(responseapprox==lowf)) {
+    factorsinc12 = 1.;
+    factorsinc21 = 1.;
+    factorsinc23 = 1.;
+    factorsinc32 = 1.;
+    factorsinc31 = 1.;
+    factorsinc13 = 1.;
+    factorcexp12 = 1.;
+    factorcexp23 = 1.;
+    factorcexp31 = 1.;
+  }
+
   /* Output result */
-  *G12 = I*prefactor * factorcexpkR * factn3Pn3 * sinc( prefactor * (1.-kn3)) * factorcexp12;
-  *G21 = I*prefactor * factorcexpkR * factn3Pn3 * sinc( prefactor * (1.+kn3)) * factorcexp12;
-  *G23 = I*prefactor * factorcexpkR * factn1Pn1 * sinc( prefactor * (1.-kn1)) * factorcexp23;
-  *G32 = I*prefactor * factorcexpkR * factn1Pn1 * sinc( prefactor * (1.+kn1)) * factorcexp23;
-  *G31 = I*prefactor * factorcexpkR * factn2Pn2 * sinc( prefactor * (1.-kn2)) * factorcexp31;
-  *G13 = I*prefactor * factorcexpkR * factn2Pn2 * sinc( prefactor * (1.+kn2)) * factorcexp31;
+  *G12 = I*prefactor * factorcexpkR * factn3Pn3 * factorsinc12 * factorcexp12;
+  *G21 = I*prefactor * factorcexpkR * factn3Pn3 * factorsinc21 * factorcexp12;
+  *G23 = I*prefactor * factorcexpkR * factn1Pn1 * factorsinc23 * factorcexp23;
+  *G32 = I*prefactor * factorcexpkR * factn1Pn1 * factorsinc32 * factorcexp23;
+  *G31 = I*prefactor * factorcexpkR * factn2Pn2 * factorsinc31 * factorcexp31;
+  *G13 = I*prefactor * factorcexpkR * factn2Pn2 * factorsinc13 * factorcexp31;
 
   return SUCCESS;
 }
@@ -669,12 +717,17 @@ int EvaluateTDIfactor3Chan(
   const double complex G31,                      /* Input for G31 */
   const double complex G13,                      /* Input for G13 */
   const double f,                                /* Frequency */
-  const TDItag tditag)                           /* Selector for the TDI observables */
+  const TDItag tditag,                           /* Selector for the TDI observables */
+  const ResponseApproxtag responseapprox)        /* Tag to select possible low-f approximation level in FD response */
 {
   /* Notation: x=pifL, z=e^2ix*/
   double x = PI*f*variant->ConstL/C_SI;
   double complex z = cexp(2*I*x);
-  double sin2x = sin(2*x);
+  /* In both lowf and lowf-L approximations, ignore z factors - consitently ignore all TDI delays */
+  if((responseapprox==lowf)||(responseapprox==lowfL)) {
+    x = 0.;
+    z = 1.;
+  }
   switch(tditag) {
     /* For testing purposes: basic yAB observable - no factor */
   case y12:

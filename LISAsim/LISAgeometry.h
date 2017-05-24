@@ -64,6 +64,13 @@ typedef enum TDItag {
   TDITalphabetagamma
 } TDItag;
 
+/* Enumerator to choose what level of low-f approximation to do in the response */
+typedef enum ResponseApproxtag {
+  full,
+  lowfL,
+  lowf
+} ResponseApproxtag;
+
 /**************************************************/
 /************** LISAconstellation *****************/
 
@@ -87,8 +94,15 @@ extern LISAconstellation bigOrbitLISA;
 /* Function to convert string input TDI string to TDItag */
 TDItag ParseTDItag(char* string);
 
+/* Function to convert string input ResponseApprox to tag */
+ResponseApproxtag ParseResponseApproxtag(char* string);
+
 /* Function cardinal sine */
 double sinc(const double x);
+
+/* Compute Solar System Barycenter time tSSB from retarded time at the center of the LISA constellation tL */
+double tSSBfromtL(const LISAconstellation *LISAvariant, const double tL, const double lambda, const double beta);
+double tLfromtSSB(const LISAconstellation *LISAvariant, const double tSSB, const double lambda, const double beta);
 
 /* Function to compute, given a value of a sky position and polarization, all the complicated time-independent trigonometric coefficients entering the response */
 void SetCoeffsG(const double lambda, const double beta, const double psi);
@@ -112,7 +126,8 @@ int EvaluateGABmode(
   const double t,                          /* Time */
   const double complex Yfactorplus,        /* Spin-weighted spherical harmonic factor for plus */
   const double complex Yfactorcross,       /* Spin-weighted spherical harmonic factor for cross */
-  int tagdelayR);                          /* Tag: when 1, include the phase term of the R-delay */
+  const int tagdelayR,                     /* Tag: when 1, include the phase term of the R-delay */
+  const ResponseApproxtag responseapprox); /* Tag to select possible low-f approximation level in FD response */
 
 /* Functions evaluating the Fourier-domain factors (combinations of the GAB's) for TDI observables */
 /* NOTE: factors have been scaled out, in parallel of what is done for the noise function */
@@ -130,7 +145,8 @@ int EvaluateTDIfactor3Chan(
   const double complex G31,                      /* Input for G31 */
   const double complex G13,                      /* Input for G13 */
   const double f,                                /* Frequency */
-  const TDItag tditag);                          /* Selector for the TDI observables */
+  const TDItag tditag,                           /* Selector for the TDI observables */
+  const ResponseApproxtag responseapprox);       /* Tag to select possible low-f approximation level in FD response */
 /* int EvaluateTDIfactor1Chan( */
 /*   double complex* factor,                       /\* Output for factor for TDI channel *\/ */
 /*   const double complex G12,                      /\* Input for G12 *\/ */

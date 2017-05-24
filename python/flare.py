@@ -38,7 +38,6 @@ def set_flare_flags(snr,params):
     flags+=" --minf 3e-6" #minimun frequency included in analysis
     flags+=" --maxf 0.5" #maximum frequency included in analysis
     #flags+=" --maxf 0.15" #maximum frequency included in analysis
-    #flags+=" --maxf 5." #maximum frequency included in analysis
     if(only22):
         flags+=" --nbmodeinj 1 --nbmodetemp 1" #for no higher modes in injection and template
     else:
