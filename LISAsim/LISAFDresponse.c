@@ -477,16 +477,14 @@ int LISASimFDResponseTDI3Chan(
       //double phaseRdelay = -2*PI*R_SI/C_SI*f*cos(beta)*cos(Omega_SI*tf - lambda) * (1 + R_SI/C_SI*Omega_SI*sin(Omega_SI*tf - lambda));
       double phaseRdelay;
       if(tagtRefatLISA==0){//delay so that tinj=torb refers to arrival time at SSB
-	phaseRdelay = -2*PI*OrbitRoC*f*cos(beta)*cos(phase) * (1 + OrbitRoC*variant->OrbitOmega*sin(phase));
+	phaseRdelay = -2*PI*OrbitRoC*f*cos(beta)*cos(phase) * (1 + cos(beta)*OrbitRoC*variant->OrbitOmega*sin(phase));
       } else {
 	//In this version we delay so that tinj=torb is relative to LISAcenter arrival time, so there is no orbital delay when tf = tinj
 	//If the original delay realized td=t+d(t), now we want td=t+d(t)-d(t0), that we we change d(t) -> d(t) + d(t0)
 	//Then with the approximation d(td)=d(t)(1-ddot(t)), 
 	double phase0=variant->OrbitOmega*torb+variant->OrbitPhi0-lambda;
 	phaseRdelay =
-	  - 2*PI*OrbitRoC*f*cos(beta)*(
-	      cos(phase) * (1 + OrbitRoC*variant->OrbitOmega*sin(phase))
-	    - cos(phase0) * (1 + OrbitRoC*variant->OrbitOmega*sin(phase0)) );
+	  - 2*PI*OrbitRoC*f*cos(beta)*( cos(phase) -cos(phase0) ) * (1 + cos(beta)*OrbitRoC*variant->OrbitOmega*sin(phase));
       }
       if(responseapprox==lowf) { /* In the full low-f approximation, ignore this delay term */
         phaseRdelay = 0.;
