@@ -549,6 +549,7 @@ Syntax: --PARAM-min\n\
         } else if (strcmp(argv[i], "--variant") == 0) {
 	  i++;
 	  if (strcmp(argv[i], "LISA2017") == 0) globalparams->variant=&LISA2017;
+	  else if (strcmp(argv[i], "LISA2010") == 0) globalparams->variant=&LISA2010;
 	  else if (strcmp(argv[i], "fastOrbitLISA") == 0) globalparams->variant=&fastOrbitLISA;
 	  else if (strcmp(argv[i], "slowOrbitLISA") == 0) globalparams->variant=&slowOrbitLISA;
 	  else if (strcmp(argv[i], "tinyOrbitLISA") == 0) globalparams->variant=&tinyOrbitLISA;

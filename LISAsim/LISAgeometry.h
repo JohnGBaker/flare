@@ -74,6 +74,11 @@ typedef enum ResponseApproxtag {
 /**************************************************/
 /************** LISAconstellation *****************/
 
+enum LISANoiseType{
+  LISA2010noise,
+  LISA2017noise
+} ;
+
 typedef struct tagLISAconstellation {
   double OrbitOmega;
   double OrbitPhi0;
@@ -81,13 +86,16 @@ typedef struct tagLISAconstellation {
   double ConstOmega;
   double ConstPhi0;
   double ConstL;
+  enum LISANoiseType noise;
 }LISAconstellation;
 extern LISAconstellation LISA2017;
+extern LISAconstellation LISA2010;
 extern LISAconstellation slowOrbitLISA;
 extern LISAconstellation tinyOrbitLISA;
 extern LISAconstellation fastOrbitLISA;
 extern LISAconstellation bigOrbitLISA;
 
+  
 /**************************************************/
 /**************** Prototypes **********************/
 

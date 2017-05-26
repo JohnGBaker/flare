@@ -45,13 +45,25 @@ struct tagLISAconstellation {
 }
 */
 
+LISAconstellation LISA2010 = {
+  EarthOrbitOmega_SI,
+  0,
+  AU_SI,
+  EarthOrbitOmega_SI,
+  0,
+  5e9,
+  LISA2010noise
+};
+
 LISAconstellation LISA2017 = {
   EarthOrbitOmega_SI,
   0,
   AU_SI,
   EarthOrbitOmega_SI,
   0,
-  2.5e9};
+  2.5e9,
+  LISA2017noise
+};
 
 LISAconstellation slowOrbitLISA = {
   EarthOrbitOmega_SI/100.0,
@@ -59,7 +71,9 @@ LISAconstellation slowOrbitLISA = {
   AU_SI,
   EarthOrbitOmega_SI/100.0,
   0,
-  2.5e9};
+  2.5e9,
+  LISA2017noise
+};
 
 LISAconstellation tinyOrbitLISA = {
   EarthOrbitOmega_SI,
@@ -67,23 +81,29 @@ LISAconstellation tinyOrbitLISA = {
   AU_SI/100,
   EarthOrbitOmega_SI,
   0,
-  2.5e9};
+  2.5e9,
+  LISA2017noise
+};
 
 LISAconstellation fastOrbitLISA = {
   EarthOrbitOmega_SI*10.0,
-    0,
-    AU_SI,
-    EarthOrbitOmega_SI*10.0,
-    0,
-    2.5e9};
+  0,
+  AU_SI,
+  EarthOrbitOmega_SI*10.0,
+  0,
+  2.5e9,
+  LISA2017noise
+};
 
 LISAconstellation bigOrbitLISA = {
   EarthOrbitOmega_SI/10.0,
-    0,
-    AU_SI,
-    EarthOrbitOmega_SI/10.0,
-    0,
-    2.5e9};
+  0,
+  AU_SI,
+  EarthOrbitOmega_SI/10.0,
+  0,
+  2.5e9,
+  LISA2017noise
+};
 
 
 
