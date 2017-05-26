@@ -11,6 +11,8 @@ import threading
 import time
 import sys
 import traceback
+import fmerge
+
 
 multithreaded=True
 threadLock=threading.Lock()
@@ -23,8 +25,11 @@ extra_flags=""
 LISAvariant="LISA2017"
 deltatobs=1.0
 only22=False;
+onlyInspiral=False;
+postInspiral=False;
 FisherReIm=True;
 ReIm_npts=32768;
+linearSNRplot=False;
 
 def set_flare_flags(snr,params):
     flags=""
@@ -35,14 +40,24 @@ def set_flare_flags(snr,params):
     #flags+=" --deltatobs 5.0" #duration in years of LISA observation
     flags+=" --deltatobs "+str(deltatobs) #duration in years of LISA observation
     #flags+=" --minf 1e-4" #minimun frequency included in analysis
-    flags+=" --minf 3e-6" #minimun frequency included in analysis
-    flags+=" --maxf 0.5" #maximum frequency included in analysis
+    #flags+=" --minf 3e-6" #minimun frequency included in analysis
+    minf=3e-6;
+    maxf=0.5;
+    if(onlyInspiral):
+        LSOf=fmerge.Mf(params[0],params[1]) #maximum frequency at LSO
+        if(LSOf<maxf):maxf=LSOf;
+    if(postInspiral):
+        LSOf=fmerge.Mf(params[0],params[1]) #maximum frequency at LSO
+        if(LSOf>minf):minf=LSOf;
+    flags+=" --maxf "+str(maxf) #maximum frequency included in analysis
+    flags+=" --minf "+str(minf) #minimum frequency included in analysis
+
     #flags+=" --maxf 0.15" #maximum frequency included in analysis
     if(only22):
         flags+=" --nbmodeinj 1 --nbmodetemp 1" #for no higher modes in injection and template
     else:
         flags+=" --nbmodeinj 5 --nbmodetemp 5" #for no higher modes in injection and template
-
+    
     if(snr>0):
         flags+=" --snr "+str(snr)+" --rescale-distprior" #fixing SNR (rescales distance)
     flags+=" --comp-min 1e5 --comp-max 1e8" #min/max for component mass prior ranges
@@ -237,6 +252,15 @@ def SNRstudy(outlabel,MtotList,qList,SNRList,Navg,Nthreads=1):
                 #x.append(math.log10(Mtot))
                 y1.append(mean-std)
                 y2.append(mean+std)
+            ylabel="log(z)"
+            ylim=[-1,3]
+            xlim=[2,9]
+            if(linearSNRplot):
+                y1=[10**y for y in y1]
+                y2=[10**y for y in y2]
+                ylabel="z"
+                ylim=[0,20]
+                xlim=[3.5,8.5]
             print "x=",x
             print "y1=",y1
             print "y2=",y2
@@ -246,10 +270,10 @@ def SNRstudy(outlabel,MtotList,qList,SNRList,Navg,Nthreads=1):
             labels.append("SNR="+str(snr))
             print "Finished band for SNR="+str(snr)
         plt.legend(tags,labels)
-        plt.ylim([-1,3])
-        plt.xlim([2,9])
+        plt.ylim(ylim)
+        plt.xlim(xlim)
         plt.title("SNR contours for LISA q="+str(q)+" SMBH merger")
-        plt.ylabel("log(z)")
+        plt.ylabel(ylabel)
         plt.xlabel("log(M/Msun)")
         #plt.show()
         pp.savefig()
@@ -401,7 +425,33 @@ def readCovarFile(file):
             raise
     return [dm1,dm2,dtRef,dD,dphase,dinc,dlam,dbeta,dpol,dsky,dori,dmvol]
             
-              
+def writeFisherSamples(name,numSamples):
+    fishcov=name+"_fishcov.dat"
+    outsamp=name+"_fishcov.dat"
+    with open(fishcov,'r') as f:
+        line="#"
+        while("#" in line): line=f.readline() #Skip comment
+        for val in line.split():
+            #print val
+            pars.append(float(val))
+        Npar=len(pars)
+        while(not "#Covariance" in line):line=f.readline() #Skip until the good stuff
+        covar=np.zeros((Npar,Npar))
+        i=0
+        for par in pars:
+            line=f.readline()
+            covar[i]=np.array(line.split())
+            i+=1
+    with open(outsamp,'w') as f:
+        for i in range(numSamples):
+            f.write("0  0  0  0  0 ")
+            dpars=np.random.multivariate_normal(pars,covar)
+            for val in pars+dpars:
+                f.write("  "+str(val))
+            f.write("\n")
+    
+    
+        
         
 def FisherStudy(outlabel,MtotList,qList,SNRList,deltalist,Navg,Nthreads,extrapoints=1.0):
     pp = PdfPages(str(outlabel)+'FisherStudy.pdf')
