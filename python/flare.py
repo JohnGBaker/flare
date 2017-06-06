@@ -31,7 +31,7 @@ def set_flare_flags(snr,params):
     #flags+=" --minf 1e-4" #minimun frequency included in analysis
     flags+=" --minf 3e-6" #minimun frequency included in analysis
     flags+=" --maxf 0.15" #maximum frequency included in analysis
-    flags+=" --nbmodeinj 5 --nbmodetemp 5" #for no higher modes in injection and template
+    #flags+=" --nbmodeinj 5 --nbmodetemp 5" #for no higher modes in injection and template
     if(snr>0):
         flags+=" --snr "+str(snr)+" --rescale-distprior" #fixing SNR (rescales distance)
     flags+=" --comp-min 1e5 --comp-max 1e8" #min/max for component mass prior ranges
@@ -68,20 +68,21 @@ def set_flare_flags(snr,params):
 def set_mcmc_flags(outroot,ptN):
     flags  = ""
     #MCMC basics
-    flags += " --rng_seed="+str(np.random.rand())
+    flags += "--noFisher --rng_seed="+str(np.random.rand())
     flags += " --outroot "+str(outroot)
-    flags += " --nskip=40 --info_every=10000" #frequency of sampling/reporting
-    flags += " --prop=7 --de_ni=500 --gauss_1d_frac=0.5 --de_reduce_gamma=4" #differential evolution proposal distribution with Gaussian draws 1/2 of the time
+    #flags += " --nskip=40 --info_every=10000" #frequency of sampling/reporting
+    flags += " --save_every=40 --info_every=10000" #frequency of sampling/reporting
+    flags += " --prop=7 --de_ni=50 --gauss_1d_frac=0.5 --de_reduce_gamma=4" #differential evolution proposal distribution with Gaussian draws 1/2 of the time
     #Parallel Tempering setup
-    flags += " --pt --pt_Tmax=1e9"    #parallel tempering basics
+    flags += " --pt --pt_stop_evid_err=0.05 --pt_Tmax=1e9"    #parallel tempering basics
     if(ptN>0):
         flags += " --pt_n="+str(ptN) #else default is 20
     flags += " --pt_swap_rate=0.10"   #rate of temp swaps (or default 0.01)
     flags += " --pt_evolve_rate=0.01" #rate at which temps are allowed to evolve
 
-    flags += " --pt_reboot_rate=0.0001 --pt_reboot_every=10000 --pt_reboot_grace=50000" #Somewhat hacky trick to avoid chains getting stuck.  Not sure whether we need this.
+    #flags += " --pt_reboot_rate=0.0001 --pt_reboot_every=10000 --pt_reboot_grace=50000" #Somewhat hacky trick to avoid chains getting stuck.  Not sure whether we need this.
     #stopping criteria
-    flags += " --nsteps=1e7" #10 million steps may be about the most we can do
+    flags += " --nsteps=10000000" #10 million steps may be about the most we can do
     flags += " --pt_stop_evid_err=0.05" #may terminate earlier based on evidence criterion
     return flags
 
