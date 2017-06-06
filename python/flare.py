@@ -1,3 +1,4 @@
+import os
 import math
 import numpy as np
 import subprocess
@@ -13,7 +14,7 @@ import sys
 import traceback
 import fmerge
 
-
+flare_dir=os.path.dirname(os.path.realpath(__file__))[:-7]
 multithreaded=True
 threadLock=threading.Lock()
 ireport=9
@@ -23,10 +24,11 @@ all_params_file=False
 ROM_DATA_PATH="ROMdata/q1-12_Mfmin_0.0003940393857519091"
 extra_flags=""
 LISAvariant="LISA2017"
-deltatobs=1.0
+deltatobs=5.0
 only22=False;
 onlyInspiral=False;
 postInspiral=False;
+SampleReIm=False;
 FisherReIm=True;
 ReIm_npts=32768;
 linearSNRplot=False;
@@ -35,8 +37,7 @@ def set_flare_flags(snr,params):
     flags=""
     #Waveform model
     #flags += " --tagextpn 0" #Don't extend waveforms at low freq to allow lower masses
-    #flags+=" --tagint 0" #1 for Fresnel integration(default), vs gridded quadrature"
-    #flags+=" --tagint 1" --nbptsoverlap 8192" #gridded quadrature
+    if(SampleReIm): flags+=" --tagint 1 --nbptsoverlap " + str(ReIm_npts) #gridded quadrature
     #flags+=" --deltatobs 5.0" #duration in years of LISA observation
     flags+=" --deltatobs "+str(deltatobs) #duration in years of LISA observation
     #flags+=" --minf 1e-4" #minimun frequency included in analysis
@@ -110,7 +111,7 @@ def set_mcmc_flags(outroot,ptN):
 
     flags += " --pt_reboot_rate=0.0001 --pt_reboot_every=10000 --pt_reboot_grace=50000" #Somewhat hacky trick to avoid chains getting stuck.  Not sure whether we need this.
     #stopping criteria
-    flags += " --nsteps=1e7" #10 million steps may be about the most we can do
+    flags += " --nsteps=100000000" #100 million steps may be about the most we can do
     flags += " --pt_stop_evid_err=0.05" #may terminate earlier based on evidence criterion
     return flags
 
@@ -281,20 +282,22 @@ def SNRstudy(outlabel,MtotList,qList,SNRList,Navg,Nthreads=1):
         print "Finished plot for q="+str(q)
     pp.close()
 
-def FisherRunByParams(snr,params,delta,label,extrapoints=1.0):
+def getFisherCommand(label,delta=0.1,extrapoints=1.0):
     cmd   = flare_dir+"/LISAinference/LISAinference_ptmcmc"
-    #npts=2**int(3.5 - math.log10(delta)*6.5)  #this formula was based on a study of how many nbptsoverlap are needed for convergence to within ~5% over a range of Fisher_err_target delta values.  The study was for a case with --m1 157500.0 --m2 107500.0 --snr 100
-    #npts=extrapoints*20/delta/delta #Simplified variant, multiplied by additional factor of two to be conservative note seems we only have convergence at order (1/nbpts)^0.5 I
-    #npts = 32768
+    #npts= int(extrapoints*20/delta/delta) #Simplified variant, multiplied by additional factor of two to be conservative note seems we only have convergence at order (1/nbpts)^0.5 I
     npts = ReIm_npts
     flags = "--nsteps=0 --Fisher_err_target="+str(delta)+" --flat-distprior --deltaT 5000"
-    flags+=set_flare_flags(snr,params)
     if(FisherReIm):
         flags+=" --tagint 1 --nbptsoverlap "+str(npts)
     name=str(label)
     flags += " --rng_seed="+str(np.random.rand())+" "
     flags += " --outroot "+str(name)+" "
-    cmd += " "+flags+">"+name+".out"
+    cmd += " "+flags
+    return cmd;
+
+def FisherRunByParams(snr,params,delta,label,extrapoints=1.0):
+    flags=set_flare_flags(snr,params)
+    cmd   = getFisherCommand(label,delta)+" "+flags+" >"+str(label)+".out";
     setenv="export ROM_DATA_PATH="+flare_dir+"/"+ROM_DATA_PATH
 
     try:

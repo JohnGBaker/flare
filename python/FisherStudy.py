@@ -1,6 +1,7 @@
 import flare
 import numpy as np
 
+np.random.seed(0)
 #flare.flare_dir="../../LISAstudy/flaretest/flare/"
 #label="LISA2017-Nov-flaretest/"
 flare.flare_dir="../flare"
@@ -8,7 +9,10 @@ flare.flare_dir="../flare"
 #flare.deltatobs=10.0;flare.LISAvariant="LISA2017";label="LISA2017c_10yr/"
 #flare.FisherReIm=False;flare.deltatobs=10.0;flare.LISAvariant="LISA2017";label="LISA2017camp_10yr/"
 #flare.onlyInspiral=True;flare.FisherReIm=True;flare.ReIm_npts=8192;flare.deltatobs=10.0;flare.LISAvariant="LISA2017";label="LISA2017reim8192_10yr_In_McW_100/" 
-flare.onlyInspiral=True;flare.FisherReIm=True;flare.ReIm_npts=8192;flare.deltatobs=10.0;flare.LISAvariant="LISA2010";label="LISA2010reim8192_10yr_In_McW_100/" 
+#flare.onlyInspiral=True;flare.FisherReIm=True;flare.ReIm_npts=8192;flare.deltatobs=10.0;flare.LISAvariant="LISA2010";label="LISA2010reim8192_10yr_In_McW_100/" 
+#flare.onlyInspiral=False;flare.SampleReIm=True;flare.FisherReIm=True;flare.ReIm_npts=16384;flare.deltatobs=10.0;flare.LISAvariant="LISA2017";label="LISA2017reim16384_10yr/" 
+flare.onlyInspiral=False;flare.SampleReIm=True;flare.FisherReIm=True;flare.ReIm_npts=8192;flare.deltatobs=10.0;flare.LISAvariant="LISA2017";label="LISA2017reim8192_0seed_10yr/" 
+#flare.onlyInspiral=False;flare.FisherReIm=True;flare.ReIm_npts=32768;flare.deltatobs=10.0;flare.LISAvariant="LISA2017";label="LISA2017reim32768_10yr/" 
 #flare.FisherReIm=True;flare.deltatobs=10.0;flare.LISAvariant="LISA2017";label="LISA2017reim_10yr_PM_100/"
 #flare.FisherReIm=True;flare.deltatobs=10.0;flare.LISAvariant="LISA2017";label="LISA2017reim_10yr/"
 #label="2arm-LISA/";flare.extra_flags=" --tagtdi TDIAXYZ"
