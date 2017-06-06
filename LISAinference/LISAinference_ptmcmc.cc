@@ -64,9 +64,12 @@ public:
     LISAParams templateparams =state2LISAParams(s);
     double result=0;
 
+    //cout<<" evaluating state: "<<s.get_string()<<endl;
+    
     //First (if --allow_m2gtm1 is not specified) we enforce mass ordering
-    if(not allow_m2gtm1)if(templateparams.m1<templateparams.m2)return -INFINITY;
-
+    if(not allow_m2gtm1)if(templateparams.m1<templateparams.m2){
+	return -INFINITY;
+      }
     /* Note: context points to a LISAContext structure containing a LISASignal* */
     if(globalparams->tagint==0) {
       LISAInjectionCAmpPhase injection = *((LISAInjectionCAmpPhase*) context);
@@ -79,6 +82,7 @@ public:
       result = CalculateLogLReIm(&templateparams, injection) - logZdata;
     }
 
+    //cout <<"like="<<result<<endl;
     double post=result;
     double lpriorval=0;
     if(prior)lpriorval=prior->evaluate_log(s);
@@ -875,14 +879,16 @@ int main(int argc, char*argv[]){
   proposal_distribution *prop=ptmcmc_sampler::new_proposal_distribution(Npar,Ninit,opt,prior,&halfwidths);
   cout<<"Proposal distribution is:\n"<<prop->show()<<endl;
   //set up the mcmc sampler (assuming mcmc)
-  mcmc.setup(Ninit,*like,*prior,*prop,output_precision);
+  //mcmc.setup(Ninit,*like,*prior,*prop,output_precision);
+  mcmc.setup(*like,*prior,output_precision);
+  mcmc.select_proposal();
 
   //Loop over Nchains
   for(int ic=0;ic<Nchain;ic++){
     bayes_sampler *s=s0->clone();
     s->initialize();
     s->run(base,ic);
-    s->analyze(base,ic,Nsigma,Nbest,*like);
+    //s->analyze(base,ic,Nsigma,Nbest,*like);
     delete s;
   }
 
