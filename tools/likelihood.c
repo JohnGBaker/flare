@@ -695,7 +695,7 @@ void ComputeIntegrandValues(
 }
 
 /* Function computing the integrand values, combining three non-correlated channels */
-void ComputeIntegrandValues3Chan(
+int ComputeIntegrandValues3Chan(
   CAmpPhaseFrequencySeries** integrand,     /* Output: values of the integrand on common frequencies (initialized in the function) */
   CAmpPhaseFrequencySeries* freqseries1chan1,    /* Input: frequency series for wf 1, channel 1 */
   CAmpPhaseFrequencySeries* freqseries1chan2,    /* Input: frequency series for wf 1, channel 2 */
@@ -719,9 +719,9 @@ void ComputeIntegrandValues3Chan(
   double f2min = gsl_matrix_get(splines2chan1->quadspline_phase, 0, 0);
   double f2max = gsl_matrix_get(splines2chan1->quadspline_phase, splines2chan1->quadspline_phase->size1 - 1, 0);
   if((fLow>0 && (f1[imax1]<=fLow || f2max<=fLow)) || (fHigh>0 && (f1[imin1]>=fHigh || f2min>=fHigh))) {
-    printf("Error: range of frequencies incompatible with fLow, fHigh in IntegrandValues.\n");
-    printf("need both {%g, %g} > %g and both {%g, %g} < %g\n",f1[imax1],f2max,fLow,f1[imin1],f2min,fHigh);
-    exit(1);
+    //printf("Error: range of frequencies incompatible with fLow, fHigh in IntegrandValues.\n");
+    //printf("need both {%g, %g} > %g and both {%g, %g} < %g\n",f1[imax1],f2max,fLow,f1[imin1],f2min,fHigh);
+    return -1;
   }
   /* If starting outside, move the ends of the frequency series to be just outside the final minf and maxf */
   double minf = fmax(f1[imin1], f2min);
@@ -730,6 +730,10 @@ void ComputeIntegrandValues3Chan(
   if(fHigh>0) {maxf = fmin(fHigh, maxf);}
   while(f1[imin1+1]<=minf) imin1++;
   while(f1[imax1-1]>=maxf) imax1--;
+  //printf("imin=%i, imax=%i\n",imin1,imax1);
+  int nbpts = imax1 + 1 - imin1;
+  //printf("nbpts=%i\n",nbpts);
+  if(nbpts<4)return -1;
   /* Estimate locally values for freqseries1 at the boundaries - phase vectors assumed to be the same for channels 1,2,3 - this is still true now that the response-processed phase includes the signal phase + R-delay phase, which is the same for all channels */
   double areal1chan1minf = EstimateBoundaryLegendreQuad(freq1, freqseries1chan1->amp_real, imin1, minf);
   double aimag1chan1minf = EstimateBoundaryLegendreQuad(freq1, freqseries1chan1->amp_imag, imin1, minf);
@@ -747,7 +751,6 @@ void ComputeIntegrandValues3Chan(
   double phi1maxf = EstimateBoundaryLegendreQuad(freq1, freqseries1chan1->phase, imax1-2, maxf); /* Note the imax1-2 */
 
   /* Initializing output structure */
-  int nbpts = imax1 + 1 - imin1;
   CAmpPhaseFrequencySeries_Init(integrand, nbpts);
 
   /* Loop computing integrand values - phases are the same for chan1, chan2 and chan3 */
@@ -842,6 +845,7 @@ void ComputeIntegrandValues3Chan(
     gsl_vector_set(phase, j, phase1 - phase2);
     j++;
   }
+  return 0;
 }
 
 /* Function computing the overlap (h1|h2) between two given modes in amplitude/phase form, one being already interpolated, for a given noise function - uses the amplitude/phase representation (Fresnel) */
@@ -892,7 +896,7 @@ double FDSinglemodeFresnelOverlap3Chan(
 {
   /* Computing the integrand values, on the frequency grid of h1 */
   CAmpPhaseFrequencySeries* integrand = NULL;
-  ComputeIntegrandValues3Chan(&integrand, freqseries1chan1, freqseries1chan2, freqseries1chan3, splines2chan1, splines2chan2, splines2chan3, Snoisechan1, Snoisechan2, Snoisechan3, fLow, fHigh);
+  if(0>ComputeIntegrandValues3Chan(&integrand, freqseries1chan1, freqseries1chan2, freqseries1chan3, splines2chan1, splines2chan2, splines2chan3, Snoisechan1, Snoisechan2, Snoisechan3, fLow, fHigh))return 0;//if allowed freq range does not exist, return 0 for overlap
 
   /* Rescaling the integrand */
   double scaling = 10./gsl_vector_get(integrand->freq, integrand->freq->size-1);

@@ -180,7 +180,7 @@ void ComputeIntegrandValues(
   double fLow,                              /* Lower bound of the frequency - 0 to ignore */
   double fHigh);                            /* Upper bound of the frequency - 0 to ignore */
 /* Function computing the integrand values, combining the three channels A, E and T */
-void ComputeIntegrandValues3Chan(
+int ComputeIntegrandValues3Chan(
   CAmpPhaseFrequencySeries** integrand,     /* Output: values of the integrand on common frequencies (initialized in the function) */
   CAmpPhaseFrequencySeries* freqseries1chan1,    /* Input: frequency series for wf 1, channel 1 */
   CAmpPhaseFrequencySeries* freqseries1chan2,    /* Input: frequency series for wf 1, channel 2 */
