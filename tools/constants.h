@@ -69,12 +69,18 @@ extern "C" {
 #define AU_SI 1.4959787066e11
 #define YRSID_SI 3.15581497635e7 /* Sideral year as found on http://hpiers.obspm.fr/eop-pc/models/constants.html */
 
-#define Omega_SI 1.99098659277e-7 /* Orbital pulsation: 2pi/year - use sidereal year as found on http://hpiers.obspm.fr/eop-pc/models/constants.html */
+//#define Omega_SI 1.99098659277e-6 /* Orbital pulsation: 20pi/year for "fast-orbit-LISA2017 "*/
+//#define Omega_SI 6e-7 /* Orbital pulsation: ~6pi/year for "fast-orbit-LISA2017 "*/
+//#define Omega_SI 1.99098659277e-7 /* Orbital pulsation: 2pi/year - use sidereal year as found on http://hpiers.obspm.fr/eop-pc/models/constants.html */
+#define EarthOrbitOmega_SI 1.99098659277e-7 /* Orbital pulsation: 2pi/year - use sidereal year as found on http://hpiers.obspm.fr/eop-pc/models/constants.html */
 //#define Omega_SI 1.99098659277e-9 /* Orbital pulsation: 2pi/century - alternative model to test the impact of a non-moving LISA*/
+//#define Omega_SI 1.99098659277e-11 /* Orbital pulsation: 2pi/century - alternative model to test the impact of a non-moving LISA*/
 //#define f0_SI 3.168753575e-8 /* Orbital frequency: 1/year */   //not used?
 //#define L_SI 5.0e9 /* Arm length of the detector (in m): (Standard LISA) */
-#define L_SI 2.5e9 /* Arm length of the detector (in m): (L3 reference LISA) */
-#define R_SI 1.4959787066e11 /* Radius of the orbit around the sun: 1AU */
+//#define L_SI 2.5e9 /* Arm length of the detector (in m): (L3 reference LISA) */
+//#define R_SI 1.4959787066e11 /* Radius of the orbit around the sun: 1AU */
+#define AU_SI 1.4959787066e11 /* Radius of the orbit around the sun: 1AU */
+//#define R_SI 1.4959787066e8 /* Radius of the orbit around the sun: 0.001 AU for hacked LISA test*/
 
 /**********************************************************/
 /********** Constants used to relate time scales **********/

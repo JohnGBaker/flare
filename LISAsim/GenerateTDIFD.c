@@ -33,6 +33,7 @@ Arguments are as follows:\n\
 ----- Physical Parameters ------------------------\n\
 --------------------------------------------------\n\
  --tRef                Time at reference frequency (sec, default=0)\n\
+ --torb                Reference orbital time (sec, default=0)\n\
  --phiRef              Orbital phase at reference frequency (radians, default=0)\n\
  --fRef                Reference frequency (Hz, default=0, interpreted as Mf=0.14)\n\
  --m1                  Component mass 1 in Solar masses (larger, default=2e6)\n\
@@ -58,6 +59,8 @@ Arguments are as follows:\n\
  --twindowend          When generating frequency series from file by FFT, twindowend (0 to set automatically at 0.01*duration)\n\
  --tagh22fromfile      Tag choosing wether to load h22 FD downsampled Amp/Phase from file (default 0)\n\
  --tagtdi              Tag choosing the set of TDI variables to use (default TDIAETXYZ)\n\
+ --frozenLISA          Freeze the orbital configuration to the time of peak of the injection (default 0)\n\
+ --responseapprox      Approximation in the GAB and orb response - choices are full (full response, default), lowfL (keep orbital delay frequency-dependence but simplify constellation response) and lowf (simplify constellation and orbital response) - WARNING : at the moment noises are not consistent, and TDI combinations from the GAB are unchanged\n\
  --taggenwave          Tag choosing the wf format: TDIhlm (default: downsampled mode contributions to TDI in Amp/Phase form), TDIFD (hlm interpolated and summed accross modes), h22FFT and yslrFFT (used with fomrtditdfile -- loads time series and FFT)\n\
  --restorescaledfactor Option to restore the factors scaled out of TDI observables (default: false)\n	\
  --FFTfromtdfile       Option for loading time series and FFTing (default: false)\n\
@@ -74,6 +77,7 @@ Arguments are as follows:\n\
 
     /* Set default values for the physical params */
     params->tRef = 0.;
+    params->torb = 0.;
     params->phiRef = 0.;
     params->fRef = 0.;
     params->m1 = 2*1e6;
@@ -95,7 +99,9 @@ Arguments are as follows:\n\
     params->twindowbeg = 0.;
     params->twindowend = 0.;
     params->tagh22fromfile = 0;
-    params->tagtdi = TDIXYZ;
+    params->tagtdi = TDIAETXYZ;
+    params->frozenLISA = 0;
+    params->responseapprox = full;
     params->taggenwave = TDIhlm;
     params->restorescaledfactor = 0;
     params->FFTfromtdfile = 0;
@@ -112,6 +118,8 @@ Arguments are as follows:\n\
             exit(0);
         } else if (strcmp(argv[i], "--tRef") == 0) {
             params->tRef = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--torb") == 0) {
+            params->torb = atof(argv[++i]);
         } else if (strcmp(argv[i], "--phiRef") == 0) {
             params->phiRef = atof(argv[++i]);
         } else if (strcmp(argv[i], "--fRef") == 0) {
@@ -151,9 +159,13 @@ Arguments are as follows:\n\
         } else if (strcmp(argv[i], "--tagh22fromfile") == 0) {
           params->tagh22fromfile = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--tagtdi") == 0) {
-	  params->tagtdi = ParseTDItag(argv[++i]);
+	          params->tagtdi = ParseTDItag(argv[++i]);
+        } else if (strcmp(argv[i], "--frozenLISA") == 0) {
+            params->frozenLISA = 1;
+        } else if (strcmp(argv[i], "--responseapprox") == 0) {
+            params->responseapprox = ParseResponseApproxtag(argv[++i]);
         } else if (strcmp(argv[i], "--taggenwave") == 0) {
-	  params->taggenwave = ParseGenTDIFDtag(argv[++i]);
+	          params->taggenwave = ParseGenTDIFDtag(argv[++i]);
         } else if (strcmp(argv[i], "--restorescaledfactor") == 0) {
             params->restorescaledfactor = 1;
         } else if (strcmp(argv[i], "--FFTfromtdfile") == 0) {
@@ -343,6 +355,10 @@ static void Write_TDIhlm(const char dir[], const char file[], ListmodesCAmpPhase
 
 int main(int argc, char *argv[])
 {
+  //These are set by command line in other programs but fixed here.
+  LISAconstellation *variant=&LISA2017;
+  int tRefatLISA=0;
+    
   /* Initialize structure for parameters */
   GenTDIFDparams* params;
   params = (GenTDIFDparams*) malloc(sizeof(GenTDIFDparams));
@@ -480,6 +496,7 @@ int main(int argc, char *argv[])
       /* Use TF2 extension, if required to, to arbitrarily low frequencies */
       /* NOTE: at this stage, if no extension is performed, deltatobs and minf are ignored - will start at MfROM */
       /* If extending, taking into account both fstartobs and minf */
+      /* Note : generate FD hlm with time shift with respect to orbital reference time (role played by injection tRef in the inference) */
       int ret;
       if(!(params->tagextpn)){
         //printf("Not Extending signal waveform.  mfmatch=%g\n",globalparams->mfmatch);
@@ -509,13 +526,14 @@ int main(int argc, char *argv[])
     ListmodesCAmpPhaseFrequencySeries* listTDI1= NULL;
     ListmodesCAmpPhaseFrequencySeries* listTDI2= NULL;
     ListmodesCAmpPhaseFrequencySeries* listTDI3= NULL;
-    LISASimFDResponseTDI3Chan(&listhlm, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->maxf, params->tagtdi);
+    /* torb is the orbital reference time (role played by injection tRef in the inference) */
+    LISASimFDResponseTDI3Chan(tRefatLISA, variant, &listhlm, &listTDI1, &listTDI2, &listTDI3, params->torb, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, params->maxf, params->tagtdi, params->frozenLISA, params->responseapprox);
 
     /* If asked for it, rescale the complex amplitudes to include the factors that were scaled out of TDI observables */
     if(params->restorescaledfactor) {
-      RestoreInPlaceScaledFactorTDI(listTDI1, params->tagtdi, 1);
-      RestoreInPlaceScaledFactorTDI(listTDI2, params->tagtdi, 2);
-      RestoreInPlaceScaledFactorTDI(listTDI3, params->tagtdi, 3);
+      RestoreInPlaceScaledFactorTDI(variant, listTDI1, params->tagtdi, 1);
+      RestoreInPlaceScaledFactorTDI(variant, listTDI2, params->tagtdi, 2);
+      RestoreInPlaceScaledFactorTDI(variant, listTDI3, params->tagtdi, 3);
     }
 
     if(params->taggenwave==TDIhlm) {

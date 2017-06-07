@@ -51,6 +51,7 @@ extern "C" {
 
 /* Core function processing a signal (in the form of a list of modes) through the Fourier-domain LISA response, for given values of the inclination, position in the sky and polarization angle - here simplified version for just the y_21 observable */
 int LISASimFDResponse21(
+  LISAconstellation *variant,                                 /* Provides specifics on the variant of LISA */
   struct tagListmodesCAmpPhaseFrequencySeries **list,  /* Input/Output: list of modes in Frequency-domain amplitude and phase form as produced by the ROM, and output after FD response processing */
   const double inclination,                                   /* Inclination of the source */
   const double lambda,                                        /* First angle for the position in the sky */
@@ -60,28 +61,37 @@ int LISASimFDResponse21(
 //WARNING: tRef is ignored for now in the response - i.e. set to 0
 /* Core function processing a signal (in the form of a list of modes) through the Fourier-domain LISA response, for given values of the inclination, position in the sky and polarization angle */
 int LISASimFDResponsey12(
+  LISAconstellation *variant,                                 /* Provides specifics on the variant of LISA */
   struct tagListmodesCAmpPhaseFrequencySeries **list,      /* Input: list of modes in Frequency-domain amplitude and phase form as produced by the ROM */
   struct tagListmodesCAmpPhaseFrequencySeries **listy12,   /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the y12 observable */
-  const double tRef,                                          /* Time at coalescence */
-  const double lambda,                                        /* First angle for the position in the sky */
-  const double beta,                                          /* Second angle for the position in the sky */
-  const double inclination,                                   /* Inclination of the source */
-  const double psi);                                          /* Polarization angle */
-
-//WARNING: tRef is ignored for now in the response - i.e. set to 0
-/* Core function processing a signal (in the form of a list of modes) through the Fourier-domain LISA response, for given values of the inclination, position in the sky and polarization angle */
-int LISASimFDResponseTDI3Chan(
-  struct tagListmodesCAmpPhaseFrequencySeries **list,      /* Input: list of modes in Frequency-domain amplitude and phase form as produced by the ROM */
-  struct tagListmodesCAmpPhaseFrequencySeries **listTDI1,  /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the TDI channel 1 */
-  struct tagListmodesCAmpPhaseFrequencySeries **listTDI2,  /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the TDI channel 2 */
-  struct tagListmodesCAmpPhaseFrequencySeries **listTDI3,  /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the TDI channel 3 */
-  const double tRef,                                          /* Time at coalescence */
+  const double torb,                                       /* Reference orbital time - tf as read from the hlm gives t-tinj, this arg allows to pass tinj to the response */
   const double lambda,                                        /* First angle for the position in the sky */
   const double beta,                                          /* Second angle for the position in the sky */
   const double inclination,                                   /* Inclination of the source */
   const double psi,                                           /* Polarization angle */
+  const int tagfrozenLISA,                                    /* Tag to treat LISA as frozen at its torb configuration  */
+  const ResponseApproxtag responseapprox);                    /* Tag to select possible low-f approximation level in FD response */
+
+//WARNING: tRef is ignored for now in the response - i.e. set to 0
+/* Core function processing a signal (in the form of a list of modes) through the Fourier-domain LISA response, for given values of the inclination, position in the sky and polarization angle */
+int LISASimFDResponseTDI3Chan(
+  int tagtRefatLISA,                                          /* 0 to measure Tref from SSB arrival, 1 at LISA guiding center */
+  LISAconstellation *variant,                                 /* Provides specifics on the variant of LISA */
+  struct tagListmodesCAmpPhaseFrequencySeries **list,      /* Input: list of modes in Frequency-domain amplitude and phase form as produced by the ROM */
+  struct tagListmodesCAmpPhaseFrequencySeries **listTDI1,  /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the TDI channel 1 */
+  struct tagListmodesCAmpPhaseFrequencySeries **listTDI2,  /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the TDI channel 2 */
+  struct tagListmodesCAmpPhaseFrequencySeries **listTDI3,  /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the TDI channel 3 */
+  const double torb,                                       /* Reference orbital time - tf as read from the hlm gives t-tinj, this arg allows to pass tinj to the response */
+  const double lambda,                                        /* First angle for the position in the sky */
+  const double beta,                                          /* Second angle for the position in the sky */
+  const double inclination,                                   /* Inclination of the source */
+  const double psi,                                           /* Polarization angle */
+  const double m1,                                            /* m1 in solar masses - used for resampling */
+  const double m2,                                            /* m2 in solar masses - used for resampling */
   const double maxf,                                          /* Maximal frequency to consider - used to ignore hard-to-resolve response at f>1Hz - NOTE: for now, no recomputation of the boundary, so when not resampling can lose a bit of support between the last frequency point covered and maxf */
-  const TDItag tditag);                                       /* Selector for the set of TDI observables */
+  const TDItag tditag,                                        /* Selector for the set of TDI observables */
+  const int tagfrozenLISA,                                    /* Tag to treat LISA as frozen at its torb configuration  */
+  const ResponseApproxtag responseapprox);                    /* Tag to select possible low-f approximation level in FD response */
 
 // int LISASimFDResponseTDI1Chan(
 //   struct tagListmodesCAmpPhaseFrequencySeries **list,      /* Input: list of modes in Frequency-domain amplitude and phase form as produced by the ROM */

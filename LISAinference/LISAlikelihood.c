@@ -17,72 +17,116 @@ int noMPI=1;
 
 int main(int argc, char *argv[])
 {
+  int myid = 0;
   noMPI = 1; //We have to set this to avoid an MPI_Comm_rank statement in the addendum
-  int i = 0;
 
-  LISARunParams runParams={};
-  int ndim=9,nPar=9;
-  int *freeparamsmap = NULL;
-  void *context = NULL;
-  double logZtrue;
-  LISAParams params;
-  LISAPrior prior;
-  double paramvals[nPar];
-  double result;
+	LISARunParams runParams = {};
+	int ndim=0, nPar=0;
+	int *freeparamsmap = NULL;
+	void *context = NULL;
+	double logZtrue;
+	addendum(argc, argv, &runParams, &ndim, &nPar, &freeparamsmap, &context, &logZtrue);
 
-  for (i = argc-nPar; i < argc; ++i) {
-    if (i<1||strncmp(argv[i], "--xxx",2) == 0) {
-      if(i<1) printf("Expected %i params at end of argument list.\n", nPar);
-      else printf("Expected %i params at end of argument list but found '%s' in place of param %i.\n", nPar,argv[i],i+nPar-argc+1 );
-      char* fakeargv[2]={argv[0],"--help"};
-      parse_args_LISA(2, fakeargv, &params,globalparams,&prior,&runParams);
-      exit(0);
+  LISAInjectionCAmpPhase* injectedsignalCAmpPhase = NULL;
+  LISAInjectionReIm* injectedsignalReIm = NULL;
+  double logL = 0;
+
+  LISAParams* params = NULL;
+  params = (LISAParams*) malloc(sizeof(LISAParams));
+  memset(params, 0, sizeof(LISAParams));
+
+  if(!(addparams->loadparamsfile)) {
+    params->m1 = addparams->m1;
+    params->m2 = addparams->m2;
+    params->tRef = addparams->tRef;
+    params->distance = addparams->distance;
+    params->phiRef = addparams->phiRef;
+    params->inclination = addparams->inclination;
+    params->lambda = addparams->lambda;
+    params->beta = addparams->beta;
+    params->polarization = addparams->polarization;
+    params->nbmode = globalparams->nbmodetemp; /* Note : read from global parameters */
+
+    /* Report params */
+    printf("Template params :\n");
+    report_LISAParams(params);
+
+    /* Calculate logL of template */
+    if(globalparams->tagint==0) {
+      injectedsignalCAmpPhase = (LISAInjectionCAmpPhase*) context;
+      logL = CalculateLogLCAmpPhase(params, injectedsignalCAmpPhase);
     }
-    double val = atof(argv[i]);
-    printf("read val: %20.15g\n",val);
-    paramvals[i+nPar-argc] =  atof(argv[i]);val;
+    else if(globalparams->tagint==1) {
+      injectedsignalReIm = (LISAInjectionReIm*) context;
+      logL = CalculateLogLReIm(params, injectedsignalReIm);
+    }
+    printf("logL template = %.16e\n", logL);
   }
-  addendum(argc-nPar,argv,&runParams,&ndim,&nPar,&freeparamsmap,&context,&logZtrue);
+  else {
+    int nlines = addparams->nlinesparams;
 
-  printf("nbmode_inj   =%i\n",globalparams->nbmodeinj);
-  printf("nbmode_templ =%i\n",globalparams->nbmodetemp);
-  params.m1 = paramvals[0];
-  params.m2 = paramvals[1];
-  params.tRef = paramvals[2];
-  //
-  //printf("params.tRef: %g\n", params.tRef);
-  params.distance = paramvals[3];
-  if(!priorParams->flat_distprior)//If not using flat prior on distance then we need to transform from s(D) to D.
-    params.distance= pow(paramvals[3] * pow(priorParams->dist_max, 3) + (1.0 - paramvals[3]) * pow(priorParams->dist_min, 3), 1.0 / 3.0);
-  params.phiRef = paramvals[4];
-  params.inclination = paramvals[5];
-  params.lambda = paramvals[6];
-  params.beta = paramvals[7];
-  params.polarization = paramvals[8];
-  params.nbmode = globalparams->nbmodetemp; /* Using the global parameter for the number of modes in templates */
-  printf("Considering parameters: \n   m1 = %g\n   m2 = %g\n   t0 = %g\n",params.m1,params.m2,params.tRef);
-  if(!priorParams->flat_distprior)printf(" s[d] = %g -->",paramvals[3]);
-  printf(" dist = %g\n phi0 = %g\n incl = %g\n  lam = %g\n beta = %g\n  pol = %g\n",
-	 params.distance,params.phiRef,params.inclination,params.lambda,params.beta,params.polarization);
-  if(globalparams->tagint==0) {
-    LISAInjectionCAmpPhase* injection = ((LISAInjectionCAmpPhase*) context);
-    printf("Comparing with injection parameters: \n   m1 = %g\n   m2 = %g\n   t0 = %g\n dist = %g\n phi0 = %g\n incl = %g\n  lam = %g\n beta = %g\n  pol = %g\n",
-	   injectedparams->m1,injectedparams->m2,injectedparams->tRef,injectedparams->distance,injectedparams->phiRef,injectedparams->inclination,injectedparams->lambda,injectedparams->beta,injectedparams->polarization);
-    result = CalculateLogLCAmpPhase(&params, injection) - logZdata;
-    printf("likelihood:CalculateLogL=%g.\n",result);
-  }
-  else if(globalparams->tagint==1) {
-    LISAInjectionReIm* injection = ((LISAInjectionReIm*) context);
-    result = CalculateLogLReIm(&params, injection) - logZdata;
+    /* Load parameters file */
+    /* Format (same as in the internals): m1, m2, tRef, dist, phase, inc, lambda, beta, pol, loglike, posteriormode */
+    /* Assumes not using mmodal */
+    gsl_matrix* inmatrix =  gsl_matrix_alloc(nlines, 10);
+    Read_Text_Matrix(addparams->indir, addparams->infile, inmatrix);
+
+    /* Initialize output matrix */
+    /* Format (same as in the internals): m1, m2, tRef, dist, phase, inc, lambda, beta, pol, loglike */
+    /* Assumes not using mmodal */
+    gsl_matrix* outmatrix =  gsl_matrix_alloc(nlines, 10);
+
+    if(globalparams->tagint==0) {
+      injectedsignalCAmpPhase = ((LISAInjectionCAmpPhase*) context);
+    }
+    else if(globalparams->tagint==1) {
+      injectedsignalReIm = ((LISAInjectionReIm*) context);
+    }
+    double logL = 0;
+    for(int i=0; i<nlines; i++) {
+      //
+      if(i%100 == 0) printf("Nb computed: %d/%d\n", i, nlines);
+
+      params->m1 = gsl_matrix_get(inmatrix, i, 0);
+      params->m2 = gsl_matrix_get(inmatrix, i, 1);
+      params->tRef = gsl_matrix_get(inmatrix, i, 2);
+      params->distance = gsl_matrix_get(inmatrix, i, 3);
+      params->phiRef = gsl_matrix_get(inmatrix, i, 4);
+      params->inclination = gsl_matrix_get(inmatrix, i, 5);
+      params->lambda = gsl_matrix_get(inmatrix, i, 6);
+      params->beta = gsl_matrix_get(inmatrix, i, 7);
+      params->polarization = gsl_matrix_get(inmatrix, i, 8);
+      params->nbmode = globalparams->nbmodetemp; /* Note : read from global parameters */
+
+      if(globalparams->tagint==0) {
+        logL = CalculateLogLCAmpPhase(params, injectedsignalCAmpPhase);
+      }
+      else if(globalparams->tagint==1) {
+        logL = CalculateLogLReIm(params, injectedsignalReIm);
+      }
+
+      /* Set values in output matrix */
+      gsl_matrix_set(outmatrix, i, 0, params->m1);
+      gsl_matrix_set(outmatrix, i, 1, params->m2);
+      gsl_matrix_set(outmatrix, i, 2, params->tRef);
+      gsl_matrix_set(outmatrix, i, 3, params->distance);
+      gsl_matrix_set(outmatrix, i, 4, params->phiRef);
+      gsl_matrix_set(outmatrix, i, 5, params->inclination);
+      gsl_matrix_set(outmatrix, i, 6, params->lambda);
+      gsl_matrix_set(outmatrix, i, 7, params->beta);
+      gsl_matrix_set(outmatrix, i, 8, params->polarization);
+      gsl_matrix_set(outmatrix, i, 9, logL);
+    }
+    /* Output matrix */
+    Write_Text_Matrix(addparams->outdir, addparams->outfile, outmatrix);
+
+    /* Cleanup */
+    free(params);
   }
 
-  for(int i=0;i<nPar-1;i++){
-    //cout<<"i="<<i<<endl;
-    printf("%20.15g,",paramvals[i]);
-  }
-  printf("%20.15g\n",paramvals[nPar-1]);
-  printf("The result: likelihood = %23.13g\n",result);
+  /* Cleanup */
   free(injectedparams);
-  //free(priorParams);
-
+  free(globalparams);
+  free(addparams);
+  free(priorParams);
 }

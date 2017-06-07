@@ -108,7 +108,7 @@ The convention we will be using for the Fourier transform of a signal $h(t)$ is
 \ee
 Notice that this sign convention is not the most frequently used in the literature. We chose it to ensure that, with the conventions of~\cite{BlanchetLiving}, spin-weighted spherical modes $h_{\ell m}$ with $m>0$ will have support mostly for positive frequencies. One can revert to the more usual convention by taking $f\rightarrow -f$.
 
-A useful representation of the gravitational waveform is given by its decomposition in spin-weighted spherical. The waveform emitted in the direction $(\Theta, \Phi)$, with its two polarizations $h_{+},h_{\times}$, can be decomposed as a superposition of modes as~\cite{Thorne80}
+A useful representation of the gravitational waveform is given by its decomposition in spin-weighted spherical harmonics. The waveform emitted in the direction $(\Theta, \Phi)$, with its two polarizations $h_{+},h_{\times}$, can be decomposed as a superposition of modes as~\cite{Thorne80}
 \be\label{eq:defmodes}
 	h_{+} - i h_{\times} = \sum\limits_{\ell \geq 2} \sum\limits_{m=-\ell}^{\ell} {}_{-2}Y_{\ell m}(\Theta,\Phi) h_{\ell m} \,,
 \ee
@@ -457,7 +457,7 @@ In this Section, we focus on the second-derivative corrective term in~\eqref{}. 
 	&\simeq \sum\limits_{p= 0}^{N} \sum\limits_{k=0}^{N} a_{N,k}\frac{(k\Tf)^{2p}}{(2p)!}  \partial_{t}^{2p}F(\tf) \nn\\
 	&\simeq \frac{1}{2}\sum\limits_{k=0}^{N} a_{N,k} \left( F(\tf + k\Tf) + F(\tf-k\Tf) \right)\,,
 \end{align}
-where one applies a truncation approximation at the first and last stage. The second equality holds provided that the complex coefficients $a_{N,k}$ are a solution of the $N+1$-dimensional linear system
+where one applies a truncation approximation at the first and last stage. The second equality holds provided that the complex coefficients $a_{N,k}$ are a solution of the $N+1$-dimensional linear system~\cite{KCY14}
 \be\label{eq:stencilsystem}
 	(-i\epsilon)^{p} (2p-1)!! = \sum\limits_{k=0}^{N} a_{N,k} k^{2p} \quad \text{for } p=0,\dots,N \,.
 \ee

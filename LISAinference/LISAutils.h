@@ -26,6 +26,22 @@ extern "C" {
 } /* so that editors will match preceding brace */
 #endif
 
+/***************** Enumerator to choose what masses/time set to sample for *****************/
+
+typedef enum SampleMassParamstag {
+  m1m2,
+  Mchirpeta
+} SampleMassParamstag;
+typedef enum SampleTimeParamtag {
+  tSSB,
+  tL
+} SampleTimeParamtag;
+
+/* Function to convert string input SampleMassParams to tag */
+SampleMassParamstag ParseSampleMassParamstag(char* string);
+/* Function to convert string input SampleTimeParams to tag */
+SampleTimeParamtag ParseSampleTimeParamtag(char* string);
+
 /***************** Structure definitions *****************/
 
 /* Parameters for the generation of a LISA waveform (in the form of a list of modes) */
@@ -49,13 +65,17 @@ typedef struct tagLISAGlobalParams {
   double minf;               /* Minimal frequency (Hz, default=0) - when set to 0, use the lowest frequency where the detector noise model is trusted __LISASimFD_Noise_fLow (set somewhat arbitrarily)*/
   double maxf;               /* Maximal frequency (Hz, default=0) - when set to 0, use the highest frequency where the detector noise model is trusted __LISASimFD_Noise_fHigh (set somewhat arbitrarily)*/
   int tagextpn;              /* Tag to allow PN extension of the waveform at low frequencies */
+  int tagtRefatLISA;         /* Tag to signal time to be referenced to arrival at LISA rather than at SSB */
   double Mfmatch;            /* When PN extension allowed, geometric matching frequency: will use ROM above this value. If <=0, use ROM down to the lowest covered frequency */
   int nbmodeinj;             /* number of modes to include in the injection (starting with 22) - defaults to 5 (all modes) */
   int nbmodetemp;            /* number of modes to include in the templates (starting with 22) - defaults to 5 (all modes) */
   int tagint;                /* Tag choosing the integrator: 0 for wip (default), 1 for linear integration */
-  int tagtdi;                /* Tag choosing the TDI variables to use */
+  TDItag tagtdi;                /* Tag choosing the TDI variables to use */
   int nbptsoverlap;          /* Number of points to use in loglinear overlaps (default 32768) */
+  LISAconstellation *variant;  /* A structure defining the LISA constellation features */
   int zerolikelihood;        /* Tag to zero out the likelihood, to sample from the prior for testing purposes (default 0) */
+  int frozenLISA;            /* Freeze the orbital configuration to the time of peak of the injection (default 0) */
+  ResponseApproxtag responseapprox;    /* Approximation in the GAB and orb response - choices are full (full response, default), lowfL (keep orbital delay frequency-dependence but simplify constellation response) and lowf (simplify constellation and orbital response) - WARNING : at the moment noises are not consistent, and TDI combinations from the GAB are unchanged */
 } LISAGlobalParams;
 
 typedef struct tagLISASignalCAmpPhase
@@ -93,12 +113,18 @@ typedef struct tagLISAInjectionReIm /* Storing the vectors of frequencies and no
 } LISAInjectionReIm;
 
 typedef struct tagLISAPrior {
+  SampleMassParamstag samplemassparams;   /* Choose the set of mass params to sample from - options are m1m2 and Mchirpeta (default m1m2) */
+  SampleTimeParamtag sampletimeparam;     /* Choose the time param to sample from - options are tSSB and tL (default tSSB) */
   double deltaT;             /* width of time prior centered on injected value (s) (default 1e5) */
   double comp_min;           /* minimum component mass (solar masses) (default 1e4) */
   double comp_max;           /* maximum component mass (solar masses) (default 1e8) */
   double mtot_min;           /* minimum total mass (solar masses) (default 5*1e4) */
   double mtot_max;           /* maximum total mass (solar masses) (default 1e8) */
   double qmax;               /* maximum asymmetric mass ratio (>=1) (default 11.98) */
+  double Mchirp_min;         /* Minimum chirp mass in Solar masses - when sampling Mchirpeta (default=2e4) */
+  double Mchirp_max;         /* Maximum chirp mass in Solar masses - when sampling Mchirpeta (default=4e7) */
+  double eta_min;            /* Minimum symmetric mass ratio eta - when sampling Mchirpeta (default=0.072) */
+  double eta_max;            /* Maximum symmetric mass ratio eta - when sampling Mchirpeta (default=0.25) */
   double dist_min;           /* minimum distance of source (Mpc) (default 100) */
   double dist_max;           /* maximum distance of source (Mpc) (default 40*1e3) */
   double lambda_min;         /* minimum lambda (rad, default 0) - for testing */
@@ -113,6 +139,8 @@ typedef struct tagLISAPrior {
   double inc_max;            /* maximum inclination (rad, default pi) - for testing */
   double fix_m1;
   double fix_m2;
+  double fix_Mchirp;
+  double fix_eta;
   double fix_time;
   double fix_lambda;
   double fix_beta;
@@ -122,6 +150,8 @@ typedef struct tagLISAPrior {
   double fix_inc;
   int pin_m1;
   int pin_m2;
+  int pin_Mchirp;
+  int pin_eta;
   int pin_time;
   int pin_lambda;
   int pin_beta;
@@ -139,6 +169,7 @@ typedef struct tagLISARunParams {
   double eff;                /* target efficiency (default 0.1) */
   double tol;                /* logZ tolerance (default 0.5) */
   int    nlive;              /* number of live points (default 1000) */
+  int    writeparams;        /* Write params - if 1, write run parameters to file (default 1) */
   char   outroot[200];       /* output root (default "chains/LISAinference_") */
   int    bambi;              /* run BAMBI? (default 0) */
   int    resume;             /* resume form previous run? (default 0) */
@@ -151,6 +182,25 @@ typedef struct tagLISARunParams {
   int    seed;               /* seed the inference by setting one of the live points to the injection ? */
 } LISARunParams;
 
+/* Parameters for the generation of a LISA waveform (in the form of a list of modes) */
+typedef struct tagLISAAddParams {
+  double tRef;               /* reference time (s) - GPS time at the frequency representing coalescence */
+  double phiRef;             /* reference phase (rad) - phase at the frequency representing coalescence (or at fRef if specified) */
+  double m1;                 /* mass of companion 1 (solar masses, default 2e6) */
+  double m2;                 /* mass of companion 2 (solar masses, default 1e6) */
+  double distance;           /* distance of source (Mpc, default 1e3) */
+  double lambda;             /* first angle for the position in the sky (rad, default 0) */
+  double beta;               /* second angle for the position in the sky (rad, default 0) */
+  double inclination;        /* inclination of L relative to line of sight (rad, default PI/3) */
+  double polarization;       /* polarization angle (rad, default 0) */
+  int loadparamsfile;        /* Option to load physical parameters from file for LISAlikelihood and to output resulting likelihoods to file (default 0) */
+  int nlinesparams;          /* Number of lines in params file for LISAlikelihood */
+  char indir[256];           /* Input directory for LISAlikelihood */
+  char infile[256];          /* Input file for LISAlikelihood */
+  char outdir[256];          /* Output directory for LISAlikelihood */
+  char outfile[256];         /* Output file for LISAlikelihood */
+} LISAAddParams;
+
 /************ Functions for LISA parameters, injection, likelihood, prior ************/
 
 /* Parse command line to initialize LISAParams, LISAGlobalParams, LISAPrior, and LISARunParams objects */
@@ -159,7 +209,8 @@ void parse_args_LISA(ssize_t argc, char **argv,
   LISAParams* params,
   LISAGlobalParams* globalparams,
   LISAPrior* prior,
-  LISARunParams* run);
+  LISARunParams* run,
+  LISAAddParams* addparams);
 
 /* Functions to print the parameters of the run in files for reference */
 int print_parameters_to_file_LISA(
@@ -240,7 +291,8 @@ void TaylorF2nonspin(
 		     );
 
 /* checks prior boundaires */
-int PriorBoundaryCheck(LISAPrior *prior, double *Cube);
+int PriorBoundaryCheckm1m2(LISAPrior *prior, double *Cube);
+int PriorBoundaryCheckMchirpeta(LISAPrior *prior, double *Cube);
 
 /* Prior functions from Cube to physical parameters
    x1 is min, x2 is max when specified
@@ -269,6 +321,7 @@ double CalculateLogLReIm(LISAParams *params, LISAInjectionReIm* injection);
 extern LISAParams* injectedparams;
 extern LISAGlobalParams* globalparams;
 extern LISAPrior* priorParams;
+extern LISAAddParams* addparams;
 double logZdata;
 
 #if 0

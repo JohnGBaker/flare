@@ -1,6 +1,6 @@
 //Written by John G Baker NASA-GSFC (2014-16)
 //This is jointly based on the gleam.cc ptmcmc-based gravitational-lens code
-//and the bambi-based LISAinterface.c 
+//and the bambi-based LISAinterface.c
 
 #ifdef PARALLEL
 #include "mpi.h"
@@ -19,12 +19,13 @@
 #include "LISAinference_common.h"
 #include "gsl/gsl_linalg.h"
 #include "gsl/gsl_eigen.h"
+#include "LISAutils.h"
 using namespace std;
 
 typedef initializer_list<double> dlist;
 typedef initializer_list<int> ilist;
 
-shared_ptr<Random> globalRNG;//used for some debugging... 
+shared_ptr<Random> globalRNG;//used for some debugging...
 
 //Global Control parameters (see more in main())
 const int Npar=9;
@@ -63,9 +64,12 @@ public:
     LISAParams templateparams =state2LISAParams(s);
     double result=0;
 
+    //cout<<" evaluating state: "<<s.get_string()<<endl;
+    
     //First (if --allow_m2gtm1 is not specified) we enforce mass ordering
-    if(not allow_m2gtm1)if(templateparams.m1<templateparams.m2)return -INFINITY;
-
+    if(not allow_m2gtm1)if(templateparams.m1<templateparams.m2){
+	return -INFINITY;
+      }
     /* Note: context points to a LISAContext structure containing a LISASignal* */
     if(globalparams->tagint==0) {
       LISAInjectionCAmpPhase injection = *((LISAInjectionCAmpPhase*) context);
@@ -77,7 +81,8 @@ public:
       LISAInjectionReIm* injection = ((LISAInjectionReIm*) context);
       result = CalculateLogLReIm(&templateparams, injection) - logZdata;
     }
-    
+
+    //cout <<"like="<<result<<endl;
     double post=result;
     double lpriorval=0;
     if(prior)lpriorval=prior->evaluate_log(s);
@@ -85,7 +90,7 @@ public:
     double tend=omp_get_wtime();
     double eval_time = tend-tstart;
 #pragma omp critical
-    {     
+    {
       total_eval_time+=eval_time;
       count++;
       if(nevery>0&&0==count%nevery){
@@ -96,7 +101,7 @@ public:
 	best_post=post;
 	best=state(s);
       }
-      //cout<<"loglike="<<result<<"<="<<maxLike<<endl;   
+      //cout<<"loglike="<<result<<"<="<<maxLike<<endl;
       if(!isfinite(result)){
 	cout<<"Whoa dude, loglike is NAN! What's up with that?"<<endl;
 	cout<<"params="<<s.get_string()<<endl;
@@ -105,7 +110,7 @@ public:
     }
     return result;
   };
-  
+
   LISAParams state2LISAParams(const state &s){
     valarray<double>params=s.get_params();
 
@@ -123,7 +128,7 @@ public:
     templateparams.beta = params[7];
     templateparams.polarization = params[8];
     templateparams.nbmode = globalparams->nbmodetemp; /* Using the global parameter for the number of modes in templates */
-    
+
     return templateparams;
   };
 
@@ -140,10 +145,10 @@ public:
     LISAInjectionCAmpPhase* injectedsignalCAmpPhase = NULL;
     LISAInjectionReIm* injectedsignalReIm = NULL;
     if(globalparams->tagint==0) {
-      //LISAInjectionCAmpPhase_Init(&injectedsignalCAmpPhase);
-      //LISAGenerateInjectionCAmpPhase(injectedparams, injectedsignalCAmpPhase);
-      cout<<"Fisher matrix computation not yet implemented for AmpPhase polar wf representation (try --tagint==1)"<<endl;
-      exit(-1);
+      LISAInjectionCAmpPhase_Init(&injectedsignalCAmpPhase);
+      LISAGenerateInjectionCAmpPhase(injectedparams, injectedsignalCAmpPhase);
+      //cout<<"Fisher matrix computation not yet implemented for AmpPhase polar wf representation (try --tagint==1)"<<endl;
+      //exit(-1);
     }
     else if(globalparams->tagint==1) {
       LISAInjectionReIm_Init(&injectedsignalReIm);
@@ -159,7 +164,7 @@ public:
     scales[0]=s0.get_param(0)/2.0;
     scales[1]=s0.get_param(1)/2.0;
     scales[3]=s0.get_param(3)/2.0;
-    for(int i=0;i<dim;i++)minscales[i]=scales[i]*1e-7;
+    for(int i=0;i<dim;i++)minscales[i]=scales[i]*1e-10;
     double err=1e100;
     double olderr=err;
     int count=0;
@@ -176,6 +181,7 @@ public:
 	sPlusi.set_param(i,s0.get_param(i)+hi);
 	state sMinusi=s0;
 	sMinusi.set_param(i,s0.get_param(i)-hi);
+
 	for(int j=i;j<(finish?dim:i+1);j++){//don't bother with offdiagonals at first for rough-in, then include while finishing
 	  //compute j derivative of model
 	  double hj=scales[j]*deltafactor;
@@ -185,48 +191,53 @@ public:
 	  sMinusj.set_param(j,s0.get_param(j)-hj);
 	  //for(int k=0;k<N;k++)dmudj[k]=(modelPlus[k]-modelMinus[k])/h/2.0;
 	  //Compute fisher matrix element
-	  //cout<<"Fisher i,j="<<i<<","<<j<<endl;
+	  cout<<"Fisher i,j="<<i<<","<<j<<endl;
 	  //cout<<"            hi,hj="<<hi<<","<<hj<<endl;
 	  if(globalparams->tagint==1) {
 	    fisher_matrix[i][j]
 	      = CalculateOverlapReIm(state2LISAParams( sPlusi), state2LISAParams( sPlusj), injectedsignalReIm)
 	      - CalculateOverlapReIm(state2LISAParams( sPlusi), state2LISAParams(sMinusj), injectedsignalReIm)
 	      - CalculateOverlapReIm(state2LISAParams(sMinusi), state2LISAParams( sPlusj), injectedsignalReIm)
-	      + CalculateOverlapReIm(state2LISAParams(sMinusi), state2LISAParams(sMinusj), injectedsignalReIm);	 
+	      + CalculateOverlapReIm(state2LISAParams(sMinusi), state2LISAParams(sMinusj), injectedsignalReIm);
 	  } else {
 	    fisher_matrix[i][j]
 	      = CalculateOverlapCAmpPhase(state2LISAParams( sPlusi), state2LISAParams( sPlusj), injectedsignalCAmpPhase)
 	      - CalculateOverlapCAmpPhase(state2LISAParams( sPlusi), state2LISAParams(sMinusj), injectedsignalCAmpPhase)
 	      - CalculateOverlapCAmpPhase(state2LISAParams(sMinusi), state2LISAParams( sPlusj), injectedsignalCAmpPhase)
-	      + CalculateOverlapCAmpPhase(state2LISAParams(sMinusi), state2LISAParams(sMinusj), injectedsignalCAmpPhase);	 
-	  }	  
-	  fisher_matrix[i][j]/=4*hi*hj;	  
+	      + CalculateOverlapCAmpPhase(state2LISAParams(sMinusi), state2LISAParams(sMinusj), injectedsignalCAmpPhase);
+	  }
+	  fisher_matrix[i][j]/=4*hi*hj;
 	  fisher_matrix[j][i] = fisher_matrix[i][j];
 	}
       }
-      
+
       //estimate error
       olderr=err;
       err=0;
       double square=0;
-      for(int i=0;i<dim;i++)for(int j=0;j<(finish?dim:i+1);j++){//neglecting offdiagonals until finish 
-	  double delta=(fisher_matrix[i][j]-last_fisher_matrix[i][j]);///scales[i]/scales[j];
+      for(int i=0;i<dim;i++)for(int j=0;j<(finish?dim:i+1);j++){//neglecting offdiagonals until finish
+	  double delta=(fisher_matrix[i][j]-last_fisher_matrix[i][j])*scales[i]*scales[j];
 	  square+=fisher_matrix[i][j]*fisher_matrix[i][j];
 	  err+=delta*delta;
 	  if(std::isnan(delta)||delta*delta>tol/10)cout<<"delta["<<i<<","<<j<<"]="<<delta*delta<<endl;
 	}
       cout<<"oldscales = ";for(int i=0;i<dim;i++)cout<<scales[i]<<"\t";cout<<endl;
-      
+
       if(std::isnan(err)){
 	for(int i=0;i<dim;i++)scales[i]/=3;
 	err=1e100;
       }else if(err<olderr or err>1000){
 	//set scale estimate based on result
 	for(int i=0;i<dim;i++){
-	  if(err>olderr)minscales[i]*=1.1;//force toward convergence is deltas are small and not converging.
-	  //scales[i]=1.0/sqrt(1/scales[i]+fisher_matrix[i][i]);
-	  scales[i]=sqrt(scales[i]/sqrt(fisher_matrix[i][i]));
-	  //if(scales[i]<minscales[i])scales[i]=minscales[i];
+	  if(err>olderr){
+	    //force toward convergence if deltas are small and not converging.
+	    minscales[i]*=1.1;
+	    cout<<"minscales["<<i<<"]->"<<minscales[i]<<endl;
+	  } //else {
+	    scales[i]=sqrt(scales[i]/sqrt(fisher_matrix[i][i]));
+	    //scales[i]=exp(log(scales[i])*0.7-log(fisher_matrix[i][i])*0.3);
+	    //}
+	  if(scales[i]<minscales[i])scales[i]=minscales[i];
 	}
 	//prep for next version of fisher calc;
 	for(int i=0;i<dim;i++)for(int j=0;j<(finish?dim:i+1);j++)last_fisher_matrix[i][j]=fisher_matrix[i][j];
@@ -253,17 +264,17 @@ public:
     //cout<<"err="<<err<<endl;
     //cout<<"tol="<<tol<<endl;
     if(err<tol)return tol;
-    return err; 
+    return err;
   };
 
   double CalculateOverlapReIm(LISAParams params1, LISAParams params2, LISAInjectionReIm * injection)
   {
     double overlap = -DBL_MAX;
     int ret;
-    
+
     /* Frequency vector - assumes common to A,E,T, i.e. identical fLow, fHigh in all channels */
     gsl_vector* freq = injection->freq;
-    
+
     /* Generating the signal in the three detectors for the input parameters */
     LISASignalReIm* signal1 = NULL;
     LISASignalReIm* signal2 = NULL;
@@ -284,7 +295,7 @@ public:
       double loglikelihoodTDI3 = FDLogLikelihoodReIm(signal1->TDI3Signal, signal2->TDI3Signal, injection->noisevalues3);
       overlap = loglikelihoodTDI1 + loglikelihoodTDI2 + loglikelihoodTDI3;
     }
-    
+
     /* Clean up */
     LISASignalReIm_Cleanup(signal1);
     LISASignalReIm_Cleanup(signal2);
@@ -297,44 +308,153 @@ public:
   {
     double overlap = -DBL_MAX;
     int ret;
-
-    
-    /* Frequency vector - assumes common to A,E,T, i.e. identical fLow, fHigh in all channels */
-    //gsl_vector* freq = injection->freq; FIXME
+    bool resampling=true;
+    double overlap_grid_rescale=128.0,grid_frac=0.98;
+    bool grid_rescale_top=true;
     
     /* Generating the signal in the three detectors for the input parameters */
     LISASignalCAmpPhase* signal1 = NULL;
-    LISASignalCAmpPhase* signal2 = NULL;
     LISASignalCAmpPhase_Init(&signal1);
-    LISASignalCAmpPhase_Init(&signal2);
-    /* FIXME
-    ret = LISAGenerateSignalCAmpPhase(&params1, freq, signal1);
+    //Note that the code for CAmpPhase overlaps is asymmetric, with one signal called the injection in the form of precomputed splines...
+    LISAInjectionCAmpPhase* signal2 = NULL;
+    LISAInjectionCAmpPhase_Init(&signal2);
+
+    ret = LISAGenerateSignalCAmpPhase(&params1, signal1);
     if(ret==SUCCESS){
-      ret = LISAGenerateSignalCAmpPhase(&params2, freq, signal2);
-      } */
+      ret = LISAGenerateInjectionCAmpPhase(&params2, signal2);
+    }
+
+    if(resampling){
+      //For each mode we resample the signal1 grid to align with the nominal "injection" freq domain
+      //optionally rescaling the frequency grid (approximately) by factor overlap_grid_rescale.
+      //Note that the overlap uses signal1 to define the grid, so this realizes a change in the overlap sampling
+
+      //First we prepare splines to use later for interpolation
+      
+      ListmodesCAmpPhaseSpline* listsplinesgen1 = NULL;
+      ListmodesCAmpPhaseSpline* listsplinesgen2 = NULL;
+      ListmodesCAmpPhaseSpline* listsplinesgen3 = NULL;
+      BuildListmodesCAmpPhaseSpline(&listsplinesgen1, signal1->TDI1Signal);
+      BuildListmodesCAmpPhaseSpline(&listsplinesgen2, signal1->TDI2Signal);
+      BuildListmodesCAmpPhaseSpline(&listsplinesgen3, signal1->TDI3Signal);
+
+      //loop over modes
+      ListmodesCAmpPhaseFrequencySeries* mode = signal1->TDI1Signal;
+      int nsize=-1;//Seem this must be the same number for all modes//set first time through loop.
+      while(mode) {
+	//cout<<"l= "<<mode->l<<"  m="<<mode->m<<"  nsize="<<nsize<<endl;
+	ListmodesCAmpPhaseSpline* centermode=ListmodesCAmpPhaseSpline_GetMode(injection->TDI1Splines,mode->l,mode->m);
+	gsl_vector_view ofreq_vv=gsl_matrix_column(centermode->splines->quadspline_phase,0);
+	gsl_vector* ofreq = &ofreq_vv.vector;
+	double s1f0=gsl_vector_get(mode->freqseries->freq,0);
+	double s1fend=gsl_vector_get(mode->freqseries->freq,mode->freqseries->freq->size-1);
+	double f0=gsl_vector_get(ofreq,0);
+	int osize=ofreq->size,i0=0;
+	double fend=gsl_vector_get(ofreq,osize-1);
+	if(f0<s1f0){//s1 does not extend down as far as nominal freq range; trim range
+	  f0=s1f0;
+	  while(gsl_vector_get(ofreq,i0)<f0 && i0<osize-1)i0++;//select old-grid index to immediate left of f0
+	}
+	//cout<<"start: i0="<<i0<<" n,o sizes = "<<nsize<<", "<<osize<<endl;
+	if(fend>s1fend){//s1 does not extend up as far as nominal freq range; trim range
+	  fend=s1fend;
+	  while(gsl_vector_get(ofreq,osize-1)>fend && i0<osize-1)osize--;//select old-grid index to immediate right of fend
+	  //{cout<<"i0="<<i0<<" < "<<osize<<" f = "<<gsl_vector_get(ofreq,osize-1)<<" > "<<fend<<endl;osize--;}
+	}
+	if(nsize<0){
+	  if(grid_rescale_top)
+	    nsize=(overlap_grid_rescale*(1.0-grid_frac)+grid_frac)*(osize-i0);//Only set the first time (expected to be 22)
+	  else
+	    nsize=(1+(overlap_grid_rescale-1)*grid_frac)*(osize-i0);//Only set the first time (expected to be 22)
+	}
+	//cout<<"end: i0="<<i0<<" n,o sizes = "<<nsize<<", "<<osize<<endl;
+	gsl_vector* nfreq = gsl_vector_alloc(nsize);
+	double f=f0;
+	gsl_vector_set(nfreq,0,f);//first point
+	for(int i=1;i<nsize-1;i++){
+	  while(gsl_vector_get(ofreq,i0)<f && i0<osize-2)i0++;//select old-grid index to left of f
+	  //cout<<"i="<<i<<" i0="<<i0<<" n,o sizes = "<<nsize<<", "<<osize<<endl;
+	  double odelta=gsl_vector_get(ofreq,i0+1)-gsl_vector_get(ofreq,i0);
+	  double ofremain=gsl_vector_get(ofreq,osize-1)-gsl_vector_get(ofreq,i0);
+	  double nfremain=fend-f;
+	  double ndelta=odelta*nfremain/ofremain*(double)(osize-i0)/(double)(nsize-i);//rescale df by ratio of old/new mean df of remaining domain.
+	  if(i0+1<(int)(osize*grid_frac)){
+	    int effosize=osize*grid_frac,effnsize;
+	    if(grid_rescale_top)effnsize=nsize/(overlap_grid_rescale*(1.0/grid_frac-1.0)+1.0);
+	    else effnsize=nsize*grid_frac*overlap_grid_rescale/((overlap_grid_rescale-1.0)*grid_frac+1.0);
+	    //cout<<"effosize="<<effosize<<"  effnsize="<<effnsize<<endl;
+	    if(effnsize<1)effnsize=1; //just in case
+	    ofremain=gsl_vector_get(ofreq,effosize-1)-gsl_vector_get(ofreq,i0);
+	    nfremain=gsl_vector_get(ofreq,effosize-1)-f;
+	    ndelta=odelta*nfremain/ofremain*(double)(effosize-i0)/(double)(effnsize-i);//rescale df by ratio of old/new mean df of remaining domain.
+	  }
+	  //cout<<"  ofreq(i0)="<<gsl_vector_get(ofreq,i0)<<" odelta="<<odelta<<" ofremain="<<ofremain<<endl;;
+	  //cout<<"   f,ndelta "<<f<<","<<ndelta<<" fend="<<fend<<endl;
+	  f+=ndelta;
+	  gsl_vector_set(nfreq,i,f);
+	}
+	gsl_vector_set(nfreq,nsize-1,fend);//last point
+	
+	//Also need to work with TDI2 and TDI3
+	ListmodesCAmpPhaseFrequencySeries* mode2 = ListmodesCAmpPhaseFrequencySeries_GetMode(signal1->TDI2Signal,mode->l,mode->m);
+	ListmodesCAmpPhaseFrequencySeries* mode3 = ListmodesCAmpPhaseFrequencySeries_GetMode(signal1->TDI3Signal,mode->l,mode->m);
+	CAmpPhaseSpline * splines1 = ListmodesCAmpPhaseSpline_GetMode(listsplinesgen1,mode->l,mode->m)->splines;
+	CAmpPhaseSpline * splines2 = ListmodesCAmpPhaseSpline_GetMode(listsplinesgen2,mode->l,mode->m)->splines;
+	CAmpPhaseSpline * splines3 = ListmodesCAmpPhaseSpline_GetMode(listsplinesgen3,mode->l,mode->m)->splines;
+	  
+	//resize allocated memory
+	//CAmpPhaseFrequencySeries_Cleanup(mode->freqseries);
+	//mode->freqseries=new CAmpPhaseFrequencySeries;
+	CAmpPhaseFrequencySeries_Init(&mode->freqseries,nsize);
+	//CAmpPhaseFrequencySeries_Cleanup(mode2->freqseries);
+	CAmpPhaseFrequencySeries_Init(&mode2->freqseries,nsize);
+	//CAmpPhaseFrequencySeries_Cleanup(mode3->freqseries);
+	CAmpPhaseFrequencySeries_Init(&mode3->freqseries,nsize);
+
+	//fill new values
+	gsl_vector_memcpy(mode->freqseries->freq,nfreq);
+	gsl_vector_memcpy(mode2->freqseries->freq,nfreq);
+	gsl_vector_memcpy(mode3->freqseries->freq,nfreq);
+
+	EvalCAmpPhaseSpline(splines1,mode->freqseries);
+	EvalCAmpPhaseSpline(splines2,mode2->freqseries);
+	EvalCAmpPhaseSpline(splines3,mode3->freqseries);
+
+	//clean up
+	gsl_vector_free(nfreq);
+
+	mode=mode->next;
+      }//end loop over modes
+      
+      //clean up
+      ListmodesCAmpPhaseSpline_Destroy(listsplinesgen1);
+      ListmodesCAmpPhaseSpline_Destroy(listsplinesgen2);
+      ListmodesCAmpPhaseSpline_Destroy(listsplinesgen3);
+
+    }//end resampling
+	
     /* If LISAGenerateSignal failed (e.g. parameters out of bound), silently return -Infinity logL */
     if(ret==FAILURE) {
       overlap = -DBL_MAX;
     }
     else if(ret==SUCCESS) {
+      /* Computing the likelihood for each TDI channel - fstartobs is the max between the fstartobs of the injected and generated signals */
+      double fstartobs1 = Newtonianfoft(params1.m1, params1.m2, globalparams->deltatobs);
+      double fstartobs2 = Newtonianfoft(params2.m1, params2.m2, globalparams->deltatobs);
+      double fLow = fmax(__LISASimFD_Noise_fLow, globalparams->minf);
+      double fHigh = fmin(__LISASimFD_Noise_fHigh, globalparams->maxf);
+      ObjectFunction NoiseSn1 = NoiseFunction(globalparams->variant, globalparams->tagtdi, 1);
+      ObjectFunction NoiseSn2 = NoiseFunction(globalparams->variant, globalparams->tagtdi, 2);
+      ObjectFunction NoiseSn3 = NoiseFunction(globalparams->variant, globalparams->tagtdi, 3);
       
-      /* Now we compute the differences*/
-      //Probably based on ComputeIntegrandValues3Chan in tools/likelihood.c which is non-trival
-
-
-      /* Computing the likelihood for each TDI channel - fstartobs has already been taken into account */
-      /* FIXME
-      double loglikelihoodTDI1 = FDLogLikelihoodCAmpPhase(signal1->TDI1Signal, signal2->TDI1Signal, injection->noisevalues1);
-      double loglikelihoodTDI2 = FDLogLikelihoodCAmpPhase(signal1->TDI2Signal, signal2->TDI2Signal, injection->noisevalues2);
-      double loglikelihoodTDI3 = FDLogLikelihoodCAmpPhase(signal1->TDI3Signal, signal2->TDI3Signal, injection->noisevalues3);
-      overlap = loglikelihoodTDI1 + loglikelihoodTDI2 + loglikelihoodTDI3;
-      */
+      overlap = FDListmodesFresnelOverlap3Chan(signal1->TDI1Signal, signal1->TDI2Signal, signal1->TDI3Signal, signal2->TDI1Splines, signal2->TDI2Splines, signal2->TDI3Splines, &NoiseSn1, &NoiseSn2, &NoiseSn3, fLow, fHigh, fstartobs2, fstartobs1);
+      
     }
-    
+
     /* Clean up */
     LISASignalCAmpPhase_Cleanup(signal1);
-    LISASignalCAmpPhase_Cleanup(signal2);
-
+    LISAInjectionCAmpPhase_Cleanup(signal2);
+    
     //cout<<" overlap="<<overlap<<endl;
     return overlap;
   };
@@ -350,7 +470,7 @@ int main(int argc, char*argv[]){
   noMPI=1;
 
   //string datafile;
-  const int NparRead=Npar; 
+  const int NparRead=Npar;
 
   //Create the sampler
   ptmcmc_sampler mcmc;
@@ -367,9 +487,9 @@ int main(int argc, char*argv[]){
   opt.add(Option("allow_m2gtm1","Unless this is set, reject cases with m2>m1."));
   opt.add(Option("Fisher_err_target","Set target for Fisher error measure. (Default 0.001).","0.001"));
   opt.add(Option("help","Print help message."));
-  //First we parse the ptmcmc-related parameters like un gleam. 
+  //First we parse the ptmcmc-related parameters like un gleam.
   opt.parse(argc,argv,false);
-  
+
   //Next we perform the initializations from LISAinference.c
   LISARunParams runParams={};
   int ndim=0,nPar=0;
@@ -383,8 +503,9 @@ int main(int argc, char*argv[]){
     LISAGlobalParams arg4;
     LISAPrior arg5;
     LISARunParams arg6;
+    LISAAddParams arg7;
     char* tmpargv[2]={argv[0],(char*)"--help"};
-    parse_args_LISA(2, tmpargv, &arg3, &arg4, &arg5, &arg6);
+    parse_args_LISA(2, tmpargv, &arg3, &arg4, &arg5, &arg6, &arg7);
   } else cout<<"ptmcmc flags=\n"<<opt.report()<<endl;
 
   addendum(argc,argv,&runParams,&ndim,&nPar,&freeparamsmap,&context,&logZtrue);
@@ -400,7 +521,7 @@ int main(int argc, char*argv[]){
   istringstream(opt.value("Fisher_err_target"))>>fisher_err_target;
   bool doFisher=not opt.set("noFisher");
   allow_m2gtm1=opt.set("allow_m2gtm1");
-  
+
   //if seed<0 set seed from clock
   if(seed<0)seed=fmod(time(NULL)/3.0e7,1);
   istringstream(opt.value("precision"))>>output_precision;
@@ -412,20 +533,20 @@ int main(int argc, char*argv[]){
   ostringstream ss("");
   ss<<outname;
   string base=ss.str();
-  
+
 
   //report
   cout.precision(output_precision);
   cout<<"\noutname = '"<<outname<<"'"<<endl;
-  cout<<"seed="<<seed<<endl; 
+  cout<<"seed="<<seed<<endl;
   cout<<"Running on "<<omp_get_max_threads()<<" thread"<<(omp_get_max_threads()>1?"s":"")<<"."<<endl;
 
   //Set up the parameter space
   stateSpace space(Npar);
-  /* Note: here we output physical values in the cube (overwriting), and we keep the original order for physical parameters */ 
+  /* Note: here we output physical values in the cube (overwriting), and we keep the original order for physical parameters */
   string names[]={"m1","m2","tRef","dist","phase","inc","lambda","beta","pol"};
   if(!priorParams->flat_distprior)names[3]="s(D)";
-  space.set_names(names);  
+  space.set_names(names);
   space.set_bound(4,boundary(boundary::wrap,boundary::wrap,0,2*M_PI));//set 2-pi-wrapped space for phi.
   space.set_bound(6,boundary(boundary::wrap,boundary::wrap,0,2*M_PI));//set 2-pi-wrapped space for lambda.
   space.set_bound(8,boundary(boundary::wrap,boundary::wrap,0,M_PI));//set pi-wrapped space for pol.
@@ -433,7 +554,7 @@ int main(int argc, char*argv[]){
 
   //Set the prior:
   //Eventually this should move to the relevant constitutent code elements where the params are given meaning.
-  const int uni=mixed_dist_product::uniform, gauss=mixed_dist_product::gaussian, polar=mixed_dist_product::polar, copol=mixed_dist_product::copolar; 
+  const int uni=mixed_dist_product::uniform, gauss=mixed_dist_product::gaussian, polar=mixed_dist_product::polar, copol=mixed_dist_product::copolar;
   double lambda0=(priorParams->lambda_min+priorParams->lambda_max)/2,dlambda=(priorParams->lambda_max-priorParams->lambda_min)/2;
   double beta0=(priorParams->beta_min+priorParams->beta_max)/2,dbeta=(priorParams->beta_max-priorParams->beta_min)/2;//Note: these are ignored by co-polar prior
   double tref0=injectedparams->tRef,dtref=priorParams->deltaT;
@@ -469,7 +590,7 @@ int main(int argc, char*argv[]){
     dist0=(smax+smin)/2;
     ddist=(smax-smin)/2;
   }
-  //                                     m1      m2     tRef     dist   phase    inc    lambda    beta     pol  
+  //                                     m1      m2     tRef     dist   phase    inc    lambda    beta     pol
   valarray<double>    centers((dlist){  m10,    m20,   tref0,  dist0,  phase0,  inc0, lambda0,  beta0,   pol0  });
   valarray<double> halfwidths((dlist){  dm1,    dm2,   dtref,  ddist,  dphase,  dinc, dlambda,  dbeta,   dpol  });
   //valarray<int>         types((ilist){  uni,    uni,     uni,     uni,    uni, polar,     uni,  copol,    uni  });
@@ -477,13 +598,13 @@ int main(int argc, char*argv[]){
   if (!std::isnan(priorParams->fix_beta))types[7]=uni;//"fixed" parameter set to narrow uniform range
   if (!std::isnan(priorParams->fix_inc)) types[5]=uni;//"fixed" parameter set to narrow uniform range
   if(priorParams->logflat_massprior)types[0]=types[1]=mixed_dist_product::log;
-  sampleable_probability_function *prior;  
+  sampleable_probability_function *prior;
   prior=new mixed_dist_product(&space,types,centers,halfwidths);
   cout<<"Prior is:\n"<<prior->show()<<endl;
-  
+
   //test the prior:
   //for(int i=0;i<5;i++){state s=prior->drawSample(*globalRNG);cout<<"test state "<<i<<"="<<s.show()<<endl;}
-  
+
   //Set the likelihood
   bayes_likelihood *like=nullptr;
   flare_likelihood fl(&space, context, prior);
@@ -509,7 +630,7 @@ int main(int argc, char*argv[]){
   //restore likelihood states
   like->reset();
   if(info_every>0)fl.info_every(info_every);
-  
+
   if(doFisher){
     //Next compute the Fisher matrix at the injected state.
     ss.str("");ss<<base<<"_fishcov.dat";
@@ -562,7 +683,7 @@ int main(int argc, char*argv[]){
     double fishnorm=0;for(int i=0;i<Npar;i++)for(int j=0;j<Npar;j++)fishnorm+=fim[i][j]*fim[i][j];
     cout<< "Norm of Fisher="<<fishnorm<<endl;
     if(false){
-      for(int i=0;i<Npar;i++)for(int j=0;j<=i;j++)gsl_matrix_set(fishcov,i,j,fim[i][j]);//Don't need upper triangle for GSLs routine 
+      for(int i=0;i<Npar;i++)for(int j=0;j<=i;j++)gsl_matrix_set(fishcov,i,j,fim[i][j]);//Don't need upper triangle for GSLs routine
       if(gsl_linalg_cholesky_decomp(fishcov))cout<<"Fisher matrix Cholesky decomposition failed."<<endl;
       else if(gsl_linalg_cholesky_invert(fishcov))cout<<"Fisher matrix Cholesky inverse failed."<<endl;
       else bad=false;
@@ -570,7 +691,7 @@ int main(int argc, char*argv[]){
 	int s;
 	gsl_permutation * p = gsl_permutation_alloc (Npar);
 	gsl_matrix * fishLU=gsl_matrix_alloc(Npar,Npar);
-	for(int i=0;i<Npar;i++)for(int j=0;j<Npar;j++)gsl_matrix_set(fishLU,i,j,fim[i][j]); 
+	for(int i=0;i<Npar;i++)for(int j=0;j<Npar;j++)gsl_matrix_set(fishLU,i,j,fim[i][j]);
 	if(gsl_linalg_LU_decomp(fishLU,p,&s))cout<<"Fisher matrix LU decomposition failed."<<endl;
 	else if (gsl_linalg_LU_invert(fishLU,p,fishcov))cout<<"Fisher matrix LU inverse failed."<<endl;
 	else bad=false;
@@ -579,10 +700,11 @@ int main(int argc, char*argv[]){
       }
     } else {
       for(int i=0;i<Npar;i++)for(int j=0;j<=i;j++)gsl_matrix_set(fishcov,i,j,sfim[i][j]);//Here we invert the scaled Fisher
-      if(gsl_linalg_cholesky_decomp(fishcov))cout<<"Fisher matrix Cholesky decomposition failed."<<endl; 
+      if(gsl_linalg_cholesky_decomp(fishcov))cout<<"Fisher matrix Cholesky decomposition failed."<<endl;
       else if(gsl_linalg_cholesky_invert(fishcov))cout<<"Fisher matrix Cholesky inverse failed."<<endl;
       else bad=false;
       //try LU decomposition, eliminating vars as needed until success
+      bad=true;//HACK
       if(bad){
 	vector<int>idxmap(Npar);for(int i=0;i<Npar;i++)idxmap[i]=i;//define an initially trivial map of param indices to (maybe) nondegenerate vector space indices
 	vector<int>idxinvmap(Npar);for(int i=0;i<Npar;i++)idxinvmap[i]=i;//and its inverse
@@ -605,12 +727,37 @@ int main(int argc, char*argv[]){
 	    for(int j=0;j<=i;j++)cout<<"\t"<<gsl_matrix_get(fishcov,i,j);
 	    cout<<endl;
 	  }
-	  for(int i=0;i<dim;i++)for(int j=0;j<dim;j++)gsl_matrix_set(fishLU,i,j,gsl_matrix_get(fishcov,i,j)); 
-	  if(gsl_linalg_LU_decomp(fishLU,p,&s))cout<<"Fisher matrix LU decomposition failed."<<endl;
-	  else if (gsl_linalg_LU_invert(fishLU,p,covLU))cout<<"Fisher matrix LU inverse failed."<<endl;
-	  else {
-	    bad=false;
-	    cout<<"LU inverse succeeded"<<endl;
+	  for(int i=0;i<dim;i++)for(int j=0;j<dim;j++)gsl_matrix_set(fishLU,i,j,gsl_matrix_get(fishcov,i,j));
+	  bool retry=true;
+	  while(retry){
+	    retry=false;
+	    if(gsl_linalg_LU_decomp(fishLU,p,&s))cout<<"Fisher matrix LU decomposition failed."<<endl;
+	    else if (gsl_linalg_LU_invert(fishLU,p,covLU))cout<<"Fisher matrix LU inverse failed."<<endl;
+	    else {
+	      cout<<"\n#Reduced Cov:"<<endl;
+	      for(int i=0;i<dim;i++){
+		cout<<names[idxinvmap[i]]<<"\t";
+		for(int j=0;j<=i;j++)cout<<"\t"<<gsl_matrix_get(covLU,i,j);
+		cout<<endl;
+	      }
+	      //Next we need to check that we got positive diagonals:
+	      for(int i=0;i<dim;i++){
+		double diag=gsl_matrix_get(covLU,i,i);
+		if(diag<=0){
+		  cout<<" detected non pos diag in row "<<i<<" val = "<<diag<<endl;
+		  gsl_matrix_set(fishcov,i,i,gsl_matrix_get(fishcov,i,i)*1.0001);
+		  retry=true;
+		}
+	      }
+	      for(int i=0;i<dim;i++){//store reduced dimension matrix in fishcov
+		for(int j=0;j<dim;j++){
+		  gsl_matrix_set(fishLU,i,j,gsl_matrix_get(fishcov,i,j));
+		}
+	      }
+
+	      bad=false;
+	      cout<<"LU inverse succeeded"<<endl;
+	    }
 	  }
 	  if(bad){ //report eigenvalues for diagnostic and try again.
 	    int s;
@@ -664,7 +811,7 @@ int main(int argc, char*argv[]){
 	    gsl_vector_free (evals);
 	    gsl_matrix_free (evecs);
 	  }
-	  if(not bad){	  //If done construct the full inverted matrix in fishcov with inf for the degenerate bits. 
+	  if(not bad){	  //If done construct the full inverted matrix in fishcov with inf for the degenerate bits.
 	    for(int i=0;i<Npar;i++)for(int j=0;j<=i;j++){
 		int iLU=idxmap[i];
 		int jLU=idxmap[j];
@@ -720,32 +867,32 @@ int main(int argc, char*argv[]){
     outfish.close();
     cout<<"Wrote file '"<<base<<"_fishcov.dat"<<"'"<<endl;
   }
-  
+
   if(stoi(opt.value("nsteps"))<=0){
     cout<<"No MCMC steps requested"<<endl;
     exit(0);
   }
 
   //assuming mcmc:
-  //Set the proposal distribution 
+  //Set the proposal distribution
   int Ninit;
   proposal_distribution *prop=ptmcmc_sampler::new_proposal_distribution(Npar,Ninit,opt,prior,&halfwidths);
   cout<<"Proposal distribution is:\n"<<prop->show()<<endl;
   //set up the mcmc sampler (assuming mcmc)
-  mcmc.setup(Ninit,*like,*prior,*prop,output_precision);
+  //mcmc.setup(Ninit,*like,*prior,*prop,output_precision);
+  mcmc.setup(*like,*prior,output_precision);
+  mcmc.select_proposal();
 
   //Loop over Nchains
   for(int ic=0;ic<Nchain;ic++){
     bayes_sampler *s=s0->clone();
     s->initialize();
     s->run(base,ic);
-    s->analyze(base,ic,Nsigma,Nbest,*like);
+    //s->analyze(base,ic,Nsigma,Nbest,*like);
     delete s;
   }
-  
+
   //Dump summary info
   cout<<"best_post "<<like->bestPost()<<", state="<<like->bestState().get_string()<<endl;
   fl.print_info();
 }
-
-
