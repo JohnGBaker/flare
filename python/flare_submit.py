@@ -1,5 +1,6 @@
 #use: module load other/SSSO_Ana-PyD/SApd_2.4.0_py2.7
 import os
+import sys
 import platform
 import flare
 import argparse
@@ -62,124 +63,133 @@ sh -c '{   \\
 exit 0
 """
 
-#detect system
-sys="discover"
-script=script_discover
-procs_per_node=24
-if(platform.system()=="Darwin"):
-    sys="macos"
-    script=script_macos
-    procs_per_node=8
-    
-#set up command-line arguments
-parser = argparse.ArgumentParser(description="generate a discover queue script for a flare run");
-paramsgroup = parser.add_mutually_exclusive_group(required=True)
-parser.add_argument('name',help="The basename for the run")
-parser.add_argument('snr',help="SNR for the run",type=float,default=-1)
-paramsgroup.add_argument('-p',help="List "+str(Npar)+" injection parameters for the run",nargs=Npar,type=float)
-paramsgroup.add_argument('-f',help="Provide filename with injection parameters")
-parser.add_argument('-d',help="Run in debug mode",action="store_true")
-parser.add_argument('--mcmc',help="Run with ptmcmc instead of bambi",action="store_true")
-parser.add_argument('-n',help="Number of bambi-nodes or ptmcmc-threads to run on (default 1 node or "+str(procs_per_node)+" threads)",type=int,default=-1)
-parser.add_argument('-t',help="Time in hours to run (default 12, but always 1 or 0 with debug)",type=int,default=-1)
-parser.add_argument('-m',help="Time: addtional minutes to run (default 00)",type=int,default=0)
-parser.add_argument('--lm22',help="Use only the 22 mode.",action="store_true")
-parser.add_argument('--live',help="Set number of nested sampling live points for bambi default=4000).",default=4000)
+if __name__ == "__main__":    
+    print "Running flare_submit.generate as main program."
+    #detect system
+    system="discover"
+    if(platform.system()=="Darwin"):
+        system="macos"
+    generate(system,sys.argv)
 
-args=parser.parse_args()
+def generate(system,argv):    
+    if(system=="discover"):
+        script=script_discover
+        procs_per_node=24
+    elif(system=="macos"):
+        script=script_macos
+        procs_per_node=8
+    else:
+        sys.exit("System '"+str(system)+"' not recognized.")
 
-#We assume that the script is located in the flare/python directory
-#below [:-7] is to strip "/python 
-#flare_path= os.path.dirname(os.path.realpath(__file__))[:-7]
-flare_path=flare.flare_dir
+    #set up command-line arguments
+    parser = argparse.ArgumentParser(description="generate a discover queue script for a flare run");
+    paramsgroup = parser.add_mutually_exclusive_group(required=True)
+    parser.add_argument('name',help="The basename for the run")
+    parser.add_argument('snr',help="SNR for the run",type=float,default=-1)
+    paramsgroup.add_argument('-p',help="List "+str(Npar)+" injection parameters for the run",nargs=Npar,type=float)
+    paramsgroup.add_argument('-f',help="Provide filename with injection parameters")
+    parser.add_argument('-d',help="Run in debug mode",action="store_true")
+    parser.add_argument('--mcmc',help="Run with ptmcmc instead of bambi",action="store_true")
+    parser.add_argument('-n',help="Number of bambi-nodes or ptmcmc-threads to run on (default 1 node or "+str(procs_per_node)+" threads)",type=int,default=-1)
+    parser.add_argument('-t',help="Time in hours to run (default 12, but always 1 or 0 with debug)",type=int,default=-1)
+    parser.add_argument('-m',help="Time: addtional minutes to run (default 00)",type=int,default=0)
+    parser.add_argument('--lm22',help="Use only the 22 mode.",action="store_true")
+    parser.add_argument('--live',help="Set number of nested sampling live points for bambi default=4000).",default=4000)
 
-name=args.name
-hours=args.t
-minutes=args.m
-nodes=args.n
+    args=parser.parse_args(argv)
 
-if(hours<0):
-    if(minutes>0):hours=0
-    else:hours=12
-total_seconds=3600*hours+60*minutes
-checkp_seconds=(int)((total_seconds-300)*0.99)
+    #We assume that the script is located in the flare/python directory
+    #below [:-7] is to strip "/python 
+    #flare_path= os.path.dirname(os.path.realpath(__file__))[:-7]
+    flare_path=flare.flare_dir
 
-#Setup flare flags
-if(args.p is None):
-    params=read_params(args.f)
-else:
-    params=args.p
-flags=flare.set_flare_flags(args.snr,params)
-if(args.lm22):flags+=" --nbmodeinj 1 --nbmodetemp 1" #for no higher modes in injection and template
+    name=args.name
+    hours=args.t
+    minutes=args.m
+    nodes=args.n
 
-#generate fisher command
-fcmd   = flare.getFisherCommand(name+"-Fisher")+" "+flags
+    if(hours<0):
+        if(minutes>0):hours=0
+        else:hours=12
+    total_seconds=3600*hours+60*minutes
+    checkp_seconds=(int)((total_seconds-300)*0.99)
 
-#generate the sampler command
-if(not args.mcmc):
-    sampler="bambi"
-    if(nodes<1):nodes=1
-    tasks=nodes*(procs_per_node-3)
-    fthreads=procs_per_node-3
-    threads=1
-    cmd   = flare_path+"/LISAinference/LISAinference"
-    flags += flare.set_bambi_flags(name,nlive=args.live)
-else:
-    sampler="ptmcmc"
-    if(nodes<1):nodes=procs_per_node
-    threads=nodes
-    fthreads=threads
-    nodes=1
-    tasks=1
-    cmd   = flare_path+"/LISAinference/LISAinference_ptmcmc"
-    flags += flare.set_mcmc_flags(name,60) + " --noFisher "
-    flags += "--checkp_at_time="+str(checkp_seconds)+" "
-    #flags += "--covariance_file="+name+"-Fisher_fishcov.dat"
-    
-#finish commands
-cmd = cmd+" "+flags
-fcmd = "export OMP_NUM_THREADS="+str(fthreads)+" ; "+fcmd+" 1>"+name+"-Fisher.out 2>&1"
+    #Setup flare flags
+    if(args.p is None):
+        params=read_params(args.f)
+    else:
+        params=args.p
+    flags=flare.set_flare_flags(args.snr,params)
+    if(args.lm22):flags+=" --nbmodeinj 1 --nbmodetemp 1" #for no higher modes in injection and template
 
+    #generate fisher command
+    fcmd   = flare.getFisherCommand(name+"-Fisher")+" "+flags
 
-if args.d:
-    debug="#SBATCH --qos=debug\n"
-    if(60*hours+minutes>60):
-        hours=1
-        minutes=0
-else:
-    debug=""
+    #generate the sampler command
+    if(not args.mcmc):
+        sampler="bambi"
+        if(nodes<1):nodes=1
+        tasks=nodes*(procs_per_node-3)
+        fthreads=procs_per_node-3
+        threads=1
+        cmd   = flare_path+"/LISAinference/LISAinference"
+        flags += flare.set_bambi_flags(name,nlive=args.live)
+    else:
+        sampler="ptmcmc"
+        if(nodes<1):nodes=procs_per_node
+        threads=nodes
+        fthreads=threads
+        nodes=1
+        tasks=1
+        cmd   = flare_path+"/LISAinference/LISAinference_ptmcmc"
+        flags += flare.set_mcmc_flags(name,60) + " --noFisher "
+        flags += "--checkp_at_time="+str(checkp_seconds)+" "
+        #flags += "--covariance_file="+name+"-Fisher_fishcov.dat"
+
+    #finish commands
+    cmd = cmd+" "+flags
+    fcmd = "export OMP_NUM_THREADS="+str(fthreads)+" ; "+fcmd+" 1>"+name+"-Fisher.out 2>&1"
 
 
-#Replace tags:
-#SCRIPT_NAME
-script = script.replace("SCRIPT_NAME", name)
-#SCRIPT_SAMPLER
-tag=name+"-"+sampler
-script = script.replace("SCRIPT_TAG", tag)
-#SCRIPT_NODES
-script = script.replace("SCRIPT_NODES", str(nodes))
-#SCRIPT_HOURS
-script = script.replace("SCRIPT_HOURS", str(hours))
-#SCRIPT_MINS
-script = script.replace("SCRIPT_MINS", str(minutes))
-#SCRIPT_TASKS
-script = script.replace("SCRIPT_TASKS", str(tasks))
-#SCRIPT_THREADS
-script = script.replace("SCRIPT_THREADS", str(threads))
-#SCRIPT_COMMAND
-script = script.replace("SCRIPT_COMMAND", cmd)
-#SCRIPT_FISHER_COMMAND
-script = script.replace("SCRIPT_FISHER_COMMAND", fcmd )
-#SCRIPT_DEBUG
-script = script.replace("SCRIPT_DEBUG", debug)
-#SCRIPT_KILL_AFTER_SECONDS
-script = script.replace("SCRIPT_KILL_AFTER_SECONDS", str(total_seconds))
-#SCRIPT_ROM_DATA_PATH
-script = script.replace("SCRIPT_ROM_DATA_PATH", flare_path+"/"+flare.ROM_DATA_PATH)
+    if args.d:
+        debug="#SBATCH --qos=debug\n"
+        if(60*hours+minutes>60):
+            hours=1
+            minutes=0
+    else:
+        debug=""
 
-print script
 
-with open(tag+".sub",'w') as file:
-    file.write(script)
-    file.close()
+    #Replace tags:
+    #SCRIPT_NAME
+    script = script.replace("SCRIPT_NAME", name)
+    #SCRIPT_SAMPLER
+    tag=name+"-"+sampler
+    script = script.replace("SCRIPT_TAG", tag)
+    #SCRIPT_NODES
+    script = script.replace("SCRIPT_NODES", str(nodes))
+    #SCRIPT_HOURS
+    script = script.replace("SCRIPT_HOURS", str(hours))
+    #SCRIPT_MINS
+    script = script.replace("SCRIPT_MINS", str(minutes))
+    #SCRIPT_TASKS
+    script = script.replace("SCRIPT_TASKS", str(tasks))
+    #SCRIPT_THREADS
+    script = script.replace("SCRIPT_THREADS", str(threads))
+    #SCRIPT_COMMAND
+    script = script.replace("SCRIPT_COMMAND", cmd)
+    #SCRIPT_FISHER_COMMAND
+    script = script.replace("SCRIPT_FISHER_COMMAND", fcmd )
+    #SCRIPT_DEBUG
+    script = script.replace("SCRIPT_DEBUG", debug)
+    #SCRIPT_KILL_AFTER_SECONDS
+    script = script.replace("SCRIPT_KILL_AFTER_SECONDS", str(total_seconds))
+    #SCRIPT_ROM_DATA_PATH
+    script = script.replace("SCRIPT_ROM_DATA_PATH", flare_path+"/"+flare.ROM_DATA_PATH)
+
+    print script
+
+    with open(tag+".sub",'w') as file:
+        file.write(script)
+        file.close()
 
