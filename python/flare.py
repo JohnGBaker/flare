@@ -92,7 +92,7 @@ def set_flare_flags(snr,params):
     flags += " --beta "+str(beta)
     flags += " --inclination "+str(inc)
     flags += " --polarization "+str(pol)
-    print "flags : \n" + flags
+    #print "flags : \n" + flags
     return flags
 
 def set_mcmc_flags(outroot,ptN):
