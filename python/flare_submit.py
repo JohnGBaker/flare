@@ -49,17 +49,15 @@ SCRIPT_RUNNING_CMD
 sh -c '{  \\
   SCRIPT_FISHER_COMMAND ; \\
   time mpirun -np SCRIPT_TASKS SCRIPT_COMMAND 1>SCRIPT_NAME.out 2>&1; \\
-  sleep 1; \\
-  if [ ! -f killed.flag ]; then SCRIPT_TEST_CMD; fi; \\
-  exit 0; \\
+  SCRIPT_TEST_CMD; \\
+  kill 0 -s INT; \\
 } | { \\
   sleep SCRIPT_KILL_AFTER_SECONDS; \\
   SCRIPT_RESTART_CMD; \\
-  echo > killed.flag \\
-  pkill -g 0 SCRIPT_EXEC_NAME; echo SCRIPT_EXEC_NAME killed after timeout\\
-  exit 0; \\
+  pkill -g 0 SCRIPT_EXEC_NAME; \\
+  echo SCRIPT_EXEC_NAME killed after timeout\\
+  kill 0 -s INT; \\
 }; ' 
-rm -f killed.flag
 echo "Exiting"
 #exit 0
 """
@@ -205,7 +203,7 @@ def generate(system,argv,rcname=""):
     else:
         debug=""
 
-    total_seconds=3600*hours+60*minutes-30
+    total_seconds=3600*hours+60*minutes-200
     checkp_seconds=(int)((total_seconds-300)*0.99)
     log_name=name
     if(len(args.r)>0):log_name=name+"."+args.r

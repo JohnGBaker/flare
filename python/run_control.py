@@ -176,6 +176,7 @@ def find_and_process(status_file,stat):
 system="discover"
 submit="sbatch "
 no_wait_submit=True
+
 if(platform.system()=="Darwin"):
     system="macos"
     submit="tcsh "
