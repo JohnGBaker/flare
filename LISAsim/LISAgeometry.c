@@ -37,6 +37,76 @@
 
 #include <time.h> /* for testing */
 
+//Named LISA-like constellation struct examples
+/*
+struct tagLISAconstellation {
+  double OrbitOmega,OrbitPhi0,OrbitR;
+  double ConstOmega,ConstPhi0,ConstL;
+}
+*/
+
+LISAconstellation LISA2010 = {
+  EarthOrbitOmega_SI,
+  0,
+  AU_SI,
+  EarthOrbitOmega_SI,
+  0,
+  5e9,
+  LISA2010noise
+};
+
+LISAconstellation LISA2017 = {
+  EarthOrbitOmega_SI,
+  0,
+  AU_SI,
+  EarthOrbitOmega_SI,
+  0,
+  2.5e9,
+  LISA2017noise
+};
+
+LISAconstellation slowOrbitLISA = {
+  EarthOrbitOmega_SI/100.0,
+  0,
+  AU_SI,
+  EarthOrbitOmega_SI/100.0,
+  0,
+  2.5e9,
+  LISA2017noise
+};
+
+LISAconstellation tinyOrbitLISA = {
+  EarthOrbitOmega_SI,
+  0,
+  AU_SI/100,
+  EarthOrbitOmega_SI,
+  0,
+  2.5e9,
+  LISA2017noise
+};
+
+LISAconstellation fastOrbitLISA = {
+  EarthOrbitOmega_SI*10.0,
+  0,
+  AU_SI,
+  EarthOrbitOmega_SI*10.0,
+  0,
+  2.5e9,
+  LISA2017noise
+};
+
+LISAconstellation bigOrbitLISA = {
+  EarthOrbitOmega_SI/10.0,
+  0,
+  AU_SI,
+  EarthOrbitOmega_SI/10.0,
+  0,
+  2.5e9,
+  LISA2017noise
+};
+
+
+
 /****************************************************************/
 /********* Coefficients for the geometric response **************/
 
@@ -130,11 +200,15 @@ ResponseApproxtag ParseResponseApproxtag(char* string) {
 }
 
 /* Compute Solar System Barycenter time tSSB from retarded time at the center of the LISA constellation tL */
-double tSSBfromtL(const double tL, const double lambda, const double beta) {
-  return tL + R_SI/C_SI*cos(beta)*cos(Omega_SI*tL - lambda) - 1./2*Omega_SI*pow(R_SI/C_SI*cos(beta), 2)*sin(2.*(Omega_SI*tL - lambda));
+double tSSBfromtL(const LISAconstellation *variant, const double tL, const double lambda, const double beta) {
+  double phase=variant->ConstOmega*tL + variant->ConstPhi0 - lambda;
+  double RoC=variant->OrbitR/C_SI;
+ return tL + RoC*cos(beta)*cos(phase) - 1./2*variant->ConstOmega*pow(RoC*cos(beta), 2)*sin(2.*phase);
 }
-double tLfromtSSB(const double tSSB, const double lambda, const double beta) {
-  return tSSB - R_SI/C_SI*cos(beta)*cos(Omega_SI*tSSB - lambda);
+double tLfromtSSB(const LISAconstellation *variant, const double tSSB, const double lambda, const double beta) {
+  double phase=variant->ConstOmega*tSSB + variant->ConstPhi0 - lambda;
+  double RoC=variant->OrbitR/C_SI;
+  return tSSB - RoC*cos(beta)*cos(phase);
 }
 
 /* Function cardinal sine */
@@ -399,11 +473,13 @@ void SetCoeffsG(const double lambda, const double beta, const double psi) {
 /* Conventions changed: now MLDC conventions */
 
 /* Function evaluating G21, combining the two polarization with the spherical harmonics factors */
-double complex G21mode(const double f, const double t, const double complex Yfactorplus, const double complex Yfactorcross) {
+double complex G21mode(const LISAconstellation *variant, const double f, const double t, const double complex Yfactorplus, const double complex Yfactorcross) {
+
+  double phase=variant->ConstOmega*t + variant->ConstPhi0;
 
   for(int j=0; j<4; j++) {
-    cosarray[j] = cos((j+1) * Omega_SI * t);
-    sinarray[j] = sin((j+1) * Omega_SI * t);
+    cosarray[j] = cos((j+1) * phase);
+    sinarray[j] = sin((j+1) * phase);
   }
   double n3Pn3plus = coeffn3Hn3plusconst;
   double n3Pn3cross = coeffn3Hn3crossconst;
@@ -417,14 +493,16 @@ double complex G21mode(const double f, const double t, const double complex Yfac
     kn3 += cosarray[j] * coeffkn3cos[j] + sinarray[j] * coeffkn3sin[j];
     kp1plusp2 += cosarray[j] * coeffkp1plusp2cos[j] + sinarray[j] * coeffkp1plusp2sin[j];
   }
-  return I*PI*f*L_SI/C_SI * (n3Pn3plus*Yfactorplus + n3Pn3cross*Yfactorcross) * sinc( PI*f*L_SI/C_SI * (1.+kn3)) * cexp( I*PI*f*L_SI/C_SI * (1.+kp1plusp2) );
+  return I*PI*f*variant->ConstL/C_SI * (n3Pn3plus*Yfactorplus + n3Pn3cross*Yfactorcross) * sinc( PI*f*variant->ConstL/C_SI * (1.+kn3)) * cexp( I*PI*f*variant->ConstL/C_SI * (1.+kp1plusp2) );
 }
 /* Function evaluating G12, combining the two polarization with the spherical harmonics factors */
-double complex G12mode(const double f, const double t, const double complex Yfactorplus, const double complex Yfactorcross) {
+double complex G12mode(const LISAconstellation *variant, const double f, const double t, const double complex Yfactorplus, const double complex Yfactorcross) {
+
+  double phase=variant->ConstOmega*t + variant->ConstPhi0;
 
   for(int j=0; j<4; j++) {
-    cosarray[j] = cos((j+1) * Omega_SI * t);
-    sinarray[j] = sin((j+1) * Omega_SI * t);
+    cosarray[j] = cos((j+1) * phase);
+    sinarray[j] = sin((j+1) * phase);
   }
   double n3Pn3plus = coeffn3Hn3plusconst;
   double n3Pn3cross = coeffn3Hn3crossconst;
@@ -439,14 +517,16 @@ double complex G12mode(const double f, const double t, const double complex Yfac
     kp1plusp2 += cosarray[j] * coeffkp1plusp2cos[j] + sinarray[j] * coeffkp1plusp2sin[j];
   }
 
-  return I*PI*f*L_SI/C_SI * (n3Pn3plus*Yfactorplus + n3Pn3cross*Yfactorcross) * sinc( PI*f*L_SI/C_SI * (1.-kn3)) * cexp( I*PI*f*L_SI/C_SI * (1.+kp1plusp2) );
+  return I*PI*f*variant->ConstL/C_SI * (n3Pn3plus*Yfactorplus + n3Pn3cross*Yfactorcross) * sinc( PI*f*variant->ConstL/C_SI * (1.-kn3)) * cexp( I*PI*f*variant->ConstL/C_SI * (1.+kp1plusp2) );
 }
 /* Function evaluating G32, combining the two polarization with the spherical harmonics factors */
-double complex G32mode(const double f, const double t, const double complex Yfactorplus, const double complex Yfactorcross) {
+double complex G32mode(const LISAconstellation *variant, const double f, const double t, const double complex Yfactorplus, const double complex Yfactorcross) {
+
+  double phase=variant->ConstOmega*t + variant->ConstPhi0;
 
   for(int j=0; j<4; j++) {
-    cosarray[j] = cos((j+1) * Omega_SI * t);
-    sinarray[j] = sin((j+1) * Omega_SI * t);
+    cosarray[j] = cos((j+1) * phase);
+    sinarray[j] = sin((j+1) * phase);
   }
   double n1Pn1plus = coeffn1Hn1plusconst;
   double n1Pn1cross = coeffn1Hn1crossconst;
@@ -461,14 +541,16 @@ double complex G32mode(const double f, const double t, const double complex Yfac
     kp2plusp3 += cosarray[j] * coeffkp2plusp3cos[j] + sinarray[j] * coeffkp2plusp3sin[j];
   }
 
-  return I*PI*f*L_SI/C_SI * (n1Pn1plus*Yfactorplus + n1Pn1cross*Yfactorcross) * sinc( PI*f*L_SI/C_SI * (1.+kn1)) * cexp( I*PI*f*L_SI/C_SI * (1.+kp2plusp3) );
+  return I*PI*f*variant->ConstL/C_SI * (n1Pn1plus*Yfactorplus + n1Pn1cross*Yfactorcross) * sinc( PI*f*variant->ConstL/C_SI * (1.+kn1)) * cexp( I*PI*f*variant->ConstL/C_SI * (1.+kp2plusp3) );
 }
 /* Function evaluating G23, combining the two polarization with the spherical harmonics factors */
-double complex G23mode(const double f, const double t, const double complex Yfactorplus, const double complex Yfactorcross) {
+double complex G23mode(const LISAconstellation *variant, const double f, const double t, const double complex Yfactorplus, const double complex Yfactorcross) {
+
+  double phase=variant->ConstOmega*t + variant->ConstPhi0;
 
   for(int j=0; j<4; j++) {
-    cosarray[j] = cos((j+1) * Omega_SI * t);
-    sinarray[j] = sin((j+1) * Omega_SI * t);
+    cosarray[j] = cos((j+1)* phase);
+    sinarray[j] = sin((j+1)* phase);
   }
   double n1Pn1plus = coeffn1Hn1plusconst;
   double n1Pn1cross = coeffn1Hn1crossconst;
@@ -483,14 +565,16 @@ double complex G23mode(const double f, const double t, const double complex Yfac
     kp2plusp3 += cosarray[j] * coeffkp2plusp3cos[j] + sinarray[j] * coeffkp2plusp3sin[j];
   }
 
-  return I*PI*f*L_SI/C_SI * (n1Pn1plus*Yfactorplus + n1Pn1cross*Yfactorcross) * sinc( PI*f*L_SI/C_SI * (1.-kn1)) * cexp( I*PI*f*L_SI/C_SI * (1.+kp2plusp3) );
+  return I*PI*f*variant->ConstL/C_SI * (n1Pn1plus*Yfactorplus + n1Pn1cross*Yfactorcross) * sinc( PI*f*variant->ConstL/C_SI * (1.-kn1)) * cexp( I*PI*f*variant->ConstL/C_SI * (1.+kp2plusp3) );
 }
 /* Function evaluating G13, combining the two polarization with the spherical harmonics factors */
-double complex G13mode(const double f, const double t, const double complex Yfactorplus, const double complex Yfactorcross) {
+double complex G13mode(const LISAconstellation *variant, const double f, const double t, const double complex Yfactorplus, const double complex Yfactorcross) {
+
+  double phase=variant->ConstOmega*t + variant->ConstPhi0;
 
   for(int j=0; j<4; j++) {
-    cosarray[j] = cos((j+1) * Omega_SI * t);
-    sinarray[j] = sin((j+1) * Omega_SI * t);
+    cosarray[j] = cos((j+1) * phase);
+    sinarray[j] = sin((j+1) * phase);
   }
   double n2Pn2plus = coeffn2Hn2plusconst;
   double n2Pn2cross = coeffn2Hn2crossconst;
@@ -505,14 +589,16 @@ double complex G13mode(const double f, const double t, const double complex Yfac
     kp3plusp1 += cosarray[j] * coeffkp3plusp1cos[j] + sinarray[j] * coeffkp3plusp1sin[j];
   }
 
-  return I*PI*f*L_SI/C_SI * (n2Pn2plus*Yfactorplus + n2Pn2cross*Yfactorcross) * sinc( PI*f*L_SI/C_SI * (1.+kn2)) * cexp( I*PI*f*L_SI/C_SI * (1.+kp3plusp1) );
+  return I*PI*f*variant->ConstL/C_SI * (n2Pn2plus*Yfactorplus + n2Pn2cross*Yfactorcross) * sinc( PI*f*variant->ConstL/C_SI * (1.+kn2)) * cexp( I*PI*f*variant->ConstL/C_SI * (1.+kp3plusp1) );
 }
 /* Function evaluating G31, combining the two polarization with the spherical harmonics factors */
-double complex G31mode(const double f, const double t, const double complex Yfactorplus, const double complex Yfactorcross) {
+double complex G31mode(const LISAconstellation *variant, const double f, const double t, const double complex Yfactorplus, const double complex Yfactorcross) {
+
+  double phase=variant->ConstOmega*t + variant->ConstPhi0;
 
   for(int j=0; j<4; j++) {
-    cosarray[j] = cos((j+1) * Omega_SI * t);
-    sinarray[j] = sin((j+1) * Omega_SI * t);
+    cosarray[j] = cos((j+1) * phase);
+    sinarray[j] = sin((j+1) * phase);
   }
   double n2Pn2plus = coeffn2Hn2plusconst;
   double n2Pn2cross = coeffn2Hn2crossconst;
@@ -527,12 +613,13 @@ double complex G31mode(const double f, const double t, const double complex Yfac
     kp3plusp1 += cosarray[j] * coeffkp3plusp1cos[j] + sinarray[j] * coeffkp3plusp1sin[j];
   }
 
-  return I*PI*f*L_SI/C_SI * (n2Pn2plus*Yfactorplus + n2Pn2cross*Yfactorcross) * sinc( PI*f*L_SI/C_SI * (1.-kn2)) * cexp( I*PI*f*L_SI/C_SI * (1.+kp3plusp1) );
+  return I*PI*f*variant->ConstL/C_SI * (n2Pn2plus*Yfactorplus + n2Pn2cross*Yfactorcross) * sinc( PI*f*variant->ConstL/C_SI * (1.-kn2)) * cexp( I*PI*f*variant->ConstL/C_SI * (1.+kp3plusp1) );
 }
 
 /* Function evaluating all coefficients G12, G21, G23, G32, G31, G13, combining the two polarization with the spherical harmonics factors */
 /* Note: includes orbital delay */
 int EvaluateGABmode(
+  const LISAconstellation *variant,    /* Description of LISA variant */ 
   double complex* G12,                     /* Output for G12 */
   double complex* G21,                     /* Output for G21 */
   double complex* G23,                     /* Output for G23 */
@@ -546,10 +633,12 @@ int EvaluateGABmode(
   const int tagdelayR,                     /* Tag: when 1, include the phase term of the R-delay */
   const ResponseApproxtag responseapprox)  /* Tag to select possible low-f approximation level in FD response */
 {
+  double phase=variant->ConstOmega*t + variant->ConstPhi0;
+
   /* Precompute array of sine/cosine */
   for(int j=0; j<4; j++) {
-    cosarray[j] = cos((j+1) * Omega_SI * t);
-    sinarray[j] = sin((j+1) * Omega_SI * t);
+    cosarray[j] = cos((j+1) * phase);
+    sinarray[j] = sin((j+1) * phase);
   }
   /* Scalar products with k */
   double n1Pn1plus = coeffn1Hn1plusconst;
@@ -587,8 +676,8 @@ int EvaluateGABmode(
   double complex factn1Pn1 = n1Pn1plus*Yfactorplus + n1Pn1cross*Yfactorcross;
   double complex factn2Pn2 = n2Pn2plus*Yfactorplus + n2Pn2cross*Yfactorcross;
   double complex factn3Pn3 = n3Pn3plus*Yfactorplus + n3Pn3cross*Yfactorcross;
-  double prefactor = PI*f*L_SI/C_SI;
-  double prefactorR = 2*PI*f*R_SI/C_SI;
+  double prefactor = PI*f*variant->ConstL/C_SI;
+  double prefactorR = 2*PI*f*variant->OrbitR/C_SI;
   double complex factorcexp12 = cexp(I*prefactor * (1.+kp1plusp2));
   double complex factorcexp23 = cexp(I*prefactor * (1.+kp2plusp3));
   double complex factorcexp31 = cexp(I*prefactor * (1.+kp3plusp1));
@@ -637,6 +726,7 @@ int EvaluateGABmode(
 /* Note: in case only one channel is considered, amplitudes for channels 2 and 3 are simply set to 0 */
 /* (allows minimal changes from the old structure that assumed KTV A,E,T - but probably not optimal) */
 int EvaluateTDIfactor3Chan(
+  const LISAconstellation *variant,    /* Description of LISA variant */ 
   double complex* factor1,                       /* Output for factor for TDI channel 1 */
   double complex* factor2,                       /* Output for factor for TDI channel 2 */
   double complex* factor3,                       /* Output for factor for TDI channel 3 */
@@ -651,7 +741,7 @@ int EvaluateTDIfactor3Chan(
   const ResponseApproxtag responseapprox)        /* Tag to select possible low-f approximation level in FD response */
 {
   /* Notation: x=pifL, z=e^2ix*/
-  double x = PI*f*L_SI/C_SI;
+  double x = PI*f*variant->ConstL/C_SI;
   double complex z = cexp(2*I*x);
   /* In both lowf and lowf-L approximations, ignore z factors - consitently ignore all TDI delays */
   if((responseapprox==lowf)||(responseapprox==lowfL)) {
@@ -755,6 +845,7 @@ int EvaluateTDIfactor3Chan(
 /* The factors scaled out, parallel what is done for the noise functions */
 /* Note: in case only one channel is considered, factors for channels 2 and 3 are simply set to 0 */
 int ScaledTDIfactor3Chan(
+  const LISAconstellation *variant,    /* Description of LISA variant */ 
   double complex* factor1,                       /* Output for factor for TDI factor 1 */
   double complex* factor2,                       /* Output for factor for TDI factor 2 */
   double complex* factor3,                       /* Output for factor for TDI factor 3 */
@@ -762,7 +853,7 @@ int ScaledTDIfactor3Chan(
   const TDItag tditag)                           /* Selector for the TDI observables */
 {
   /* Notation: x=pifL */
-  double x = PI*f*L_SI/C_SI;
+  double x = PI*f*variant->ConstL/C_SI;
   switch(tditag) {
     /* First-generation rescaled TDI aet from X,Y,Z */
   case TDIAETXYZ:
@@ -844,6 +935,7 @@ int ScaledTDIfactor3Chan(
 /* Function restoring the factor that have been scaled out of the TDI observables */
 /* NOTE: the operation is made in-place, and the input is overwritten */
 int RestoreInPlaceScaledFactorTDI(
+  const LISAconstellation *variant,    /* Description of LISA variant */ 
   ListmodesCAmpPhaseFrequencySeries* listtdi,     /* Output/Input: list of mode contributions to TDI observable */
   TDItag tditag,                                  /* Tag selecting the TDI observable */
   int nchannel)                                   /* TDI channel number */
@@ -860,7 +952,7 @@ int RestoreInPlaceScaledFactorTDI(
     gsl_vector* ampreal = listelement->freqseries->amp_real;
     gsl_vector* ampimag = listelement->freqseries->amp_imag;
     for(int i=0; i<freq->size; i++) {
-      ScaledTDIfactor3Chan(&factor1, &factor2, &factor3, gsl_vector_get(freq, i), tditag);
+      ScaledTDIfactor3Chan(variant,&factor1, &factor2, &factor3, gsl_vector_get(freq, i), tditag);
       switch(nchannel) {
       case 1: factor = factor1; break;
       case 2: factor = factor2; break;
@@ -889,7 +981,7 @@ int RestoreInPlaceScaledFactorTDI(
 /*   const TDItag tditag)                           /\* Selector for the TDI observables *\/ */
 /* { */
 /*   /\* Notation: x=pifL, z = e^2ix*\/ */
-/*   double x = PI*f*L_SI/C_SI; */
+/*   double x = PI*f*variant->ConstL/C_SI; */
 /*   double complex z = cexp(2*I*x); */
 /*   double sin2x = sin(2*x); */
 /*   double complex commonfac; */
@@ -937,6 +1029,7 @@ int RestoreInPlaceScaledFactorTDI(
 
 /* Processing single mode in amp/phase form through orbital time delay */
 double hOTDAmpPhase(
+  const LISAconstellation *variant,    /* Description of LISA variant */   
   double* amp,                             /* Output: amplitude */
   double* phase,                           /* Output: phase */
   gsl_spline* splineamp,                   /* Input spline for TD mode amplitude */
@@ -945,10 +1038,11 @@ double hOTDAmpPhase(
   gsl_interp_accel* accelphase,            /* Accelerator for phase spline */
   const double t)                          /* Time */
 {
+  double tphase=variant->ConstOmega*t + variant->ConstPhi0;
   /* Precompute array of sine/cosine */
   for(int j=0; j<4; j++) {
-    cosarray[j] = cos((j+1) * Omega_SI * t);
-    sinarray[j] = sin((j+1) * Omega_SI * t);
+    cosarray[j] = cos((j+1) * tphase);
+    sinarray[j] = sin((j+1) * tphase);
   }
   /* Scalar product k.R */
   double kR = coeffkRconst;
@@ -956,7 +1050,7 @@ double hOTDAmpPhase(
     kR += cosarray[j] * coeffkRcos[j] + sinarray[j] * coeffkRsin[j];
   }
   /* Common factor and delay */
-  double delay = -(kR*R_SI)/C_SI;
+  double delay = -(kR*variant->OrbitR)/C_SI;
 
   /* Output result */
   *amp = gsl_spline_eval(splineamp, t+delay, accelamp);
@@ -966,6 +1060,7 @@ double hOTDAmpPhase(
 /* Functions evaluating yAB observables in time domain */
 /* Note: includes both h22 and h2m2 contributions, assuming planar orbits so that h2-2 = h22* */
 double y12LTDfromh22AmpPhase(
+  const LISAconstellation *variant,    /* Description of LISA variant */   
   gsl_spline* splineamp,                   /* Input spline for h22 TD amp */
   gsl_spline* splinephase,                 /* Input spline for h22 TD phase */
   gsl_interp_accel* accelamp,              /* Accelerator for amp spline */
@@ -975,9 +1070,10 @@ double y12LTDfromh22AmpPhase(
   const double t)                          /* Time */
 {
   /* Precompute array of sine/cosine */
+  double phase=variant->ConstOmega*t + variant->ConstPhi0;
   for(int j=0; j<4; j++) {
-    cosarray[j] = cos((j+1) * Omega_SI * t);
-    sinarray[j] = sin((j+1) * Omega_SI * t);
+    cosarray[j] = cos((j+1) * phase);
+    sinarray[j] = sin((j+1) * phase);
   }
   /* Scalar products with k */
   double n3Pn3plus = coeffn3Hn3plusconst;
@@ -998,8 +1094,8 @@ double y12LTDfromh22AmpPhase(
   /* Common factor and delay */
   double factorp = (1./(1.-kn3)) * 0.5*n3Pn3plus;
   double factorc = (1./(1.-kn3)) * 0.5*n3Pn3cross;
-  double firstdelay = -((kp1 + 1)*L_SI)/C_SI;
-  double seconddelay = -(kp2*L_SI)/C_SI;
+  double firstdelay = -((kp1 + 1)*variant->ConstL)/C_SI;
+  double seconddelay = -(kp2*variant->ConstL)/C_SI;
 
   /* Values of Y22*h22 + Y2-2*h2-2 at 1 and 2 with delays, and hplus, hcross */
   /* Note: includes both h22 and h2m2 contributions, assuming planar orbits so that h2-2 = h22* */
@@ -1023,6 +1119,7 @@ double y12LTDfromh22AmpPhase(
 
 /* Functions evaluating yAB observables in time domain */
 double y12TD(
+  const LISAconstellation *variant,    /* Description of LISA variant */   
   gsl_spline* splinehp,                    /* Input spline for TD hplus */
   gsl_spline* splinehc,                    /* Input spline for TD hcross */
   gsl_interp_accel* accelhp,               /* Accelerator for hp spline */
@@ -1030,9 +1127,10 @@ double y12TD(
   const double t)                          /* Time */
 {
   /* Precompute array of sine/cosine */
+  double phase=variant->ConstOmega*t + variant->ConstPhi0;
   for(int j=0; j<4; j++) {
-    cosarray[j] = cos((j+1) * Omega_SI * t);
-    sinarray[j] = sin((j+1) * Omega_SI * t);
+    cosarray[j] = cos((j+1) * phase);
+    sinarray[j] = sin((j+1) * phase);
   }
   /* Scalar products with k */
   double n3Pn3plus = coeffn3Hn3plusconst;
@@ -1055,14 +1153,16 @@ double y12TD(
   /* Common factor and delay */
   double factorp = (1./(1.-kn3)) * 0.5*n3Pn3plus;
   double factorc = (1./(1.-kn3)) * 0.5*n3Pn3cross;
-  double firstdelay = -(kR*R_SI + (kp1 + 1)*L_SI)/C_SI;
-  double seconddelay = -(kR*R_SI + kp2*L_SI)/C_SI;
+  double firstdelay = -(kR*variant->OrbitR + (kp1 + 1)*variant->ConstL)/C_SI;
+  double seconddelay = -(kR*variant->OrbitR + kp2*variant->ConstL)/C_SI;
 
   /* Result */
   double y12 = factorp*(gsl_spline_eval(splinehp, t+firstdelay, accelhp) - gsl_spline_eval(splinehp, t+seconddelay, accelhp)) + factorc*(gsl_spline_eval(splinehc, t+firstdelay, accelhc) - gsl_spline_eval(splinehc, t+seconddelay, accelhc));
   return y12;
 }
+
 double y21TD(
+  const LISAconstellation *variant,    /* Description of LISA variant */   
   gsl_spline* splinehp,                    /* Input spline for TD hplus */
   gsl_spline* splinehc,                    /* Input spline for TD hcross */
   gsl_interp_accel* accelhp,               /* Accelerator for hp spline */
@@ -1070,9 +1170,10 @@ double y21TD(
   const double t)                          /* Time */
 {
   /* Precompute array of sine/cosine */
+  double phase=variant->ConstOmega*t + variant->ConstPhi0;
   for(int j=0; j<4; j++) {
-    cosarray[j] = cos((j+1) * Omega_SI * t);
-    sinarray[j] = sin((j+1) * Omega_SI * t);
+    cosarray[j] = cos((j+1) * phase);
+    sinarray[j] = sin((j+1) * phase);
   }
   /* Scalar products with k */
   double n3Pn3plus = coeffn3Hn3plusconst;
@@ -1095,14 +1196,15 @@ double y21TD(
   /* Common factor and delay */
   double factorp = (1./(1.+kn3)) * 0.5*n3Pn3plus;
   double factorc = (1./(1.+kn3)) * 0.5*n3Pn3cross;
-  double firstdelay = -(kR*R_SI + (kp2 + 1)*L_SI)/C_SI;
-  double seconddelay = -(kR*R_SI + kp1*L_SI)/C_SI;
+  double firstdelay = -(kR*variant->OrbitR + (kp2 + 1)*variant->ConstL)/C_SI;
+  double seconddelay = -(kR*variant->OrbitR + kp1*variant->ConstL)/C_SI;
 
   /* Result */
   double y21 = factorp*(gsl_spline_eval(splinehp, t+firstdelay, accelhp) - gsl_spline_eval(splinehp, t+seconddelay, accelhp)) + factorc*(gsl_spline_eval(splinehc, t+firstdelay, accelhc) - gsl_spline_eval(splinehc, t+seconddelay, accelhc));
   return y21;
 }
 double y23TD(
+  const LISAconstellation *variant,    /* Description of LISA variant */   
   gsl_spline* splinehp,                    /* Input spline for TD hplus */
   gsl_spline* splinehc,                    /* Input spline for TD hcross */
   gsl_interp_accel* accelhp,               /* Accelerator for hp spline */
@@ -1110,9 +1212,10 @@ double y23TD(
   const double t)                          /* Time */
 {
   /* Precompute array of sine/cosine */
+  double phase=variant->ConstOmega*t + variant->ConstPhi0;
   for(int j=0; j<4; j++) {
-    cosarray[j] = cos((j+1) * Omega_SI * t);
-    sinarray[j] = sin((j+1) * Omega_SI * t);
+    cosarray[j] = cos((j+1) * phase);
+    sinarray[j] = sin((j+1) * phase);
   }
   /* Scalar products with k */
   double n1Pn1plus = coeffn1Hn1plusconst;
@@ -1135,14 +1238,15 @@ double y23TD(
   /* Common factor and delay */
   double factorp = (1./(1.-kn1)) * 0.5*n1Pn1plus;
   double factorc = (1./(1.-kn1)) * 0.5*n1Pn1cross;
-  double firstdelay = -(kR*R_SI + (kp2 + 1)*L_SI)/C_SI;
-  double seconddelay = -(kR*R_SI + kp3*L_SI)/C_SI;
+  double firstdelay = -(kR*variant->OrbitR + (kp2 + 1)*variant->ConstL)/C_SI;
+  double seconddelay = -(kR*variant->OrbitR + kp3*variant->ConstL)/C_SI;
 
   /* Result */
   double y23 = factorp*(gsl_spline_eval(splinehp, t+firstdelay, accelhp) - gsl_spline_eval(splinehp, t+seconddelay, accelhp)) + factorc*(gsl_spline_eval(splinehc, t+firstdelay, accelhc) - gsl_spline_eval(splinehc, t+seconddelay, accelhc));
   return y23;
 }
 double y32TD(
+  const LISAconstellation *variant,    /* Description of LISA variant */   
   gsl_spline* splinehp,                    /* Input spline for TD hplus */
   gsl_spline* splinehc,                    /* Input spline for TD hcross */
   gsl_interp_accel* accelhp,               /* Accelerator for hp spline */
@@ -1150,9 +1254,10 @@ double y32TD(
   const double t)                          /* Time */
 {
   /* Precompute array of sine/cosine */
+  double phase=variant->ConstOmega*t + variant->ConstPhi0;
   for(int j=0; j<4; j++) {
-    cosarray[j] = cos((j+1) * Omega_SI * t);
-    sinarray[j] = sin((j+1) * Omega_SI * t);
+    cosarray[j] = cos((j+1) * phase);
+    sinarray[j] = sin((j+1) * phase);
   }
   /* Scalar products with k */
   double n1Pn1plus = coeffn1Hn1plusconst;
@@ -1175,14 +1280,15 @@ double y32TD(
   /* Common factor and delay */
   double factorp = (1./(1.+kn1)) * 0.5*n1Pn1plus;
   double factorc = (1./(1.+kn1)) * 0.5*n1Pn1cross;
-  double firstdelay = -(kR*R_SI + (kp3 + 1)*L_SI)/C_SI;
-  double seconddelay = -(kR*R_SI + kp2*L_SI)/C_SI;
+  double firstdelay = -(kR*variant->OrbitR + (kp3 + 1)*variant->ConstL)/C_SI;
+  double seconddelay = -(kR*variant->OrbitR + kp2*variant->ConstL)/C_SI;
 
   /* Result */
   double y32 = factorp*(gsl_spline_eval(splinehp, t+firstdelay, accelhp) - gsl_spline_eval(splinehp, t+seconddelay, accelhp)) + factorc*(gsl_spline_eval(splinehc, t+firstdelay, accelhc) - gsl_spline_eval(splinehc, t+seconddelay, accelhc));
   return y32;
 }
 double y31TD(
+  const LISAconstellation *variant,    /* Description of LISA variant */   
   gsl_spline* splinehp,                    /* Input spline for TD hplus */
   gsl_spline* splinehc,                    /* Input spline for TD hcross */
   gsl_interp_accel* accelhp,               /* Accelerator for hp spline */
@@ -1190,9 +1296,10 @@ double y31TD(
   const double t)                          /* Time */
 {
   /* Precompute array of sine/cosine */
+  double phase=variant->ConstOmega*t + variant->ConstPhi0;
   for(int j=0; j<4; j++) {
-    cosarray[j] = cos((j+1) * Omega_SI * t);
-    sinarray[j] = sin((j+1) * Omega_SI * t);
+    cosarray[j] = cos((j+1) * phase);
+    sinarray[j] = sin((j+1) * phase);
   }
   /* Scalar products with k */
   double n2Pn2plus = coeffn2Hn2plusconst;
@@ -1215,14 +1322,15 @@ double y31TD(
   /* Common factor and delay */
   double factorp = (1./(1.-kn2)) * 0.5*n2Pn2plus;
   double factorc = (1./(1.-kn2)) * 0.5*n2Pn2cross;
-  double firstdelay = -(kR*R_SI + (kp3 + 1)*L_SI)/C_SI;
-  double seconddelay = -(kR*R_SI + kp1*L_SI)/C_SI;
+  double firstdelay = -(kR*variant->OrbitR + (kp3 + 1)*variant->ConstL)/C_SI;
+  double seconddelay = -(kR*variant->OrbitR + kp1*variant->ConstL)/C_SI;
 
   /* Result */
   double y31 = factorp*(gsl_spline_eval(splinehp, t+firstdelay, accelhp) - gsl_spline_eval(splinehp, t+seconddelay, accelhp)) + factorc*(gsl_spline_eval(splinehc, t+firstdelay, accelhc) - gsl_spline_eval(splinehc, t+seconddelay, accelhc));
   return y31;
 }
 double y13TD(
+  const LISAconstellation *variant,    /* Description of LISA variant */   
   gsl_spline* splinehp,                    /* Input spline for TD hplus */
   gsl_spline* splinehc,                    /* Input spline for TD hcross */
   gsl_interp_accel* accelhp,               /* Accelerator for hp spline */
@@ -1230,9 +1338,10 @@ double y13TD(
   const double t)                          /* Time */
 {
   /* Precompute array of sine/cosine */
+  double phase=variant->ConstOmega*t + variant->ConstPhi0;
   for(int j=0; j<4; j++) {
-    cosarray[j] = cos((j+1) * Omega_SI * t);
-    sinarray[j] = sin((j+1) * Omega_SI * t);
+    cosarray[j] = cos((j+1) * phase);
+    sinarray[j] = sin((j+1) * phase);
   }
   /* Scalar products with k */
   double n2Pn2plus = coeffn2Hn2plusconst;
@@ -1255,8 +1364,8 @@ double y13TD(
   /* Common factor and delay */
   double factorp = (1./(1.+kn2)) * 0.5*n2Pn2plus;
   double factorc = (1./(1.+kn2)) * 0.5*n2Pn2cross;
-  double firstdelay = -(kR*R_SI + (kp1 + 1)*L_SI)/C_SI;
-  double seconddelay = -(kR*R_SI + kp3*L_SI)/C_SI;
+  double firstdelay = -(kR*variant->OrbitR + (kp1 + 1)*variant->ConstL)/C_SI;
+  double seconddelay = -(kR*variant->OrbitR + kp3*variant->ConstL)/C_SI;
 
   /* Result */
   double y13 = factorp*(gsl_spline_eval(splinehp, t+firstdelay, accelhp) - gsl_spline_eval(splinehp, t+seconddelay, accelhp)) + factorc*(gsl_spline_eval(splinehc, t+firstdelay, accelhc) - gsl_spline_eval(splinehc, t+seconddelay, accelhc));
@@ -1265,6 +1374,7 @@ double y13TD(
 
 /**/
 int EvaluateTDIXYZTD(
+  const LISAconstellation *variant,    /* Description of LISA variant */   
   double* TDIX,                            /* Output: value of TDI observable X */
   double* TDIY,                            /* Output: value of TDI observable Y */
   double* TDIZ,                            /* Output: value of TDI observable Z */
@@ -1274,10 +1384,10 @@ int EvaluateTDIXYZTD(
   gsl_interp_accel* accelhc,               /* Accelerator for hc spline */
   const double t)                          /* Time */
 {
-  double armdelay = L_SI/C_SI;
-  double X = (y31TD(splinehp, splinehc, accelhp, accelhc, t) + y13TD(splinehp, splinehc, accelhp, accelhc, t - armdelay)) + (y21TD(splinehp, splinehc, accelhp, accelhc, t - 2*armdelay) + y12TD(splinehp, splinehc, accelhp, accelhc, t - 3*armdelay)) - (y21TD(splinehp, splinehc, accelhp, accelhc, t) + y12TD(splinehp, splinehc, accelhp, accelhc, t - armdelay)) - (y31TD(splinehp, splinehc, accelhp, accelhc, t - 2*armdelay) + y13TD(splinehp, splinehc, accelhp, accelhc, t - 3*armdelay));
-  double Y = (y12TD(splinehp, splinehc, accelhp, accelhc, t) + y21TD(splinehp, splinehc, accelhp, accelhc, t - armdelay)) + (y32TD(splinehp, splinehc, accelhp, accelhc, t - 2*armdelay) + y23TD(splinehp, splinehc, accelhp, accelhc, t - 3*armdelay)) - (y32TD(splinehp, splinehc, accelhp, accelhc, t) + y23TD(splinehp, splinehc, accelhp, accelhc, t - armdelay)) - (y12TD (splinehp, splinehc, accelhp, accelhc, t - 2*armdelay) + y21TD(splinehp, splinehc, accelhp, accelhc, t - 3*armdelay));
-  double Z = (y23TD(splinehp, splinehc, accelhp, accelhc, t) + y32TD(splinehp, splinehc, accelhp, accelhc, t - armdelay)) + (y13TD(splinehp, splinehc, accelhp, accelhc, t - 2*armdelay) + y31TD(splinehp, splinehc, accelhp, accelhc, t - 3*armdelay)) - (y13TD(splinehp, splinehc, accelhp, accelhc, t) + y31TD(splinehp, splinehc, accelhp, accelhc, t - armdelay)) - (y23TD(splinehp, splinehc, accelhp, accelhc, t - 2*armdelay) + y32TD(splinehp, splinehc, accelhp, accelhc, t - 3*armdelay));
+  double armdelay = variant->ConstL/C_SI;
+  double X = (y31TD(variant, splinehp, splinehc, accelhp, accelhc, t) + y13TD(variant, splinehp, splinehc, accelhp, accelhc, t - armdelay)) + (y21TD(variant, splinehp, splinehc, accelhp, accelhc, t - 2*armdelay) + y12TD(variant, splinehp, splinehc, accelhp, accelhc, t - 3*armdelay)) - (y21TD(variant, splinehp, splinehc, accelhp, accelhc, t) + y12TD(variant, splinehp, splinehc, accelhp, accelhc, t - armdelay)) - (y31TD(variant, splinehp, splinehc, accelhp, accelhc, t - 2*armdelay) + y13TD(variant, splinehp, splinehc, accelhp, accelhc, t - 3*armdelay));
+  double Y = (y12TD(variant, splinehp, splinehc, accelhp, accelhc, t) + y21TD(variant, splinehp, splinehc, accelhp, accelhc, t - armdelay)) + (y32TD(variant, splinehp, splinehc, accelhp, accelhc, t - 2*armdelay) + y23TD(variant, splinehp, splinehc, accelhp, accelhc, t - 3*armdelay)) - (y32TD(variant, splinehp, splinehc, accelhp, accelhc, t) + y23TD(variant, splinehp, splinehc, accelhp, accelhc, t - armdelay)) - (y12TD(variant, splinehp, splinehc, accelhp, accelhc, t - 2*armdelay) + y21TD(variant, splinehp, splinehc, accelhp, accelhc, t - 3*armdelay));
+  double Z = (y23TD(variant, splinehp, splinehc, accelhp, accelhc, t) + y32TD(variant, splinehp, splinehc, accelhp, accelhc, t - armdelay)) + (y13TD(variant, splinehp, splinehc, accelhp, accelhc, t - 2*armdelay) + y31TD(variant, splinehp, splinehc, accelhp, accelhc, t - 3*armdelay)) - (y13TD(variant, splinehp, splinehc, accelhp, accelhc, t) + y31TD(variant, splinehp, splinehc, accelhp, accelhc, t - armdelay)) - (y23TD(variant, splinehp, splinehc, accelhp, accelhc, t - 2*armdelay) + y32TD(variant, splinehp, splinehc, accelhp, accelhc, t - 3*armdelay));
 
   /* Output */
   *TDIX = X;
@@ -1289,6 +1399,7 @@ int EvaluateTDIXYZTD(
 
 /**/
 int EvaluateTDIAETXYZTD(
+  const LISAconstellation *variant,    /* Description of LISA variant */   
   double* TDIA,                            /* Output: value of TDI observable X */
   double* TDIE,                            /* Output: value of TDI observable Y */
   double* TDIT,                            /* Output: value of TDI observable Z */
@@ -1298,10 +1409,10 @@ int EvaluateTDIAETXYZTD(
   gsl_interp_accel* accelhc,               /* Accelerator for hc spline */
   const double t)                          /* Time */
 {
-  double armdelay = L_SI/C_SI;
-  double X = (y31TD(splinehp, splinehc, accelhp, accelhc, t) + y13TD(splinehp, splinehc, accelhp, accelhc, t - armdelay)) + (y21TD(splinehp, splinehc, accelhp, accelhc, t - 2*armdelay) + y12TD(splinehp, splinehc, accelhp, accelhc, t - 3*armdelay)) - (y21TD(splinehp, splinehc, accelhp, accelhc, t) + y12TD(splinehp, splinehc, accelhp, accelhc, t - armdelay)) - (y31TD(splinehp, splinehc, accelhp, accelhc, t - 2*armdelay) + y13TD(splinehp, splinehc, accelhp, accelhc, t - 3*armdelay));
-  double Y = (y12TD(splinehp, splinehc, accelhp, accelhc, t) + y21TD(splinehp, splinehc, accelhp, accelhc, t - armdelay)) + (y32TD(splinehp, splinehc, accelhp, accelhc, t - 2*armdelay) + y23TD(splinehp, splinehc, accelhp, accelhc, t - 3*armdelay)) - (y32TD(splinehp, splinehc, accelhp, accelhc, t) + y23TD(splinehp, splinehc, accelhp, accelhc, t - armdelay)) - (y12TD (splinehp, splinehc, accelhp, accelhc, t - 2*armdelay) + y21TD(splinehp, splinehc, accelhp, accelhc, t - 3*armdelay));
-  double Z = (y23TD(splinehp, splinehc, accelhp, accelhc, t) + y32TD(splinehp, splinehc, accelhp, accelhc, t - armdelay)) + (y13TD(splinehp, splinehc, accelhp, accelhc, t - 2*armdelay) + y31TD(splinehp, splinehc, accelhp, accelhc, t - 3*armdelay)) - (y13TD(splinehp, splinehc, accelhp, accelhc, t) + y31TD(splinehp, splinehc, accelhp, accelhc, t - armdelay)) - (y23TD(splinehp, splinehc, accelhp, accelhc, t - 2*armdelay) + y32TD(splinehp, splinehc, accelhp, accelhc, t - 3*armdelay));
+  double armdelay = variant->ConstL/C_SI;
+  double X = (y31TD(variant, splinehp, splinehc, accelhp, accelhc, t) + y13TD(variant, splinehp, splinehc, accelhp, accelhc, t - armdelay)) + (y21TD(variant, splinehp, splinehc, accelhp, accelhc, t - 2*armdelay) + y12TD(variant, splinehp, splinehc, accelhp, accelhc, t - 3*armdelay)) - (y21TD(variant, splinehp, splinehc, accelhp, accelhc, t) + y12TD(variant, splinehp, splinehc, accelhp, accelhc, t - armdelay)) - (y31TD(variant, splinehp, splinehc, accelhp, accelhc, t - 2*armdelay) + y13TD(variant, splinehp, splinehc, accelhp, accelhc, t - 3*armdelay));
+  double Y = (y12TD(variant, splinehp, splinehc, accelhp, accelhc, t) + y21TD(variant, splinehp, splinehc, accelhp, accelhc, t - armdelay)) + (y32TD(variant, splinehp, splinehc, accelhp, accelhc, t - 2*armdelay) + y23TD(variant, splinehp, splinehc, accelhp, accelhc, t - 3*armdelay)) - (y32TD(variant, splinehp, splinehc, accelhp, accelhc, t) + y23TD(variant, splinehp, splinehc, accelhp, accelhc, t - armdelay)) - (y12TD(variant, splinehp, splinehc, accelhp, accelhc, t - 2*armdelay) + y21TD(variant, splinehp, splinehc, accelhp, accelhc, t - 3*armdelay));
+  double Z = (y23TD(variant, splinehp, splinehc, accelhp, accelhc, t) + y32TD(variant, splinehp, splinehc, accelhp, accelhc, t - armdelay)) + (y13TD(variant, splinehp, splinehc, accelhp, accelhc, t - 2*armdelay) + y31TD(variant, splinehp, splinehc, accelhp, accelhc, t - 3*armdelay)) - (y13TD(variant, splinehp, splinehc, accelhp, accelhc, t) + y31TD(variant, splinehp, splinehc, accelhp, accelhc, t - armdelay)) - (y23TD(variant, splinehp, splinehc, accelhp, accelhc, t - 2*armdelay) + y32TD(variant, splinehp, splinehc, accelhp, accelhc, t - 3*armdelay));
 
   /* Output */
   *TDIA = 1./(2*sqrt(2)) * (Z-X);
@@ -1313,6 +1424,7 @@ int EvaluateTDIAETXYZTD(
 
 /**/
 int GenerateTDITD3Chanhphc(
+  const LISAconstellation *variant,    /* Description of LISA variant */   
   RealTimeSeries** TDI1,                   /* Output: real time series for TDI channel 1 */
   RealTimeSeries** TDI2,                   /* Output: real time series for TDI channel 2 */
   RealTimeSeries** TDI3,                   /* Output: real time series for TDI channel 3 */
@@ -1348,7 +1460,7 @@ int GenerateTDITD3Chanhphc(
   if(tditag==y12) {
     for(int i=nbptmargin; i<nbpt-nbptmargin; i++) {
       t = tval[i];
-      tdi1[i] = y12TD(splinehp, splinehc, accelhp, accelhc, t);
+      tdi1[i] = y12TD(variant, splinehp, splinehc, accelhp, accelhc, t);
       tdi2[i] = 0.;
       tdi3[i] = 0.;
     }
@@ -1356,7 +1468,7 @@ int GenerateTDITD3Chanhphc(
   else if(tditag==TDIXYZ) {
     for(int i=nbptmargin; i<nbpt-nbptmargin; i++) {
       t = tval[i];
-      EvaluateTDIXYZTD(&tdi1val, &tdi2val, &tdi3val, splinehp, splinehc, accelhp, accelhc, t);
+      EvaluateTDIXYZTD(variant, &tdi1val, &tdi2val, &tdi3val, splinehp, splinehc, accelhp, accelhc, t);
       tdi1[i] = tdi1val;
       tdi2[i] = tdi2val;
       tdi3[i] = tdi3val;
@@ -1365,7 +1477,7 @@ int GenerateTDITD3Chanhphc(
   else if(tditag==TDIAETXYZ) {
     for(int i=nbptmargin; i<nbpt-nbptmargin; i++) {
       t = tval[i];
-      EvaluateTDIAETXYZTD(&tdi1val, &tdi2val, &tdi3val, splinehp, splinehc, accelhp, accelhc, t);
+      EvaluateTDIAETXYZTD(variant, &tdi1val, &tdi2val, &tdi3val, splinehp, splinehc, accelhp, accelhc, t);
       tdi1[i] = tdi1val;
       tdi2[i] = tdi2val;
       tdi3[i] = tdi3val;
@@ -1380,6 +1492,7 @@ int GenerateTDITD3Chanhphc(
 
 /* Generate hO orbital-delayed for one mode contribution from amp, phase */
 int Generateh22TDO(
+  const LISAconstellation *variant,    /* Description of LISA variant */   
   AmpPhaseTimeSeries** h22tdO,             /* Output: amp/phase time series for h22TDO */
   gsl_spline* splineamp,                   /* Input spline for TD mode amplitude */
   gsl_spline* splinephase,                 /* Input spline for TD mode phase */
@@ -1404,7 +1517,7 @@ int Generateh22TDO(
   /* Loop over time samples */
   for(int i=nbptmargin; i<nbpt-nbptmargin; i++) {
     t = tval[i];
-    hOTDAmpPhase(&(amp[i]), &(phase[i]), splineamp, splinephase, accelamp, accelphase, t);
+    hOTDAmpPhase(variant,&(amp[i]), &(phase[i]), splineamp, splinephase, accelamp, accelphase, t);
   }
 
   return SUCCESS;
@@ -1414,6 +1527,7 @@ int Generateh22TDO(
 /* Note: includes both h22 and h2m2 contributions, assuming planar orbits so that h2-2 = h22* */
 /* BEWARE: this ignores the fact that processing through orbital delay breaks the h2-2 = h22* symmetry */
 int Generatey12LTD(
+  const LISAconstellation *variant,    /* Description of LISA variant */   
   RealTimeSeries** y12Ltd,                 /* Output: real time series for y12L */
   gsl_spline* splineamp,                   /* Input spline for h22 TD amplitude */
   gsl_spline* splinephase,                 /* Input spline for h22 TD phase */
@@ -1442,7 +1556,7 @@ int Generatey12LTD(
   /* Loop over time samples */
   for(int i=nbptmargin; i<nbpt-nbptmargin; i++) {
     t = tval[i];
-    y12val[i] = y12LTDfromh22AmpPhase(splineamp, splinephase, accelamp, accelphase, Y22, Y2m2, t);
+    y12val[i] = y12LTDfromh22AmpPhase(variant, splineamp, splinephase, accelamp, accelphase, Y22, Y2m2, t);
   }
 
   return SUCCESS;

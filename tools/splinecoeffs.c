@@ -256,3 +256,59 @@ void BuildListmodesCAmpPhaseSpline(
       }
     }
 }
+
+/* Note: for the spines in matrix form, the first column contains the x values, so the coeffs start at 1 */
+double EvalCubic(
+  gsl_vector* coeffs,  /**/
+  double eps,          /**/
+  double eps2,         /**/
+  double eps3)         /**/
+{
+  double p0 = gsl_vector_get(coeffs, 1);
+  double p1 = gsl_vector_get(coeffs, 2);
+  double p2 = gsl_vector_get(coeffs, 3);
+  double p3 = gsl_vector_get(coeffs, 4);
+  return p0 + p1*eps + p2*eps2 + p3*eps3;
+}
+
+double EvalQuad(
+  gsl_vector* coeffs,  /**/
+  double eps,          /**/
+  double eps2)         /**/
+{
+  double p0 = gsl_vector_get(coeffs, 1);
+  double p1 = gsl_vector_get(coeffs, 2);
+  double p2 = gsl_vector_get(coeffs, 3);
+  return p0 + p1*eps + p2*eps2;
+}
+
+
+void EvalCAmpPhaseSpline(
+  CAmpPhaseSpline* splines,                    //input
+  CAmpPhaseFrequencySeries* freqseries)  //in/out defines CAmpPhase from defined freqs  
+{
+  int ispline=0;
+  //printf("Enter: n=%i\n",freqseries->freq->size);
+  for(int i=0;i<freqseries->freq->size;i++){
+    double f=gsl_vector_get(freqseries->freq,i);
+    //printf(" f:%g < %g < %g\n",gsl_matrix_get(splines->quadspline_phase, 0, 0),f,gsl_matrix_get(splines->quadspline_phase, splines->quadspline_phase->size1-1, 0));
+
+    /* Adjust the index in the spline if necessary and compute */
+    while(gsl_matrix_get(splines->quadspline_phase, ispline+1, 0)<f)ispline++;
+   
+    double eps = f - gsl_matrix_get(splines->quadspline_phase, ispline, 0);
+    double eps2 = eps*eps;
+    double eps3 = eps2*eps;
+    gsl_vector_view coeffsampreal = gsl_matrix_row(splines->spline_amp_real, ispline);
+    gsl_vector_view coeffsampimag = gsl_matrix_row(splines->spline_amp_imag, ispline);
+    gsl_vector_view coeffsphase = gsl_matrix_row(splines->quadspline_phase, ispline);
+    double Ar = EvalCubic(&coeffsampreal.vector, eps, eps2, eps3);
+    double Ai = EvalCubic(&coeffsampimag.vector, eps, eps2, eps3);
+    double Ph = EvalQuad(&coeffsphase.vector, eps, eps2);
+  
+    gsl_vector_set(freqseries->amp_real,i,Ar);
+    gsl_vector_set(freqseries->amp_imag,i,Ai);
+    gsl_vector_set(freqseries->phase,i,Ph);
+  }
+};
+

@@ -32,7 +32,7 @@ void getphysparams(double *Cube, int *ndim) /* Note: ndim not used here */
       tRef = CubeToFlatPrior(Cube[i++], injectedparams->tRef - priorParams->deltaT, injectedparams->tRef + priorParams->deltaT);
     }
     else if(priorParams->sampletimeparam==tL) { /* Here tRef has the meaning of tL */
-      double injectedtL = tLfromtSSB(injectedparams->tRef, injectedparams->lambda, injectedparams->beta);
+      double injectedtL = tLfromtSSB(globalparams->variant, injectedparams->tRef, injectedparams->lambda, injectedparams->beta);
       tRef = CubeToFlatPrior(Cube[i++], injectedtL - priorParams->deltaT, injectedtL + priorParams->deltaT);
     }
   } else { /* fix_time, if defined, has the sense of a SSB time */
@@ -40,7 +40,7 @@ void getphysparams(double *Cube, int *ndim) /* Note: ndim not used here */
       tRef = priorParams->fix_time;
     }
     else if(priorParams->sampletimeparam==tL) { /* Set tRef (meaning tL) to the injected tL (with injected sky position) */
-      tRef = tLfromtSSB(priorParams->fix_time, injectedparams->lambda, injectedparams->beta);
+      tRef = tLfromtSSB(globalparams->variant, priorParams->fix_time, injectedparams->lambda, injectedparams->beta);
     }
   }
 
@@ -127,7 +127,7 @@ void getphysparams(double *Cube, int *ndim) /* Note: ndim not used here */
   /* Convert time - if sampling in tL, compute tSSB from tL using (approximate but 3e-6s accurate) inverse relation */
   /* The tRef we output has always the meaning of a SSB time */
   if(priorParams->sampletimeparam==tL) {
-    tRef = tSSBfromtL(tRef, lambda, beta);
+    tRef = tSSBfromtL(globalparams->variant, tRef, lambda, beta);
   }
 
   /* Note: here we output physical values in the cube (overwriting), and we keep the original order for physical parameters */

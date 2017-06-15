@@ -44,6 +44,7 @@
 /* Core function processing a signal (in the form of a list of modes) through the Fourier-domain LISA response, for given values of the inclination, position in the sky and polarization angle - here simplified version for just the y_21 observable */
 /* Older version of th FD response: two stages, first for the orbital delay (Bessel phase) and second for the constellation delay/modulation */
 int LISASimFDResponse21(
+  LISAconstellation *variant,                                 /* Provides specifics on the variant of LISA */
   struct tagListmodesCAmpPhaseFrequencySeries **list,  /* Input/Output: list of modes in Frequency-domain amplitude and phase form as produced by the ROM, and output after FD response processing */
   const double inclination,                                   /* Inclination of the source */
   const double lambda,                                        /* First angle for the position in the sky */
@@ -97,7 +98,7 @@ int LISASimFDResponse21(
     for(int j=0; j<len; j++) {
       f = gsl_vector_get(freq, j);
       tf =  gsl_spline_eval_deriv(spline_phi, f, accel_phi)/(2*PI);
-      bphi = -2*PI*f*R_SI/C_SI*cos(beta) * cos( Omega_SI*tf - lambda );
+      bphi = -2*PI*f*variant->OrbitR/C_SI*cos(beta) * cos( variant->OrbitOmega*tf + variant->OrbitPhi0 - lambda );
       camp = gsl_vector_get(amp_real, j) * cexp(I*bphi); /* Amplitude is real before applying this first delay */
       gsl_vector_set(amp_real, j, creal(camp));
       gsl_vector_set(amp_imag, j, cimag(camp));
@@ -113,7 +114,7 @@ int LISASimFDResponse21(
     for(int j=0; j<len; j++) {
       f = gsl_vector_get(freq, j);
       tf =  (gsl_spline_eval_deriv(spline_phi, f, accel_phi) + gsl_spline_eval_deriv(spline_besselphi, f, accel_besselphi))/(2*PI);
-      camp = G21mode(f, tf, Yfactorplus, Yfactorcross) * (gsl_vector_get(amp_real, j) + I * gsl_vector_get(amp_imag, j));
+      camp = G21mode(variant, f, tf, Yfactorplus, Yfactorcross) * (gsl_vector_get(amp_real, j) + I * gsl_vector_get(amp_imag, j));
       /**/
       gsl_vector_set(amp_real, j, creal(camp));
       gsl_vector_set(amp_imag, j, cimag(camp));
@@ -135,6 +136,7 @@ int LISASimFDResponse21(
 //WARNING: tRef is ignored for now in the response - i.e. set to 0
 /* Core function processing a signal (in the form of a list of modes) through the Fourier-domain LISA response, for given values of the inclination, position in the sky and polarization angle */
 int LISASimFDResponsey12(
+  LISAconstellation *variant,                                 /* Provides specifics on the variant of LISA */
   struct tagListmodesCAmpPhaseFrequencySeries **list,      /* Input: list of modes in Frequency-domain amplitude and phase form as produced by the ROM */
   struct tagListmodesCAmpPhaseFrequencySeries **listy12,   /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the y12 observable */
   const double torb,                                       /* Reference orbital time - tf as read from the hlm gives t-tinj, this arg allows to pass tinj to the response */
@@ -212,7 +214,7 @@ int LISASimFDResponsey12(
         tforb = torb;
       }
       //clock_t tbegGAB = clock();
-      EvaluateGABmode(&g12mode, &g21mode, &g23mode, &g32mode, &g31mode, &g13mode, f, tforb, Yfactorplus, Yfactorcross, 1, responseapprox); /* does include the R-delay term */
+	  EvaluateGABmode(variant, &g12mode, &g21mode, &g23mode, &g32mode, &g31mode, &g13mode, f, tforb, Yfactorplus, Yfactorcross, 1, responseapprox); /* does include the R-delay term */
       //clock_t tendGAB = clock();
       //timingcumulativeGABmode += (double) (tendGAB-tbegGAB) /CLOCKS_PER_SEC;
       /**/
@@ -246,6 +248,8 @@ int LISASimFDResponsey12(
 //WARNING: tRef is ignored for now in the response - i.e. set to 0
 /* Core function processing a signal (in the form of a list of modes) through the Fourier-domain LISA response, for given values of the inclination, position in the sky and polarization angle */
 int LISASimFDResponseTDI3Chan(
+  int tagtRefatLISA,                                          /* 0 to measure Tref from SSB arrival, 1 at LISA guiding center */
+  LISAconstellation *variant,                                 /* Provides specifics on the variant of LISA */
   struct tagListmodesCAmpPhaseFrequencySeries **list,      /* Input: list of modes in Frequency-domain amplitude and phase form as produced by the ROM */
   struct tagListmodesCAmpPhaseFrequencySeries **listTDI1,  /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the TDI channel 1 */
   struct tagListmodesCAmpPhaseFrequencySeries **listTDI2,  /* Output: list of contribution of each mode in Frequency-domain amplitude and phase form, in the TDI channel 2 */
@@ -458,18 +462,30 @@ int LISASimFDResponseTDI3Chan(
         tforb = torb;
       }
       //clock_t tbegGAB = clock();
-      EvaluateGABmode(&g12mode, &g21mode, &g23mode, &g32mode, &g31mode, &g13mode, f, tforb, Yfactorplus, Yfactorcross, 0, responseapprox); /* does not include the R-delay term */
+      EvaluateGABmode(variant, &g12mode, &g21mode, &g23mode, &g32mode, &g31mode, &g13mode, f, tforb, Yfactorplus, Yfactorcross, 0, responseapprox); /* does not include the R-delay term */
       //clock_t tendGAB = clock();
       //timingcumulativeGABmode += (double) (tendGAB-tbegGAB) /CLOCKS_PER_SEC;
       /**/
-      EvaluateTDIfactor3Chan(&factor1, &factor2, &factor3, g12mode, g21mode, g23mode, g32mode, g31mode, g13mode, f, tditag, responseapprox);
-
+      EvaluateTDIfactor3Chan(variant, &factor1, &factor2, &factor3, g12mode, g21mode, g23mode, g32mode, g31mode, g13mode, f, tditag, responseapprox);
       double complex amphtilde = gsl_vector_get(amp_real_resample, j) + I * gsl_vector_get(amp_imag_resample, j);
       camp1 = factor1 * amphtilde;
       camp2 = factor2 * amphtilde;
       camp3 = factor3 * amphtilde;
       /* Phase term due to the R-delay, including correction to first order */
-      double phaseRdelay = -2*PI*R_SI/C_SI*f*cos(beta)*cos(Omega_SI*tforb - lambda) * (1 + R_SI/C_SI*Omega_SI*sin(Omega_SI*tforb - lambda));
+      double phase=variant->OrbitOmega*tforb + variant->OrbitPhi0 - lambda;
+      double OrbitRoC=variant->OrbitR/C_SI;
+      //double phaseRdelay = -2*PI*R_SI/C_SI*f*cos(beta)*cos(Omega_SI*tf - lambda) * (1 + R_SI/C_SI*Omega_SI*sin(Omega_SI*tf - lambda));
+      double phaseRdelay;
+      if(tagtRefatLISA==0){//delay so that tinj=torb refers to arrival time at SSB
+	phaseRdelay = -2*PI*OrbitRoC*f*cos(beta)*cos(phase) * (1 + cos(beta)*OrbitRoC*variant->OrbitOmega*sin(phase));
+      } else {
+	//In this version we delay so that tinj=torb is relative to LISAcenter arrival time, so there is no orbital delay when tf = tinj
+	//If the original delay realized td=t+d(t), now we want td=t+d(t)-d(t0), that we we change d(t) -> d(t) + d(t0)
+	//Then with the approximation d(td)=d(t)(1-ddot(t)), 
+	double phase0=variant->OrbitOmega*torb+variant->OrbitPhi0-lambda;
+	phaseRdelay =
+	  - 2*PI*OrbitRoC*f*cos(beta)*( cos(phase) -cos(phase0) ) * (1 + cos(beta)*OrbitRoC*variant->OrbitOmega*sin(phase));
+      }
       if(responseapprox==lowf) { /* In the full low-f approximation, ignore this delay term */
         phaseRdelay = 0.;
       }

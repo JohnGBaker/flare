@@ -214,6 +214,10 @@ static int AllowedTDItag(TDItag tag) {
 
 int main(int argc, char *argv[])
 {
+  //These are set by command line in other programs but fixed here.
+  LISAconstellation *variant=&LISA2017;
+  int tRefatLISA=0;
+    
   double SNR = 0;
 
   /* Initialize structure for parameters */
@@ -268,13 +272,13 @@ int main(int argc, char *argv[])
       gsl_vector* noisevaluesE = gsl_vector_alloc(sizeE);
       gsl_vector* noisevaluesT = gsl_vector_alloc(sizeT);
       for(int i=0; i<sizeA; i++) {
-	       gsl_vector_set(noisevaluesA, i, SnAXYZNoRescaling(gsl_vector_get(TDI1FFTrestr->freq, i)));
+	gsl_vector_set(noisevaluesA, i, SnAXYZNoRescaling(variant, gsl_vector_get(TDI1FFTrestr->freq, i)));
       }
       for(int i=0; i<sizeE; i++) {
-	       gsl_vector_set(noisevaluesE, i, SnEXYZNoRescaling(gsl_vector_get(TDI2FFTrestr->freq, i)));
+	gsl_vector_set(noisevaluesE, i, SnEXYZNoRescaling(variant, gsl_vector_get(TDI2FFTrestr->freq, i)));
       }
       for(int i=0; i<sizeT; i++) {
-	       gsl_vector_set(noisevaluesT, i, SnTXYZNoRescaling(gsl_vector_get(TDI3FFTrestr->freq, i)));
+	gsl_vector_set(noisevaluesT, i, SnTXYZNoRescaling(variant, gsl_vector_get(TDI3FFTrestr->freq, i)));
       }
       double SNRA2 = FDOverlapReImvsReIm(TDI1FFTrestr, TDI1FFTrestr, noisevaluesA);
       double SNRE2 = FDOverlapReImvsReIm(TDI2FFTrestr, TDI2FFTrestr, noisevaluesE);

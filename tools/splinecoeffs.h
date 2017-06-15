@@ -63,6 +63,24 @@ void BuildListmodesCAmpPhaseSpline(
   ListmodesCAmpPhaseSpline** listspline,              /* Output: list of modes of splines in matrix form */
   ListmodesCAmpPhaseFrequencySeries* listh);          /* Input: list of modes in amplitude/phase form */
 
+/* Functions for spline evaluation */
+
+/* Note: for the spines in matrix form, the first column contains the x values, so the coeffs start at 1 */
+double EvalCubic(
+  gsl_vector* coeffs,  /**/
+  double eps,          /**/
+  double eps2,         /**/
+  double eps3);         /**/
+
+double EvalQuad(
+  gsl_vector* coeffs,  /**/
+  double eps,          /**/
+  double eps2);         /**/
+
+void EvalCAmpPhaseSpline(
+  CAmpPhaseSpline* splines,                     //input
+  CAmpPhaseFrequencySeries* freqseries);  //in/out defines CAmpPhase from defined freqs  
+
 #if 0
 { /* so that editors will match succeeding brace */
 #elif defined(__cplusplus)

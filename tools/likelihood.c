@@ -52,7 +52,7 @@
 void EvaluateNoise(
   gsl_vector* noisevalues,                         /* Output: vector of the noise values */
   gsl_vector* freq,                                /* Input: vector of frequencies on which to evaluate */
-  double (*Snoise)(double),                        /* Noise function */
+  ObjectFunction * Snoise,                  /* Noise function */
   double fLow,                                     /* Lower bound of the frequency window for the detector */
   double fHigh)                                    /* Upper bound of the frequency window for the detector */
 {
@@ -65,7 +65,7 @@ void EvaluateNoise(
   }
 
   /* Checking the boundary frequencies */
-  if( gsl_vector_get(freq, 0) - fLow < -1e-15 || gsl_vector_get(freq, nbpts-1) > fHigh ) {
+  if( gsl_vector_get(freq, 0) - fLow < -1e-15 || gsl_vector_get(freq, nbpts-1) > fHigh + 1e-15 ) {
     printf("Error: incompatible frequency range in EvaluateNoise.\n");
     printf("freq[0]=%g vs fLow=%g, freq[max]=%g vs fHigh=%g\n",gsl_vector_get(freq, 0), fLow, gsl_vector_get(freq, nbpts-1), fHigh);
     printf(" %i, %i\n",gsl_vector_get(freq, 0) < fLow , gsl_vector_get(freq, nbpts-1) > fHigh);
@@ -74,7 +74,7 @@ void EvaluateNoise(
   }
 
   for(int i=0; i<nbpts; i++) {
-    gsl_vector_set(noisevalues, i, Snoise(gsl_vector_get(freq, i)));
+    gsl_vector_set(noisevalues, i, ObjectFunctionCall(Snoise,gsl_vector_get(freq, i)));
   }
 }
 
@@ -168,7 +168,7 @@ static double TrapezeIntegrate(const gsl_vector* x, const gsl_vector* y)
 double FDSinglemodeLogLinearOverlap(
   struct tagCAmpPhaseFrequencySeries *freqseries1, /* First mode h1, in amplitude/phase form */
   struct tagCAmpPhaseFrequencySeries *freqseries2, /* Second mode h2, in amplitude/phase form */
-  double (*Snoise)(double),                        /* Noise function */
+  ObjectFunction * Snoise,                  /* Noise function */
   double fLow,                                     /* Lower bound of the frequency window for the detector */
   double fHigh)                                    /* Upper bound of the frequency window for the detector */
 {
@@ -226,7 +226,7 @@ double FDSinglemodeLogLinearOverlap(
     A2 = gsl_spline_eval(amp2real, f, accel_amp2real) + I*gsl_spline_eval(amp2imag, f, accel_amp2imag);
     phi1 = gsl_spline_eval(phase1, f, accel_phase1);
     phi2 = gsl_spline_eval(phase2, f, accel_phase2);
-    Sn = Snoise(f);
+    Sn = ObjectFunctionCall(Snoise,f);
     valuesvectordata[i] = 4.*creal(A1*conj(A2)*cexp(I*(phi1-phi2))/Sn);
   }
 
@@ -256,7 +256,7 @@ double FDSinglemodeLogLinearOverlap(
 double FDListmodesLogLinearOverlap(
   struct tagListmodesCAmpPhaseFrequencySeries *list1,    /* First waveform, list of modes in amplitude/phase form */
   struct tagListmodesCAmpPhaseFrequencySeries *list2,    /* Second waveform, list of modes in amplitude/phase form */
-  double (*Snoise)(double),                              /* Noise function */
+  ObjectFunction * Snoise,                        /* Noise function */
   double fLow,                                           /* Lower bound of the frequency window for the detector */
   double fHigh,                                          /* Upper bound of the frequency window for the detector */
   double fstartobs1,                                     /* Starting frequency for the 22 mode of wf 1 - as determined from a limited duration of the observation - set to 0 to ignore */
@@ -308,7 +308,7 @@ double FDListmodesLogLinearOverlap(
   double* himag2data = freqseries2->h_imag->data;
   double* freqdata = freqoverlap->data;
   for(int i=0; i<nbpts; i++) {
-    gsl_vector_set(valuesoverlap, i, 4.*creal( (hreal1data[i] + I*himag1data[i]) * (hreal2data[i] - I*himag2data[i]) / Snoise(freqdata[i])));
+    gsl_vector_set(valuesoverlap, i, 4.*creal( (hreal1data[i] + I*himag1data[i]) * (hreal2data[i] - I*himag2data[i]) / ObjectFunctionCall(Snoise,freqdata[i])));
   }
 
   /* Final trapeze integration */
@@ -410,7 +410,7 @@ double FDOverlapReImvsReIm(
 double FDSinglemodeWIPOverlap(
   struct tagCAmpPhaseFrequencySeries *freqseries1, /* First mode h1, in amplitude/phase form */
   struct tagCAmpPhaseFrequencySeries *freqseries2, /* Second mode h2, in amplitude/phase form */
-  double (*Snoise)(double),                        /* Noise function */
+  ObjectFunction * Snoise,                  /* Noise function */
   double fLow,                                     /* Lower bound of the frequency window for the detector */
   double fHigh)                                    /* Upper bound of the frequency window for the detector */
 {
@@ -440,7 +440,7 @@ double FDSinglemodeWIPOverlap(
 double FDListmodesWIPOverlap(
   struct tagListmodesCAmpPhaseFrequencySeries *listh1, /* First waveform, list of modes in amplitude/phase form */
   struct tagListmodesCAmpPhaseFrequencySeries *listh2, /* Second waveform, list of modes in amplitude/phase form */
-  double (*Snoise)(double),                            /* Noise function */
+  ObjectFunction * Snoise,                  /* Noise function */
   double fLow,                                         /* Lower bound of the frequency window for the detector */
   double fHigh,                                        /* Upper bound of the frequency window for the detector */
   double fstartobs1,                                   /* Starting frequency for the 22 mode of wf 1 - as determined from a limited duration of the observation - set to 0 to ignore */
@@ -472,7 +472,7 @@ double FDListmodesWIPOverlap(
 double FDListmodesOverlap(
   struct tagListmodesCAmpPhaseFrequencySeries *listh1, /* First mode h1, list of modes in amplitude/phase form */
   struct tagListmodesCAmpPhaseFrequencySeries *listh2, /* Second mode h2, list of modes in amplitude/phase form */
-  double (*Snoise)(double),                            /* Noise function */
+  ObjectFunction * Snoise,                  /* Noise function */
   double fLow,                                         /* Lower bound of the frequency window for the detector */
   double fHigh,                                        /* Upper bound of the frequency window for the detector */
   double fstartobs1,                                   /* Starting frequency for the 22 mode of wf 1 - as determined from a limited duration of the observation - set to 0 to ignore */
@@ -493,7 +493,7 @@ double FDListmodesOverlap(
 double FDLogLikelihood(
   struct tagListmodesCAmpPhaseFrequencySeries *lists,  /* Input: list of modes for the signal s, in Frequency-domain amplitude and phase form */
   struct tagListmodesCAmpPhaseFrequencySeries *listh,  /* Input: list of modes for the template, in Frequency-domain amplitude and phase form */
-  double (*Snoise)(double),                            /* Noise function */
+  ObjectFunction * Snoise,                      /* Noise function */
   double fLow,                                         /* Lower bound of the frequency window for the detector */
   double fHigh,                                        /* Upper bound of the frequency window for the detector */
   double ss,                                           /* Inner product (s|s), constant to be computed elsewhere and passed as an argument */
@@ -548,12 +548,14 @@ double FDLogLikelihoodReIm(
 
 /***************************** Functions for overlaps using amplitude/phase (Fresnel) ******************************/
 
-/* Note: for the spines in matrix form, the first column contains the x values, so the coeffs start at 1 */
+/*  Moved these to splinecoeffs.c
+ 
+// Note: for the spines in matrix form, the first column contains the x values, so the coeffs start at 1 
 static double EvalCubic(
-  gsl_vector* coeffs,  /**/
-  double eps,          /**/
-  double eps2,         /**/
-  double eps3)         /**/
+  gsl_vector* coeffs,  
+  double eps,          
+  double eps2,         
+  double eps3)         
 {
   double p0 = gsl_vector_get(coeffs, 1);
   double p1 = gsl_vector_get(coeffs, 2);
@@ -562,15 +564,16 @@ static double EvalCubic(
   return p0 + p1*eps + p2*eps2 + p3*eps3;
 }
 static double EvalQuad(
-  gsl_vector* coeffs,  /**/
-  double eps,          /**/
-  double eps2)         /**/
+  gsl_vector* coeffs,  
+  double eps,          
+  double eps2)         
 {
   double p0 = gsl_vector_get(coeffs, 1);
   double p1 = gsl_vector_get(coeffs, 2);
   double p2 = gsl_vector_get(coeffs, 3);
   return p0 + p1*eps + p2*eps2;
 }
+*/
 
 /* Quadratic Legendre approximation to compute values at minf and maxf when they do not fall on the grid of a freqseries, using the two first/last intervals */
 static double EstimateBoundaryLegendreQuad(
@@ -598,7 +601,7 @@ void ComputeIntegrandValues(
   CAmpPhaseFrequencySeries** integrand,     /* Output: values of the integrand on common frequencies (initialized in the function) */
   CAmpPhaseFrequencySeries* freqseries1,    /* Input: frequency series for wf 1 */
   CAmpPhaseSpline* splines2,                /* Input: splines in matrix form for wf 2 */
-  double (*Snoise)(double),                 /* Noise function */
+  ObjectFunction * Snoise,           /* Noise function */
   double fLow,                              /* Lower bound of the frequency - 0 to ignore */
   double fHigh)                             /* Upper bound of the frequency - 0 to ignore */
 {
@@ -681,7 +684,7 @@ void ComputeIntegrandValues(
     ampreal2 = EvalCubic(&coeffsampreal2.vector, eps, eps2, eps3);
     ampimag2 = EvalCubic(&coeffsampimag2.vector, eps, eps2, eps3);
     phase2 = EvalQuad(&coeffsphase2.vector, eps, eps2);
-    invSn = 1./Snoise(f);
+    invSn = 1./ObjectFunctionCall(Snoise,f);
     camp = invSn * (ampreal1 + I*ampimag1) * (ampreal2 - I*ampimag2);
     gsl_vector_set(freq, j, f);
     gsl_vector_set(ampreal, j, creal(camp));
@@ -692,7 +695,7 @@ void ComputeIntegrandValues(
 }
 
 /* Function computing the integrand values, combining three non-correlated channels */
-void ComputeIntegrandValues3Chan(
+int ComputeIntegrandValues3Chan(
   CAmpPhaseFrequencySeries** integrand,     /* Output: values of the integrand on common frequencies (initialized in the function) */
   CAmpPhaseFrequencySeries* freqseries1chan1,    /* Input: frequency series for wf 1, channel 1 */
   CAmpPhaseFrequencySeries* freqseries1chan2,    /* Input: frequency series for wf 1, channel 2 */
@@ -700,9 +703,9 @@ void ComputeIntegrandValues3Chan(
   CAmpPhaseSpline* splines2chan1,                /* Input: splines in matrix form for wf 2, channel 1 */
   CAmpPhaseSpline* splines2chan2,                /* Input: splines in matrix form for wf 2, channel 2 */
   CAmpPhaseSpline* splines2chan3,                /* Input: splines in matrix form for wf 2, channel 3 */
-  double (*Snoise1)(double),                /* Noise function for channel 1 */
-  double (*Snoise2)(double),                /* Noise function for channel 2 */
-  double (*Snoise3)(double),                /* Noise function for channel 3 */
+  ObjectFunction * Snoise1,                /* Noise function */
+  ObjectFunction * Snoise2,                /* Noise function */
+  ObjectFunction * Snoise3,                /* Noise function */
   double fLow,                              /* Lower bound of the frequency - 0 to ignore */
   double fHigh)                             /* Upper bound of the frequency - 0 to ignore */
 {
@@ -716,9 +719,9 @@ void ComputeIntegrandValues3Chan(
   double f2min = gsl_matrix_get(splines2chan1->quadspline_phase, 0, 0);
   double f2max = gsl_matrix_get(splines2chan1->quadspline_phase, splines2chan1->quadspline_phase->size1 - 1, 0);
   if((fLow>0 && (f1[imax1]<=fLow || f2max<=fLow)) || (fHigh>0 && (f1[imin1]>=fHigh || f2min>=fHigh))) {
-    printf("Error: range of frequencies incompatible with fLow, fHigh in IntegrandValues.\n");
-    printf("need both {%g, %g} > %g and both {%g, %g} < %g\n",f1[imax1],f2max,fLow,f1[imin1],f2min,fHigh);
-    exit(1);
+    //printf("Error: range of frequencies incompatible with fLow, fHigh in IntegrandValues.\n");
+    //printf("need both {%g, %g} > %g and both {%g, %g} < %g\n",f1[imax1],f2max,fLow,f1[imin1],f2min,fHigh);
+    return -1;
   }
   /* If starting outside, move the ends of the frequency series to be just outside the final minf and maxf */
   double minf = fmax(f1[imin1], f2min);
@@ -727,6 +730,10 @@ void ComputeIntegrandValues3Chan(
   if(fHigh>0) {maxf = fmin(fHigh, maxf);}
   while(f1[imin1+1]<=minf) imin1++;
   while(f1[imax1-1]>=maxf) imax1--;
+  //printf("imin=%i, imax=%i\n",imin1,imax1);
+  int nbpts = imax1 + 1 - imin1;
+  //printf("nbpts=%i\n",nbpts);
+  if(nbpts<4)return -1;
   /* Estimate locally values for freqseries1 at the boundaries - phase vectors assumed to be the same for channels 1,2,3 - this is still true now that the response-processed phase includes the signal phase + R-delay phase, which is the same for all channels */
   double areal1chan1minf = EstimateBoundaryLegendreQuad(freq1, freqseries1chan1->amp_real, imin1, minf);
   double aimag1chan1minf = EstimateBoundaryLegendreQuad(freq1, freqseries1chan1->amp_imag, imin1, minf);
@@ -744,7 +751,6 @@ void ComputeIntegrandValues3Chan(
   double phi1maxf = EstimateBoundaryLegendreQuad(freq1, freqseries1chan1->phase, imax1-2, maxf); /* Note the imax1-2 */
 
   /* Initializing output structure */
-  int nbpts = imax1 + 1 - imin1;
   CAmpPhaseFrequencySeries_Init(integrand, nbpts);
 
   /* Loop computing integrand values - phases are the same for chan1, chan2 and chan3 */
@@ -820,23 +826,33 @@ void ComputeIntegrandValues3Chan(
     ampreal2chan3 = EvalCubic(&coeffsampreal2chan3.vector, eps, eps2, eps3);
     ampimag2chan3 = EvalCubic(&coeffsampimag2chan3.vector, eps, eps2, eps3);
     phase2 = EvalQuad(&coeffsphase2.vector, eps, eps2);
-    invSnchan1 = 1./Snoise1(f);
-    invSnchan2 = 1./Snoise2(f);
-    invSnchan3 = 1./Snoise3(f);
+    invSnchan1 = 1./ObjectFunctionCall(Snoise1,f);
+    invSnchan2 = 1./ObjectFunctionCall(Snoise2,f);
+    invSnchan3 = 1./ObjectFunctionCall(Snoise3,f);
+
     camp = invSnchan1 * (ampreal1chan1 + I*ampimag1chan1) * (ampreal2chan1 - I*ampimag2chan1) + invSnchan2 * (ampreal1chan2 + I*ampimag1chan2) * (ampreal2chan2 - I*ampimag2chan2) + invSnchan3 * (ampreal1chan3 + I*ampimag1chan3) * (ampreal2chan3 - I*ampimag2chan3);
+    //dump
+    /*
+    printf("j=%i, im=%g\n a11=(%g,%g),  a12=(%g,%g),  a13=(%g,%g)\n a11=(%g,%g),  a12=(%g,%g),  a13=(%g,%g)\n",j,cimag(camp),
+	   ampreal1chan1,ampimag1chan1,ampreal1chan2,ampimag1chan2,ampreal1chan3,ampimag1chan3,
+	   ampreal2chan1,ampimag2chan1,ampreal2chan2,ampimag2chan2,ampreal2chan3,ampimag2chan3);
+    printf("in1=%g, in2=%g, in3=%g\n",invSnchan1,invSnchan2,invSnchan3);
+    */
+    
     gsl_vector_set(freq, j, f);
     gsl_vector_set(ampreal, j, creal(camp));
     gsl_vector_set(ampimag, j, cimag(camp));
     gsl_vector_set(phase, j, phase1 - phase2);
     j++;
   }
+  return 0;
 }
 
 /* Function computing the overlap (h1|h2) between two given modes in amplitude/phase form, one being already interpolated, for a given noise function - uses the amplitude/phase representation (Fresnel) */
 double FDSinglemodeFresnelOverlap(
   struct tagCAmpPhaseFrequencySeries *freqseries1, /* First mode h1, in amplitude/phase form */
   struct tagCAmpPhaseSpline *splines2,             /* Second mode h2, already interpolated in matrix form */
-  double (*Snoise)(double),                        /* Noise function */
+  ObjectFunction * Snoise,                  /* Noise function */
   double fLow,                                     /* Lower bound of the frequency window for the detector */
   double fHigh)                                    /* Upper bound of the frequency window for the detector */
 {
@@ -872,15 +888,15 @@ double FDSinglemodeFresnelOverlap3Chan(
   struct tagCAmpPhaseSpline *splines2chan1,             /* Second mode h2 for channel 1, already interpolated in matrix form */
   struct tagCAmpPhaseSpline *splines2chan2,             /* Second mode h2 for channel 2, already interpolated in matrix form */
   struct tagCAmpPhaseSpline *splines2chan3,             /* Second mode h2 for channel 3, already interpolated in matrix form */
-  double (*Snoisechan1)(double),                        /* Noise function for channel 1 */
-  double (*Snoisechan2)(double),                        /* Noise function for channel 2 */
-  double (*Snoisechan3)(double),                        /* Noise function for channel 3 */
+  ObjectFunction * Snoisechan1,                  /* Noise function */
+  ObjectFunction * Snoisechan2,                  /* Noise function */
+  ObjectFunction * Snoisechan3,                  /* Noise function */
   double fLow,                                      /* Lower bound of the frequency window for the detector */
   double fHigh)                                     /* Upper bound of the frequency window for the detector */
 {
   /* Computing the integrand values, on the frequency grid of h1 */
   CAmpPhaseFrequencySeries* integrand = NULL;
-  ComputeIntegrandValues3Chan(&integrand, freqseries1chan1, freqseries1chan2, freqseries1chan3, splines2chan1, splines2chan2, splines2chan3, Snoisechan1, Snoisechan2, Snoisechan3, fLow, fHigh);
+  if(0>ComputeIntegrandValues3Chan(&integrand, freqseries1chan1, freqseries1chan2, freqseries1chan3, splines2chan1, splines2chan2, splines2chan3, Snoisechan1, Snoisechan2, Snoisechan3, fLow, fHigh))return 0;//if allowed freq range does not exist, return 0 for overlap
 
   /* Rescaling the integrand */
   double scaling = 10./gsl_vector_get(integrand->freq, integrand->freq->size-1);
@@ -892,14 +908,15 @@ double FDSinglemodeFresnelOverlap3Chan(
   gsl_vector_scale(integrand->amp_real, 1./scaling);
   gsl_vector_scale(integrand->amp_imag, 1./scaling);
 
+  //dump
+  /*
+  for(int ii=0;ii<integrand->freq->size;ii++)
+    printf("ii=%i, f=%g, integrand = ( %g, %g, %g )\n",ii,gsl_vector_get(integrand->freq,ii),gsl_vector_get(integrand->amp_real,ii),gsl_vector_get(integrand->amp_imag,ii),gsl_vector_get(integrand->phase,ii));
+  */
+  
   /* Interpolating the integrand */
   CAmpPhaseSpline* integrandspline = NULL;
   BuildSplineCoeffs(&integrandspline, integrand);
-
-    //TEST
-    // Write_Text_Matrix("/Users/marsat/data/flare/test/testlnLlist_v2", "test_int_amp_real.txt", integrandspline->spline_amp_real);
-    // Write_Text_Matrix("/Users/marsat/data/flare/test/testlnLlist_v2", "test_int_amp_imag.txt", integrandspline->spline_amp_imag);
-    // Write_Text_Matrix("/Users/marsat/data/flare/test/testlnLlist_v2", "test_int_phase.txt", integrandspline->quadspline_phase);
 
   /* Computing the integral - including here the factor 4 and the real part */
   double overlap = 4.*creal(ComputeInt(integrandspline->spline_amp_real, integrandspline->spline_amp_imag, integrandspline->quadspline_phase));
@@ -916,7 +933,7 @@ double FDSinglemodeFresnelOverlap3Chan(
 double FDListmodesFresnelOverlap(
   struct tagListmodesCAmpPhaseFrequencySeries *listh1, /* First waveform, list of modes in amplitude/phase form */
   struct tagListmodesCAmpPhaseSpline *listsplines2,    /* Second waveform, list of modes already interpolated in matrix form */
-  double (*Snoise)(double),                            /* Noise function */
+  ObjectFunction * Snoise,                  /* Noise function */
   double fLow,                                         /* Lower bound of the frequency window for the detector */
   double fHigh,                                        /* Upper bound of the frequency window for the detector */
   double fstartobs1,                                   /* Starting frequency for the 22 mode of wf 1 - as determined from a limited duration of the observation - set to 0 to ignore */
@@ -950,9 +967,9 @@ double FDListmodesFresnelOverlap3Chan(
   struct tagListmodesCAmpPhaseSpline *listsplines2chan1,    /* Second waveform channel channel 1, list of modes already interpolated in matrix form */
   struct tagListmodesCAmpPhaseSpline *listsplines2chan2,    /* Second waveform channel channel 2, list of modes already interpolated in matrix form */
   struct tagListmodesCAmpPhaseSpline *listsplines2chan3,    /* Second waveform channel channel 3, list of modes already interpolated in matrix form */
-  double (*Snoise1)(double),                            /* Noise function for channel 1 */
-  double (*Snoise2)(double),                            /* Noise function for channel 2 */
-  double (*Snoise3)(double),                            /* Noise function for channel 3 */
+  ObjectFunction * Snoise1,                          /* Noise function for channel 1 */
+  ObjectFunction * Snoise2,                          /* Noise function for channel 1 */
+  ObjectFunction * Snoise3,                          /* Noise function for channel 1 */
   double fLow,                                          /* Lower bound of the frequency window for the detector */
   double fHigh,                                         /* Upper bound of the frequency window for the detector */
   double fstartobs1,                                    /* Starting frequency for the 22 mode of wf 1 - as determined from a limited duration of the observation - set to 0 to ignore */
@@ -982,3 +999,4 @@ double FDListmodesFresnelOverlap3Chan(
 
   return overlap;
 }
+

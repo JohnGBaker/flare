@@ -47,6 +47,15 @@ extern "C" {
 
 /* Type for real functions */
 typedef double (*RealFunctionPtr)(double);
+typedef double (*RealObjectFunctionPtr)(const void *, double);
+
+/* Type for real functions that reference an object */
+typedef struct tagObjectFunction
+{
+  const void * object;
+  RealObjectFunctionPtr function;
+} ObjectFunction ;
+double ObjectFunctionCall(const ObjectFunction*,double);
 
 /* Complex frequency series in amplitude and phase representation (for one mode) */
 typedef struct tagCAmpPhaseFrequencySeries

@@ -149,6 +149,7 @@ int main(int argc, char *argv[])
 {
   int ret;
 
+  LISAconstellation *variant=&LISA2017;
   /* Initialize structure for parameters */
   GenTDITDparams* params;
   params = (GenTDITDparams*) malloc(sizeof(GenTDITDparams));
@@ -182,7 +183,7 @@ int main(int argc, char *argv[])
 
     /* Here, hardcoded time margin that we will set to 0 on both sides, to avoid problems with delays extending past the input values */
     /* We take R/c as the maximum delay that can occur in the response, and adjust the margin accordingly */
-    double maxdelay = R_SI/C_SI;
+    double maxdelay = variant->OrbitR/C_SI;
     double deltat = gsl_vector_get(times, 1) - gsl_vector_get(times, 0);
     int nptmargin = 2 * (int)(maxdelay/deltat);
 
@@ -190,7 +191,7 @@ int main(int argc, char *argv[])
     RealTimeSeries* TDI1 = NULL;
     RealTimeSeries* TDI2 = NULL;
     RealTimeSeries* TDI3 = NULL;
-    GenerateTDITD3Chanhphc(&TDI1, &TDI2, &TDI3, spline_hp, spline_hc, accel_hp, accel_hc, times, nptmargin, params->tagtdi);
+    GenerateTDITD3Chanhphc(variant, &TDI1, &TDI2, &TDI3, spline_hp, spline_hc, accel_hp, accel_hc, times, nptmargin, params->tagtdi);
 
     /* Output */
     Write_TDITD(params->outdir, params->outfile, TDI1, TDI2, TDI3, params->binaryout);
@@ -215,14 +216,14 @@ int main(int argc, char *argv[])
 
     /* Here, hardcoded time margin that we will set to 0 on both sides, to avoid problems with delays extending past the input values */
     /* We take R/c as the maximum delay that can occur in the response, and adjust the margin accordingly */
-    double maxdelay = R_SI/C_SI;
+    double maxdelay = variant->OrbitR/C_SI;
     double deltat = gsl_vector_get(times, 1) - gsl_vector_get(times, 0);
     int nptmargin = 2 * (int)(maxdelay/deltat);
 
     if(params->tagtdi==delayO) {
       /* Evaluate orbital-delayed signal */
       AmpPhaseTimeSeries* h22tdO = NULL;
-      Generateh22TDO(&h22tdO, spline_amp, spline_phase, accel_amp, accel_phase, times, nptmargin);
+      Generateh22TDO(variant, &h22tdO, spline_amp, spline_phase, accel_amp, accel_phase, times, nptmargin);
 
       /* Output */
       Write_AmpPhaseTimeSeries(params->outdir, params->outfile, h22tdO, params->binaryout);
@@ -231,7 +232,7 @@ int main(int argc, char *argv[])
     else if(params->tagtdi==y12L) {
       /* Evaluate y12 signal - constellation response only, input assumed to be h22tdO already */
       RealTimeSeries* y12td = NULL;
-      Generatey12LTD(&y12td, spline_amp, spline_phase, accel_amp, accel_phase, times, params->inclination, params->phiRef, nptmargin);
+      Generatey12LTD(variant, &y12td, spline_amp, spline_phase, accel_amp, accel_phase, times, params->inclination, params->phiRef, nptmargin);
 
       /* Output */
       Write_RealTimeSeries(params->outdir, params->outfile, y12td, params->binaryout);
