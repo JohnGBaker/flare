@@ -58,19 +58,7 @@ def set_flare_flags(snr,params):
         flags+=" --nbmodeinj 1 --nbmodetemp 1" #for no higher modes in injection and template
     else:
         flags+=" --nbmodeinj 5 --nbmodetemp 5" #for no higher modes in injection and template
-    
-    if(snr>0):
-        flags+=" --snr "+str(snr)+" --rescale-distprior" #fixing SNR (rescales distance)
-    flags+=" --comp-min 1e5 --comp-max 1e8" #min/max for component mass prior ranges
-    flags+=" --logflat-massprior" #assume prior uniform in log of masses, rather than uniform for mass."
-    #flags+=" --mtot-min 8e5 --mtot-max 2e8 --q-max 11.98"  #additional prior limits on Mtot and q
-    flags+=" --mtot-min 1e4 --mtot-max 1e10 --q-max 11.98"  #additional prior limits on Mtot and q
-    #flags+=" --dist-min 5000. --dist-max 200e4 --distance 1e5"  #prior range for distances should verify range based on distances (in Mpc).
-    flags+=" --dist-min 1000. --dist-max 4e5"  #prior range for distances approx 0.2<z<33
-    flags+=" --flat-distprior" #by default us a flat prior on the distance rather than as R^2
-    flags+=" --variant "+LISAvariant #by default us a flat prior on the distance rather than as R^2
-    flags+=extra_flags  #Default is none, but can add at runtime...
-    #set parameter flags
+    #set parameter vals
     m1           = params[0]
     m2           = params[1]
     tRef         = params[2]
@@ -83,6 +71,24 @@ def set_flare_flags(snr,params):
     beta         = params[6]
     inc          = params[7]
     pol          = params[8]
+    #flags+=" --comp-min 1e5 --comp-max 1e8" #min/max for component mass prior ranges
+    #flags+=" --mtot-min 1e4 --mtot-max 1e10 "  #additional prior limits on Mtot and q
+    flags+=" --comp-min "+str(m2/3.)+" --comp-max "+str(m1*3.) #min/max factor of 3 for component mass prior ranges
+    flags+=" --mtot-min "+str((m1+m2)/10.)+" --mtot-max "+str((m1+m2)*10.)  #min/max factor of 10 for total mass
+    
+    if(snr>0):
+        flags+=" --snr "+str(snr)+" --rescale-distprior" #fixing SNR (rescales distance)
+    flags+=" --logflat-massprior" #assume prior uniform in log of masses, rather than uniform for mass."
+    #flags+=" --mtot-min 8e5 --mtot-max 2e8 --q-max 11.98"  #additional prior limits on Mtot and q
+    #flags+=" --mtot-min 1e4 --mtot-max 1e10 --q-max 11.98"  #additional prior limits on Mtot and q
+    flags+=" --q-max 11.98"  #additional prior limits on q
+    #flags+=" --dist-min 5000. --dist-max 200e4 --distance 1e5"  #prior range for distances should verify range based on distances (in Mpc).
+    #flags+=" --dist-min 1000. --dist-max 4e5"  #prior range for distances approx 0.2<z<33
+    flags+=" --dist-min 500. --dist-max 1.3e6"  #prior range for distances approx 0.1<z<100
+    flags+=" --flat-distprior" #by default us a flat prior on the distance rather than as R^2
+    flags+=" --variant "+LISAvariant #by default us a flat prior on the distance rather than as R^2
+    flags+=extra_flags  #Default is none, but can add at runtime...
+    #set parameter flags
     flags += " --phiRef "+str(phiRef)
     flags += " --m1 "+str(m1)
     flags += " --m2 "+str(m2)
@@ -116,8 +122,10 @@ def set_mcmc_flags(outroot,ptN):
     flags += " --pt_stop_evid_err=0.05" #may terminate earlier based on evidence criterion
     return flags
 
-def set_bambi_flags(outroot,nlive=4000):
-    flags  = " --nlive "+str(nlive)+" --tol 1.0 --mmodal --nclspar 2 --maxcls 10 --ztol -60 --seed"
+def set_bambi_flags(outroot,nlive=4000, tol=1.0, multimodal=True):
+    flags  = " --nlive "+str(nlive)+" --tol "+str(tol)
+    if(multimodal):flags += " --mmodal --nclspar 2 --maxcls 20 --ztol -60"
+    flags += " --seed"
     flags += " --outroot "+outroot
     return flags
 

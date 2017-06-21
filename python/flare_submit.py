@@ -107,6 +107,7 @@ def generate(system,argv,rcname=""):
     parser.add_argument('snr',help="SNR for the run",type=float)
     paramsgroup.add_argument('-p',help="List "+str(Npar)+" injection parameters for the run",nargs=Npar,type=float)
     paramsgroup.add_argument('-f',help="Provide filename with injection parameters")
+    parser.add_argument('-T',help="Specify BAMBI tol",type=float,default=1.0)
     parser.add_argument('-d',help="Run in debug mode",action="store_true")
     parser.add_argument('--mcmc',help="Run with ptmcmc instead of bambi",action="store_true")
     parser.add_argument('-n',help="Number of bambi-nodes or ptmcmc-threads to run on (default 1 node or "+str(procs_per_node)+" threads)",type=int,default=-1)
@@ -114,6 +115,7 @@ def generate(system,argv,rcname=""):
     parser.add_argument('-m',help="Time: addtional minutes to run (default 00)",type=int,default=0)
     parser.add_argument('--lm22',help="Use only the 22 mode.",action="store_true")
     parser.add_argument('--live',help="Set number of nested sampling live points for bambi default=4000).",default=4000)
+    parser.add_argument('--nonMultimodal',help="Do not use BAMBI multimodal option",action="store_true")
     parser.add_argument('-r',help="Restart label (default ""=no restart)",default="")
     parser.add_argument('--noFish',help="Skip initial fisher call",action="store_true")
     
@@ -164,7 +166,7 @@ def generate(system,argv,rcname=""):
         fthreads=procs_per_node-3
         threads=1
         exec_name   = "/LISAinference/LISAinference"
-        flags += flare.set_bambi_flags(name,nlive=args.live)
+        flags += flare.set_bambi_flags(name,nlive=args.live,tol=args.T,multimodal=(not args.nonMultimodal))
         if(len(args.r)>0):flags += " --resume"
         test_cmd=done_cmd
         new_res="1";
@@ -213,6 +215,8 @@ def generate(system,argv,rcname=""):
     script = script.replace("SCRIPT_NAME", log_name)
     #SCRIPT_SAMPLER
     tag=name+"-"+sampler
+    if(not args.T==1.0):tag+="-"+str(args.T)
+    if(args.nonMultimodal):tag+="-nonMM"
     script = script.replace("SCRIPT_TAG", tag)
     #SCRIPT_NODES
     script = script.replace("SCRIPT_NODES", str(nodes))

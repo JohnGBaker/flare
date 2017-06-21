@@ -48,14 +48,18 @@ def read_injection(file):
         lam=pars[5]
         beta=pars[6]
         inc=pars[7]
+        distance=pars[4]
         pars[4]=phi0
         pars[5]=inc
         pars[6]=lam
         pars[7]=beta
         while(not "snr_target:" in line): line=f.readline() #Skip stuff
-        snr=float(line.split()[1])
-        while(not "dist_resc:" in line): line=f.readline() #Skip stuff
-        pars[3]=float(line.split()[1])#replace original distance with the SNR-rescaled distance
+        snr=0
+        if(not re.search("nan",line)):
+            snr=float(line.split()[1])
+            while(not "dist_resc:" in line): line=f.readline() #Skip stuff
+            distance=float(line.split()[1])#replace original distance with the SNR-rescaled distance
+        pars[3]=distance
     return pars,snr
 
 #help(corner)
@@ -66,7 +70,8 @@ fishfiles=sys.argv[1+ncases:]
 for chainfile,fishfile in zip(chainfiles,fishfiles):
     print "Processing posterior in ",chainfile
     print " with Fisher results in ",fishfile
-    run=re.search("Run\d*",chainfile).group(0)
+    #run=re.search("Run\d*",chainfile).group(0)
+    run=os.path.basename(chainfile)
     if(None==re.search("lm22",chainfile)):modes=""
     else: modes=" (2-2 only)"
     if(None==re.search("nl8k",chainfile)):res=""
@@ -85,12 +90,14 @@ for chainfile,fishfile in zip(chainfiles,fishfiles):
     cov=readCovar(fishfile)
     pars,snr=read_injection(injfile)
     print "SNR=",snr
+    names=[r"$m_1$",r"$m_2$",r"$t_0$",r"$D$",r"$\phi_0$",r"$\iota$",r"$\lambda$",r"$\beta$",r"$\psi$"]
+    print "Injected pars=",dict(zip(names,pars))
     Npar=len(pars)
     data=np.loadtxt(chainfile,usecols=range(Npar))
-    names=[r"$m_1$",r"$m_2$",r"$t_0$",r"$D$",r"$\phi_0$",r"$\iota$",r"$\lambda$",r"$\beta$",r"$\psi$"]
     #Sylvain:Here crop down to a limited parameter set for a smaller plot
     #the overlaid text is added with the "annotate" commands below
-    istart=4;iend=7
+    print "data shape=",data.shape
+    istart=0;iend=9
     data=data[:,istart:iend]
     pars=pars[istart:iend]
     names=names[istart:iend]
