@@ -1,8 +1,11 @@
 import fcntl
 import os
+import os.path
 import sys
+import shutil
 import platform
 import argparse
+import flare
 import flare_submit
 import astropy.units as units
 from astropy.cosmology import Planck15 as cosmo
@@ -50,12 +53,13 @@ print "pass-through flags: '",extra_flags,"'"
 #The list will contain run_tag - status pairs
 #These are processed by get_next_tag, write_status
 #Status list  access is controlled so that only one process can access the file at a time. 
-tags = ["new","processing","submitted","running","need_restart","need_analysis","done"]
+#tags = ["new","processing","submitted","running","need_restart","need_analysis","done"]
 def read_file_data(fd):
     data=[]
     for line in fd:
         row=(line[:-1].split())
-        data.append(row)
+        if(len(row)>0):
+            data.append(row)
     return data
 
 def write_file_data(fd,data):
@@ -97,6 +101,7 @@ def get_next_tag(status_file,seek_status):
                 else:
                     time.sleep(0.1)
         data=read_file_data(fd)
+        print data
         vals=numpy.array(data)[:,1].tolist()
         found_status=""
         for val in vals:
@@ -138,11 +143,21 @@ def write_status(status_file,tag,new_status, expect=""):
         else: print "tag '"+tag+"' not found"
         fcntl.flock(fd,fcntl.LOCK_UN)
 
+def get_snr(tag):
+    p=read_tag(tag)
+    snr=-1
+    if("snr" in p["z"]):snr=float(p["z"][3:])
+    return snr
+
 def get_params_string(tag):
     p=read_tag(tag)
     mtot=float(p["M"])
     q=float(p["q"])
-    d=float(cosmo.luminosity_distance(float(p["z"]))/units.Mpc)
+    snr=0
+    if("snr" in p["z"]):
+        d=0;
+    else:
+        d=float(cosmo.luminosity_distance(float(p["z"]))/units.Mpc)
     inc=math.pi/float(p["inc"])
     m1=mtot/(1.0+1.0/q)
     m2=mtot/(1.0+q)
@@ -164,7 +179,7 @@ def get_code_flag(tag):
 
 def find_and_process(status_file,stat):
     #actions=["new","restart_at","needs_analysis"]
-    actions=["new","restart_at"]
+    actions=["new","restart_at","unpack","needFisher"]
     if(not stat in actions):
         print "Nothing defined for action: ",stat
         sys.exit("Quitting.")
@@ -173,7 +188,7 @@ def find_and_process(status_file,stat):
         print "processing tag=",tag
         if(stat==actions[0]):#new
             #first make the submission script file
-            argv=tag+" -1 "+get_code_flag(tag)+" -p "+get_params_string(tag)+" "+extra_flags
+            argv=tag+" "+str(get_snr(tag))+" "+get_code_flag(tag)+" -p "+get_params_string(tag)+" "+extra_flags
             argv=argv.split()
             subfile=flare_submit.generate(system,argv,status_file)
             print "*******  cwd=",os.getcwd();
@@ -183,7 +198,7 @@ def find_and_process(status_file,stat):
             if(no_wait_submit):write_status(status_file,tag,'submitted')
         elif(stat==actions[1]):
             restart_label=found[11:]
-            argv=tag+" -1 "+get_code_flag(tag)+" -p "+get_params_string(tag)+" "+extra_flags
+            argv=tag+" "+str(get_snr(tag))+" "+get_code_flag(tag)+" -p "+get_params_string(tag)+" "+extra_flags
             argv=argv.split()
             argv.append("-r="+restart_label)
             subfile=flare_submit.generate(system,argv,status_file)
@@ -193,6 +208,34 @@ def find_and_process(status_file,stat):
             subprocess.call(cmd,shell=True)
             print "R*******"
             if(no_wait_submit):write_status(status_file,tag,'restart_submitted')
+        elif(stat==actions[2]): #unpack sylvains runs
+            sourcedir="SylvainsRuns/"
+            #mkdir
+            dir=tag+"-sylvains_run"
+            if(not os.path.exists(dir)):
+                os.mkdir(dir)
+            shutil.copyfile(sourcedir+tag+"_post_equal_weights.dat",dir+"/"+tag+"post_equal_weights.dat")
+            shutil.copy(sourcedir+tag+"_params.txt",dir)
+            write_status(status_file,tag,actions[3])
+        elif(stat==actions[3]): #needs Fisher
+            #set up params 
+            dir=tag+"-sylvains_run"
+            parstring=get_params_string(tag)
+            params=[float(p) for p in parstring.split()]
+            print "params=",params
+            snr=get_snr(tag)
+            flags=flare.set_flare_flags(snr,params)
+            if(read_tag(tag)["modes"]=="lm2"):
+                flags+=" --nbmodeinj 1 --nbmodetemp 1" #for no higher modes in injection and template
+            fcmd   = flare.getFisherCommand(tag+"-Fisher")+" "+flags
+            fcmd = fcmd+" 1>"+tag+"-Fisher.out 2>&1 "
+            if(no_wait_submit):
+                fcmd = ". ${MODULESHOME}/init/sh;module load other/SSSO_Ana-PyD/SApd_2.4.0_py2.7;module purge;module load comp/intel-15.0.3.187 lib/mkl-15.0.3.187 mpi/impi-5.0.3.048;"+fcmd   #specific to discover environment, but expedient...
+            fcmd = "export ROM_DATA_PATH="+flare.flare_dir+"/"+flare.ROM_DATA_PATH+";"+fcmd
+            fcmd = "cd "+dir+";"+fcmd
+            print fcmd
+            subprocess.call(fcmd,shell=True)
+            write_status(status_file,tag,'done')
         else:
             print "No action to take for stat='",str(stat),"'"
         tag,found=get_next_tag(status_file,stat)
