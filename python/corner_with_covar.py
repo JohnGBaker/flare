@@ -390,6 +390,8 @@ def corner(xs, bins=20, range=None, weights=None, cov=None, color="k",
             #print("cov[ii],cov[ij],cov[jj],Cplus,Cminus:",cov[i,i],cov[i,j],cov[j,j],Cplus,Cminus)
             ang=-math.pi/4.
             root=cov[i,j]/math.sqrt(cov[i,i]*cov[j,j])
+            if(root>1):root=1
+            if(root<-1):root=-1
             acoeff=math.sqrt(1-root)
             bcoeff=math.sqrt(1+root)
             xcoeff=math.sqrt(cov[j,j])
