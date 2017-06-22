@@ -1216,8 +1216,62 @@ int LISAGenerateInjectionReIm(
 
 /* Log-Likelihood function */
 
+// Routines for simplified likelihood 22 mode, frozen LISA, lowf
+static double funcphiL(LISAParams *params) {
+  double MfROMmax22 = 0.14;
+  double fRef = MfROMmax22/((params->m1 + params->m2)*MTSUN_SI);
+  return -params->phiRef + PI*params->tRef*fRef;
+}
+static double funclambdaL(LISAParams *params) {
+  double lambd = params->lambda;
+  double beta = params->beta;
+  return -atan2(cos(beta)*cos(lambd)*cos(PI/3) + sin(beta)*sin(PI/3), cos(beta)*sin(lambd));
+}
+static double funcbetaL(LISAParams *params) {
+  double lambd = params->lambda;
+  double beta = params->beta;
+  return -asin(cos(beta)*cos(lambd)*sin(PI/3) - sin(beta)*cos(PI/3));
+}
+static double funcpsiL(LISAParams *params) {
+  double lambd = params->lambda;
+  double beta = params->beta;
+  double psi = params->polarization;
+  return atan2(cos(PI/3)*cos(beta)*sin(psi) - sin(PI/3)*(sin(lambd)*cos(psi) - cos(lambd)*sin(beta)*sin(psi)), cos(PI/3)*cos(beta)*cos(psi) + sin(PI/3)*(sin(lambd)*sin(psi) + cos(lambd)*sin(beta)*cos(psi)));
+}
+static double complex funcsa(double d, double phi, double inc, double lambd, double beta, double psi) {
+  double complex Daplus = I*3./4 * (3 - cos(2*beta)) * cos(2*lambd - PI/3);
+  double complex Dacross = I*3*sin(beta) * sin(2*lambd - PI/3);
+  double complex a22 = 1./d*1./2 * sqrt(5/PI) * pow(cos(inc/2), 4) * cexp(2.*I*(-phi-psi)) * 1./2*(Daplus + I*Dacross);
+  double complex a2m2 = 1./d*1./2 * sqrt(5/PI) * pow(sin(inc/2), 4) * cexp(2.*I*(-phi+psi)) * 1./2*(Daplus - I*Dacross);
+  return a22 + a2m2;
+}
+static double complex funcse(double d, double phi, double inc, double lambd, double beta, double psi) {
+  double complex Deplus = -I*3./4 * (3 - cos(2*beta)) * sin(2*lambd - PI/3);
+  double complex Decross = I*3*sin(beta) * cos(2*lambd - PI/3);
+  double complex e22 = 1./d*1./2 * sqrt(5/PI) * pow(cos(inc/2), 4) * cexp(2.*I*(-phi-psi)) * 1./2*(Deplus + I*Decross);
+  double complex e2m2 = 1./d*1./2 * sqrt(5/PI) * pow(sin(inc/2), 4) * cexp(2.*I*(-phi+psi)) * 1./2*(Deplus - I*Decross);
+  return e22 + e2m2;
+}
+
 double CalculateLogLCAmpPhase(LISAParams *params, LISAInjectionCAmpPhase* injection)
 {
+  //TESTING
+  //Simple likelihood for runcan 22 mode, frozen LISA, lowf, snr 200
+  //normalization factor and injection values sainj, seinj hardcoded - read from Mathematica
+  // double factor = 216147.866077;
+  // double complex sainj = 0.33687296665053773 + I*0.087978055005482114;
+  // double complex seinj = -0.12737105239204741 + I*0.21820079314765678;
+  // double phiL = funcphiL(params);
+  // double lambdL = funclambdaL(params);
+  // double betaL = funcbetaL(params);
+  // double psiL = funcpsiL(params);
+  // double inc = params->inclination;
+  // double d = params->distance / injectedparams->distance;
+  // double complex sa = funcsa(d, phiL, inc, lambdL, betaL, psiL);
+  // double complex se = funcse(d, phiL, inc, lambdL, betaL, psiL);
+  // double simplelogL = -1./2 * factor * (pow(cabs(sa - sainj), 2) + pow(cabs(se - seinj), 2));
+  // return simplelogL;
+
   double logL = -DBL_MAX;
   int ret;
   /* Generating the signal in the three detectors for the input parameters */
