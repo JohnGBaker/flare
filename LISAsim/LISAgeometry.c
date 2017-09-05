@@ -473,7 +473,8 @@ void SetCoeffsG(const double lambda, const double beta, const double psi) {
 /* Conventions changed: now MLDC conventions */
 
 /* Function evaluating G21, combining the two polarization with the spherical harmonics factors */
-double complex G21mode(const LISAconstellation *variant, const double f, const double t, const double complex Yfactorplus, const double complex Yfactorcross) {
+double complex G21mode(const LISAconstellation *variant, const double f, const double t, const double complex Yfactorplus, const double complex Yfactorcross)
+{
 
   double phase=variant->ConstOmega*t + variant->ConstPhi0;
 
@@ -496,7 +497,8 @@ double complex G21mode(const LISAconstellation *variant, const double f, const d
   return I*PI*f*variant->ConstL/C_SI * (n3Pn3plus*Yfactorplus + n3Pn3cross*Yfactorcross) * sinc( PI*f*variant->ConstL/C_SI * (1.+kn3)) * cexp( I*PI*f*variant->ConstL/C_SI * (1.+kp1plusp2) );
 }
 /* Function evaluating G12, combining the two polarization with the spherical harmonics factors */
-double complex G12mode(const LISAconstellation *variant, const double f, const double t, const double complex Yfactorplus, const double complex Yfactorcross) {
+double complex G12mode(const LISAconstellation *variant, const double f, const double t, const double complex Yfactorplus, const double complex Yfactorcross)
+{
 
   double phase=variant->ConstOmega*t + variant->ConstPhi0;
 
@@ -520,7 +522,8 @@ double complex G12mode(const LISAconstellation *variant, const double f, const d
   return I*PI*f*variant->ConstL/C_SI * (n3Pn3plus*Yfactorplus + n3Pn3cross*Yfactorcross) * sinc( PI*f*variant->ConstL/C_SI * (1.-kn3)) * cexp( I*PI*f*variant->ConstL/C_SI * (1.+kp1plusp2) );
 }
 /* Function evaluating G32, combining the two polarization with the spherical harmonics factors */
-double complex G32mode(const LISAconstellation *variant, const double f, const double t, const double complex Yfactorplus, const double complex Yfactorcross) {
+double complex G32mode(const LISAconstellation *variant, const double f, const double t, const double complex Yfactorplus, const double complex Yfactorcross)
+{
 
   double phase=variant->ConstOmega*t + variant->ConstPhi0;
 
@@ -544,7 +547,8 @@ double complex G32mode(const LISAconstellation *variant, const double f, const d
   return I*PI*f*variant->ConstL/C_SI * (n1Pn1plus*Yfactorplus + n1Pn1cross*Yfactorcross) * sinc( PI*f*variant->ConstL/C_SI * (1.+kn1)) * cexp( I*PI*f*variant->ConstL/C_SI * (1.+kp2plusp3) );
 }
 /* Function evaluating G23, combining the two polarization with the spherical harmonics factors */
-double complex G23mode(const LISAconstellation *variant, const double f, const double t, const double complex Yfactorplus, const double complex Yfactorcross) {
+double complex G23mode(const LISAconstellation *variant, const double f, const double t, const double complex Yfactorplus, const double complex Yfactorcross)
+{
 
   double phase=variant->ConstOmega*t + variant->ConstPhi0;
 
@@ -568,7 +572,8 @@ double complex G23mode(const LISAconstellation *variant, const double f, const d
   return I*PI*f*variant->ConstL/C_SI * (n1Pn1plus*Yfactorplus + n1Pn1cross*Yfactorcross) * sinc( PI*f*variant->ConstL/C_SI * (1.-kn1)) * cexp( I*PI*f*variant->ConstL/C_SI * (1.+kp2plusp3) );
 }
 /* Function evaluating G13, combining the two polarization with the spherical harmonics factors */
-double complex G13mode(const LISAconstellation *variant, const double f, const double t, const double complex Yfactorplus, const double complex Yfactorcross) {
+double complex G13mode(const LISAconstellation *variant, const double f, const double t, const double complex Yfactorplus, const double complex Yfactorcross)
+{
 
   double phase=variant->ConstOmega*t + variant->ConstPhi0;
 
@@ -592,7 +597,8 @@ double complex G13mode(const LISAconstellation *variant, const double f, const d
   return I*PI*f*variant->ConstL/C_SI * (n2Pn2plus*Yfactorplus + n2Pn2cross*Yfactorcross) * sinc( PI*f*variant->ConstL/C_SI * (1.+kn2)) * cexp( I*PI*f*variant->ConstL/C_SI * (1.+kp3plusp1) );
 }
 /* Function evaluating G31, combining the two polarization with the spherical harmonics factors */
-double complex G31mode(const LISAconstellation *variant, const double f, const double t, const double complex Yfactorplus, const double complex Yfactorcross) {
+double complex G31mode(const LISAconstellation *variant, const double f, const double t, const double complex Yfactorplus, const double complex Yfactorcross)
+{
 
   double phase=variant->ConstOmega*t + variant->ConstPhi0;
 
@@ -619,7 +625,7 @@ double complex G31mode(const LISAconstellation *variant, const double f, const d
 /* Function evaluating all coefficients G12, G21, G23, G32, G31, G13, combining the two polarization with the spherical harmonics factors */
 /* Note: includes orbital delay */
 int EvaluateGABmode(
-  const LISAconstellation *variant,    /* Description of LISA variant */ 
+  const LISAconstellation *variant,    /* Description of LISA variant */
   double complex* G12,                     /* Output for G12 */
   double complex* G21,                     /* Output for G21 */
   double complex* G23,                     /* Output for G23 */
@@ -726,7 +732,7 @@ int EvaluateGABmode(
 /* Note: in case only one channel is considered, amplitudes for channels 2 and 3 are simply set to 0 */
 /* (allows minimal changes from the old structure that assumed KTV A,E,T - but probably not optimal) */
 int EvaluateTDIfactor3Chan(
-  const LISAconstellation *variant,    /* Description of LISA variant */ 
+  const LISAconstellation *variant,    /* Description of LISA variant */
   double complex* factor1,                       /* Output for factor for TDI channel 1 */
   double complex* factor2,                       /* Output for factor for TDI channel 2 */
   double complex* factor3,                       /* Output for factor for TDI channel 3 */
@@ -845,7 +851,7 @@ int EvaluateTDIfactor3Chan(
 /* The factors scaled out, parallel what is done for the noise functions */
 /* Note: in case only one channel is considered, factors for channels 2 and 3 are simply set to 0 */
 int ScaledTDIfactor3Chan(
-  const LISAconstellation *variant,    /* Description of LISA variant */ 
+  const LISAconstellation *variant,    /* Description of LISA variant */
   double complex* factor1,                       /* Output for factor for TDI factor 1 */
   double complex* factor2,                       /* Output for factor for TDI factor 2 */
   double complex* factor3,                       /* Output for factor for TDI factor 3 */
@@ -935,7 +941,7 @@ int ScaledTDIfactor3Chan(
 /* Function restoring the factor that have been scaled out of the TDI observables */
 /* NOTE: the operation is made in-place, and the input is overwritten */
 int RestoreInPlaceScaledFactorTDI(
-  const LISAconstellation *variant,    /* Description of LISA variant */ 
+  const LISAconstellation *variant,    /* Description of LISA variant */
   ListmodesCAmpPhaseFrequencySeries* listtdi,     /* Output/Input: list of mode contributions to TDI observable */
   TDItag tditag,                                  /* Tag selecting the TDI observable */
   int nchannel)                                   /* TDI channel number */
@@ -1029,7 +1035,7 @@ int RestoreInPlaceScaledFactorTDI(
 
 /* Processing single mode in amp/phase form through orbital time delay */
 double hOTDAmpPhase(
-  const LISAconstellation *variant,    /* Description of LISA variant */   
+  const LISAconstellation *variant,    /* Description of LISA variant */
   double* amp,                             /* Output: amplitude */
   double* phase,                           /* Output: phase */
   gsl_spline* splineamp,                   /* Input spline for TD mode amplitude */
@@ -1060,7 +1066,7 @@ double hOTDAmpPhase(
 /* Functions evaluating yAB observables in time domain */
 /* Note: includes both h22 and h2m2 contributions, assuming planar orbits so that h2-2 = h22* */
 double y12LTDfromh22AmpPhase(
-  const LISAconstellation *variant,    /* Description of LISA variant */   
+  const LISAconstellation *variant,    /* Description of LISA variant */
   gsl_spline* splineamp,                   /* Input spline for h22 TD amp */
   gsl_spline* splinephase,                 /* Input spline for h22 TD phase */
   gsl_interp_accel* accelamp,              /* Accelerator for amp spline */
@@ -1119,7 +1125,7 @@ double y12LTDfromh22AmpPhase(
 
 /* Functions evaluating yAB observables in time domain */
 double y12TD(
-  const LISAconstellation *variant,    /* Description of LISA variant */   
+  const LISAconstellation *variant,    /* Description of LISA variant */
   gsl_spline* splinehp,                    /* Input spline for TD hplus */
   gsl_spline* splinehc,                    /* Input spline for TD hcross */
   gsl_interp_accel* accelhp,               /* Accelerator for hp spline */
@@ -1162,7 +1168,7 @@ double y12TD(
 }
 
 double y21TD(
-  const LISAconstellation *variant,    /* Description of LISA variant */   
+  const LISAconstellation *variant,    /* Description of LISA variant */
   gsl_spline* splinehp,                    /* Input spline for TD hplus */
   gsl_spline* splinehc,                    /* Input spline for TD hcross */
   gsl_interp_accel* accelhp,               /* Accelerator for hp spline */
@@ -1204,7 +1210,7 @@ double y21TD(
   return y21;
 }
 double y23TD(
-  const LISAconstellation *variant,    /* Description of LISA variant */   
+  const LISAconstellation *variant,    /* Description of LISA variant */
   gsl_spline* splinehp,                    /* Input spline for TD hplus */
   gsl_spline* splinehc,                    /* Input spline for TD hcross */
   gsl_interp_accel* accelhp,               /* Accelerator for hp spline */
@@ -1246,7 +1252,7 @@ double y23TD(
   return y23;
 }
 double y32TD(
-  const LISAconstellation *variant,    /* Description of LISA variant */   
+  const LISAconstellation *variant,    /* Description of LISA variant */
   gsl_spline* splinehp,                    /* Input spline for TD hplus */
   gsl_spline* splinehc,                    /* Input spline for TD hcross */
   gsl_interp_accel* accelhp,               /* Accelerator for hp spline */
@@ -1288,7 +1294,7 @@ double y32TD(
   return y32;
 }
 double y31TD(
-  const LISAconstellation *variant,    /* Description of LISA variant */   
+  const LISAconstellation *variant,    /* Description of LISA variant */
   gsl_spline* splinehp,                    /* Input spline for TD hplus */
   gsl_spline* splinehc,                    /* Input spline for TD hcross */
   gsl_interp_accel* accelhp,               /* Accelerator for hp spline */
@@ -1330,7 +1336,7 @@ double y31TD(
   return y31;
 }
 double y13TD(
-  const LISAconstellation *variant,    /* Description of LISA variant */   
+  const LISAconstellation *variant,    /* Description of LISA variant */
   gsl_spline* splinehp,                    /* Input spline for TD hplus */
   gsl_spline* splinehc,                    /* Input spline for TD hcross */
   gsl_interp_accel* accelhp,               /* Accelerator for hp spline */
@@ -1374,7 +1380,7 @@ double y13TD(
 
 /**/
 int EvaluateTDIXYZTD(
-  const LISAconstellation *variant,    /* Description of LISA variant */   
+  const LISAconstellation *variant,    /* Description of LISA variant */
   double* TDIX,                            /* Output: value of TDI observable X */
   double* TDIY,                            /* Output: value of TDI observable Y */
   double* TDIZ,                            /* Output: value of TDI observable Z */
@@ -1399,7 +1405,7 @@ int EvaluateTDIXYZTD(
 
 /**/
 int EvaluateTDIAETXYZTD(
-  const LISAconstellation *variant,    /* Description of LISA variant */   
+  const LISAconstellation *variant,    /* Description of LISA variant */
   double* TDIA,                            /* Output: value of TDI observable X */
   double* TDIE,                            /* Output: value of TDI observable Y */
   double* TDIT,                            /* Output: value of TDI observable Z */
@@ -1424,7 +1430,7 @@ int EvaluateTDIAETXYZTD(
 
 /**/
 int GenerateTDITD3Chanhphc(
-  const LISAconstellation *variant,    /* Description of LISA variant */   
+  const LISAconstellation *variant,    /* Description of LISA variant */
   RealTimeSeries** TDI1,                   /* Output: real time series for TDI channel 1 */
   RealTimeSeries** TDI2,                   /* Output: real time series for TDI channel 2 */
   RealTimeSeries** TDI3,                   /* Output: real time series for TDI channel 3 */
@@ -1492,7 +1498,7 @@ int GenerateTDITD3Chanhphc(
 
 /* Generate hO orbital-delayed for one mode contribution from amp, phase */
 int Generateh22TDO(
-  const LISAconstellation *variant,    /* Description of LISA variant */   
+  const LISAconstellation *variant,    /* Description of LISA variant */
   AmpPhaseTimeSeries** h22tdO,             /* Output: amp/phase time series for h22TDO */
   gsl_spline* splineamp,                   /* Input spline for TD mode amplitude */
   gsl_spline* splinephase,                 /* Input spline for TD mode phase */
@@ -1527,7 +1533,7 @@ int Generateh22TDO(
 /* Note: includes both h22 and h2m2 contributions, assuming planar orbits so that h2-2 = h22* */
 /* BEWARE: this ignores the fact that processing through orbital delay breaks the h2-2 = h22* symmetry */
 int Generatey12LTD(
-  const LISAconstellation *variant,    /* Description of LISA variant */   
+  const LISAconstellation *variant,    /* Description of LISA variant */
   RealTimeSeries** y12Ltd,                 /* Output: real time series for y12L */
   gsl_spline* splineamp,                   /* Input spline for h22 TD amplitude */
   gsl_spline* splinephase,                 /* Input spline for h22 TD phase */

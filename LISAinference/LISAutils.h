@@ -70,12 +70,13 @@ typedef struct tagLISAGlobalParams {
   int nbmodeinj;             /* number of modes to include in the injection (starting with 22) - defaults to 5 (all modes) */
   int nbmodetemp;            /* number of modes to include in the templates (starting with 22) - defaults to 5 (all modes) */
   int tagint;                /* Tag choosing the integrator: 0 for wip (default), 1 for linear integration */
-  TDItag tagtdi;                /* Tag choosing the TDI variables to use */
+  TDItag tagtdi;             /* Tag choosing the TDI variables to use */
   int nbptsoverlap;          /* Number of points to use in loglinear overlaps (default 32768) */
   LISAconstellation *variant;  /* A structure defining the LISA constellation features */
   int zerolikelihood;        /* Tag to zero out the likelihood, to sample from the prior for testing purposes (default 0) */
   int frozenLISA;            /* Freeze the orbital configuration to the time of peak of the injection (default 0) */
   ResponseApproxtag responseapprox;    /* Approximation in the GAB and orb response - choices are full (full response, default), lowfL (keep orbital delay frequency-dependence but simplify constellation response) and lowf (simplify constellation and orbital response) - WARNING : at the moment noises are not consistent, and TDI combinations from the GAB are unchanged */
+  int tagsimplelikelihood;   /* Tag to use simplified, frozen-LISA and lowf likelihood where mode overlaps are precomputed - can only be used when the masses and time (tL) are pinned to injection values (Note: when using --snr, distance adjustment done using responseapprox, not the simple response) */
 } LISAGlobalParams;
 
 typedef struct tagLISASignalCAmpPhase
@@ -201,6 +202,13 @@ typedef struct tagLISAAddParams {
   char outfile[256];         /* Output file for LISAlikelihood */
 } LISAAddParams;
 
+/* Saved precomputed values for the injection , when using the simplified frozenLISA lowf likelihood - here for now assumes 22 mode only */
+typedef struct tagSimpleLikelihoodPrecomputedValues {
+  double normalization;
+  double complex sa;
+  double complex se;
+} SimpleLikelihoodPrecomputedValues;
+
 /************ Functions for LISA parameters, injection, likelihood, prior ************/
 
 /* Parse command line to initialize LISAParams, LISAGlobalParams, LISAPrior, and LISARunParams objects */
@@ -316,6 +324,10 @@ double CosPriorToCube(double y, double x1, double x2);
 double CalculateLogLCAmpPhase(LISAParams *params, LISAInjectionCAmpPhase* injection);
 double CalculateLogLReIm(LISAParams *params, LISAInjectionReIm* injection);
 
+/* Functions for simplified likelihood using precomputing relevant values */
+int LISAComputeSimpleLikelihoodPrecomputedValues(SimpleLikelihoodPrecomputedValues* simplelikelihoodvals, LISAParams* params);
+double CalculateLogLSimpleLikelihood(SimpleLikelihoodPrecomputedValues* simplelikelihoodvals, LISAParams* params);
+
 /************ Global Parameters ************/
 
 extern LISAParams* injectedparams;
@@ -323,6 +335,7 @@ extern LISAGlobalParams* globalparams;
 extern LISAPrior* priorParams;
 extern LISAAddParams* addparams;
 double logZdata;
+extern SimpleLikelihoodPrecomputedValues* simplelikelihoodinjvals;
 
 #if 0
 { /* so that editors will match succeeding brace */

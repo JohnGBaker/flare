@@ -24,6 +24,9 @@ void addendum(int argc, char *argv[],LISARunParams *runParams, int *ndim, int *n
   memset(priorParams, 0, sizeof(LISAPrior));
   addparams = (LISAAddParams*) malloc(sizeof(LISAAddParams));
   memset(addparams, 0, sizeof(LISAAddParams));
+  /* This structure is used only for storing precomputed values for the simple likelihood */
+  simplelikelihoodinjvals = (SimpleLikelihoodPrecomputedValues*) malloc(sizeof(SimpleLikelihoodPrecomputedValues));
+  memset(simplelikelihoodinjvals, 0, sizeof(SimpleLikelihoodPrecomputedValues));
 
   /* Parse commandline to read parameters of injection - copy the number of modes demanded for the injection */
   parse_args_LISA(argc, argv, injectedparams, globalparams, priorParams, runParams, addparams);
@@ -92,6 +95,12 @@ void addendum(int argc, char *argv[],LISARunParams *runParams, int *ndim, int *n
     report_LISAParams(injectedparams);
   }
 
+  /* If using simple likelihood, initialize precomputed values - note that the other initializations for the injection are done anyway, but will be ignored */
+  /* Note: the optional distance adjustment to a given snr is done above using the response as given by responseapprox, not the simplified response */
+  if(globalparams->tagsimplelikelihood) {
+    LISAComputeSimpleLikelihoodPrecomputedValues(simplelikelihoodinjvals, injectedparams);
+  }
+
   /* Print SNR */
   if (myid == 0) {
     printf("Total SNR: %g\n", SNR123);
@@ -116,11 +125,14 @@ void addendum(int argc, char *argv[],LISARunParams *runParams, int *ndim, int *n
   if(myid == 0) printf("logZtrue = %lf\n", *logZtrue-logZdata);
 
   /* Set the context pointer */
-  if(globalparams->tagint==0) {
+  if((globalparams->tagint==0) && (!globalparams->tagsimplelikelihood)) {
     *contextp = injectedsignalCAmpPhase;
   }
-  else if(globalparams->tagint==1) {
+  else if((globalparams->tagint==1) && (!globalparams->tagsimplelikelihood)) {
     *contextp = injectedsignalReIm;
+  }
+  else if(globalparams->tagsimplelikelihood) {
+    *contextp = simplelikelihoodinjvals;
   }
 
   *nPar = 9;	  /* Total no. of parameters including free & derived parameters */
