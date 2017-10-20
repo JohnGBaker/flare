@@ -149,7 +149,7 @@ int main(int argc, char *argv[])
 {
   int ret;
 
-  LISAconstellation *variant=&LISA2017;
+  LISAconstellation *variant = &LISA2017;
   /* Initialize structure for parameters */
   GenTDITDparams* params;
   params = (GenTDITDparams*) malloc(sizeof(GenTDITDparams));
