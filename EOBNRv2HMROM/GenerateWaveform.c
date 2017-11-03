@@ -300,7 +300,7 @@ int main(int argc, char *argv[])
   if(!(params->tagh22fromfile)) {
     /* Starting frequency corresponding to duration of observation deltatobs */
     if(!(params->deltatobs==0.)) fstartobs = Newtonianfoft(params->m1, params->m2, params->deltatobs);
-      
+
     /* Generate Fourier-domain waveform as a list of hlm modes */
     /* Use TF2 extension, if required to, to arbitrarily low frequencies */
     /* NOTE: at this stage, if no extension is performed, deltatobs and minf are ignored - will start at MfROM */
