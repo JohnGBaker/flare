@@ -54,6 +54,7 @@ prd,superscriptaddress,nofootinbib]{revtex4-1}
 \newcommand{\tf}{t_{f}}
 \newcommand{\Tf}{T_{f}}
 \newcommand{\tfd}{t_{f}^{d}}
+\newcommand{\tfSPA}{t_{f}^{\rm SPA}}
 
 \newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
 \newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
@@ -124,7 +125,7 @@ The plan of the paper is as follows. In Sec.~\ref{sec:motivation}, we motivate t
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Fourier-domain waveforms, modulations and delays}
+\section{Motivation}
 \label{sec:motivation}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -141,34 +142,33 @@ and seek an efficient way to commpute the Fourier transform $\tilde{s}(f)$, expr
 \be\label{eq:deftransfer}
 	\tilde{s}(f) \equiv \calT(f) \tilde{h}(f) \,. 
 \ee
+As is well known, GW signals decomposed in spin-weighted spherical harmonic components are smoothly varying functions of frequency in amplitude/phase form. An important consequence is that these signal components can be accurately represented in terms of a relatively coarsely sampled frequency grid. This property will also extend to the transfer functions, allowing us to keep a compact representation of the full signals. (See Appendix~\ref{app:notation} for details of our notation and conventions for Fourier transforms and spherical harmonics.)
 
-In the case of precessing binaries, the delays will be absent and the modulation functions will be the time-dependent Wigner coefficients applied to rotate the waveform from a precessing frame, where it verifies a restored mode hierarchy, to an inertial frame where the observations take place. In the case of a LISA-type detector, the signal $h(t)$ will simply be the waveform in a fixed heliocentric frame, and the delays will come from the motion of each detector in the wave front, while the modulation will represent the time-variation in the detector orientation. \jgb{MOVE:Both can be considered as periodic functions with a period of a year, which allows for an additional rewriting in terms of Fourier series instead of Fourier transforms, as will be developed in Sec.~\ref{}.NOTE: Probably move other technical partso f the par. as well.} 
+In the case of precessing binaries, the delays will be absent and the modulation functions will be the time-dependent Wigner coefficients applied to rotate the waveform from a precessing frame, where it verifies a restored mode hierarchy, to an inertial frame where the observations take place. In the case of a LISA-type detector, the signal $h(t)$ will simply be the waveform in a fixed heliocentric frame, and the delays will come from the motion of each detector in the wave front, while the modulation will represent the time-variation in the detector orientation.
 
-\jgb{In full generality computing the transfer function $\calT(f)$ will require a convolution, a costly integral (numerically a sum) over the full frequency domain for each value of $f$. For our context though, and perhaps for other applications, there are some properties of $h(t)$, $d(t)$ and $F(t)$ which we can exploit for a more efficient computation.}
+In full generality computing the transfer function $\calT(f)$ would require a convolution, a costly (discretized) integral over the full frequency domain for each value of $f$. For our context though, there are some properties of $h(t)$, $d(t)$ and $F(t)$ which we can exploit for a more efficient computation. In particular, we will be able to exploit the separation of the different timescales in the problem.
 
-\jgb{First consider the waveforms. There is a separation between the timescales of orbital motion and radiation-reaction. This leads to a general feature of many GW signals, including binary inspirals and black hole mergers, that the signal is relatively localized in time-frequency.  As far as $h(f)$ is concerned then, for given $f$, only a limited range of times should be relevant in $d(t)$ and $F(t)$ so that we may expect to find a more efficient treatment for the transfer function.}
+First, the gravitational waveforms present a clear separation between the timescales of orbital motion and radiation-reaction. This leads to a general feature of GW signals from compact binaries, during the inspiral phase but also for black hole mergers, that the signal is relatively localized in time-frequency. The localization is particularly clear during the inspiral phase, where the SPA (see Sec.~\ref{subsec:SPA} below) provides an unambiguous time-to-frequency correspondence, however we will find that the applicability of the SPA will not be a limiting factor of our approach.
 
-\jgb{As is well known (refs) this is especially true for non-precessing systems when the signal is decomposed in spin-weighted spherical harmonic components with respect to the source orientation angles.  In amplitude-phase form the individual spherical harmonic components of even long-lasting signals may be treated as smoothly varying functions of frequency.  An important consequence is that these signal components can be accurately represented in terms of a relatively coarsely sampled frequency grid, but we will also use this property in transfer function treatment.  (See Appendix~\ref{sec:notation} for details of our notation and conventions for Fourier transforms and spherical harmonics.)}
+Second, the delay and modulation functions we consider are much more slowly varying than the GW signal. The relevant timescales are either the precession timescale for precessing binaries or the fixed annual-orbital motion timescale for the LISA response. This means that the modulation and delay have relatively compact support in the Fourier domain, hence the convolution with the signal will be localized in frequency, which justifies writing its output as a transfer function as in~\eqref{eq:deftransfer}.
 
-\jgb{Next consider the delay and modulation functions.  Again we can identify a separation of time scales between the modulation or delay and the gravitational-wave period. This is either the precession timescale or for the LISA response the annual-orbital motion timescale for the constellation.}
+Together, these observations let us think that, for a given $f$, only a limited range of times should be relevant in $d(t)$ and $F(t)$ so that we may expect to find a treatment for the transfer function that would be local in time for the modulation and delay. Intuitively, for an inspiral signal and in the limit of an extremely slowly varying $d(t)$ and $F(t)$, we should be able to simply evaluate them at the time given by the time-to-frequency correspondence of the SPA. Furthermore, a natural quantitative criterion for the applicability of this idea is given by the comparison of the radiation-reaction timescale of the signal with the modulation timescale (possibly augmented by a dimensionless factor when delays are present). In other words, the change in frequency of the signal over a characeteristic time of the modulation should be small for the separation of timescales to work.
 
-\jgb{Our objective is to find an efficient approximate treatment for $\calT(f)$ which allows us to exploit these properties in a way which is extensible to the high-accuracies which will be required by LISA and other future gravitational-wave instruments, yet which widely applicable to GW analysis, without unnecessary limiting assumptions. Before introducing developing our formalism, though, we review the salient features of our application problems.}
-
-\SM{[introduce three timescales: orbital, Trr, 1/f, and say what is to be compared ]}
+Our objective is to find an approximate treatment for $\calT(f)$ which allows us to exploit these properties without relying on unnecessary limiting assumptions for the signal (like the limitation of the SPA to inspiral signals), which is extensible to the high-accuracies which will be required by LISA and other future gravitational-wave instruments, while being computationally efficient and widely applicable to GW analysis. Before introducing developing our formalism, though, we review the salient features of our application problems.
 
 \subsection{Instrumental modulations and delays for LISA-type detectors}
 \label{subsec:modulationLISA}
 
-The response of a detector of the LISA type to an incident gravitational wave can be written in two different, equivalent forms, in terms of phase or frequency measurements. Here we will work with the second representation, which will prove more convenient for our purposes. Moreover, various notation and conventions have been used in the literature to label the spacecrafts and describe their orbits. We refer the reader to~\cite{Vallisneri04} for a comparative account on these various conventions. In this work, we will use the conventions of~\cite{Vallisneri04}, which were also used in the Mock LISA Data Challenges (MLDC)~\cite{MLDC4}.
+The response of a detector of the LISA type to an incident gravitational wave can be written in two different, equivalent forms, in terms of phase or frequency measurements. Here we will work with the second representation, which will prove more convenient for our purposes. Moreover, various notation and conventions have been used in the literature to label the spacecrafts and describe their orbits. We refer the reader to~\cite{Vallisneri04} for a comparative account on these various conventions. In this work, we will keep close to the conventions of~\cite{Vallisneri04}, which were also used in the Mock LISA Data Challenges (MLDC)~\cite{MLDC4}.
 
-We use a coordinate system centered on the solar system barycenter (SSB), and we denote the center of the constellation by $O$. We introduce the notation $\hatk$ for the propagation vector of the gravitational wave, which we denote by $h_{ij}^{\rm TT}(t)$ in transverse-traceless matrix form, as measured at the SSB (thus, at position $p$, $h_{ij}^{\rm TT}(t, p) = h_{ij}^{\rm TT}(t - \hatk.p)$). We denote by $p_{A}$ ($A=1,2,3$) the position of the spacecrafts and $n_{l}$ the unit vectors of the three links, with the convention that $n_{3}$ points from 1 to 2.
+We use a coordinate system centered on the solar system barycenter (SSB), and we denote the center of the constellation by $O$. We introduce the notation $\hatk$ for the propagation vector of the gravitational wave, which we denote by $h_{ij}^{\rm TT}(t)$ in transverse-traceless matrix form, as measured at the SSB (thus, at position $p$, $h_{ij}^{\rm TT}(t, p) = h_{ij}^{\rm TT}(t - \hatk \cdot p)$). We denote by $p_{A}$ ($A=1,2,3$) the position of the spacecrafts and $n_{l}$ the unit vectors of the three links, with the convention that $n_{3}$ points from 1 to 2.
 
 Written in terms of the fractional laser frequency shifts between two spacecrafts, the elementary response of the detector reads~\cite{EW75, RCP04, Vallisneri04}
 \begin{align}\label{eq:yslr}
 	y_{slr} &\equiv \frac{\nu_{r} - \nu_{s}}{\nu} \nn\\
-	&= \frac{1}{2} \frac{n_{l}^{i}n_{l}^{j}}{1 - \hatk\cdot n_{l}} \left[ h_{ij}^{\rm TT}(t - \hatk\cdot p_{s}) - h_{ij}^{\rm TT}(t - \hatk\cdot p_{r}) \right] \,.
+	&= \frac{1}{2} \frac{n_{l}^{i}n_{l}^{j}}{1 - \hatk\cdot n_{l}} \left[ h_{ij}^{\rm TT}(t - L - \hatk\cdot p_{s}) - h_{ij}^{\rm TT}(t - \hatk\cdot p_{r}) \right] \,.
 \end{align}
-As detailed below in Sec.~\ref{}, we will use a rigid instantaneous model, approximating the geometry of the constellation by a moving equilateral triangle (neglecting the flexing of the arms induced by corrections in the orbits), and evaluating all geometric factors in~\eqref{eq:yslr} at a single time $t$ (neglecting pointing-ahead corrections).
+As detailed below in Sec.~\ref{}, we will use a rigid instantaneous model, approximating the geometry of the constellation by a moving equilateral triangle (neglecting the flexing of the arms induced by corrections in the orbits), and evaluating all geometric factors in~\eqref{eq:yslr} at a single time $t$ (neglecting pointing-ahead corrections). The additional delay $L$ (we use $c=1$) in the first term represents the light propagation time along the arm between spacecrafts $s$ and $l$.
 
 The first- and second-generation TDI observables are then built as combinations of these basic building blocks, evaluated at delayed times. Since in our rigid approximation these delays will take a simple form in Fourier domain, we will focus in this paper on the $y_{slr}$ observables. We will give in Sec.~\ref{subsec:modelLISA} more details on the response of LISA-type detectors, on the TDI observables, and on the approximations that enter the derivation of the basic response~\eqref{eq:yslr} above.
 
@@ -178,7 +178,7 @@ The structure of~\eqref{eq:yslr} is such that one can build the full signal from
 \ee
 Here, $h(t)$ represents one of the individual modes building the full gravitational wave signal (see Eq.~\eqref{eq:defmodes}), $d(t)$ represents the time-varying delays of the form $-\hatk\cdot p_{A}(t)$, and $F(t)$ incorporates all the relevant geometric prefactors.
 
-The functions $F(t)$ and $d(t)$ vary on a timescale of one year. When neglecting small non-periodic orbital perturbations (such as those caused by the influence of the Earth and of the other planets on the orbits), both $F(t)$ and $d(t)$ are periodic. It will also be useful to separate the delays in two types of terms: the first, $d_{O} = -\hatk\cdot p_{O}$, relates the waveform at the SSB to the waveform at the center of the constellation $O$, whereas the second, $d_{c}$, represents the various delays between the spacecrafts of the constellation. For an orbit radius $R=1\,\mathrm{au}$ and an armlength $L=2.5\times10^{6}\mathrm{km}$~\cite{LISA17}, $d_{O} \sim R/c \sim 500\mathrm{s}$ and $d_{c} \sim L/c \sim 8\mathrm{s}$.
+The functions $F(t)$ and $d(t)$ vary on a timescale of one year. When neglecting small non-periodic orbital perturbations (such as those caused by the influence of the Earth and of the other planets on the orbits), both $F(t)$ and $d(t)$ are periodic. It will also be useful to separate the delays in two types of terms: the first, $d_{O} = -\hatk\cdot p_{O}$, relates the waveform at the SSB to the waveform at the center of the constellation $O$, whereas the second, $d_{c}$, represents the various delays between the spacecrafts of the constellation. For an orbit radius $R=1\,\mathrm{au}$ and an armlength $L=2.5\times10^{6}\mathrm{km}$~\cite{LISA17}, $d_{O} \sim R/c \simeq 500\mathrm{s}$ and $d_{c} \sim L/c \simeq 8\mathrm{s}$.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -187,7 +187,7 @@ The functions $F(t)$ and $d(t)$ vary on a timescale of one year. When neglecting
 
 For spinning compact objects, the presence of the spins leads to the precession of the orbit~\cite{Apostolatos+94, Kidder95}, which can have large effects on the waveform. In particular, it breaks the planar symmetry of the gravitational wave emission, and leads to modulations that are especially important for systems that are observed edge-on.
 
-It was suggested by a number of authors~\cite{BCV03b, BCPTV05, Schmidt+10, OShaughnessy+11, Boyle+11} that the effect of the precession can be modeled, to a good approximation, by a time-dependent rotation of a non-precessing waveform. In this approach, one introduces a precessing frame following the evolution of the plane of the orbit, and approximates the waveform in this precessing frame by using a non-precessing model. Different prescriptions have been proposed for the construction of the precessing frame itself~\cite{} \SM{[C]}.
+It was suggested by a number of authors~\cite{BCV03b, BCPTV05, Schmidt+10, OShaughnessy+11, Boyle+11} that the effect of the precession can be modeled, to a good approximation, by a time-dependent rotation of a non-precessing waveform. This allows for a modelling approach where one models separately a precessing frame following the evolution of the plane of the orbit, and approximates the waveform in this precessing frame by using a non-precessing model. Different prescriptions have been proposed for the construction of a precessing frame from the waveform itself~\cite{Schmidt+10, OShaughnessy+11, Boyle+11}.
 
 If $(\alpha, \beta, \gamma)$ are the Euler angles relating the precessing frame to the inertial frame in the $(z,y,z)$ convention, the modes in the inertial frame $h_{\ell m}^{\rm I}$ are then related to the modes in the precessing frame $h_{\ell m}^{\rm P}$ by~\cite{Goldberg+67}
 \be\label{eq:wignerrotintro}
@@ -208,80 +208,77 @@ In Eq.~\eqref{eq:defmodulationprec} above, the modulation function $F$ has time 
 \subsection{Stationary phase approximation}
 \label{subsec:SPA}
 
-As a preliminary step, we recall here an approximation widely used for similar purposes in treating gravitational waves signals emitted by inspiralling binaries, the Stationary Phase Approximation (thereafter SPA). It applies in general to chirping signals, and we refer the reader to~\ref{} for details. One first writes the time-domain signal in amplitude and phase form as $h(t) = a(t) e^{-2i\varphi(t)}$, where for gravitational wave signals $\varphi$ will correspond to the orbital phase, with the orbital frequency being $\omega = \dot{\varphi}$. In order to keep close to the notation used in the gravitational wave literature, we introduced a factor of 2 in the phase of the wave, which is appropriate for the dominant 22 harmonic of the signal. The approximation then applies to signals verifying the conditions \SM{[say that the third is sometimes missing ?]} \SM{[add reference to Finn-Chernoff, Cutler-Flanagan where the third one is missing]}
-\be\label{eq:conditionSPA}
+As a preliminary step, we recall here an approximation widely used for similar purposes in treating gravitational waves signals emitted by inspiralling binaries, the Stationary Phase Approximation (thereafter SPA, and also sometimes called the steepest-descent method). It applies in general to chirping signals, and we refer the reader to~\ref{} for details. One first writes the time-domain signal in amplitude and phase form as $h(t) = a(t) e^{-2i\varphi(t)}$, where for gravitational wave signals $\varphi$ will correspond to the orbital phase, with the orbital frequency being $\omega = \dot{\varphi}$. In order to keep close to the notation used in the gravitational wave literature, we introduced a factor of 2 in the phase of the wave, which is appropriate for the dominant 22 harmonic of the signal. The approximation then applies to signals verifying the conditions \SM{[say that the third is sometimes missing ?]} \SM{[add reference to Finn-Chernoff, Cutler-Flanagan where the third one is missing]}
+\be\label{eq:conditionsSPA}
 	\left| \frac{\dot{a}/a}{\omega} \right| \ll 1\,, \quad \left|\frac{\dot{\omega}}{\omega^{2}} \right| \ll 1\,, \quad \left| \frac{(\dot{a}/a)^{2}}{\dot{\omega}} \right| \ll 1 \,.
 \ee
 Since the integral~\eqref{eq:defFT} defining the Fourier transform is rapidly oscillatory unless the term $2\pi f t$ cancels the evolution of $-2\varphi(t)$, its support is well centered around the point of stationary phase. This determines the time-to-frequency correspondence in the stationary phase approximation, and leads to the definition of this time as an implicit function of frequency by the relation
 \be\label{eq:deftfSPA}
-	\omega(t_{f}^{\rm SPA}) = \pi  f \,.
+	\omega(\tfSPA) = \pi  f \,.
 \ee
-For a chirping signal of increasing phase, $\omega>0$ and $\dot{\omega}>0$, there is a unique point of stationary phase, located in the positive frequency range $f>0$. Using the conditions above, one can formally expand the signal around $t_{f}^{\rm SPA}$ to quadratic order in time, according to
+For a chirping signal of increasing phase, $\omega>0$ and $\dot{\omega}>0$, there is a unique point of stationary phase, located in the positive frequency range $f>0$. Using the conditions above, one can formally expand the signal around $\tfSPA$ to quadratic order in time, according to
 \begin{align}
-	\tilde{h}_{\rm SPA} (f) &\simeq a(t_{f}^{\rm SPA}) \exp\left[2i\pi f t_{f}^{\rm SPA}-2i\varphi(t_{f}^{\rm SPA}) \right] \nn\\
-	& \qquad \cdot \int \ud t \, e^{-i \dot{\omega} (t_{f}^{\rm SPA}) (t-t_{f}^{\rm SPA})^{2}} \,.
+	\tilde{h}_{\rm SPA} (f) &\simeq a(\tfSPA) \exp\left[2i\pi f \tfSPA-2i\varphi(\tfSPA) \right] \nn\\
+	& \qquad \cdot \int \ud t \, e^{-i \dot{\omega} (\tfSPA) (t-\tfSPA)^{2}} \,.
 \end{align}
-Note that to be able to treat the amplitude as a constant in the integral above, we used the third condition in~\eqref{eq:conditionSPA}. The resulting complex Gaussian integral yields\footnote{Note that the expressions given here are valid for the $22$ mode of the waveform.}
+Note that to be able to treat the amplitude as a constant in the integral above, we used the third condition in~\eqref{eq:conditionSPA}. The resulting complex Gaussian integral yields\footnote{Note that the expressions given here are valid for the dominant mode $h_{22}$ of the waveform. They can be readily generalized to other modes $h_{\ell m}$ with phase $e^{-im\varphi}$.}
 \begin{subequations}
 \begin{align}
 	\tilde{h}_{\rm SPA}(f) &= A_{\rm SPA}(f) e^{-i\Psi_{\rm SPA}(f)} \,, \\
-	A_{\rm SPA}(f) &= a(t_{f}^{\rm SPA}) \sqrt{\frac{\pi}{\dot{\omega}(t_{f}^{\rm SPA})}} \,, \\
-	\Psi_{\rm SPA}(f) &= 2\varphi(t_{f}^{\rm SPA}) - 2\pi f t_{f}^{\rm SPA} + \frac{\pi}{4} \,.
+	A_{\rm SPA}(f) &= a(\tfSPA) \sqrt{\frac{\pi}{\dot{\omega}(\tfSPA)}} \,, \\
+	\Psi_{\rm SPA}(f) &= 2\varphi(\tfSPA) - 2\pi f \tfSPA + \frac{\pi}{4} \,. \label{eq:PsiSPA}
 \end{align}
 \end{subequations}
 Ref.~\cite{Droz+99} evaluated the first correction to this approximation, within the context of post-Newtonian signals, and found that it can be considered as a term of the fifth post-Newtonian order, beyond the accuracy level of our current best models~\cite{BlanchetLiving}.
 
-To understand the separation of timescales in the problem, it will be useful to have at hand the leading-order scaling laws for an inspiral (at the Newtonian order in the PN language). Although inaccurate for the purpose of waveform modelling, these Newtonian estimates will give useful orders of magnitude of the relevant timescales in the inspiral. For a binary with masses $m_{1}, m_{2}$, we define the total mass $m=m_{1}+m_{2}$ and the symmetric mass ratio $\nu = m_{1}m_{2}/m^{2}$. Introducing a time of coalescence $t_{c}$, the relations between the orbital frequency and phase and the time to coalescence $t_{c} - t$ are then given by
+To understand the separation of timescales in the problem, it will be useful to have at hand the leading-order scaling laws for an inspiral (at the Newtonian order in the PN language). Although inaccurate for the purpose of waveform modelling, these Newtonian estimates will give useful orders of magnitude of the relevant timescales in the inspiral. For a binary with masses $m_{1}, m_{2}$, we define the total mass $M=m_{1}+m_{2}$ and the symmetric mass ratio $\nu = m_{1}m_{2}/M^{2}$. Introducing a time of coalescence $t_{c}$, the relations between the orbital frequency and phase and the time to coalescence $t_{c} - t$ are then given by
 \begin{subequations}\label{eq:omegaphiN}
 \begin{align}
-	\omega(t) &= \left[ \frac{256\nu}{5c^{5}} (Gm)^{5/3} (t_{c}-t) \right]^{-3/8} \,, \\
-	\varphi(t) &= -\left[ \frac{c^{3}}{G m \nu^{3/5}} (t_{c}-t) \right]^{5/8} \,.
+	\omega(t) &= \left[ \frac{256\nu}{5c^{5}} (GM)^{5/3} (t_{c}-t) \right]^{-3/8} \,, \\
+	\varphi(t) &= -\left[ \frac{c^{3}}{5 G M \nu^{3/5}} (t_{c}-t) \right]^{5/8} \,.
 \end{align}
 \end{subequations}
 As for the leading-order time-domain amplitude of the $22$ mode, we have~\cite{BlanchetLiving}
 \be\label{eq:a22N}
-	a_{22}^{\rm N} (t) = \frac{2 G m \nu x}{D c^{2}} \sqrt{\frac{16 \pi}{5}} \,,
+	a_{22}^{\rm N} (t) = \frac{2 G M \nu x}{D c^{2}} \sqrt{\frac{16 \pi}{5}} \,,
 \ee
 where we set $x = (G M\omega/c^{3})^{2/3}$ and where $D$ is the luminosity distance to the observer. For this Newtonian inspiral, applying the SPA gives for the $22$ mode $\tilde{h}(f) = A_{\rm N}(f)e^{-i\Psi_{\rm N}(f)}$ with
 \begin{subequations}\label{eq:SPAN}
 \begin{align}
-	A_{N}(f) &= \frac{G^{2}m^{2} \pi}{Dc^{5}} \sqrt{\frac{2\nu}{3}} v^{-7/2}\,, \label{eq:ASPAN}\\
+	A_{N}(f) &= \frac{G^{2}M^{2} \pi}{Dc^{5}} \sqrt{\frac{2\nu}{3}} v^{-7/2}\,, \label{eq:ASPAN}\\
 	\Psi_{\rm SPA}^{\rm N}(f) &= \phi_{0} - 2\pi f t_{0} - \frac{3}{128\nu v^{5}} \,, \label{eq:PsiSPAN} 
 \end{align}
 \end{subequations}
-\SM{[Check sign of $\Psi$ ? Should have $<0$ 2nd der.] }
-where we used the notation $v=(G m \pi f/c^{3})^{1/3}$ ($x=v^{2}$ with the SPA correspondence~\eqref{eq:deftfSPA}), and where $t_{0}, \phi_{0}$ are constants. It is also customary to rewrite the above relations in terms of the chirp mass $\calM \equiv m\nu^{3/5}$, which is the only mass combination arising in the phase at the leading PN order.
+where we used the notation $v=(G M \pi f/c^{3})^{1/3}$ ($x=v^{2}$ with the SPA correspondence~\eqref{eq:deftfSPA}), and where $t_{0}, \phi_{0}$ are constants. It is also customary to rewrite the above relations in terms of the chirp mass $\calM \equiv M\nu^{3/5}$, which is the only mass combination characterizing the signal at the leading PN order.
 
-\SM{[explain how (11) and (12) allow one to directly check conditions (7)]}
-
-\jgb{In the Newtonian, low-frequency limit each of the combinations \eqref{eq:conditionsSPA} assumed to be small in the SPA limit indeed vanishes at $\calO{((v/c)^5)}$, but as the system approaches merger, this condition is no-longer satisfied.  Near-merger however the treatment is not applicable, so that this is not a viable approach for binary systems beyond insprial. Nonetheless the SPA, has been a useful workhorse in many gravitational analysis involving frequency domain transfer functions of the form \eqref{eq:deftransfer}.  The usual approach is simply to replace any time dependencies appearing the transfer function using \eqref{eq:deftfSPA}.  We will later return to further consider the SPA treatment in the context of a more general formalism.}
+In this Newtonian, low-frequency limit one can check that each of the combinations \eqref{eq:conditionsSPA} indeed vanish at $\calO{(v^5)}$. but as the system approaches merger, this condition is no-longer satisfied. However, near and after the merger, the SPA treatment is not applicable, as can be seen by the breakdown of the relation~\eqref{eq:deftfSPA} as $\omega$ asymptotes the quasi-normal mode frequency in the ringdown. Because of this limitation, we aim at developing a formalism that would not rely on this approximation. Nonetheless, the SPA has been a useful workhorse in many gravitational analysis involving frequency domain transfer functions of the form~\eqref{eq:deftransfer}. The usual approach is simply to replace any time dependencies appearing the transfer function using \eqref{eq:deftfSPA}. We will later return to further consider the SPA treatment in the context of a more general formalism.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Fourier-domain approach to modulations and delays}
+\section{Perturbative Fourier-domain approach to modulations and delays}
 \label{sec:formalism}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\jgb{In this section we develop a Fourier-domain formalism for treating time-delays and temporally multiplicative signal transformations, where the period of primary signal oscilations is short compared to the timescale on which the modulating functions vary.}
+In this section we develop a perturbative Fourier-domain formalism for treating time-delays and temporally multiplicative signal transformations, exploiting the separation of timescales in the problem.
 
 \subsection{Fourier transform of a modulated and delayed signal}
 \label{subsec:FTgeneral}
 
-\jgb{We begin by expression our delay and modulation function definitions in \eqref{eq:delay-mod-defs} using the Fourier transform (note conventions in \eqref{eq:defFT})},
+We begin by expression our delay and modulation function definitions in \eqref{eq:delay-mod-defs} using the Fourier transform (note our unusal convention~\eqref{eq:defFT}),
 \begin{align}
 h_{d}(t) & =  h(t+d(t)) \nonumber\\
 &=\int \ud f \, e^{-2i\pi f (t+d(t))}\tilde{h}(f) \,,
 \end{align}
 and
 \begin{align}
-  \tilde{s}(f) &= F(t)h_{d}(t) \nn \\
+  \tilde{s}(f) &= \mathrm{FT} \left[ F h_{d}\right] (f) \nn \\
   &= \int \ud t \, e^{2i\pi f t} F(t)  \int \ud f' \, e^{-2i\pi f' (t+d(t))}\tilde{h}(f') \nn\\
 	&= \int \ud f' \, \tilde{h}(f-f') \int \ud t \, e^{2i\pi f' t} e^{-2i\pi (f-f') d(t)} F(t) \,.
 \end{align}
-The last equation can then be rewritten as a kind of convolution with a frequency-dependent Kernel, according to
+The last equation can then be rewritten as a generalized convolution integral with a frequency-dependent Kernel, according to
 \be\label{eq:FDkernel}
 	\tilde{s}(f) = \int \ud f' \, \tilde{h}(f-f') \tilde{G}(f-f',f') \,,
 \ee
@@ -289,20 +286,17 @@ where we introduced the frequency-dependent function of time $G(f,t)$, and its F
 \begin{subequations}\label{eq:defg}
 \begin{align}
 	G(f,t) &= e^{-2i\pi f d(t)} F(t) \,, \\
-	\tilde{G}(f,f') &= \int \ud t \, e^{2i\pi f' t} e^{-2i\pi f d(t)} F(t) \,.
+	\tilde{G}(f,f') &= \int \ud t \, e^{2i\pi f' t} G(f,t) \,.
 \label{eq:defGtilde}
 \end{align}
 \end{subequations}
-In the absence of delays $d(t)$, as in the case of precessing binaries, the function $G$ loses its frequency-dependence and becomes a modulation in the form of a function of time $F(t)$, and the result~\eqref{eq:FDkernel} above reduces to the usual convolution theorem for the Fourier transform.
+In the absence of delays $d(t)$, as in the case of precessing binaries, the function $G$ loses its frequency-dependence and becomes a modulation in the form of a function of time $F(t)$, and the result~\eqref{eq:FDkernel} above reduces to the familiar convolution theorem for the Fourier transform.
 
-\jgb{A direct computation of \eqref{eq:FDkernel} using \eqref{eq:defGtilde} will generally be computationally demanding, but when $\tilde{G}(f,f')$ has only limited support over $f'$, we can seek an accurate but more efficient approximation.} In our approach, two assumptions will be crucial for our approximations to be valid: \SM{[rewrite: not clear, make clear the 'SPA for the integral' argument]}
-\begin{itemize}
-	\item The time scales entering the signal $h(t)$ are well separated from the ones entering the modulation and the delay, so that $\tilde{G}(f-f',f')$ has support limited to $|f'| < f'_{\rm max}$, with $f'_{\rm max}$ small compared the characteristic scale for the variation of the Fourier-domain signal;
-	\item The original signal has a smooth amplitude and phase in the Fourier-domain, slowly varying over the scale $f'_{\rm max}$, so that a local treatment in $f'$ of the convolution in~\eqref{eq:FDkernel} will be possible.
-\end{itemize}
-Although well verified for the case of LISA-type detectors, the first assumption can be a limitation of the approximation in the case of precessing binaries, and we will carefully explore its validity in Sec.~\ref{}.
+A direct computation of the generalized convolution~\eqref{eq:FDkernel} using~\eqref{eq:defGtilde} will generally be computationally demanding, but we can exploit the separation of timescales in the problem to seek an accurate but efficient approximation. A first argument would be to notice that the Fourier transform $\tilde{G}(f,f')$ should have a compact support, limited to $f' \in [-f_{\rm max}, f_{\rm max}]$ with $f_{\rm max}$ a maximal frequency for the modulation, roughly the inverse of its characteristic timescale. This makes the convolution integral~\eqref{eq:FDkernel} localized in frequency, as the waveform is to be evaluated only at frequencies close to $f$. We can then approximate $\tilde{h}(f-f')$ by $\tilde{h}(f)$, with a simple Taylor expansion for a perturbative treatment of the difference between the two. Doing so, we will recover at leading order a locality in time: the modulation is to be evaluated at a time $\tf$, which will be equivalent to $\tfSPA$ for inspiral signals.
 
-Notice that these approximations are not exactly the same as the ones usually made to justify the stationary phase approximation (thereafter SPA) for the treatment of the Fourier transform of the inspiral part of the signal. Indeed, we will exploit the smoothness of the Fourier-domain $\tilde{h}(f)$ to be able to cover the merger-ringdown part of the signal $h$, where the SPA itself breaks down.
+Now, there are two limitations to this straightforward argument. The first is that we did not yet specify what $f_{\rm max}$ should be compared with, in order for the approximation to work. As shown in Sec.~\ref{subsec:SPA}, the Fourier-domain expressions for the amplitude and phases inspiral signals are steep power-laws. We will therefore need a quantitative criterion to ensure $\tilde{h}(f-f')$ does not vary too much on the range $f'\in [-f_{\rm max}, f_{\rm max}]$. Second, although clear when considering a fixed characteristic timescale for the modulation and delay (like in the LISA case), the above argument does not apply as such to modulations with a varying timescale (like in the case of precessing binaries, where the precession goes faster when arriving at merger). We will show below that what will be relevant is the characteristic timescale at the time $t_{f}$ associated to $f$. 
+
+In presence of delays, the above is also complicated by the additional delay phases. Depending on the frequency $f$, this can lead $G(f,t)$ to have faster variations that its nominal timescale ($1\mathrm{yr}$ for LISA). As we will see in Sec.~\ref{} \SM{[R]}, to decide of the applicability of this approach we will not only need to compare timescales, but also take into account potential dimensionless factors of the form $2\pi f d$.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -312,94 +306,80 @@ Notice that these approximations are not exactly the same as the ones usually ma
 \begin{figure}
   \centering
   \includegraphics[width=.98\linewidth]{plots/tf.pdf}
-  \caption{Time-to-frequency correspondence $t_{f}$, as defined directly from the phase of the Fourier-domain signal as in~\eqref{eq:deftf}, in geometric units. We show only the high-frequency part of the signal, corresponding to the merger region. The PhenomD waveforms have been aligned such that the time-domain amplitude (obtained by an IFFT) peaks at $t=0$. The two aligned spins are equal, with components of $0.95$ ($++$, blue), $0$ ($00$, red), and $-0.95$ ($--$, yellow), for mass ratios $q=1$ (full line) and $q=8$ (dashed). The vertical lines shows the time-domain instantaneous frequency at the peak $\omega^{22}_{\rm peak}/(2\pi)$, again measured from an IFFT, and the fact that the curves $t_{f}$ do not pass exactly by the crossing with the $t=0$ horizontal line reflects the fact that the link between time-domain frequency and Fourier-domain $f$ is not accurate anymore in the merger part of the signal. Note that $t_{f}$ does not go beyond $\sim 30M$ after the peak, and is not monotonous. \SM{[add color to the vertical lines]} \SM{[add dots to highlights the crossings]}}
+  \caption{Time-to-frequency correspondence $t_{f}$, as defined directly from the phase of the Fourier-domain signal as in~\eqref{eq:deftf}, in geometric units. We show only the high-frequency part of the signal, corresponding to the merger region. The PhenomD waveforms have been aligned such that the time-domain amplitude (obtained by an IFFT \SM{[check acronym]}) peaks at $t=0$. The two aligned spins are equal, with components of $0.95$ ($++$, blue), $0$ ($00$, red), and $-0.95$ ($--$, yellow), for mass ratios $q=1$ (full line) and $q=8$ (dashed). The vertical lines shows the time-domain instantaneous frequency at the peak $\omega^{22}_{\rm peak}/(2\pi)$, again measured from an IFFT, and the fact that the curves $t_{f}$ do not pass exactly by the crossing with the $t=0$ horizontal line reflects the fact that the link between time-domain frequency and Fourier frequency $f$ is only approximate at merger. Note that $t_{f}$ increases to at most $\sim 30M$ after the peak, and is not monotonous. \SM{[add color to the vertical lines]} \SM{[add dots to highlights the crossings]}}
   \label{fig:tf}
 \end{figure}
 
-Under the assumptions above, it is possible to see the convolution in the $f'$ variable in~\eqref{eq:FDkernel} as being a local operation, allowing us to expand the signal $\tilde{h}(f-f')$ around $f$. A first leading-order approximation, which could be called the local approximation for reasons that will appear clear below, is to discard the $f'$ dependence in the first argument of $\tilde{g}(f-f', f')$, to keep only the leading order in the Fourier-domain amplitude, and to expand the Fourier-domain phase to the first order, according to
+As a first step, we perform a formal leading-order expansion of the signal $\tilde{h}(f-f')$ around $f$. We use the amplitude/phase decomposition~\eqref{eq:defAPsi}, treat the Fourier-domain amplitude $A$ as a constant, expand the Fourier-domain phase $\Psi$ to the first order, and discard the $f'$ dependence in the first argument of $\tilde{G}(f-f', f')$, to obtain
 \be
 	\tilde{h}(f-f') \simeq A(f) \exp\left[ -i\left( \Psi(f) - f' \frac{\ud \Psi}{\ud f} \right) \right] \,,
 \ee
-Here and in the rest of the paper, derivatives with respect to the frequency will always be evaluated at $f$. Notice that, because of the freedom of adding a linear term to $\Psi(f)$ by simply shifting the signal in time, no assumption can be made on the smallness of the first derivative of the phase, and this is really a leading order approximation.
+Here and in the rest of the paper, such derivatives with respect to the frequency will always be evaluated at $f$.
 
 Plugging this relation in~\eqref{eq:FDkernel}, we obtain
 \begin{align}
-	\tilde{s}(f) &= \tilde{h}(f) \int \ud f' \, \exp\left[ i f' \frac{\ud \Psi}{\ud f} \right] \tilde{G}(f,f') \nn\\
+	\tilde{s}(f) &\simeq \tilde{h}(f) \int \ud f' \, \exp\left[ i f' \frac{\ud \Psi}{\ud f} \right] \tilde{G}(f,f') \nn\\
 	&= \tilde{h}(f) G\left( f, -\frac{1}{2\pi} \frac{\ud \Psi}{\ud f} \right) \,,
 \end{align}
 which motivates the introduction of an effective time, seen as a function of frequency,
 \be\label{eq:deftf}
-	\tf \equiv -\frac{1}{2\pi} \frac{\ud \Psi}{\ud f} \,,
+	\tf \equiv -\frac{1}{2\pi} \frac{\ud \Psi}{\ud f} \,.
 \ee
-This definition is a generalization of the time-to-frequency correspondence at the heart of the SPA, as will be discussed in Sec.~\ref{subsec:linkSPA}, but it is worth noting that here it is defined entirely from the Fourier-domain waveform, and independently of the SPA being valid or not for the underlying signal $\tilde{h}$. As such, this time-of-frequency function also extends to the merger-ringdown part of the signals. Fig.~\ref{fig:tf} shows the behaviour of the time function $\tf$ around merger for six example waveforms, for mass ratios $q=1$ and $q=8$ and for aligned spin components $\chi=0.95,0.,-0.95$. In particular, one should note that $\tf$ is not monotonously increasing with frequency anymore when reaching in the high-frequency part of the waveform, corresponding to the ringdown. This would forbid an unambiguous definition of an inverse frequency-of-time correspondence $f(t)$.
+It is worth noting that a shift in time of the time-domain signal will, by virtue of~\eqref{eq:shifttime}, be appropriately propagated to $t_{f}$. Because of the freedom of adding a linear term to $\Psi(f)$ by simply shifting the signal in time, no assumption can be made on the smallness of the first derivative of the phase, and this is really a leading order approximation.
+
+The definition~\eqref{eq:deftf} is a generalization of the time-to-frequency correspondence at the heart of the SPA~\eqref{eq:deftfSPA}. Indeed, using~\eqref{eq:deftfSPA} one can verify that the derivative of the SPA phase $\Psi_{\rm SPA}$~\eqref{eq:PsiSPA} with respect to $f$ yields back $\tfSPA$, as
+\be
+	\tfSPA = -\frac{1}{2\pi} \frac{\ud \Psi_{\rm SPA}}{\ud f} \,.
+\ee
+However, our defintion~\eqref{eq:deftf} refers only to the Fourier-domain waveform. We do not need to relate the frequency $f$ to a time-domain frequency like the orbital frequency $\omega$, and the defintion is independent of the SPA being valid or not for the underlying signal $\tilde{h}$.
+
+The main advantage of our time-of-frequency function~\eqref{eq:deftf} is that it extends naturally to the merger-ringdown part of the signals. Fig.~\ref{fig:tf} shows the behaviour of the time function $\tf$ around merger for six example waveforms, for mass ratios $q=1$ and $q=8$ and for aligned spin components $\chi=0.95,0.,-0.95$. In particular, one should note that $\tf$ is not monotonously increasing with frequency anymore when reaching in the high-frequency part of the waveform, corresponding to the ringdown. Although $t_{f}$ is always a well-defined function of $f$, this non-monotonicity would forbid an unambiguous definition of a reciprocal frequency-of-time function $f(t)$.
 
 Using this notation, we have simply
 \be\label{eq:transferlocal}
-	\calT_{\rm local}(f) = G(f, \tf) \,.
+	\calT_{\rm local}(f) = G(f, \tf) = F(t_{f}) e^{-2i\pi f d(t_{f})}\,.
 \ee
-The interpretation of this approximation is straightforward: the signal is simply multiplied by the response function evaluated at the time $\tf$. For precessing binaries, this corresponds to the approximation used for the PhenomP approximant~\cite{Hannam+13}, as will be discussed in Sec.~\ref{}. Additionally, when delays are present, the frequency-dependence of the response is evaluated directly at $f$.
-
-It is worth noting that a shift in time of the time-domain signal will, by construction, be appropriately propagated to~\eqref{eq:tranferlocal}. If $h'(t) = h(t -  \Delta t)$ [but the modulation and delays are left unchanged (which is relevant for space-based detectors, not for precessing binaries)], $\Psi'(f) = \Psi(f) - 2\pi f \Delta t$, so that
-\be\label{eq:localshifted}
-	\tilde{s}'_{\rm local}(f) = \tilde{h}'(f) G(f, \tf + \Delta t) \,. 
-\ee
-This observation also justifies that the first derivative of the Fourier-domain phase cannot, in general, be considered a small quantity, as it can take arbitrary values for arbitrary shifts in time of the signal. The leading order approximation corresponds to neglecting the curvature in $\Psi(f)$, and yields a result~\eqref{eq:transferlocal} where the passage to the Fourier domain is done by simply using a time-to-frequency correspondence~\eqref{eq:deftf}, which motivates the name ``local approximation''.
+The interpretation of this approximation is straightforward: the signal is simply multiplied by the response function evaluated at the time $\tf$, the delay phase becoming the same linear phase contribution as one would have in~\eqref{eq:shifttime} with a time shift $d(t_{f})$ treated like a constant. The locality in frequency at $f$ for $\tilde{h}$ translates into a locality in time at $t_{f}$ for $F,d$.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsection{Taylor expansion in the Fourier domain}
 \label{subsec:TaylorFD}
 
-We now extend our approach beyond the local approximation. We will give a formal derivation of the  general formula for the higher-order corrections in~\eqref{eq:FDkernel}, and then specialize it to the special cases of interest.
-
-We will formally Taylor-expand $\tilde{h}(f-f')$ in $f'$ as follows:
-\begin{subequations}
+We now extend our approach beyond the leading-order approximation. A Taylor-expansion of~\eqref{eq:FDkernel} in the variable $f'$ yields:
+\begin{subequations}\label{eq:expandfprime}
 \begin{align}
 	\Psi(f-f') &= \Psi(f) + 2\pi f' \tf + \sum\limits_{p\geq 2}^{N} \frac{(-1)^{p}}{p!} {f'}^{p} \frac{\ud^{p} \Psi}{\ud f^{p}} \,, \label{eq:expandPsi}\\
 	A(f-f') &= A(f) \sum\limits_{q\geq 0} \frac{(-1)^{q}}{q!} {f'}^{q} \frac{1}{A}\frac{\ud^{q} A}{\ud f^{q}} \,, \label{eq:expandA}\\
-	\tilde{G}(f-f', f') &= \sum\limits_{r\geq 0} \frac{(-1)^{r}}{r!} {f'}^{r} \frac{\partial^{r} }{\partial f^{r}}  \tilde{G}(f,f') \label{eq:expandg} \,.
+	\tilde{G}(f-f', f') &= \sum\limits_{r\geq 0} \frac{(-1)^{r}}{r!} {f'}^{r} \frac{\partial^{r} }{\partial f^{r}}  \tilde{G}(f,f') \label{eq:expandG} \,,
 \end{align}
 \end{subequations}
-This expansion will only be usable in practice when we will be able to keep only a few terms in each of these expansions. We therefore limited the expansion in $\Psi$ to a finite order $N$, to keep the formula readable. Notice that we expand $\tilde{G}(f-f',f')$ in $f'$ only in its first argument. We can also interchange the $f$-derivatives of $g$ with its Fourier transform.
+were we used the definition of $t_{f}$ introduced in~\eqref{eq:deftf}. In the following, we will only keep the first few terms in each of these expansions, but we keep these expressions in terms of formal series for now. Notice that we expand $\tilde{G}(f-f',f')$ in $f'$ only in its first argument, and that we can interchange the $f$-derivatives of $G$ with the Fourier transform operation.
 
-\begin{widetext}
-If we further expand the exponentials to obtain a pure $f'$-expansion, by applying the formal derivative rule
+Now, if we further expand the exponential of the phase to obtain a pure $f'$-expansion we can convert the resulting power series in $f'$ into a Taylor series with time derivatives, by applying the formal derivative rule
 \allowdisplaybreaks
 \be
-	\int \ud f'\, {f'}^{n} \frac{\partial^{m} }{\partial f^{m}}  \tilde{G}(f,f') e^{-2i\pi f' \tf} = \frac{1}{(-2i\pi)^{n}} \left( \frac{\partial^{m} }{\partial f^{m}} \frac{\partial^{n} }{\partial t^{n}} G \right)(f,\tf) \,,
+	\int \ud f'\, {(-2i\pi f')}^{n} \frac{\partial^{m}}{\partial f^{m}} \tilde{G}(f,f') e^{-2i\pi f' \tf} = \frac{\partial^{m} }{\partial f^{m}} \frac{\partial^{n} }{\partial t^{n}} G (f,\tf) \,.
 \ee
-we arrive at the formal combined expansion
-\begin{align}
-	\calT(f) &= \sum\limits_{q\geq 0} \sum\limits_{r\geq 0} \sum\limits_{k_{2}\geq 0} \dots \sum\limits_{k_{N}\geq 0} \frac{(-1)^{q}}{q!} \frac{(-1)^{r}}{r!} \prod\limits_{p=2}^{N} \frac{1}{k_{p}!}\left( \frac{(-1)^{p}(-i)}{p!} \frac{\ud^{p}\Psi}{\ud f^{p}}\right)^{k_{p}} \frac{1}{A} \frac{\ud^{q} A}{\ud f ^{q}} \frac{1}{(-2i\pi)^m} \left( \frac{\partial^{r} }{\partial f^{r}} \frac{\partial^{m} }{\partial t^{m}} G \right)(f,\tf) \,,
-\end{align}
-where $m = p+r+2k_{2}+\dots+N k_{N}$.
-\end{widetext}
+The result is a rather cumbersome expression with multiple sums, that we will not use directly. Instead, it will be more instructive to separate the different expansions in~\eqref{eq:expandfprime}. Only in Sec.~\ref{subsec:executivesummary} will we come back to combining our results together.
 
-This cumbersome expansion will not be used as such, but takes a more intuitive form for special cases. Of particular interest for us will be the case where we keep only the first term of the series in~\eqref{eq:expandPsi}, and expand the resulting exponential, which yields
+We first consider the effect of the higher-order corrections in~\eqref{eq:expandPsi}. We will find that the third and higher derivatives of the phase are always negligible for our purposes, and we will ignore them. Keeping only the first term of the series in~\eqref{eq:expandPsi}, corresponding to the second derivative of $\Psi$, and expanding the exponential of the phase, we obtain straightforwardly
 \be\label{eq:resulttaylorPsi}
 	\calT_{\rm phase}(f) = \sum\limits_{p\geq 0} \frac{1}{p!} \left( \frac{i}{8\pi^{2}}\frac{\ud^{2} \Psi}{\ud f^{2}} \right)^{p} \left( \frac{\partial^{2p} }{\partial t^{2p}} G \right)(f, \tf) \,.
 \ee
-Indeed, this correction will be shown in Sec.~\ref{subsec:resumquadphase} to be closely related to the previous approach of~\cite{KCY14}. The expansion shows that the transfer function is signal-dependent through the second derivative of the phase $\Psi$. Similarly, the expansion~\eqref{eq:expandA} gives
+This correction to the transfer function is of particular interest to us. It will be quantitatively dominant over the other ones in most contexts, and it will be shown in Sec.~\ref{subsec:resumquadphase} that it generalizes the previous approach of~\cite{KCY14}. This result shows that the transfer function is signal-dependent, not only through the time-to-frequency correspondence $t_{f}$ but also through the second derivative of the phase $\Psi$.
+
+Similarly, the expansion of the Fourier-domain amplitude~\eqref{eq:expandA} gives
 \be\label{eq:resulttaylorA}
-	\calT_{\rm amp}(f) = \sum\limits_{q\geq 0} \frac{1}{(2i\pi)^{q}q!} \frac{1}{A} \frac{\ud^{q} A}{\ud f ^{q}}  \left( \frac{\partial^{q} }{\partial t^{q}} G \right)(f,\tf) \,.
+	\calT_{\rm amp}(f) = \sum\limits_{p\geq 0} \frac{1}{(2i\pi)^{p}p!} \frac{1}{A} \frac{\ud^{p} A}{\ud f ^{p}}  \left( \frac{\partial^{p} }{\partial t^{p}} G \right)(f,\tf) \,,
 \ee
-If we expand only the frequency-dependence of $G$ as in~\eqref{eq:expandg}, we obtain
+while expanding only the frequency-dependence of $G$ as in~\eqref{eq:expandG} yields
 \be\label{eq:resulttaylordelay}
-	\calT_{\rm delay}(f) = \sum\limits_{r\geq 0} \frac{1}{(2i\pi)^{r}r!} \left( \frac{\partial^{r} }{\partial f^{r}} \frac{\partial^{r} }{\partial t^{r}} G \right)(f,\tf) \,,
+	\calT_{\rm delay}(f) = \sum\limits_{p\geq 0} \frac{1}{(2i\pi)^{p}p!} \left( \frac{\partial^{p} }{\partial f^{p}} \frac{\partial^{p} }{\partial t^{p}} G \right)(f,\tf) \,,
 \ee
-which interestingly looks like a Taylor expansion of $G$, but with joint derivatives in frequency and time. This time, the expansion is signal-independent as it only depends on the function $G$ and not on $A$, $\Psi$.
+which interestingly looks like a Taylor expansion of $G$, but this time with joint derivatives in frequency and time. This last expansion, taken separately from the other corrections, is signal-independent as it only depends on the function $G$ and not on $A$, $\Psi$.
 
-In the following, we will rewrite in a more convenient form the formal Taylor expansions for the quadratic phase effects and the delay effects. As will be explained in Sec.~\ref{} \SM{[R]}, we will use these Taylor expansions to build error measures designed to keep track of which of these three types of corrections is important.
-
-\SM{[interpretation of $\epsilon$'s as ratios of timescales - next subsec]}
-
-\SM{[add magnitude of the derivatives of G, like $\Omega^{n}$ with possible factors of $2\pi f d$]}
-
-\SM{[add loose convergence argument with scaling $\partial^{n}_{t} \sim \Omega^{n} $]}
-
-\SM{[stress that these are errors in the relative sense - so less important in RD than it seems]}
-
-We found in both the LISA case and in the precession case that the third and higher derivatives of both the amplitude and phase are negligible. \SM{[maybe to be recalled below]} Note that the figure of merit $\epsilon_{d}$, introduced to represent the effect of the frequency dependence in the convolution kernel~\eqref{eq:FDkernel}, is signal-independent and depends only on $G$.
+As will be explained in Sec.~\ref{subsec:executivesummary}, we will also use these formal Taylor expansions to build error measures (constructed as the magnitude of the first term ignored in the series, see~\eqref{eq:deffom}) designed to estimate which of these three types of corrections are important to take into account.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -409,7 +389,7 @@ We found in both the LISA case and in the precession case that the third and hig
 \begin{figure}
   \centering
   \includegraphics[width=.99\linewidth]{plots/TfTA.pdf}
-  \caption{Fourier-domain amplitude and phase timescales, as defined in~\eqref{eq:defTf} and~\eqref{eq:defTA}, in geometric units for an equal-mass, non-spinning system. The hierarchy of these timescales is roughly the same for higher mass ratio and higher spin systems. The time-domain frequency at merger is represented by the vertical line. The derivatives from which these timescales are built encounter zero-crossings and change sign in the high-frequency range. \SM{[discuss discontinuity of third derivative]} \SM{[change legent to Tf/M]}}
+  \caption{Fourier-domain amplitude and phase timescales, as defined in~\eqref{eq:defTf} and~\eqref{eq:defTA}, in geometric units for an equal-mass, non-spinning system. The hierarchy of these timescales is roughly the same for higher mass ratio and higher spin systems. The time-domain frequency at merger is represented by the vertical line. The derivatives from which these timescales are built encounter zero-crossings and change sign in the high-frequency range. \SM{[discuss discontinuity of third derivative]}\SM{[add vertical line for RD, make merger thick]}}
   \label{fig:TfTA}
 \end{figure}
 
@@ -417,71 +397,69 @@ Considering~\eqref{eq:resulttaylorPsi} it is natural to define a new timescale, 
 \be\label{eq:defTf}
 	\Tf^{2} = \frac{1}{4\pi^{2}}\left| \frac{\ud^{2}\Psi}{\ud f^{2}} \right| \,.
 \ee
-The interpretation of this timescale for the inspiralling part of the signal, when the SPA applies, will be discussed below. Whe can use this notation to rewrite~\eqref{eq:resulttaylorPsi} as
+The interpretation of this timescale for the inspiralling part of the signal, when the SPA applies, will be discussed below. We can use this notation to rewrite~\eqref{eq:resulttaylorPsi} as
 \begin{align}\label{eq:resultdffPsiTf}
 	 \calT_{\rm phase}(f) &= \sum\limits_{p\geq 0} \frac{(-i\epsilon)^{p}}{2^{p}p!} \Tf^{2p} \left( \frac{\partial^{2p} }{\partial t^{2p}} G \right)(f, \tf) \,,
 \end{align}
 where $\epsilon = -\mathrm{sgn}(\ud^{2}\Psi/\ud f^{2} )$ is $1$ in the inspiral.
 
-The expansion in amplitude corrections~\eqref{eq:resulttaylorA} also leads to the natural introduction of a set of other timescales related to the successive derivatives of the amplitude. In an analogous manner to the definition~\eqref{eq:defTf} of the timescale $T_{f}$, we can define
-\be\label{eq:defTA}
-	\left( T_{An} \right)^{n} \equiv \frac{1}{(2 \pi)^{n}} \frac{1}{A(f)} \left| \frac{\ud^{n} A}{\ud f^{n}} \right| \,,
-\ee
-where we included an absolute value to accomodate the possible sign changes in the right-hand side. Although the definition above is for a generic $n\geq 0$, in practice only the first few of these timescales will be relevant. In this paper we will use only the first two, $T_{A1}$ and $T_{A2}$.
-
-Of particular interest is the relation between out formal results and the SPA. For non-precessing gravitational wave signals, the SPA is a very good approximation through the inspiralling phase~\cite{Droz+99}. However, it is important to note that the approximation breaks down when reaching the merger-ringdown part of the signal, as the rapidly varying features of the merger break the locality of the time-to-frequency relation~\eqref{eq:deftfSPA}.  
-
-Taking the first derivative of the defining relation~\eqref{eq:deftfSPA} gives
-\be
-	t_{f} = -\frac{1}{2\pi} \frac{\ud \Psi_{\rm SPA}}{\ud f} \,,
-\ee
-which means that our generalized definition~\eqref{eq:deftf} for the effective time $t_{f}$ coincides with $t_{f}^{\rm SPA}$ in the inspiral phase of the signal, where the SPA is applicable. Similarly, if we define
+We can obtain a straighforward physical interpretation of this timescale $\Tf$ by considering inspiral signals for which the SPA is valid. If we define
 \be\label{eq:TfSPA}
-	T_{f}^{\rm SPA} \equiv \frac{1}{\sqrt{2\dot{\omega}(t_{f})}} \,,
+	\Tf^{\rm SPA} \equiv \frac{1}{\sqrt{2\dot{\omega}(\tfSPA)}} \,,
 \ee
-we have \SM{[add more details on Fourier-domain derivatives of SPA amp and phase]}
+we have, by taking two derivatives of~\eqref{eq:PsiSPA},
 \be
-	\left(T_{f}^{\rm SPA} \right)^{2} = -\frac{1}{4\pi^{2}}  \frac{\ud^{2} \Psi_{\rm SPA}}{\ud f^{2}} \,,
+	\left(\Tf^{\rm SPA} \right)^{2} = -\frac{1}{4\pi^{2}}  \frac{\ud^{2} \Psi_{\rm SPA}}{\ud f^{2}} \,,
 \ee
-where $\ud^{2}\Psi/\ud f^{2} < 0$ in the SPA with our sign conventions. Comparing with~\eqref{eq:defTf} above, we see that our generalized time scale $\Tf$ also reduces to $T_{f}^{\rm SPA}$ when the SPA applies. However, its definition extends to the merger-ringdown part of the signal, and we have to include an absolute value to allow for a possible change of sign of $\ud^{2}\Psi/\ud f^{2}$ in that regime, as shown in Fig.~\ref{fig:TfTA}.
+where $\ud^{2}\Psi/\ud f^{2} < 0$ in the SPA with our sign conventions. The quantity $\Tf^{\rm SPA}$ is clearly a radiation-reaction timescale: the shorter this timescale, the faster the binary chirps to higher frequencies on its quasi-circular inspiral. Comparing with~\eqref{eq:defTf} above, we see that our generalized time scale $\Tf$ also reduces to $\Tf^{\rm SPA}$ when the SPA applies.
 
-It is useful, to estimate the magnitude of the corrections with respect to the leading order as we will do in Secs.~\ref{} and~\ref{} below \SM{[R]}, to give an estimate for these timescales based on the Newtonian expressions~\eqref{eq:SPAN}. This gives for the Newtonian radiation-reaction and amplitude timescales:
+However, in the same way as our definition~\eqref{eq:deftf} for the time-of-frequency function $t_{f}$ generalizes the SPA definition~\eqref{eq:deftfSPA}, the definition~\eqref{eq:defTf} only refers to the phase of the Fourier-domain signal, does not require to introduce a time-domain frequency like $\omega$, and extends naturally to the merger-ringdown part of the signal. In this part of the signal, its physical interpretation as the timescale of radiation reaction is obscured, and the second derivative $\ud^{2}\Psi/\ud f^{2}$ can go through zero and change sign, as shown in Fig.~\ref{fig:TfTA}. We include an absolute value in the definition~\eqref{eq:defTf} to allow for this possibility, and keep track of the sign via $\epsilon$.
+
+The expansion in amplitude corrections~\eqref{eq:resulttaylorA} also leads to the natural introduction of a set of other timescales related to the successive derivatives of the amplitude. In an analogous manner to the definition~\eqref{eq:defTf} of the timescale $\Tf$, we can define
+\be\label{eq:defTA}
+	\left( T_{Ap} \right)^{p} \equiv \frac{1}{(2 \pi)^{p}} \frac{1}{A(f)} \left| \frac{\ud^{p} A}{\ud f^{p}} \right| \,,
+\ee
+where we included an absolute value to accomodate the possible sign changes in the right-hand side. With this notation, \eqref{} becomes simply
+\be\label{eq:resulttaylorA}
+	\calT_{\rm amp}(f) = \sum\limits_{p\geq 0} \frac{1}{p!} (T_{Ap})^{p}  \left( \partial_{t}^{p} G \right) (f,\tf) \,,
+\ee
+Although the above is written for a generic $p\geq 0$, in practice only the first few of these timescales will be relevant. In this paper we will use only the first two, $T_{A1}$ and $T_{A2}$.
+
+By contrast, the expansion~\eqref{eq:resulttaylordelay} is signal-independent and does not lead to the introduction of new timescales as the coupled time- and frequency derivatives are dimensionless. We will see however in Sec.~\ref{subsec:sizecorrLISA} that treating delays requires to take into account dimensionless factors of the type $2\pi f d$.
+
+We can obtain useful estimates for these timescales from the Newtonian expressions~\eqref{eq:SPAN}. This gives for the Newtonian radiation-reaction and amplitude timescales:
 \begin{subequations}\label{eq:timescalesN}
 \begin{align}
-	T_{f}^{\rm N} &= \frac{1}{8} \sqrt{\frac{5}{3\nu}} \frac{G m}{c^{3}} v^{-11/2} \,, \label{eq:TfN}\\
-	T_{A1}^{\rm N} &= \frac{7}{6} \frac{1}{2\pi f} \,. \label{eq:TA1N}
+	\Tf^{\rm N} &= \frac{1}{8} \sqrt{\frac{5}{3\nu}} \frac{G m}{c^{3}} v^{-11/2} \,, \label{eq:TfN}\\
+	T_{A1}^{\rm N} &= \frac{7}{6} \frac{1}{2\pi f}\,, \quad T_{A2}^{\rm N} = \frac{\sqrt{91}}{6} \frac{1}{2\pi f} \,. \label{eq:TA1N-TA2N}
 \end{align}
 \end{subequations}
-One can check explicitly that this expression for $T_{f}$ agrees with~\eqref{eq:TfSPA}. With a simple power-law amplitude as in~\eqref{eq:ASPAN}, all higher-order amplitude timescales are also simply proportional to $1/f$ and differ from the first only by their numerical factor.
+One can check explicitly that this expression for $\Tf$ agrees with~\eqref{eq:TfSPA}. With a simple power-law amplitude as in~\eqref{eq:ASPAN}, all higher-order amplitude timescales are also simply proportional to $1/f$ and differ only by their numerical factor.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%\section{Quadratic phase corrections and delays}
-%\label{sec:quadphasedelay}
+We show in Fig.~\ref{fig:TfTA} the timescales $\Tf$, $T_{A1}$, $T_{A2}$ for an equal-mass and non-spinning system. In the inspiral, they follow the scalings~\eqref{eq:timescalesN} and $\Tf$ is much larger than the other two. For frequencies above the merger frequency, $\Tf$ can go through zero and the amplitude-related timescales become comparable or larger.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsection{Quadratic term in the phase and relation to the SUA}
 \label{subsec:resumquadphase}
 
-\SM{[move all of the SUA comparison here]}
+If we restrict to the case of a pure modulation, $d=0$ and $G(f,t) = F(t)$, we can relate our result~\eqref{eq:resultdffPsiTf} to the approach of Ref.~\cite{KCY14}, where the authors extend the SPA in a formalism called the Shifted Uniform Asymptotic expansion (SUA) \SM{[look for other reference beyon KCY]}.
+%The derivation includes an expansion of the modulation in Bessel functions, a study of the displacement of the stationary phase point induced by the precession, and a resummation of the result in the form of time derivatives.
+The main intermediate result of~\cite{KCY14}, their equation~(34), reads exactly like~\eqref{eq:resultdffPsiTf} with $\epsilon=1$ and with the identifications $\tilde{H}_{corr}(f)\rightarrow \calT(f)$ for the transfer function, $T\rightarrow \Tf$ for the radiation-reaction timescale and $e^{-i\delta\phi} \rightarrow F$ for the modulation function (which is restricted in their framework to a phase, amplitudes being treated jointly with the amplitude of the signal). Thus, our treatment gives a straightforward rederivation of the result of~\cite{KCY14} which corresponds in our framework to the approximation~\eqref{eq:expandPsi}, where in the Fourier-domain convolution the phase of the signal is expanded to quadratic order and the amplitude is not expanded. The main difference is that the approach of~\cite{KCY14} still relies on the SPA being valid for the underlying signal.
 
-In this Section, we focus on the second-derivative corrective term in~\eqref{}.
-
-If we restrict to the case of a pure modulation, $d=0$ and $G(f,t) = F(t)$ [go back to more general $G(f,t)$ ?], we can relate our result~\eqref{eq:resultdffPsiTf} to the approach of Ref.~\cite{KCY14}, where the authors extend the SPA in a formalism called the shifted uniform asymptotic expansion (SUA). The derivation includes an expansion of the modulation in Bessel functions, a study of the displacement of the stationary phase point induced by the precession, and a resummation of the result in the form of time derivatives. The main result of~\cite{KCY14}, their equation~(34), reads exactly like~\eqref{eq:resultdffPsiTf} with the identifications $\tilde{H}_{corr}(f)\rightarrow \calT(f)$ for the transfer function, $T\rightarrow \Tf$ for the radiation-reaction timescale and $e^{-i\delta\phi} \rightarrow F$ for the modulation function (which is restricted in their framework to include only the phase of the modulation, its amplitude being treated jointly with the amplitude of the signal). Thus, we are able to make a direct correspondence between the treatment of~\cite{KCY14} and our framework, which provides us with a simple and alternative derivation of their result. Namely, the result of~\cite{KCY14} corresponds to the approximation~\eqref{eq:expandPsi}, where in the Fourier-domain convolution the phase of the signal is expanded to quadratic order and the amplitude is not expanded.
-
-The authors of~\cite{KCY14} proposed a resummation scheme. Indeed, the result~\eqref{} looks like a symmetrized Taylor expansion, except for the factors $i^{p}$ and $1/p!$ instead of $1/(2p)!$. After having truncated the sum at some finite $N$, one can write (following~\cite{KCY14})
-\begin{align}\label{eq:resumquadphase}
-	\calT(f) &\simeq \sum\limits_{p = 0}^{N} \frac{(-i\epsilon\Tf^{2})^{p}}{2^{p}p!} \partial_{t}^{2p}F(\tf) \nn\\
-	&\simeq \sum\limits_{p= 0}^{N} \sum\limits_{k=0}^{N} a_{N,k}\frac{(k\Tf)^{2p}}{(2p)!}  \partial_{t}^{2p}F(\tf) \nn\\
-	&\simeq \frac{1}{2}\sum\limits_{k=0}^{N} a_{N,k} \left( F(\tf + k\Tf) + F(\tf-k\Tf) \right)\,,
-\end{align}
-where one applies a truncation approximation at the first and last stage. The second equality holds provided that the complex coefficients $a_{N,k}$ are a solution of the $N+1$-dimensional linear system~\cite{KCY14}
-\be\label{eq:stencilsystem}
-	(-i\epsilon)^{p} (2p-1)!! = \sum\limits_{k=0}^{N} a_{N,k} k^{2p} \quad \text{for } p=0,\dots,N \,.
+The authors of~\cite{KCY14} then proposed a resummation scheme for~\eqref{eq:resultdffPsiTf}, using finite differences for the derivatives. Indeed, the result~\eqref{eq:resultdffPsiTf} looks like a symmetrized Taylor expansion, except for the factors $i^{p}$ and $1/p!$ instead of $1/(2p)!$. Truncating the sum at some finite order $N$, one can write (following~\cite{KCY14})
+\be
+	\calT_{\rm phase}(f) \simeq \sum\limits_{p = 0}^{N} \frac{(-i\epsilon\Tf^{2})^{p}}{2^{p}p!} \partial_{t}^{2p}F(\tf) \simeq \calF_{\Tf}^{N,\epsilon}[F] (\tf) \,,
 \ee
-The two solutions for the stencil coefficients in the two cases $\epsilon = \pm 1$ are simply related by a complex conjugation. \SM{[give the rational number expressions of $a_{N,k}$ for the first values of $N$; add derivation in appendix]}
+with the operator $\calF_{T}^{N,\epsilon}$ defined as
+\be
+	\calF_{T}^{N,\epsilon}[F] (t) \equiv \frac{1}{2}\sum\limits_{k=0}^{N} a_{N,k}^{\epsilon} \left( F(t + kT) + F(t - k T) \right) \,,
+\ee
+provided that the complex coefficients $a_{N,k}^{\epsilon}$ are a solution of the $N+1$-dimensional linear system~\cite{KCY14}
+\be\label{eq:stencilsystem}
+	(-i\epsilon)^{p} (2p-1)!! = \sum\limits_{k=0}^{N} a_{N,k}^{\epsilon} k^{2p} \quad \text{for } p=0,\dots,N \,.
+\ee
+In~\cite{KCY14}, only the case $\epsilon=1$ was considered. The two solutions for the stencil coefficients in the two cases $\epsilon = \pm 1$ are simply related by a complex conjugation. Explicit expressions for the stencil coefficients $a_{N,k}^{\epsilon}$ are given in App.~\ref{app:stencil} for the first values of $N$.
 
 An immediate advantage of this reformulation is its improved numerical stability. For the signal of precessing binaries, although one should expect an ideal scaling $\partial_{t}^{p} F \sim \Omega^{p} F$ with $\Omega$ the precession frequency, it can be extremely hard to control numerical derivatives of $F$ (which in any realistic model will be only provided as sampled at discrete times) well enough to enforce this scaling. Here, however, one simply evaluates the original smooth function $F$ at shifted times.
 
@@ -525,13 +503,6 @@ As a verification, upon performing a formal Taylor expansion in time of $F(t)$ a
 \ee
 with $a_{N,k}^{1} = a_{N,k}$ and $a_{N,k}^{-1} = a_{N,k}^{*}$. Formally, if one allows for polynomial integrands in~\eqref{eq:defFresnel} (which can only be given sense by introducing a regularization), Eq.~\eqref{eq:Fresnelstencil} amounts to the building a quadrature rule for the particular choice of nodes $t_{0} \pm k \tau$, which is exact (with a regularization) if $F$ is a symmetric polynomial of degree $\leq 2N$. Note however that this quadrature rule does not fall into the class of Gaussian quadratures, which provide $N$-point rules that give an exact representation of the integral for polynomials of degree $2N-1$. Due to the complex character of the kernel in~\eqref{eq:defFresnel}, the induced inner product is not positive definite and some key properties are lost, such as the construction of the optimal Gaussian nodes from the zeros of the orthonormalized polynomials. For more details on quadrature rules when applied to integrals with oscillatory kernels, we refer to~\cite{} \SM{[C]}.
 
-%[TO CORRECT AND REWRITE]
-%The rewriting of~\eqref{eq:resultdffPsiTf} by means of an integral transform leads by analogy to another way of formulating the connection to the results of Ref.~\cite{KCY14}. If we consider the inspiralling phase of a precessing binary, the SPA applies to the signal $h(t) = a(t)e^{-2i\varphi(t)}$. Refering to~\eqref{} above, if we consider as before that $a(t)$ is slowly variable
-%\be
-%	\tilde{s}(f) \simeq \tilde{h}_{\rm SPA} (f) \simeq a(t_{f}^{\rm SPA}) \exp\left[2i\pi f t_{f}^{\rm SPA}-2i%\varphi(t_{f}^{\rm SPA}) \right]  \int \ud t \, F(t) e^{-i \dot{\omega} (t_{f}^{\rm SPA}) (t-t_{f}^{\rm SPA})^{2}} \,.
-%\ee
-%We see that, within the context of the SPA, the result~\eqref{} for the quadratic term in the phase, equivalent to the result of~\cite{KCY14}, can be recovered by a time-domain approach. However, our formalism is somewhat more general, as it does not make use of the SPA for the underlying signal $\tilde{h}(f)$ and can in principle be used for the merger-ringdown part of the signal as well.
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsection{Treatment of the delays}
@@ -553,7 +524,7 @@ The above integral can then be formally computed as
 	&= \tilde{h}(f) F(t_{f}^{d}) \frac{e^{-2i\pi f d(t_{f}^{d})}}{1+\dot{d}(t_{f}^{d})}
 \end{align}
 
-For the standard LISA configuration, we have for the orbital delays the scaling $d_{O}\sim R \sim 500s$, for the constellation delays the scaling $d_{c}\sim L \sim 8s$ (with $c=1$ and ignoring the dependence on angular factors). Since the motion of the constellation is periodic with a period of one year and $\Omega_{0} = 2 \times 10^{-7}\mathrm{rad}.s^{-1}$, we have $\dot{d}_{O} \sim \Omega_{0} R/c \sim 10^{-4}$ and $\dot{d}_{c} \sim \Omega_{0} L/c \sim 1.7 \times 10^{-6}$. The smallness of the dimensionless quantity $\dot{d} \ll 1$ (and of its subsequent derivatives) will allow us to treat it perturbatively with a very good approximation, and shows also that the function $t_{d}$ is univalued and that there is no ambiguity in defining its reciprocal $t_{d}^{-1}$.
+For the standard LISA configuration, we have for the orbital delays the scaling $d_{O}\sim R/c \sim 500s$, for the constellation delays the scaling $d_{c}\sim L/c \sim 8s$ (with $c=1$ and ignoring the dependence on angular factors). Since the motion of the constellation is periodic with a period of one year and $\Omega_{0} \simeq 2 \times 10^{-7}\mathrm{rad}.s^{-1}$, we have $\dot{d}_{O} \sim \Omega_{0} R/c \simeq 10^{-4}$ and $\dot{d}_{c} \sim \Omega_{0} L/c \simeq 1.7 \times 10^{-6}$. The smallness of the dimensionless quantity $\dot{d} \ll 1$ (and of its subsequent derivatives) will allow us to treat it perturbatively with a very good approximation, and shows also that the function $t_{d}$ is univalued and that there is no ambiguity in defining its reciprocal $t_{d}^{-1}$.
 
 By treating $\dot{d}$ as a perturbation and keeping only first-order terms, we obtain for the delayed time reciprocal function
 \begin{align}
@@ -575,7 +546,7 @@ Next, we consider the case where the quadratic phase correction is kept as well,
 \end{widetext}
 where we used a change of variable $\tau = t_{d}(t)$. We see that the result can again be expressed as a Fresnel transform. When considering amplitude corrections as well, as in~\eqref{}, additional powers of $f'$ can be translated as time derivatives with respect to the variable $\tau$ after performing the change of variables. This produces our most general result given in Eq.~\eqref{eq:transferfinal} below.
 
-\subsection{Executive summary of the formalism}
+\subsection{Executive summary of the formalism}\label{subsec:executivesummary}
 
 In this Section, we gather our previous results for the convenience of the reader. For a modulation $F$ and delay $d$, so that $s(t) = F(t) h(t+d(t))$, we defined the associated function $G(f,t) = F(t) e^{-2i\pi f d(t)}$ and we obtained the transfer function $\calT (f) = \tilde{s}(f)/\tilde{h}(f)$:
 \begin{widetext}
@@ -583,9 +554,9 @@ In this Section, we gather our previous results for the convenience of the reade
 	\calT(f) = \sum\limits_{k \geq 0} \frac{(-i)^{k}}{k!} (T_{Ak})^{k} \calF^{\epsilon}_{\Tf} \left[ \frac{\ud^{k}}{\ud \tau^{k}} \left( \frac{F(\tau - d(\tau))}{1+\dot{d}(\tau)} e^{-2i\pi f d(\tau)(1-\dot{d}(\tau))} \right) \right] (\tf) \,.
 \ee
 \end{widetext}
-In each term of this series, the Fresnel transform $\calF^{\epsilon}_{\Tf}$ can in turn be approximated by using the stencil formula~\eqref{eq:Fresnelstencil}. The timescales $T_{f}$ and $T_{Ak}$ were defined in~\eqref{eq:defTf} and~\eqref{eq:defTA}, and the generalized time-to-frequency function $t_{f}$ was given in~\eqref{eq:deftf}. The delays $d$ are present only in the LISA context, while in the context of precessing binaries we only have to consider the modulation function $F$. In practice, only the first few of the terms in this last remaining series expansion are relevant. We will investigate several orders of approximation, combining corrections from the phase, amplitude and delays, and explore which ones are relevant for a given level of accuracy. We will use symbols of the form $\{N,A,d\}$ to indicate the order of the stencil in~\eqref{eq:Fresnelstencil}, the maximal order of the amplitude correction included, and the inclusion or not of the delay correction.
+In each term of this series, the Fresnel transform $\calF^{\epsilon}_{\Tf}$ can in turn be approximated by using the stencil formula~\eqref{eq:Fresnelstencil}. The timescales $\Tf$ and $T_{Ak}$ were defined in~\eqref{eq:defTf} and~\eqref{eq:defTA}, and the generalized time-to-frequency function $t_{f}$ was given in~\eqref{eq:deftf}. The delays $d$ are present only in the LISA context, while in the context of precessing binaries we only have to consider the modulation function $F$. In practice, only the first few of the terms in this last remaining series expansion are relevant. We will investigate several orders of approximation, combining corrections from the phase, amplitude and delays, and explore which ones are relevant for a given level of accuracy. We will use symbols of the form $\{N,A,d\}$ to indicate the order of the stencil in~\eqref{eq:Fresnelstencil}, the maximal order of the amplitude correction included, and the inclusion or not of the delay correction.
 
-In the LISA context, due to the smallness of the corrections we will only go up to $k=1$ in~\eqref{eq:transferfinal}, and in computing the remaining time derivatives in~\eqref{eq:transferfinal} we will neglect the second and higher derivatives. We will also use $F(\tau - d(\tau)) \simeq (F - d \dot{F})(\tau)$. This gives concretely:
+In the LISA context, due to the smallness of the corrections we will only go up to \SM{[k=2 for prec]} $k=1$ in~\eqref{eq:transferfinal}, and in computing the remaining time derivatives in~\eqref{eq:transferfinal} we will neglect the second and higher derivatives. We will also use $F(\tau - d(\tau)) \simeq (F - d \dot{F})(\tau)$. This gives concretely:
 \begin{widetext}
 \begin{subequations}
 \begin{align}
@@ -606,16 +577,25 @@ In the context of precessing binaries, the delays are absent and we will go up t
 \end{align}
 \end{subequations}
 
-In the following, it will be convenient to introduce \SM{[think of removing ``figure of merit'' throughout the text as it is not quite the word - error measure ?]} error estimates built from the Taylor-like series~\eqref{eq:resulttaylorPsi},~\eqref{eq:resulttaylorA} and~\eqref{eq:resulttaylordelay}. We simply define  this error estimates at a certain level of approximation as the magnitude of the first term ignored in the original Taylor series. Thus we define \SM{[check if the 1/2! was taken into account]}
+In the following, it will be convenient to introduce error estimates built from the Taylor-like series~\eqref{eq:resulttaylorPsi},~\eqref{eq:resulttaylorA} and~\eqref{eq:resulttaylordelay}. We simply define  this error estimates at a certain level of approximation as the magnitude of the first term ignored in the original Taylor series. Thus we define \SM{[check if the 1/2! was taken into account]}
+\SM{[interpretation of $\epsilon$'s as ratios of timescales - next subsec]}
+
+\SM{[add magnitude of the derivatives of G, like $\Omega^{n}$ with possible factors of $2\pi f d$]}
+
+\SM{[add loose convergence argument with scaling $\partial^{n}_{t} \sim \Omega^{n} $]}
+
+\SM{[stress that these are errors in the relative sense - so less important in RD than it seems]}
 \begin{subequations}\label{eq:deffom}
 \begin{align}
-	\epsilon_{\Psi 2} &\equiv \frac{1}{2} T_{f}^{2} \left| \frac{1}{G}\partial_{tt}G \right| \,, \\
+	\epsilon_{\Psi 2} &\equiv \frac{1}{2} \Tf^{2} \left| \frac{1}{G}\partial_{tt}G \right| \,, \\
 	\epsilon_{A 1} &\equiv T_{A1} \left| \frac{1}{G} \partial_{t} G \right| \,, \\
 	\epsilon_{A 2} &\equiv \frac{1}{2} T_{A2}^{2} \left| \frac{1}{G} \partial_{tt}G \right| \,, \\
 	\epsilon_{d} &\equiv \frac{1}{2\pi} \left| \frac{1}{G} \partial_{tf} G \right| \,,
 \end{align}
 \end{subequations}
-where the function $G$ and its derivatives are evaluated at $(f, t_{f})$. As we will detail below, in the presence of delays these derivatives do not obey the simple scaling $\partial_{t}^{n} \rightarrow \Omega_{0}^{n}$, with $\Omega_{0}$ the characteristic frequency for the time variablility in the modulation and delay. This is due to the presence of additional dimensionless delay terms of the form $2\pi f d$, which can be larger than 1.
+where the function $G$ and its derivatives are evaluated at $(f, t_{f})$. Reaching $\epsilon \simeq 1$ will indicate a breakdown of the perturbative approach. As we will detail below, in the presence of delays these derivatives do not obey the simple scaling $\partial_{t}^{n} \rightarrow \Omega_{0}^{n}$, with $\Omega_{0}$ the characteristic frequency for the time variablility in the modulation and delay. This is due to the presence of additional dimensionless delay terms of the form $2\pi f d$, which can be larger than 1.
+
+We will also \SM{[]}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -630,17 +610,17 @@ where the function $G$ and its derivatives are evaluated at $(f, t_{f})$. As we 
 
 In this Section, we expand Sec.~\ref{subsec:} \SM{[R]} and detail more the model that we use for the response of a LISA-like detector, together with the assumptions used and their limitations.
 
-As argued in~\cite{Krolak+04}, since we focus on the gravitational-wave contribution to the basic observable, we can use a simplified model for the response, ignoring corrections that are crucial from the point of view of noise cancellations. Our aim is indeed to assess the accuracy of a direct Fourier-domain treatment of the response, thus focusing on the separation of timescales in the problem, keeping in mind that corrections can be added later without affecting the conclusions of the present analysis.
+As argued in~\cite{Krolak+04} \SM{[expand a bit; not the only place where this approximation is used]}, since we focus on the gravitational-wave contribution to the basic observable, we can use a simplified model for the response, ignoring corrections that are crucial from the point of view of noise cancellations. Our aim is indeed to assess the accuracy of a direct Fourier-domain treatment of the response, thus focusing on the separation of timescales in the problem, keeping in mind that corrections can be added later without affecting the conclusions of the present analysis.
 
-The frequency-shift response for a single link~\eqref{eq:yslr} was derived in Ref.~\cite{EW75} (see also~\cite{} \SM{[C]} for a more modern derivation). Several assumptions enter the result as written in~\eqref{eq:yslr}: (i) effects of the order $v/c$ are neglected, including for instance the special relativistic Doppler effect created by the relative speeds of the spacecrafts on their orbits (ii) the propagation is assumed to take place in a flat spacetime, perturbed only by the gravitational wave; thus the gravitational redshift as well as the deflection of light created by the gravitational potential of the Sun is ignored (iii) all geometric factors are evaluated at a single time, whereas one should consider the beam as propagating from the position of the first spacecraft at the time of emission to the position of the second scapecraft at the time of reception, leading to a pointing-ahead effect.
+The frequency-shift response for a single link~\eqref{eq:yslr} was derived in Ref.~\cite{EW75} (see also~\cite{RCP04, Finn08, Cornish09} for more modern derivations). Several assumptions enter the result as written in~\eqref{eq:yslr}: (i) effects of the order $v/c$ are neglected, including for instance the special relativistic Doppler effect created by the relative speeds of the spacecrafts on their orbits (ii) the propagation is assumed to take place in a flat spacetime, perturbed only by the gravitational wave; thus the gravitational redshift as well as the deflection of light created by the gravitational potential of the Sun is ignored (iii) all geometric factors are evaluated at a single time, whereas one should consider the beam as propagating from the position of the first spacecraft at the time of emission to the position of the second scapecraft at the time of reception, leading to a pointing-ahead effect.
 
 Additionally, we limit ourselves to a rigid model for the detector, namely we assume that the constellation remains in an equilateral configuration with fixed armlengths $L=2.5\times 10^{6}\mathrm{km}$, as proposed in~\cite{LISA17}. This simplified orbits neglect (iv) the effect of excentricity of the individual Keplerian orbits, which introduces corrections at the level $e^{2}$ (v) the effect of gravitational perturbations coming from other celestial bodies, such as the Earth, the quadrupole of the Sun, and the other planets. 
 
-Note that although we can neglect all the effects (i)-(v) for our present study, keeping track of these corrections is crucial for the purpose of noise cancellations, and led to the development of new generations of TDI observables~\cite{} \SM{[C]}.
+Note that although we can neglect all the effects (i)-(v) for our present study, keeping track of these corrections is crucial for the purpose of laser noise cancellations, and led to the development of new generations of TDI observables~\cite{} \SM{[C]}.
 
-Since the orbital delay due to the orbit around the Sun is common to all $y_{slr}$ observables, we will decompose the full instrument response~\eqref{} \SM{[R]} in two steps. The first step consists simply in applying the varying time delay to bring the signal from the SSB to the center of the LISA triangular constellation. For $h^{\rm TT}$ the transverse-traceless gravitational waveform in matrix form, we write this orbital time delay as
+Since the orbital delay due to the orbit around the Sun is common to all $y_{slr}$ observables, we will decompose the one-arm instrument response~\eqref{} \SM{[R]} in two steps. The first step consists simply in applying the varying time delay to bring the signal from the SSB to the center of the LISA triangular constellation. For $h^{\rm TT}$ the transverse-traceless gravitational waveform in matrix form, we write this orbital time delay as
 \be\label{eq:defresponseO}
-	h_{O} (t) = h(t-\hatk\cdot p_{O}) \,.
+	h_{O}^{\rm TT} (t) = h^{\rm TT}(t-\hatk\cdot p_{O}) \,.
 \ee
 The second step consists in the remaining, constellation-centered response, which we write as
 \begin{align}\label{eq:defresponsec}
@@ -675,7 +655,7 @@ where all vectors $n_{l}$ and $p_{A}^{L}$ are to be evaluated at time $t_{f}$. W
 
 In the case $m<0$, the formalism can be applied in the same way, except that notation is complicated by the fact that the mode $\tilde{h}_{\ell m}$ has to be evaluated at $-f$. In the following, we will limit ourselves to the case $m>0$ for simplicity of presentation. \SM{[really necessary ?]}
 
-Note that, if the corrections~\eqref{} are included for the constellation delays, this transfer function will not have this simple form anymore as $\dot{d}$ will have a different velocity-dependent expression for the sending and receiving spacecrafts.
+Note that, if the corrections~\eqref{} are included for the constellation delays, this transfer function will not have this simple form anymore, as $\dot{d}$ will have a different velocity-dependent expression for the sending and receiving spacecrafts.
 
 It is natural to define two transfer frequencies for the two relevant length scales for the delays, defined such that a wavelength fits within this length scale. Geometrical projection factors aside, these scales are the radius of the orbit around the Sun $R=1\text{au}=1.5\times 10^{8} \text{km}$ and the detector armlength $L=2.5\times 10^{6}\text{km}$ (in the configuration proposed in~\cite{LISA17}). This gives
 \begin{subequations}\label{eq:transferfrequencies}
@@ -684,7 +664,7 @@ It is natural to define two transfer frequencies for the two relevant length sca
 	f_{L} &= 1.9\times 10^{-2}\text{Hz} \,.
 \end{align}
 \end{subequations}
-These transfer frequencies will indicate where in the LISA band a delay term of the form $2\pi f d$ becomes larger than unity.\SM{[check if this appears elsewhere]}
+These transfer frequencies will indicate where in the LISA band a dimensionless delay term of the form $2\pi f d$ becomes larger than unity. \SM{[check if this appears elsewhere]}
 
 \SM{[comment on the added structure in the high-f response - say a word of f-factor corresponding to discrete derivatives - define low-f response that others have been using - reference to folks also looking at that (marginal) for ET? ]}
 
@@ -711,7 +691,7 @@ These transfer frequencies will indicate where in the LISA band a delay term of 
 
 Due to the smallness of the annual frequency $\Omega_{0}/2\pi \simeq 3.1\times10^{-8}\mathrm{Hz}$ compared to the timescales relevant for the signal over the LISA frequency band, one can expect that the higher-order corrections described in Section~\ref{sec:formalism} are small. In this Section we try to quantify to which extent, and give simple estimates of their magnitude.
 
-Using the Newtonian-order expressions~\eqref{eq:timescalesN} for the signal-dependent timescales $T_{f}$ and $T_{A1}$, we can obtain a useful order-of-magnitude estimate for the error measures $\epsilon$ introduced in~\eqref{eq:deffom}. Higher-order amplitude terms beyond the first one in~\eqref{eq:resulttaylorA} will turn out to be completely negligible in the LISA case and we will ignore them in the following. We will present these estimates separately for the orbital response~\eqref{eq:transferOlocal} and the constellation~\eqref{eq:transferclocal}, as the different baseline of the delays ($R$ or $L$) as well as the presence of a time-varying prefactor $F(t)$ both affect the result. As we will see, when estimating the magnitude of the relevant derivatives of $G$ we have to take into account delay factors of the type $2\pi f d$.
+Using the Newtonian-order expressions~\eqref{eq:timescalesN} for the signal-dependent timescales $\Tf$ and $T_{A1}$, we can obtain a useful order-of-magnitude estimate for the error measures $\epsilon$ introduced in~\eqref{eq:deffom}. Higher-order amplitude terms beyond the first one in~\eqref{eq:resulttaylorA} will turn out to be completely negligible in the LISA case and we will ignore them in the following. We will present these estimates separately for the orbital response~\eqref{eq:transferOlocal} and the constellation~\eqref{eq:transferclocal}, as the different baseline of the delays ($R$ or $L$) as well as the presence of a time-varying prefactor $F(t)$ both affect the result. As we will see, when estimating the magnitude of the relevant derivatives of $G$ we have to take into account delay factors of the type $2\pi f d$.
 
 We start with the orbital response, which takes the form of a pure delay $G_{0}(f, t) = e^{-2 i \pi f d_{O}(t)}$, and obtain
 \begin{subequations}
@@ -749,7 +729,7 @@ for the orbital response and
 \end{subequations}
 for the constellation response. In the presence of different terms, we simply take the maximum of their norms. An important point in the above is the presence of delay factors in the forms of powers of $2\pi f d$. Thus, the magnitude of the corrections cannot be evaluated with the simple replacement $\partial_{t}^{n} \rightarrow \Omega_{0}^{n}$, and the frequency dependency of the error measures will depend on the frequency being above or below the transfer frequencies $f_{R}$ and $f_{L}$ defined in~\eqref{eq:transferfrequencies}.
 
-The error measure $\epsilon_{d}$ does not depend on signal-dependent timescales and can be directly read off the estimates above, with $\epsilon_{d} = \partial_{tf}G/(2\pi G)$. For the error measures $\epsilon_{\Psi}$ and $\epsilon_{A1}$, we can combine the above with the Newtonian timescales given in~\eqref{eq:timescalesN} for the inspiral phase of the signal. An important distinction needs to be made there, as the radiation reaction timescale $T_{f}$ grows rapidly towards lower frequencies as $f^{-11/6}$. If one considers systems that are arbitrarily far from merging, $T_{f}$ can be made arbitrarily large, leading the error measure $\epsilon_{\Psi}$ to take values arbitrarily larger than 1 where the perturbative treatment we adopted breaks down. This limit would describe systems observed in their deep inspiral and very slowly chirping, such as the population of galactic binaries that form one of the science targets of the LISA mission~\cite{LISA17}. Such signals would be very compact in Fourier domain, and are not covered by our formalism that assumes an extended Fourier spectrum. We will present in App.~\ref{} \SM{[R]} another version of our formalism based on discrete Fourier coefficients, that could apply better to this case \SM{[check: do we put this appendix or not ?]}. On the contrary, if one considers only systems that will merge during or shortly after the observation span of the mission, the starting frequency of the observations will be set by this limited lifetime of the source before merging and we can then bound $\epsilon_{\Psi}$ to be smaller than 1.
+The error measure $\epsilon_{d}$ does not depend on signal-dependent timescales and can be directly read off the estimates above, with $\epsilon_{d} = \partial_{tf}G/(2\pi G)$. For the error measures $\epsilon_{\Psi}$ and $\epsilon_{A1}$, we can combine the above with the Newtonian timescales given in~\eqref{eq:timescalesN} for the inspiral phase of the signal. An important distinction needs to be made there, as the radiation reaction timescale $\Tf$ grows rapidly towards lower frequencies as $f^{-11/6}$. If one considers systems that are arbitrarily far from merging, $\Tf$ can be made arbitrarily large, leading the error measure $\epsilon_{\Psi}$ to take values arbitrarily larger than 1 where the perturbative treatment we adopted breaks down. This limit would describe systems observed in their deep inspiral and very slowly chirping, such as the population of galactic binaries that form one of the science targets of the LISA mission~\cite{LISA17}. Such signals would be very compact in Fourier domain, and are not covered by our formalism that assumes an extended Fourier spectrum. We will present in App.~\ref{} \SM{[R]} another version of our formalism based on discrete Fourier coefficients, that could apply better to this case \SM{[check: do we put this appendix or not ?]}. On the contrary, if one considers only systems that will merge during or shortly after the observation span of the mission, the starting frequency of the observations will be set by this limited lifetime of the source before merging and we can then bound $\epsilon_{\Psi}$ to be smaller than 1.
 
 In the following we will consider only these merging binaries, which include the supermassive black hole mergers that we expect to detect~\cite{LISA17}. The population of stellar-origin binary black holes, proposed in~\cite{Sesana16}, will have both sources rather far from merger and sources that will merge within a few years after the mission finishes. We will take a reference starting frequency corresponding to a time from merger $\Delta t = 10\text{yrs}$. Since the corrections turn out to be most important at the beginning of the signal, we will evaluate the timescales at this starting frequency. From the Newtonian relation~\eqref{eq:omegaphiN}, we have (using $\nu_{0} = 1/4$ for the equal-mass value): \SM{[check]}
 \be
@@ -758,13 +738,13 @@ In the following we will consider only these merging binaries, which include the
 which gives in turn for the timescales
 \begin{subequations}
 \begin{align}
-	T_{f} = 6.8\times10^{-2}\text{yr} \left( \frac{\nu}{\nu_{0}} \right)^{3/16} \left( \frac{m}{10^{6}M_{\odot}} \right)^{5/16} \left( \frac{\Delta t}{10 \text{yr}} \right)^{11/16} \,\\
+	\Tf = 6.8\times10^{-2}\text{yr} \left( \frac{\nu}{\nu_{0}} \right)^{3/16} \left( \frac{m}{10^{6}M_{\odot}} \right)^{5/16} \left( \frac{\Delta t}{10 \text{yr}} \right)^{11/16} \,\\
 	T_{A1} = 2.0\times10^{-4}\text{yr} \left( \frac{\nu}{\nu_{0}} \right)^{3/8} \left( \frac{m}{10^{6}M_{\odot}} \right)^{5/8} \left( \frac{\Delta t}{10 \text{yr}} \right)^{3/8} \,.
 \end{align}
 \end{subequations}
-When inserting these expressions in~\eqref{eq:deffom}, in~\eqref{eq:estimatederivorb} and~\eqref{eq:estimatederivconst} we must also use $f_{\rm start}$ for the possible extra factors of $f$ or $f^{2}$ coming from the delay terms, which can lead to different overall scalings with mass ratio and total mass depending on where the signal starts in the band.
+\SM{[change notation for total mass everywhere to $M$]} When inserting these expressions in~\eqref{eq:deffom}, in~\eqref{eq:estimatederivorb} and~\eqref{eq:estimatederivconst} we must also use $f_{\rm start}$ for the possible extra factors of $f$ or $f^{2}$ coming from the delay terms, which can lead to different overall scalings with mass ratio and total mass depending on where the signal starts in the band.
 
-We summarize the results for the error estimates in Fig.~\ref{fig:fomLISA}. We show the magnitude of the figures of merit $\epsilon_{\Psi}$, $\epsilon_{A1}$, $\epsilon_{d}$ both for the orbital delay and the constellation response, for an equal-mass system with total masses of $m=10^{7} \Msol$, $10^{4} \Msol$ and $10^{2} \Msol$ and a starting frequency corresponding to $\Delta t =10 \text{yr}$ of observation. Since individual signals can show significant variation depending on the angular parameters, we show an average of $\ln \epsilon$ over the sky position, inclination and polarization, together with $\pm \sigma$ standard deviation, and overlay the estimates resulting from~\eqref{eq:estimatederivorb},~\eqref{eq:estimatederivconst} and~\eqref{eq:timescalesN}. Here and in the following, for completeness we show results on the frequency band from $10^{-5}\text{Hz}$ to $1Hz$, while the signals are expected to have little signal-to-noise ratio outside of the band from $10^{-4}\text{Hz}$ to $10^{-1}Hz$, which is sometimes taken as a reference~\cite{LISA17}.
+We summarize the results for the error estimates in Fig.~\ref{fig:fomLISA}. We show the magnitude of the error estimates $\epsilon_{\Psi}$, $\epsilon_{A1}$, $\epsilon_{d}$ both for the orbital delay and the constellation response, for an equal-mass system with total masses of $m=10^{7} \Msol$, $10^{4} \Msol$ and $10^{2} \Msol$ and a starting frequency corresponding to $\Delta t =10 \text{yr}$ of observation. Since individual signals can show significant variation depending on the angular parameters, we show an average of $\ln \epsilon$ over the sky position, inclination and polarization, together with $\pm \sigma$ standard deviation, and overlay the estimates resulting from~\eqref{eq:estimatederivorb},~\eqref{eq:estimatederivconst} and~\eqref{eq:timescalesN}. Here and in the following, for completeness we show results on the frequency band from $10^{-5}\text{Hz}$ to $1Hz$, while the signals are expected to have little signal-to-noise ratio outside of the band from $10^{-4}\text{Hz}$ to $10^{-1}Hz$, which is sometimes taken as a reference~\cite{LISA17}.
 
 For $\epsilon_{\Psi}$, we find as expected a steep rise towards lower frequencies, which shows that considering only merging binaries with a limited time remaining before merger is crucial here. Due to the different occurences of delay factors, we find a different behaviour between the orbital response, where the initial value of $\epsilon_{\Psi}$ grows towards lower masses, and the constellation response, where $\epsilon_{\Psi}$ grows towards higher masses. In both cases, the error measure remains below $\epsilon_{\Psi} \sim 0.1$, where the corrections can be sizeable but well manageable by the perturbative formalism (as we will show in the next Section). Not represented in the figure is the behaviour with mass ratio, which also differs: for a total mass of $10^{2} \Msol$, the extra factors of $f_{\rm start}$ due to the delay factors lead to an increase towards larger mass ratios, while for a total mass of $10^{7} \Msol$ we have a decrease towards larger mass ratios.
 
@@ -799,6 +779,8 @@ Overall, we find that for merging binaries the perturbative approach presented i
 \SM{[argument why we do not compute mismatches]}
 
 \SM{[stress that binaries very far from merger could have arbitrarily large Psi2 corrections]}
+
+\SM{[say that we take a large number of samples to eliminate spline interpolation errors]}
 
 Having at hand generic estimates for where the higher-order corrections in the LISA response are expected to be relevant, we now demonstrate that including them indeed reduces the reconstruction error of the Fourier-domain waveform. We will use an example PhenomD~\cite{Khan+15,Husa+15} waveform for an equal-mass and non-spinning system, and consider only two values for the total mass, $m=10^{7} \Msol$ and $m=10^{2} \Msol$. For this example, we will also focus on the orbital response and on a single-arm constellation response $y_{132}$, as TDI combinations will appear (within the approximations listed in Sec.~\ref{} \SM{[R]}) as linear combinations of these basic observables. On one hand, we perform a numerical inverse Fourier transform (IFFT) of the Fourier-domain PhenomD waveform, process the signal through the time-domain response~\eqref{eq:defresponseO} or~\eqref{eq:defresponsec}, and perform a numerical Fourier transform (FFT). This gives us the target Frourier-domain waveform, considered to be exact but for the possible artifacts of numerical Fourier transforms (most notably, oscillations induced by the necessary tapering of the signal). On the other hand, we process the Fourier-domain signal through the response summarized in Sec.~\ref{} \SM{[R]}, including various higher-order corrections. We then compare the output of the two procedures.
 
@@ -851,6 +833,16 @@ For the constellation response, we show the results in Figs.~\ref{fig:LISAerrorM
 \end{figure}
 
 \SM{[say a word of resampling needed at low and high f, refer to paper PE - discussion section at the end ?]}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Alternative approach for periodic modulations and delays}
+
+In the LISA case, the modulations and delays entering~\eqref{eq:yslr} are periodic, with a period of $f_{0} = 1/\mathrm{yr} \simeq 3.2\times 10^{-8}\mathrm{Hz}$. If the above perturbative formalism cannot be applied, we can still exploit this periodic structure . \SM{[]}
+\be
+	G(f,t) = \sum_{n} c_{n}(f) e^{-in\Omega_{0}t} \,.
+\ee
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -967,13 +959,13 @@ The above decomposition~\eqref{eq:wignerrot}, and simplifying assumptions~\eqref
 To account for previous approaches to the problem of producing precessing waveforms directly in the Fourier domain, avoiding the use of a FFT \SM{[check acronym]}, it is useful to introduce schematically three levels of approximation (dropping the mode indices):
 \begin{itemize}
 	\item unstable SPA: $\calT(f) \tilde{h}^{\rm P}(f) = \mathrm{SPA}\left[ \calD^{*} h^{\rm P} \right](f)$,
-	\item SPA, $0^{\text{th}}$-order SUA, PhenomP: $\calT(f) = \calD^{*}(t_{f}^{\rm SPA}) $,
-	\item SUA: $\calT(f) = \frac{1}{2} \sum\limits_{k} a_{k} \calD^{*}(t_{f}^{\rm SPA} \pm k T_{f}^{\rm SPA})$.
+	\item SPA, $0^{\text{th}}$-order SUA, PhenomP: $\calT(f) = \calD^{*}(\tfSPA) $,
+	\item SUA: $\calT(f) = \frac{1}{2} \sum\limits_{k} a_{k} \calD^{*}(\tfSPA \pm k \Tf^{\rm SPA})$.
 \end{itemize}
 
 In the first option, one applies directly the SPA, as described in Sec.~\ref{subsec:SPA}, to the product of the modulation and the signal. This is known (see e.g.~\cite{KCY13}) to lead to possible pathologies, since the prefactor $1/\sqrt{\ddot{\phi}_{\rm prec}}$ can blow up due the precessing contributions to the phase, and is not used in waveform modelling.
 
-The second option corresponds to simply multiplying the Fourier-domain signal by the modulation function evaluated at the time $t_{f}^{\rm SPA}$ as defined in~\eqref{eq:deftfSPA}. In the SUA formalism of Ref.~\cite{KCY14}, this amounts to using a stencil reduced to a single point, i.e. using $a_{0,0} = 1$ in~\eqref{} \SM{[R]}. It is equivalent to the leading order of our formalism, as explained in Sec.~\ref{} \SM{[R]}, with the difference that we use a more general definition of $t_{f}$ (see~\eqref{eq:deftf}) that extends through the merger and ringdown. \SM{[Mention O'Shaugnessy single-spin FD waveforms]}. The PhenomP model~\cite{Hannam+13} implictly uses this level of approximation, although with the notable difference that a frequency-based expression of the modulation is used, allowing to cover the whole frequency band. The precessing-frame evolution is modelled using post-Newtonian expressions for the Euler angles $(\alpha^{\rm PN}, \beta^{\rm PN}, \gamma^{\rm PN}) (\omega)$, that are obtained as functions of the orbital frequency $\omega$ in the limit of a small opening angle of the precession cone and at the spin-orbit level~\cite{Hannam+13} (see also~\cite{BBF11, MBBB13}). Using the SPA-inspired correspondence~\eqref{} \SM{[R]} between the orbital and Fourier-domain frequency, one then writes 
+The second option corresponds to simply multiplying the Fourier-domain signal by the modulation function evaluated at the time $\tfSPA$ as defined in~\eqref{eq:deftfSPA}. In the SUA formalism of Ref.~\cite{KCY14}, this amounts to using a stencil reduced to a single point, i.e. using $a_{0,0} = 1$ in~\eqref{} \SM{[R]}. It is equivalent to the leading order of our formalism, as explained in Sec.~\ref{} \SM{[R]}, with the difference that we use a more general definition of $t_{f}$ (see~\eqref{eq:deftf}) that extends through the merger and ringdown. \SM{[Mention O'Shaugnessy single-spin FD waveforms]}. The PhenomP model~\cite{Hannam+13} implictly uses this level of approximation, although with the notable difference that a frequency-based expression of the modulation is used, allowing to cover the whole frequency band. The precessing-frame evolution is modelled using post-Newtonian expressions for the Euler angles $(\alpha^{\rm PN}, \beta^{\rm PN}, \gamma^{\rm PN}) (\omega)$, that are obtained as functions of the orbital frequency $\omega$ in the limit of a small opening angle of the precession cone and at the spin-orbit level~\cite{Hannam+13} (see also~\cite{BBF11, MBBB13}). Using the SPA-inspired correspondence~\eqref{} \SM{[R]} between the orbital and Fourier-domain frequency, one then writes 
 \be\label{eq:precPhenomP}
 	\calT^{\ell}_{mm'}(f) = \calD^{\ell *}_{mm'}(\alpha^{\rm PN}, \beta^{\rm PN}, \gamma^{\rm PN}) \left( \omega=\pi f\right) \,.
 \ee
@@ -982,10 +974,10 @@ When the SPA is valid for the underlying signal $h^{\rm P}_{\ell m}$, the condit
 In the SUA formalism proposed in~\cite{} \SM{[C]}, one extends the SPA to incorporate the leading-order correction during the inspiral phase. The transfer function is then computed by evaluating the modulation on a stencil of times centered around the time-of-frequency given by the SPA, following 
 \begin{widetext}
 \be
-	\calT(f) = \frac{1}{2} \sum\limits_{k=0}^{N} a_{N,k} \left[\calD^{\ell *}_{mm'}(t_{f}^{\rm SPA} + k T_{f}^{\rm SPA}) + \calD^{\ell *}_{mm'}(t_{f}^{\rm SPA} - k T_{f}^{\rm SPA}) \right] \,.
+	\calT(f) = \frac{1}{2} \sum\limits_{k=0}^{N} a_{N,k} \left[\calD^{\ell *}_{mm'}(\tfSPA + k \Tf^{\rm SPA}) + \calD^{\ell *}_{mm'}(\tfSPA - k \Tf^{\rm SPA}) \right] \,.
 \ee
 \end{widetext}
-The definition of $T_{f}^{\rm SPA}$ was given in~\ref{} \SM{[R]}. As described in Sec.~\ref{} \SM{[R]}, this approach is equivalent to our formalism when keeping only the quadratic phase correction, but is a priori limited to the inspiral phase of the signal through the definitions of the times $t^{\rm SPA}_{f}$ and $T^{\rm SPA}_{f}$. For inspiral waveforms, Ref.~\cite{} \SM{[C]} showed that this treatment improves the accuracy with respect to the local approximation.
+The definition of $\Tf^{\rm SPA}$ was given in~\ref{} \SM{[R]}. As described in Sec.~\ref{} \SM{[R]}, this approach is equivalent to our formalism when keeping only the quadratic phase correction, but is a priori limited to the inspiral phase of the signal through the definitions of the times $t^{\rm SPA}_{f}$ and $T^{\rm SPA}_{f}$. For inspiral waveforms, Ref.~\cite{} \SM{[C]} showed that this treatment improves the accuracy with respect to the local approximation.
 
 The time-domain SEOB~\cite{} \SM{[C]} model includes the modes $h^{\rm P}_{2m}$ with $|m|=2$ and $|m|=1$ for the inspiral, and the ringdown constructed in the inertial frame contains a superposition of all modes $h^{\rm I}_{2 m}$ by construction. In the PhenomP~\cite{} \SM{[C]} model, only the dominant harmonics $h^{\rm P}_{22}$ and $h^{\rm P}_{2,-2}$ were included in the precessing-frame waveform. The SUA~\cite{} \SM{[C]} model can be constructed using any PN non-precessing model for an inspiral-only waveform, including higher harmonics. \SM{[Check what is implemented in LAL ? HM or not ?]}
 
@@ -1030,7 +1022,7 @@ To combine our various waveform ingredients, we first ensure that the PhenomD an
 
 Note an important caveat of our approach: the application of the perturbative formalism presented in Sec.~\ref{sec:formalism} relies on the smoothness of both the time-domain modulation and the Fourier-domain signal. For the time-domain modulation, the assumption of the separation of timescales~\eqref{} \SM{[R]} relies on the identification of a characeteristic frequency $\Omega_{\rm prec}$, which is based on the time derivative of $F$. It is always possible to add and remove arbitrarily small oscillations in $F$ that would give arbitrarily large contributions to its derivatives, hence affecting any local computation of $\Omega_{\rm prec}$. One can consider that our approach is to be applied to such a slowly varying approximation of $F$, that can be obtained by filtering away rapidly-varying, small-amplitude features. However, we should keep in mind that any smoothing procedure could possibly eliminate  some information present in the original waveforms.
 
-For the smoothness of the signal in the Fourier domain, one has to keep in mind that, for waveforms computed starting with a time-domain waveform, Gibbs oscillations can be mitigated by properly tapering the waveform in time domain before performing the FFT, however taking Fourier-domain derivatives magnifies this oscillations, to the point that they would dominate among others the timescale $T_{f}$ (unless one takes much longer waveforms to push this problem to lower frequencies). This is avoided in our case by working with a pure Fourier-domain PhenomD waveform that is smooth by construction, but would become important if one were to apply our formalism to the FFT of NR or SEOB waveforms.
+For the smoothness of the signal in the Fourier domain, one has to keep in mind that, for waveforms computed starting with a time-domain waveform, Gibbs oscillations can be mitigated by properly tapering the waveform in time domain before performing the FFT, however taking Fourier-domain derivatives magnifies this oscillations, to the point that they would dominate among others the timescale $\Tf$ (unless one takes much longer waveforms to push this problem to lower frequencies). This is avoided in our case by working with a pure Fourier-domain PhenomD waveform that is smooth by construction, but would become important if one were to apply our formalism to the FFT of NR or SEOB waveforms.
 
 Another caveat is that for the precessing-frame waveform, the assumption~\eqref{eq:approxsymmetryhlminusm} is only approximate. Mode asymmetries are present in the late inspiral and merger phases of precessing binaries, as shown by numerical relativity simulations (see e.g.~\cite{} \SM{[C]}). These asymmetries play a role in the emission of linear momentum and in the resulting kick of the black hole remnant, and they also result in amplitude and phase variations on the orbital timescale.
 
@@ -1128,7 +1120,7 @@ First, we would like to stress that the modulation functions $\calD^{\ell *}_{mm
 
 For the inspiral phase of the dynamics, one can read the quantities $\epsilon_{\Psi 2}$, $\epsilon_{A1}$ and $\epsilon_{A 2}$ from the outcome of post-Newtonian computations. To obtain a qualitative picture of the timescales involved, here we will consider the most simple setting for precession in the post-Newtonian framework: at leading PN order and for a single-spin system, both the orbital angular momentum $\bm{L}$ and the spin vector $\bm{S}$ undergo what is called simple precession around the total angular momentum, $\bm{J}$ (see e.g.~\cite{Apostolatos+94, Kidder95}). By neglecting the slow evolution of the orbit under radiation reaction, ignoring higher-order corrections that are quadratic and higher in the spins, and orbit-averaging the precession equations (thus eliminating nutations in the precession of the orbital plane, which occur at the orbital timescale), the trajectories of $\bm{L}$ and $\bm{S}$ become cones around the direction of $\bm{J}$, with a constant precession velocity $\Omega_{\rm prec}$ that we will use to define the timescale of variations of the modulation functions $F$. Note that the presence of two spins complicates the evolution of the system, but the picture of a precession cone for $\bm{\ell}$ remains approximately valid (see~\cite{} \SM{[C]} for a classification of the morphologies of precessing trajectories).
 
-In the following, we will use the notation $m=m_{1}+m_{2}$, $\nu=m_{1}m_{2}/m^{2}$, $\delta = (m_{1}-m_{2})/m$, $|\bm{S}_{A}|=Gm_{A}^{2} \chi_{A}$ for $A=1,2$. We take the convention $m_{1} \geq m_{2}$. We define $\bm{\ell}$ as the unit vector normal to the orbital plane, and assume that only the more massive object has a spin, so that $\bm{S}_{2} = 0$. A factor $c$ is scaled out of the spins so that $S_{A} = G m_{A}^{2} \chi$, with $\chi$ the dimensionless spin between $0$ and $1$ for Kerr black holes. We will use the notation $v = (G m \omega/c^{3})^{1/3}$ with $\omega$ the orbital frequency, which is equivalent to the frequency-domain definition $v=(G \pi m f/c^{3})^{1/3}$ when the SPA applies. \SM{[Check redundancy with notations of previous sections]} The Newtonian order orbital angular momentum is $\bm{L} = L_{N} \bm{\ell}$, with
+In the following, we will use the notation \SM{[use M instead of m]} $m=m_{1}+m_{2}$, $\nu=m_{1}m_{2}/m^{2}$, $\delta = (m_{1}-m_{2})/m$, $|\bm{S}_{A}|=Gm_{A}^{2} \chi_{A}$ for $A=1,2$. We take the convention $m_{1} \geq m_{2}$. We define $\bm{\ell}$ as the unit vector normal to the orbital plane, and assume that only the more massive object has a spin, so that $\bm{S}_{2} = 0$. A factor $c$ is scaled out of the spins so that $S_{A} = G m_{A}^{2} \chi$, with $\chi$ the dimensionless spin between $0$ and $1$ for Kerr black holes. We will use the notation $v = (G m \omega/c^{3})^{1/3}$ with $\omega$ the orbital frequency, which is equivalent to the frequency-domain definition $v=(G \pi m f/c^{3})^{1/3}$ when the SPA applies. \SM{[Check redundancy with notations of previous sections]} The Newtonian order orbital angular momentum is $\bm{L} = L_{N} \bm{\ell}$, with
 \be\label{eq:defLN}
 	L_{N} = \frac{G m^{2} \nu}{c v} \,.
 \ee
@@ -1177,7 +1169,7 @@ Under our assumptions of simple precession, ignoring radiation reaction, and usi
 \end{subequations}
 As noted in Section~\ref{} \SM{[R]}, $\epsilon_{\Psi 2}$ has a factor $v^{-1}$, formally at $-0.5$PN order, which means that the relative size of this correction grows towards smaller frequencies, away from merger. Remember however that the opening angle of the precession cone, giving the overall normalization for precession effects in the waveform, also goes to 0 as $v$ in that limit. The amplitude error estimates $\epsilon_{A1}$, $\epsilon_{A2}$, by contrast, have the more usual behaviour of PN corrections (of order 1PN and 2PN respectively) growing towards merger. The geometric factors $(m' \cos\beta - m)$ show that higher $|m-m'|$ mode contributions are harder to model, with larger $\epsilon$, although they also have smaller amplitudes for small $\beta$. The overall $\nu$ scalings indicate a better separation of timescales for larger mass ratio systems. These expressions also show that, since the total angular momentum appear as a factor in $\Omega_{\rm prec}$, higher-order corrections will be larger for spin-aligned systems than for antialigned spins \SM{[language: antialigned or anti-aligned ?]}, an effect that becomes significant for large mass ratios. Note that when $\xi$ gets close to 0, it means that the system is in the transitional precession range, with the spin of the primary compensating the orbital angular momentum, and our analysis based on simple precession is not valid anymore.
 
-The previous expressions for the error estimate only aim at providing a crude order-of-magnitude picture. We now present a more complete numerical computation of these quantities for our post-merger extended precession model presented in Sec.~\ref{subsec:precmodel}, for the three examples summarized in Table.~\ref{table:precexamples}. Here and in the following we present only the $h^{\rm I}_{2 m}$ mode contributions induced by $h^{\rm P}_{22}$, knowing that the ones induced by $h^{\rm P}_{2,-2}$ can be deduced from~\eqref{} \SM{[R]}. We compute the Fourier-domain based timescales $T_{f}$, $T_{A1}$ and $T_{A2}$ from the analytic derivatives of the PhenomD phase and amplitude (modified to be of class $C^{2}$). The time derivatives of the time-domain modulation are computed from an interpolating cubic spline. The results are shown in Fig.~\ref{fig:fomprec}, using the frequency at merger, shown by the vertical lines, to give an idea of the separation between the inspiral and post-merger phases. The first two cases, $++$ and $pp$, have \SM{[come back to this after having checked trajectories]} the usual behaviour of precession on a cone, with a larger opening angle for $pp$ due to the larger in-plane spin components. After merger, the case $++$ shows a much faster frame rotation than the $pp$ case, as shown by the values of $\Omega_{\rm frame}$ in Table~\ref{table:precexamples}, due to the larger remnant spin that incorporates the aligned spin components. The case $--$ is qualitatively different, with a larger variation of $\bm{J}$ in direction, and a large and varying $\beta$. Since the $\epsilon$ quantities are the magnitude of the first or second term in a Taylor series, we will take $\epsilon \sim 1$ as an indication of the breakdown of a perturbative treatment. We recall an important point about Fig.~\ref{fig:fomprec}: since the error estimates are computed on a mode-by-mode basis and normalized by the transfer function for this mode, the amplitude hierarchy between mode contributions is erased here. What is plotted is an error estimate in relative sense, and one should keep in mind that higher $|m-m'|$ modes, which we will find harder to model accurately, can be very subdominant in the final waveform.
+The previous expressions for the error estimate only aim at providing a crude order-of-magnitude picture. We now present a more complete numerical computation of these quantities for our post-merger extended precession model presented in Sec.~\ref{subsec:precmodel}, for the three examples summarized in Table.~\ref{table:precexamples}. Here and in the following we present only the $h^{\rm I}_{2 m}$ mode contributions induced by $h^{\rm P}_{22}$, knowing that the ones induced by $h^{\rm P}_{2,-2}$ can be deduced from~\eqref{} \SM{[R]}. We compute the Fourier-domain based timescales $\Tf$, $T_{A1}$ and $T_{A2}$ from the analytic derivatives of the PhenomD phase and amplitude (modified to be of class $C^{2}$). The time derivatives of the time-domain modulation are computed from an interpolating cubic spline. The results are shown in Fig.~\ref{fig:fomprec}, using the frequency at merger, shown by the vertical lines, to give an idea of the separation between the inspiral and post-merger phases. The first two cases, $++$ and $pp$, have \SM{[come back to this after having checked trajectories]} the usual behaviour of precession on a cone, with a larger opening angle for $pp$ due to the larger in-plane spin components. After merger, the case $++$ shows a much faster frame rotation than the $pp$ case, as shown by the values of $\Omega_{\rm frame}$ in Table~\ref{table:precexamples}, due to the larger remnant spin that incorporates the aligned spin components. The case $--$ is qualitatively different, with a larger variation of $\bm{J}$ in direction, and a large and varying $\beta$. Since the $\epsilon$ quantities are the magnitude of the first or second term in a Taylor series, we will take $\epsilon \sim 1$ as an indication of the breakdown of a perturbative treatment. We recall an important point about Fig.~\ref{fig:fomprec}: since the error estimates are computed on a mode-by-mode basis and normalized by the transfer function for this mode, the amplitude hierarchy between mode contributions is erased here. What is plotted is an error estimate in relative sense, and one should keep in mind that higher $|m-m'|$ modes, which we will find harder to model accurately, can be very subdominant in the final waveform.
 
 The resulting magnitude of the error estimates in Fig.~\ref{fig:fomprec} is roughly in agreement with the PN-inspired computation~\ref{eq:} \SM{[R]} above for the inspiral \SM{[check if the PN is quantitatively ok -- overlay it on the plot ?]}. For the inspiral, the magnitude of the quadratic phase term $\epsilon_{\Psi 2}$ has a negative slope $v^{-1}=(Mf)^{-1/3}$ \SM{[check the slope on the figure]}, with a clear hierarchy that is due to the prefactor of $\alpha$ in the phase of the modulation, as explained above. This hierarchy is not respected for $--$. The mode $m=2$, the most important to model once the amplitudes are refactored in, is mainly in the perturbative regime, but we see that the perturbative treatment can be challenged for modes $m\leq 0$ and also for $m=1$ in the case $++$, especially for the post-merger. The amplitude corrections are found to be in the perturbative regime for all cases during the inspiral, however both the $++$ and $pp$ cases show a sharp increase of $\epsilon_{A1}$, $\epsilon_{A2}$ post-merger. The case $--$, with its small remnant spin and mild post-merger frame rotation, shows no such increase.
 
@@ -1204,7 +1196,7 @@ Overall, the conclusion to be drawn of Fig.~\ref{} is that for the $++$ and $pp$
   \includegraphics[width=.32\linewidth]{plots/fom_--_A1.pdf}
   \hspace{0cm}
   \includegraphics[width=.32\linewidth]{plots/fom_--_A2.pdf}
-  \caption{Figures of merit of the approximation as defined in~\eqref{eq:deffom} for the precession modulations. \SM{[transpose, compact the columns to share the x axis, fix legends, add horizontal line for $10^{0}$]}}
+  \caption{Error estimates of the approximation as defined in~\eqref{eq:deffom} for the precession modulations. \SM{[transpose, compact the columns to share the x axis, fix legends, add horizontal line for $10^{0}$]}}
   \label{fig:fomprec}
 \end{figure*}
 
@@ -1455,7 +1447,7 @@ Overall, we find that all the corrections we investigated, perturbative in phase
 \appendix
 
 \section{Notation and conventions}
-\label{sec:notation}
+\label{app:notation}
 
 \SM{[add appendix with discrete Fourier coeffs]}
 
@@ -1464,6 +1456,11 @@ The convention we will be using for the Fourier transform of a signal $h(t)$ is
 	\tilde{h}(f) = \mathrm{FT}[h](f) =  \int \ud t \, e^{+2i\pi f t} h(t) \,.
 \ee
 Notice that this sign convention is not the most frequently used in the literature. We chose it to ensure that, with the conventions of~\cite{BlanchetLiving}, spin-weighted spherical modes $h_{\ell m}$ with $m>0$ will have support mostly for positive frequencies. One can revert to the more usual convention by taking $f\rightarrow -f$.
+
+The effect of a shift in time of the time-domain signal translates into a linear phase contribution added to the Fourier-domain signal. For $h_{\Delta t}(t) \equiv h(t+\Delta t)$ with $\Delta t$ a constant, in our convention we have
+\be\label{eq:shifttime}
+	\tilde{h}_{\Delta t} (f) = e^{-2i\pi f \Delta t} \tilde{h}(f) \,.
+\ee
 
 A useful representation of the gravitational waveform is given by its decomposition in spin-weighted spherical harmonics. The waveform emitted in the direction $(\Theta, \Phi)$, with its two polarizations $h_{+},h_{\times}$, can be decomposed as a superposition of modes as~\cite{Thorne80}
 \be\label{eq:defmodes}

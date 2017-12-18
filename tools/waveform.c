@@ -566,8 +566,8 @@ int UnwrapPhase(
   int* cumul = (int*) malloc(sizeof(int) * N);
 
   /* Compute phase mod 2pi (shifted to be between -pi and pi) */
-  for(int i=1; i<N; i++) {
-    pmod[i] = p[i] - floor((p[i] + PI) / (2*PI))*(2*PI) - PI;
+  for(int i=0; i<N; i++) {
+    pmod[i] = p[i] - floor((p[i] + PI) / (2*PI))*(2*PI);
   }
 
   /* Identify jumps */
