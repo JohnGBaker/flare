@@ -450,11 +450,11 @@ The main intermediate result of~\cite{KCY14}, their equation~(34), reads exactly
 
 The authors of~\cite{KCY14} then proposed a resummation scheme for~\eqref{eq:resultdffPsiTf}, using finite differences for the derivatives. Indeed, the result~\eqref{eq:resultdffPsiTf} looks like a symmetrized Taylor expansion, except for the factors $i^{p}$ and $1/p!$ instead of $1/(2p)!$. Truncating the sum at some finite order $N$, one can write (following~\cite{KCY14})
 \be\label{eq:stencilresult}
-	\calT_{\rm phase}(f) \simeq \sum\limits_{p = 0}^{N} \frac{(-i\epsilon\Tf^{2})^{p}}{2^{p}p!} \partial_{t}^{2p}F(\tf) \simeq \calF_{\Tf}^{N,\epsilon}[F] (\tf) \,,
+	\calT_{\rm phase}(f) \simeq \sum\limits_{p = 0}^{N} \frac{(-i\epsilon\Tf^{2})^{p}}{2^{p}p!} \partial_{t}^{2p}F(\tf) \simeq \calF^{N}_{\Tf, \epsilon}[F] (\tf) \,,
 \ee
-with the operator $\calF_{T}^{N,\epsilon}$ defined as
+with the operator $\calF_{T, \epsilon}^{N}$ defined as
 \be\label{eq:stencilfresnel}
-	\calF_{T}^{N,\epsilon}[F] (t) \equiv \frac{1}{2}\sum\limits_{k=0}^{N} a_{N,k}^{\epsilon} \left( F(t + kT) + F(t - k T) \right) \,,
+	\calF_{T, \epsilon}^{N}[F] (t) \equiv \frac{1}{2}\sum\limits_{k=0}^{N} a_{N,k}^{\epsilon} \left( F(t + kT) + F(t - k T) \right) \,,
 \ee
 provided that the complex coefficients $a_{N,k}^{\epsilon}$ are a solution of the $N+1$-dimensional linear system~\cite{KCY14}
 \be\label{eq:stencilsystem}
@@ -479,7 +479,7 @@ where we recall that $\epsilon = -\mathrm{sgn}(\ud ^{2} \Psi/\ud f^{2})$. The in
 \ee
 together with the additional notation
 \be\label{eq:Fresnelsign}
-	\calF^{\epsilon}_{\tau}[F](t_{0}) \equiv
+	\calF_{\tau, \epsilon}[F](t_{0}) \equiv
 \begin{cases}
 	 \calF_{\tau}[F](t_{0}) &\text{ if } \epsilon=1 \\
 	 \calF_{\tau}[F^{*}](t_{0})^{*} &\text{ if } \epsilon=-1
@@ -487,14 +487,14 @@ together with the additional notation
 \ee
 to accomodate for the possible sign change represented by $\epsilon$. The integral~\eqref{eq:integralquadphase} then gives for the transfer function
 \be\label{eq:resultFresnel}
-	\calT_{\rm phase}(f) = \calF^{\epsilon}_{\Tf}[F](\tf) \,.
+	\calT_{\rm phase}(f) = \calF_{\Tf, \epsilon}[F](\tf) \,.
 \ee
 
 The Fresnel transform~\cite{} \SM{[C]} is an integral transform that shares some properties with the Fourier transform. Contrarily to the latter, it is localized in the sense that the part of the integral that is centered around $t_{0}$ contributes predominantly, due to the cancelling oscillations far from $t_{0}$.  The parameter $\tau$ determines how local the transform is. In the limit $\tau\rightarrow 0$, fast oscillations away from the central value $t_{0}$ will cancel out, leading to the integral taking the value $F(t_{0})$. For large values of $\tau$, by contrast, the integral~\eqref{eq:defFresnel} has an extended support. Note also that only the part of the function $F$ that is symmetric about $t_{0}$ contributes to the integral in~\eqref{eq:defFresnel}.
 
 In our result~\eqref{eq:resultFresnel}, both the scale $\Tf$ and the central time $\tf$ are functions of the frequency $f$. Since we have seen that $\Tf$ can be interpreted as the radiation reaction timescale in the SPA regime, this means that a faster-chirping signal ($\Tf$ small) will have a Fresnel transform that is more focused, whereas a slower-chirping signal ($\Tf$ large) will have a Fresnel transform that is more extended. In turn, this is to be put in relation with how fast the function $F(t)$ in the integrand is varying. In Sec.~\ref{subsec:executivesummary}, we will build an estimate for the magnitude of these phase corrections by comparing of the radiation-reaction timescale to the timescale of variation of the modulation.
 
-Thus, the previous result~\eqref{eq:stencilresult}-\eqref{eq:stencilfresnel} can be rephrased as a quadrature rule, and the stencil $\calF_{T}^{N,\epsilon}$ is an quadrature approximation of the Fresnel transfrom $\calF^{\epsilon}_{T}$. If one allows for polynomial integrands\footnote{Note that such integrals with a polynomial integrand are formally divergent. One can regularize them for instance by introducing a small imaginary part in $\tau$ that is sent it to $0$ at the end of the computation.} in~\eqref{eq:defFresnel}, using the stencil~\eqref{eq:stencilfresnel} amounts to building a quadrature rule for the particular choice of nodes $\tf \pm k \Tf$, which is exact (with a regularization) if $F$ is a symmetric polynomial of degree $\leq 2N$. As a verification, performing a formal Taylor expansion in time of $F(t)$ around $\tf$ in the integral~\eqref{eq:defFresnel} and integrating term by term yields back~\eqref{eq:resultdffPsiTf}.
+Thus, the previous result~\eqref{eq:stencilresult}-\eqref{eq:stencilfresnel} can be rephrased as a quadrature rule, and the stencil $\calF_{T, \epsilon}^{N}$ is an quadrature approximation of the Fresnel transfrom $\calF_{T, \epsilon}$. If one allows for polynomial integrands\footnote{Note that such integrals with a polynomial integrand are formally divergent. One can regularize them for instance by introducing a small imaginary part in $\tau$ that is sent it to $0$ at the end of the computation.} in~\eqref{eq:defFresnel}, using the stencil~\eqref{eq:stencilfresnel} amounts to building a quadrature rule for the particular choice of nodes $\tf \pm k \Tf$, which is exact (with a regularization) if $F$ is a symmetric polynomial of degree $\leq 2N$. As a verification, performing a formal Taylor expansion in time of $F(t)$ around $\tf$ in the integral~\eqref{eq:defFresnel} and integrating term by term yields back~\eqref{eq:resultdffPsiTf}.
 
 Note however that this quadrature rule does not fall into the class of Gaussian quadratures, due to the complex character of the kernel in~\eqref{eq:defFresnel}. The induced inner product is not positive definite and some key properties are lost, such as the construction of the optimal Gaussian nodes from the zeros of the orthonormalized polynomials. For more details on quadrature rules when applied to integrals with oscillatory kernels, we refer to~\cite{} \SM{[C]}. Note that the choice of a stencil with quadrature nodes $\tf \pm k\Tf$, even if natural, is by no means unique, and other choices would have led to different stencils. The formulation of the result~\eqref{eq:resultdffPsiTf} as a Fresnel transform~\eqref{eq:resultFresnel} opens the way for future investigations of different numerical approaches to the problem.
 
@@ -538,7 +538,7 @@ Next, we consider the case where the quadratic phase correction is kept as well,
 \end{align}
 where we used a change of variable $\tau = t_{d}(t)$. We see that the result can again be expressed as a Fresnel transform. When considering amplitude corrections as well, as in~\eqref{eq:resulttaylorA}, additional powers of $f'$ can be translated as time derivatives with respect to the variable $\tau$ after performing the change of variables. This produces the final result:
 \be\label{eq:transferfinal}
-	\calT(f) = \sum\limits_{k \geq 0} \frac{(-i)^{k}}{k!} (T_{Ak})^{k} \calF^{\epsilon}_{\Tf} \left[ \frac{\ud^{k}}{\ud \tau^{k}} \left( \frac{F(\tau - d(\tau))}{1+\dot{d}(\tau)} e^{-2i\pi f d(\tau)(1-\dot{d}(\tau))} \right) \right] (\tf) \,.
+	\calT(f) = \sum\limits_{k \geq 0} \frac{(-i)^{k}}{k!} (T_{Ak})^{k} \calF_{\Tf, \epsilon} \left[ \frac{\ud^{k}}{\ud \tau^{k}} \left( \frac{F(\tau - d(\tau))}{1+\dot{d}(\tau)} e^{-2i\pi f d(\tau)(1-\dot{d}(\tau))} \right) \right] (\tf) \,.
 \ee
 \end{widetext}
 
@@ -546,16 +546,16 @@ where we used a change of variable $\tau = t_{d}(t)$. We see that the result can
 
 In this Section, we gather our previous results for the convenience of the reader, and explain how we will use them in practice. For a modulation $F$ and delay $d$, so that $s(t) = F(t) h(t+d(t))$, we obtained the transfer function $\calT (f) = \tilde{s}(f)/\tilde{h}(f)$ given in~\eqref{eq:transferfinal}.
 
-In this result, the Fresnel transform $\calF^{\epsilon}_{\Tf}$ can in turn be approximated by the stencil $\calF^{N,\epsilon}_{\Tf}$ using the formula~\eqref{eq:stencilfresnel}. The timescales $\Tf$ and $T_{Ak}$ were defined in~\eqref{eq:defTf} and~\eqref{eq:defTA}, and the generalized time-to-frequency function $t_{f}$ was given in~\eqref{eq:deftf}. The delays $d$ are present only in the LISA context, while in the context of precessing binaries we only have to consider the modulation function $F$. In practice, only the first few of the terms in the series expansion are relevant. We will investigate several orders of approximation, combining corrections from the phase, amplitude and delays, and explore which ones are relevant for a given level of accuracy. We will use symbols of the form $\{N,A,d\}$ to indicate the order of the stencil in~\eqref{eq:stencilfresnel}, the maximal order of the amplitude correction included, and the inclusion or not of the delay corrections.
+In this result, the Fresnel transform $\calF^{\epsilon}_{\Tf}$ can in turn be approximated by the stencil $\calF^{N}_{\Tf, \epsilon}$ using the formula~\eqref{eq:stencilfresnel}. The timescales $\Tf$ and $T_{Ak}$ were defined in~\eqref{eq:defTf} and~\eqref{eq:defTA}, and the generalized time-to-frequency function $t_{f}$ was given in~\eqref{eq:deftf}. The delays $d$ are present only in the LISA context, while in the context of precessing binaries we only have to consider the modulation function $F$. In practice, only the first few of the terms in the series expansion are relevant. We will investigate several orders of approximation, combining corrections from the phase, amplitude and delays, and explore which ones are relevant for a given level of accuracy. We will use symbols of the form $\{N,A,d\}$ to indicate the order of the stencil in~\eqref{eq:stencilfresnel}, the maximal order of the amplitude correction included, and the inclusion or not of the delay corrections.
 
 In the LISA context, due to the smallness of the corrections we will only go up to $k=1$ in~\eqref{eq:transferfinal}, and in computing the remaining time derivatives in~\eqref{eq:transferfinal} we will neglect the second and higher derivatives. We will also use $F(\tau - d(\tau)) \simeq (F - d \dot{F})(\tau)$. This gives concretely:
 \begin{widetext}
 \begin{subequations}
 \begin{align}
-	\{N,A:0,d:0\}&: \; \calT(f) = \calF^{\epsilon}_{\Tf} \left[ F e^{-2i\pi f d} \right] (t_{f}) \,, \\
-	\{N,A:1,d:0\}&: \; \calT(f) = \calF^{\epsilon}_{\Tf} \left[ \left(F - i T_{A1} \left( \dot{F} - 2i\pi f \dot{d}\right) \right) e^{-2i\pi f d} \right] (t_{f}) \,, \\
-	\{N,A:0,d:1\}&: \; \calT(f) = \calF^{\epsilon}_{\Tf} \left[ \frac{F - d\dot{F}}{1+\dot{d}} e^{-2i\pi f d (1-\dot{d})} \right] (t_{f})\,, \\
-	\{N,A:1,d:1\}&: \; \calT(f) = \calF^{\epsilon}_{\Tf} \left[ \frac{1}{1+\dot{d}}\left(  F - d\dot{F} - i T_{A1} \left( \dot{F} - 2i\pi f \dot{d} \right) \right) e^{-2i\pi f d (1 - \dot{d})} \right] (t_{f})\,.
+	\{N,A:0,d:0\}&: \; \calT(f) = \calF^{N}_{\Tf, \epsilon} \left[ F e^{-2i\pi f d} \right] (t_{f}) \,, \\
+	\{N,A:1,d:0\}&: \; \calT(f) = \calF^{N}_{\Tf, \epsilon} \left[ \left(F - i T_{A1} \left( \dot{F} - 2i\pi f \dot{d}\right) \right) e^{-2i\pi f d} \right] (t_{f}) \,, \\
+	\{N,A:0,d:1\}&: \; \calT(f) = \calF^{N}_{\Tf, \epsilon} \left[ \frac{F - d\dot{F}}{1+\dot{d}} e^{-2i\pi f d (1-\dot{d})} \right] (t_{f})\,, \\
+	\{N,A:1,d:1\}&: \; \calT(f) = \calF^{N}_{\Tf, \epsilon} \left[ \frac{1}{1+\dot{d}}\left(  F - d\dot{F} - i T_{A1} \left( \dot{F} - 2i\pi f \dot{d} \right) \right) e^{-2i\pi f d (1 - \dot{d})} \right] (t_{f})\,.
 \end{align}
 \end{subequations}
 \end{widetext}
@@ -563,9 +563,9 @@ In the LISA context, due to the smallness of the corrections we will only go up 
 In the context of precessing binaries, the delays are absent and we will go up to $k=2$ in~\eqref{eq:transferfinal}. The tranfer function at different orders of approximation will be:
 \begin{subequations}
 \begin{align}
-	\{N,A:0\}&: \; \calT(f) = \calF^{\epsilon}_{\Tf} \left[ F \right] (t_{f}) \,, \\
-	\{N,A:1\}&: \; \calT(f) = \calF^{\epsilon}_{\Tf} \left[ \left(F - i T_{A1} \dot{F} \right) \right] (t_{f}) \,, \\
-	\{N,A:2\}&: \; \calT(f) = \calF^{\epsilon}_{\Tf} \left[ \left(F - i T_{A1} \dot{F} - \frac{1}{2} (T_{A2})^{2} \ddot{F} \right) \right] (t_{f}) \,.
+	\{N,A:0\}&: \; \calT(f) = \calF^{N}_{\Tf, \epsilon} \left[ F \right] (t_{f}) \,, \\
+	\{N,A:1\}&: \; \calT(f) = \calF^{N}_{\Tf, \epsilon} \left[ \left(F - i T_{A1} \dot{F} \right) \right] (t_{f}) \,, \\
+	\{N,A:2\}&: \; \calT(f) = \calF^{N}_{\Tf, \epsilon} \left[ \left(F - i T_{A1} \dot{F} - \frac{1}{2} (T_{A2})^{2} \ddot{F} \right) \right] (t_{f}) \,.
 \end{align}
 \end{subequations}
 
@@ -578,7 +578,7 @@ In the following, it will be convenient to introduce error estimates built from 
 	\epsilon_{d} &\equiv \frac{1}{2\pi} \left| \frac{1}{G} \partial_{tf} G \right| \,,
 \end{align}
 \end{subequations}
-where the function $G$ and its derivatives are evaluated at $(f, t_{f})$. Reaching $\epsilon \simeq 1$ will indicate a breakdown of the perturbative approach.
+where the function $G$ and its derivatives are evaluated at $(f, t_{f})$. Reaching $\epsilon \simeq 1$ will indicate a breakdown of the perturbative approach. \SM{[expand a bit]}
 
 The physical interpretation of these error measures is clear: when the modulation and delay obey the simple scaling $\partial_{t}^{n} \rightarrow \Omega^{n}$, with $\Omega_{0}$ a characteristic frequency, the phase and amplitude error estimates are simply ratios of timescales. For instance, with this scaling $\epsilon_{\Psi 2} \sim T_{f}^{2}\Omega^{2}/2$, so that the approximation will work well when the radiation-reaction timescale is shorter than the characteristic timescale of the modulation. However, as we will show in Sec.~\ref{subsec:lisafom} this simple picture will need to be refined in the presence of delays, due to the presence of additional dimensionless factors of the form $2\pi f d$, which can be larger than 1.
 
@@ -678,7 +678,7 @@ These transfer frequencies will indicate where in the LISA band a dimensionless 
 
 Due to the smallness of the annual frequency $\Omega_{0}/2\pi \simeq 3.1\times10^{-8}\mathrm{Hz}$ compared to the timescales relevant for the signal over the LISA frequency band, one can expect that the higher-order corrections described in Section~\ref{sec:formalism} are small. In this Section we try to quantify to which extent, and give simple estimates of their magnitude.
 
-Using the Newtonian-order expressions~\eqref{eq:timescalesN} for the signal-dependent timescales $\Tf$ and $T_{A1}$, we can obtain a useful order-of-magnitude estimate for the error measures $\epsilon$ introduced in~\eqref{eq:deffom}. Higher-order amplitude terms beyond the first one in~\eqref{eq:resulttaylorA} will turn out to be completely negligible in the LISA case and we will ignore them in the following. We will present these estimates separately for the orbital response~\eqref{eq:transferOlocal} and the constellation~\eqref{eq:transferclocal}, as the different baseline of the delays ($R$ or $L$) as well as the presence of a time-varying prefactor $F(t)$ both affect the result. As we will see, when estimating the magnitude of the relevant derivatives of $G$ we have to take into account delay factors of the type $2\pi f d$.
+Using the Newtonian-order expressions~\eqref{eq:timescalesN} for the signal-dependent timescales $\Tf$ and $T_{A1}$, we can obtain a useful order-of-magnitude estimate for the error measures $\epsilon$ introduced in~\eqref{eq:deffom}. Higher-order amplitude terms beyond the first one in~\eqref{eq:resulttaylorA} will turn out to be completely negligible in the LISA case and we will ignore them in the following. We will present these estimates separately for the orbital response~\eqref{eq:transferOlocal} and the constellation~\eqref{eq:transferclocal}, as the different baseline of the delays (orbital radius $R$ or armlength $L$) as well as the presence of a time-varying prefactor $F(t)$ both affect the result. As we will see, when estimating the magnitude of the relevant derivatives of $G$ we have to take into account delay factors of the type $2\pi f d$.
 
 We start with the orbital response, which takes the form of a pure delay $G_{0}(f, t) = e^{-2 i \pi f d_{0}(t)}$, and obtain
 \begin{subequations}
@@ -823,9 +823,11 @@ For the constellation response, we show the results in Figs.~\ref{fig:LISAerrorM
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsection{Direct approach for periodic modulations and delays}\label{subsec:comblisa}
+\subsection{Slowly chirping binaries and Direct approach for periodic modulations and delays}\label{subsec:comblisa}
 
-In the LISA case, the modulations and delays entering~\eqref{eq:yslr} are periodic, with a period of $f_{0} = 1/\mathrm{yr} \simeq 3.2\times 10^{-8}\mathrm{Hz}$. If the above perturbative formalism cannot be applied, we can still exploit this periodic structure . \SM{[]}
+
+
+In the LISA case, the modulations and delays entering~\eqref{eq:yslr} are periodic, with a period of one year and a frequency $f_{0} = 1/\mathrm{yr} \simeq 3.2\times 10^{-8}\mathrm{Hz}$. If the above perturbative formalism cannot be applied, we can still exploit this periodic structure to transform the . \SM{[]}
 \be
 	G(f,t) = \sum_{n} c_{n}(f) e^{-in\Omega_{0}t} \,.
 \ee
