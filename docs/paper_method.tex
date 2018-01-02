@@ -124,6 +124,8 @@ In previous works, the Stationary Phase Approximation (SPA) (see e.g.~\cite{Thor
 
 The plan of the paper is as follows. In Sec.~\ref{sec:motivation}, we motivate the problem of Fourier-domain modulation and introduce the relevant timescales for both the response of LISA-type detectors and the modulation of precessing signals. In Sec.~\ref{sec:formalism}, we present our general formalism, give its leading order approximation as well as higher-order corrections, introduce new timescales based on the Fourier-domain signal, refine the previous results for both the quadratic-in-phase corrections and the treatment of the delays, and make the connection to previous approaches of the problem. We then apply our formalism to the response of the LISA detector in Sec.~\ref{sec:LISA}, and to the case of signals from precessing binaries in Sec~\ref{sec:precession}. We discuss and summarize our results in Sec.~\ref{sec:discussion}.
 
+\SM{[talk about slowly chirping systems in the intro]}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -297,7 +299,7 @@ A direct computation of the generalized convolution~\eqref{eq:FDkernel} using~\e
 
 Now, there are two limitations to this straightforward argument. The first is that we did not yet specify what $f_{\rm max}$ should be compared with, in order for the approximation to work. As shown in Sec.~\ref{subsec:SPA}, the Fourier-domain expressions for the amplitude and phases inspiral signals are steep power-laws. We will therefore need a quantitative criterion to ensure $\tilde{h}(f-f')$ does not vary too much on the range $f'\in [-f_{\rm max}, f_{\rm max}]$. Second, although clear when considering a fixed characteristic timescale for the modulation and delay (like in the LISA case), the above argument does not apply as such to modulations with a varying timescale (like in the case of precessing binaries, where the precession goes faster when arriving at merger). We will show below that what will be relevant is the characteristic timescale at the time $t_{f}$ associated to $f$. 
 
-In presence of delays, the above is also complicated by the additional delay phases. Depending on the frequency $f$, this can lead $G(f,t)$ to have faster variations that its nominal timescale ($1\mathrm{yr}$ for LISA). As we will see in Sec.~\ref{} \SM{[R]}, to decide of the applicability of this approach we will not only need to compare timescales, but also take into account potential dimensionless factors of the form $2\pi f d$.
+In presence of delays, the above is also complicated by the additional delay phases. Depending on the frequency $f$, this can lead $G(f,t)$ to have faster variations that its nominal timescale ($1\mathrm{yr}$ for LISA). As we will see in Sec.~\ref{} \SM{[R]}, to decide of the applicability of this approach we will not only need to compare timescales, but also take into account dimensionless factors of the form $2\pi f d$.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -328,7 +330,7 @@ which motivates the introduction of an effective time, seen as a function of fre
 \ee
 It is worth noting that a shift in time of the time-domain signal will, by virtue of~\eqref{eq:shifttime}, be appropriately propagated to $t_{f}$. Because of the freedom of adding a linear term to $\Psi(f)$ by simply shifting the signal in time, no assumption can be made on the smallness of the first derivative of the phase, and this is really a leading order approximation.
 
-The definition~\eqref{eq:deftf} is a generalization of the time-to-frequency correspondence at the heart of the SPA~\eqref{eq:deftfSPA}. Indeed, using~\eqref{eq:deftfSPA} one can verify that the derivative of the SPA phase $\Psi_{\rm SPA}$~\eqref{eq:PsiSPA} with respect to $f$ yields back $\tfSPA$, as
+The definition~\eqref{eq:deftf} is a straightforward generalization of the time-to-frequency correspondence at the heart of the SPA~\eqref{eq:deftfSPA}. Indeed, using~\eqref{eq:deftfSPA} one can verify that the derivative of the SPA phase $\Psi_{\rm SPA}$~\eqref{eq:PsiSPA} with respect to $f$ yields back $\tfSPA$, as
 \be
 	\tfSPA = -\frac{1}{2\pi} \frac{\ud \Psi_{\rm SPA}}{\ud f} \,.
 \ee
@@ -446,7 +448,7 @@ In the following, we will compare these signal-dependent timescales to the times
 \subsection{Quadratic term in the phase and relation to the SUA}
 \label{subsec:resumquadphase}
 
-If we restrict to the case of a pure modulation, $d=0$ and $G(f,t) = F(t)$, we can relate our result~\eqref{eq:resultdffPsiTf} to the approach of Ref.~\cite{KCY14}, where the authors extend the SPA in a formalism called the Shifted Uniform Asymptotic expansion (SUA) \SM{[look for other reference beyon KCY]}.
+If we restrict to the case of a pure modulation, $d=0$ and $G(f,t) = F(t)$, we can relate our result~\eqref{eq:resultdffPsiTf} to the approach of Ref.~\cite{KCY14}, where the authors extend the SPA in a formalism called the Shifted Uniform Asymptotic expansion (SUA) \SM{[look for other reference beyond KCY]}.
 %The derivation includes an expansion of the modulation in Bessel functions, a study of the displacement of the stationary phase point induced by the precession, and a resummation of the result in the form of time derivatives.
 The main intermediate result of~\cite{KCY14}, their equation~(34), reads exactly like~\eqref{eq:resultdffPsiTf} with $\epsilon=1$ and with the identifications $\tilde{H}_{corr}(f)\rightarrow \calT(f)$ for the transfer function, $T\rightarrow \Tf$ for the radiation-reaction timescale and $e^{-i\delta\phi} \rightarrow F$ for the modulation function (which is restricted in their framework to a phase, amplitudes being treated jointly with the amplitude of the signal). Thus, our treatment gives a straightforward rederivation of the result of~\cite{KCY14} which corresponds in our framework to the approximation~\eqref{eq:expandPsi}, where in the Fourier-domain convolution the phase of the signal is expanded to quadratic order and the amplitude is not expanded. The main difference is that the approach of~\cite{KCY14} still relies on the SPA being valid for the underlying signal.
 
@@ -655,18 +657,24 @@ For the constellation response~\eqref{eq:defresponseL}, we can separate the two 
 	d_{s,L}(t) &= -L - k\cdot p_{s}^{L}(t) \,, \quad d_{r}(t) = - k\cdot p_{r}^{L}(t) \,,\nn\\
 	G_{slr}^{L}(f,t) &=  F_{slr}^{L}(t) \left( e^{-2i\pi f d_{s,L}(t)} - e^{-2i\pi f d_{r}(t)} \right) \,.
 \end{align}
-When also using the rigid approximation for the constellation, where the armlengths are fixed, a particular simplification occurs when combining these individual delays, thanks to the relation $p^{L}_{r} - p^{L}_{s} =  L n_{l}$. In the local approximation~\eqref{eq:transferlocal}, the Fourier-domain transfer function then reads
-\begin{align}\label{eq:transferLlocal}
-	\calT_{slr}^{L, \mathrm{local}} &= \frac{i \pi f L}{2} \sinc \left[ \pi f L\left(1-\hatk\cdot n_{l} \right) \right] \nn\\
+When also using the rigid approximation for the constellation, where the armlengths are fixed, a particular simplification occurs when combining these individual delays, thanks to the relation $p^{L}_{r} - p^{L}_{s} =  L n_{l}$:
+\begin{align}\label{eq:GslrL}
+	G_{slr}^{L}(f,t) &= \frac{i \pi f L}{2} \sinc \left[ \pi f L\left(1-\hatk\cdot n_{l} \right) \right] \nn\\
 	& \quad \cdot \exp\left[ i \pi f \left( L + \hatk\cdot \left( p_{1}^{L} + p_{2}^{L} \right) \right) \right]  n_{l} \cdot P_{\ell m} \cdot n_{l} \,,
 \end{align}
-where all vectors $n_{l}$ and $p_{A}^{L}$ are to be evaluated at the time $t_{f}$. This result~\eqref{eq:transferlocal} is familiar, as it was derived in the past taking the point of view of monochromatic signals (see e.g.~\cite{} \SM{[C]}).
+with all time-dependent vectors evaluated at $t$. In the local approximation~\eqref{eq:transferlocal}, the Fourier-domain transfer function then reads
+\begin{align}\label{eq:transferLlocal}
+	\calT_{slr}^{L, \mathrm{local}}(f) &= G_{slr}^{L}(f, \tf) \,.
+\end{align}
+This leading-order result~\eqref{eq:transfer0local}-\eqref{eq:transferLlocal} is familiar, as it was derived in the past taking the point of view of monochromatic signals (see e.g.~\cite{} \SM{[C]}).
 
 Note that, if the corrections of Sec.~\ref{subsec:delays} are included for the constellation delays, the transfer function will not have this simple form anymore, as $\dot{d}$ will have a different velocity-dependent expression for the sending and receiving spacecrafts. One must then handle separately $d_{s,L}$ and $d_{r}$ in~\eqref{eq:decomposeGslr}.
 
 The response~\eqref{eq:transfer0local}-\eqref{eq:delay0} takes a simple analytic form, but the phase contribution of this delay is significant on most of the frequency band and can be large for $f \gg f_{R}$.
 
-The response~\eqref{eq:transferLlocal} can be interpreted as the Fourier-domain translation of a discrete derivative taken on the waveform. The factor shows that the amplitude of the response is $\propto f$ in the low-frequency limit $f\ll f_{L}$, where the other factors are essentially unity. For $f\gtrsim f_{L}$, the $\sinc$ and the phase of the exponential give raise to additional structure in the response, including zero-crossings when the projected armlength corresponds to a wavelength. From~\eqref{eq:transferLlocal}, an expansion for small $f\ll f_{L}$ yields back a Fourier-domain analog of the low-frequency approximation of the response~\cite{Cutler97, RCP04}, which amounts to having two LIGO-type interferometers turned by $\pi/4$ and set in motion.
+The response~\eqref{eq:GslrL}-\eqref{eq:transferLlocal} can be interpreted as the Fourier-domain translation of a discrete derivative taken on the waveform. The factor shows that the amplitude of the response is $\propto f$ in the low-frequency limit $f\ll f_{L}$, where the other factors are essentially unity. For $f\gtrsim f_{L}$, the $\sinc$ and the phase of the exponential give raise to additional structure in the response, including zero-crossings when the projected armlength corresponds to a wavelength. From~\eqref{eq:transferLlocal}, an expansion for small $f\ll f_{L}$ yields back a Fourier-domain analog of the low-frequency approximation of the response~\cite{Cutler97, RCP04}, which amounts to having two LIGO-type interferometers turned by $\pi/4$ and set in motion. See Fig.~\ref{} and ~\ref{} \SM{[R]} for examples of LISA transfer functions.
+
+For the gravitational waveform itself, we will use the PhenomD model~\cite{Khan+15,Husa+15}, which provides Fourier-domain inspiral-merger-ringdown waveforms for aligned spins.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -764,7 +772,7 @@ Overall, we find that for merging binaries the perturbative approach presented i
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsection{Error control for the Fourier-domain response}
+\subsection{Errors in the Fourier-domain response for merging binaries}
 \label{subsec:errorsLISA}
 
 \SM{[We have to say why we take a non-spinning, equal-mass system - say why the method should also work for precessing signals]}
@@ -777,9 +785,11 @@ Overall, we find that for merging binaries the perturbative approach presented i
 
 \SM{[say that we take a large number of samples to eliminate spline interpolation errors]}
 
-Having at hand generic estimates for where the higher-order corrections in the LISA response are expected to be relevant, we now demonstrate that including them indeed reduces the reconstruction error of the Fourier-domain waveform. We will use an example PhenomD~\cite{Khan+15,Husa+15} waveform for an equal-mass and non-spinning system, and consider only two values for the total mass, $m=10^{7} \Msol$ and $m=10^{2} \Msol$. For this example, we will also focus on the orbital response and on a single-arm constellation response $y_{132}$, as TDI combinations will appear (within the approximations listed in Sec.~\ref{} \SM{[R]}) as linear combinations of these basic observables. On one hand, we perform a numerical inverse Fourier transform (IFFT) of the Fourier-domain PhenomD waveform, process the signal through the time-domain response~\eqref{eq:defresponse0} or~\eqref{eq:defresponseL}, and perform a numerical Fourier transform (FFT). This gives us the target Frourier-domain waveform, considered to be exact but for the possible artifacts of numerical Fourier transforms (most notably, oscillations induced by the necessary tapering of the signal). On the other hand, we process the Fourier-domain signal through the response summarized in Sec.~\ref{} \SM{[R]}, including various higher-order corrections. We then compare the output of the two procedures.
+Having at hand estimates for the relevance of higher-order corrections in the LISA response, we now demonstrate that including these higher-order corrections does indeed reduce the reconstruction error of the Fourier-domain transfer function. We will consider an equal-mass and non-spinning system, with only two values for the total mass, $M=10^{7} \Msol$ and $M=10^{2} \Msol$. For this example, we will also focus on the orbital response and on a single-arm constellation response $y_{132}$, as TDI combinations will appear (within the approximations listed in Sec.~\ref{subsec:modelLISA}) as linear combinations of these basic observables. The orientation angles chosen for this example are $[\lambda,\beta,\iota,\psi] = [\pi/4,\pi/3,\pi/3,0]$.
 
-We show the results for the orbital response in Figs.~\ref{fig:LISAerrorM1e7orb} and~\ref{fig:LISAerrorM1e2orb} in amplitude and phase form. In both cases, in accordance with~\eqref{eq:transfer0local}, the transfer function is essentially a phase, and contains many more cycles in the low-mass case in the higher frequency band. We find that including higher-order corrections does reduce the reconstruction errors, but with the distincitve feature that including only one of the amplitude and delay corrections can make the approximation actually worse, while including both does improve the accuracy. In the high-mass case, we also find for all orders of approximation an increase in the errors at the very end. This is likely to be due to the fact that the errors in the transfer function are to be interpreted in the relative sense, and the amplitude of the signal is decaying rapidly \SM{[ref to amplitude plot somewhere]} in this post-merger region. Although we did not identify the precise cause of this rise in errors, one possible explanation would be tapering-induced oscillations in the numerical Fourier transforms.
+On one hand, we perform a numerical inverse Fourier transform (IFFT) of the Fourier-domain PhenomD waveform, process the signal through the time-domain response~\eqref{eq:defresponse0} or~\eqref{eq:defresponseL}, and perform a numerical Fourier transform (FFT). This gives us the target Fourier-domain waveform, considered to be exact but for possible numerical artifacts (most notably, oscillations induced by the necessary tapering of the signal). On the other hand, we process the Fourier-domain signal through the response summarized in Sec.~\ref{subsec:executivesummary}, including various higher-order corrections. We then compare the output of the two procedures.
+
+We show the results for the orbital response in Figs.~\ref{fig:LISAerrorM1e7orb} and~\ref{fig:LISAerrorM1e2orb} in amplitude and phase form. In both cases, in accordance with~\eqref{eq:transfer0local}, the transfer function is essentially a phase, and contains many more cycles in the low-mass case in the higher frequency band. We find that including higher-order corrections does reduce the reconstruction errors, but with the distinctive feature that including only one of the amplitude and delay corrections can make the error actually worse, while including both does improve the accuracy. In the high-mass case, we also find for all orders of approximation an increase in the errors at the very end. This is likely to be due to the fact that the errors in the transfer function are to be interpreted in the relative sense, and the amplitude of the signal is decaying rapidly \SM{[ref to amplitude plot somewhere]} in this post-merger region. Although we did not identify the precise cause of this rise in errors, one possible explanation would be tapering-induced oscillations in the numerical Fourier transforms.
 
 For the constellation response, we show the results in Figs.~\ref{fig:LISAerrorM1e7const} and~\ref{fig:LISAerrorM1e2const}, using directly the real and imaginary part of the transfer function. We find similar features as for the orbital response: including higher-corrections reduces the errors, but in the high-mass case the amplitude and delay corrections should be added together. We also find the same uncontrolled grow of errors at the very end of the signal in the high-mass case, in the region where the amplitude of the signal decays.
 
@@ -792,7 +802,7 @@ For the constellation response, we show the results in Figs.~\ref{fig:LISAerrorM
   \includegraphics[width=.48\linewidth]{plots/LISAerrorM1e7dOamp.pdf}
   \hspace{0.2cm}
   \includegraphics[width=.48\linewidth]{plots/LISAerrorM1e7dOphase.pdf}
-  \caption{Error in the transfer function for the orbital delay $d_{0}$, for $M=10^{7} \Msol$.}
+  \caption{Error in the transfer function for the orbital delay $d_{0}$, for $M=10^{7} \Msol$. \SM{[Add line for RD freq]}}
   \label{fig:LISAerrorM1e7orb}
 \end{figure*}
 
@@ -814,7 +824,7 @@ For the constellation response, we show the results in Figs.~\ref{fig:LISAerrorM
   \includegraphics[width=.98\linewidth]{plots/LISAtransferM1e7y12LReIm.pdf}
   %
   \includegraphics[width=.98\linewidth]{plots/LISAerrorM1e7y12L.pdf}
-  \caption{Error in the transfer function for the basic observable $y_{12}$, for $M=10^{7} \Msol$.}
+  \caption{Error in the transfer function for the basic observable $y_{12}$, for $M=10^{7} \Msol$. \SM{[Add line for RD freq]}}
   \label{fig:LISAerrorM1e7const}
 \end{figure}
 
@@ -835,9 +845,13 @@ For the constellation response, we show the results in Figs.~\ref{fig:LISAerrorM
 
 
 
-In the LISA case, the modulations and delays entering~\eqref{eq:yslr} are periodic, with a period of one year and a frequency $f_{0} = 1/\mathrm{yr} \simeq 3.2\times 10^{-8}\mathrm{Hz}$. If the above perturbative formalism cannot be applied, we can still exploit this periodic structure to transform the . \SM{[]}
-\be
-	G(f,t) = \sum_{n} c_{n}(f) e^{-in\Omega_{0}t} \,.
+In the LISA case, the modulations and delays entering~\eqref{eq:yslr} are periodic, with a period of one year and a frequency $f_{0} = \Omega_{0}/2\pi = 1/\mathrm{yr} \simeq 3.2\times 10^{-8}\mathrm{Hz}$. If the above perturbative formalism cannot be applied, we can still exploit this periodic structure to transform the . \SM{[]}
+\be\label{eq:Gdiscretefourier}
+	G(f,t) = \sum_{n} c_{n}(f) e^{-in\Omega_{0}t} \,,
+\ee
+with frequency-dependent discrete Fourier coefficients given by the integrals (we recall our Fourier convention~\eqref{eq:defFT})
+\be\label{eq:defcn}
+	c_{n}(f) = \frac{\Omega_{0}}{2\pi} \int_{0}^{\frac{2\pi}{\Omega_{0}}} \ud t \, e^{i n \Omega_{0} t} G(f,t) \,.
 \ee
 
 This leads to the following generalized discrete convolution: \SM{[]}
@@ -846,6 +860,8 @@ This leads to the following generalized discrete convolution: \SM{[]}
 \ee
 
 Although straightforward and generic, this writing of the Fourier-domain response function will be in general more expansive to compute than the perturbative transfer function approach of Sec.~\ref{sec:formalism}.
+
+Note that for slowly-chirping binaries, the large features in the orbital transfer functions (see Fig.~\ref{} \SM{[R]} and Fig.~\ref{} \SM{[R]}) start to dominate signal-dependent derivatives. For the clarity of the presentation, we still do two separate comparisons for the orbital response~\eqref{} \SM{[R]} and the constellation response~\eqref{} \SM{[R]}, while the actual treatment would require to process the signal through the two steps of the response at once, instead of sequentially. This would result in replacing the discrete comb~\eqref{eq:defcn} by a double sum, however the extent of the constellation $c_{n}$ is rather limited in $n$.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1226,7 +1242,7 @@ Overall, the conclusion to be drawn of Fig.~\ref{} is that for the $++$ and $pp$
   \includegraphics[width=.48\linewidth]{plots/trig_amp.pdf}
   \hspace{0.2cm}
   \includegraphics[width=.48\linewidth]{plots/trig_phase.pdf}
-  \caption{Amplitude (left panel) and phase (right panel), compared to its trigonometric polynomial representation for the three cases listed in Table~\ref{table:precexamples}. The vertical lines indicate the merger frequencies. \SM{[color for vertical lines at fpeak]}}
+  \caption{Amplitude (left panel) and phase (right panel), compared to its trigonometric polynomial representation for the three cases listed in Table~\ref{table:precexamples}. The vertical lines indicate the merger frequencies. \SM{[color for vertical lines at fpeak]} \SM{[add bottom panel with residual ?]}}
   \label{fig:trigopoly}
 \end{figure*}
 
@@ -1257,7 +1273,7 @@ that will satisfy the system $P(x_{j}) = F(x_{j})$ for $j=0,\dots, N-1$. Here we
 \be
 	y_{k} = \frac{1}{N} \sum\limits_{j=0}^{N-1} F(x_{j}) \omega^{jk} \,,
 \ee
-which is the expression of the inverse DFT in our sign convention~\eqref{eq:defFT}, the coefficients $c_{k}$ are given by
+which is the expression of the inverse DFT in our sign convention~\eqref{eq:defFT}, the coefficients $c_{k}$ are given by \SM{[move generic trigopoly things to the appendix, as it is common with comb approach for LISA]}
 \begin{align}\label{eq:ckyk}
 	c_{k} &= y_{k} \text{ for } k=0,\dots, M-1 \,, \nn\\
 	c_{k} &= y_{k+N} \text{ for } k=-M+1,\dots, -1 \,, \nn\\
@@ -1308,7 +1324,7 @@ The $++$ case, as expected from the analysis of the previous section, is the mos
 
 For the $pp$ case, we find a clearer picture. Errors are increasing to larger $|m-m'|$, higher-order corrections improve the reconstruction but are unsufficient for the merger-ringdown, and the convolution works for all modes on the frequency range where it is applied. The errors at the very high end of the frequency band occur when the overall amplitudes are low, and are therefore unimportant. 
 
-For the $--$ case, the mode hierarchy is not respected, as the frame trajectory does not quite follow the picture of simple precession. The precession velocity is much milder, leading to smaller errors. Apart from some amplitude errors in the merger-ringdown region, we find that in this case even the leading-order treatment gives very reasonable results.
+For the $--$ case, the mode hierarchy is not respected, as the frame trajectory does not quite follow the picture of simple precession \SM{[mention angle Ji-Jf]}. The precession velocity is much milder, leading to smaller errors. Apart from some amplitude errors in the merger-ringdown region, we find that in this case even the leading-order treatment gives very reasonable results.
 
 In order to illustrate what these errors really mean for the analysis of GW signals, we also compute the unfaithfulness (or mismatch) between various orders of approximation and the exact, numerical result. This unfaithfulness figure, although giving a simplified view of waveform inaccuracies, is commonly used to quantify disagreements between template families and to compare them to numerical relativity waveforms. For real signals $h_{1}$ and $h_{2}$, one introduces the usual noise-weighted scalar product
 \be\label{eq:defoverlap}
@@ -1519,7 +1535,7 @@ We recall that, with our sign convention, the effect of a positive shift in time
 \be
 	\tilde{h}'(f) = e^{2i\pi f \Delta t} \tilde{h}(f) \,.
 \ee
-If we also allow for a global shift in phase of the signal, which corresponds to a rotation of the unit vector pointing towards the observer in the frame of the gravitational waves source, a constant term can also be added (note that the effect of such a rotation gives different phase changes $e^{\pm i m \delta \phi}$ for the different modes of the radiation). We see that both a constant and a linear term in the Fourier-domain phase can be adjusted by changing extrinsic parameters. Thus, as is well known, apart from the relative phases of the modes for waveforms that include higher harmonics, the intrinsic information on the phasing is contained in the second derivative of the Fourier-domain phase $\Psi(f)$.
+If we also allow for a global shift in phase of the signal, which corresponds to a rotation of the unit vector pointing towards the observer in the frame of the gravitational waves source, a constant term can also be added (note that the effect of such a rotation gives different phase changes $e^{\pm i m \delta \phi}$ for the different modes of the radiation). We see that both a constant and a linear term in the Fourier-domain phase can be adjusted by changing extrinsic parameters. Thus, as is well known, apart from the relative phases of the modes for waveforms that include higher harmonics, the intrinsic information on the phasing is contained in the second derivative of the Fourier-domain phase $\Psi(f)$. \SM{[rewrite this paragraph]}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
