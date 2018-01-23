@@ -642,11 +642,15 @@ We focus only on positive frequencies. Assuming that the approximation~\eqref{eq
 	\end{cases}
 \ee
 
-We now turn to the transposition of~\eqref{eq:defresponse0} and~\eqref{eq:defresponseL} to the Fourier domain. For the leading-order response~\eqref{eq:transferlocal}, applying a pure delay as in~\eqref{eq:defresponse0} translates into Fourier-domain transfer function common to all modes, that is a pure phase factor, proportional to the frequency but also $t_{f}$-dependent:
-\be\label{eq:transfer0local}
-	\calT_{0}^{\rm local}(f) = e^{-2i\pi f d_{0}(t_{f})}\,,
+We now turn to the transposition of~\eqref{eq:defresponse0} and~\eqref{eq:defresponseL} to the Fourier domain. Applying a pure delay as in~\eqref{eq:defresponse0} translates into
+\be\label{eq:G0}
+	G_{0}(f, t) = e^{-2i\pi f d_{0}(t)} \,,
 \ee
-with $d_{0} = -\hatk \cdot p_{0}$ the delay associated to the orbit around the Sun. If $(\lambda, \beta)$ are the ecliptic longitude and latitude of the source in the sky, and if the orbital phase is set to $0$ at $t=0$, this delay has the simple expression
+with $d_{0} = -\hatk \cdot p_{0}$ the delay associated to the orbit around the Sun. For the leading-order response~\eqref{eq:transferlocal}, this gives a Fourier-domain transfer function common to all modes, that is a pure phase factor, proportional to the frequency but also $t_{f}$-dependent:
+\be\label{eq:transfer0local}
+	\calT_{0}^{\rm local}(f) = G_{0}(f, \tf)\,.
+\ee
+If $(\lambda, \beta)$ are the ecliptic longitude and latitude of the source in the sky, and if the orbital phase is set by convention to $0$ at $t=0$, the orbital delay has the simple expression
 \be\label{eq:delay0}
 	d_{0}(t) = -R \cos\beta \cos\left(\Omega_{0}t - \lambda\right)\,.
 \ee
@@ -690,13 +694,14 @@ For the gravitational waveform itself, we will use the PhenomD model~\cite{Khan+
 
 \begin{figure*}
   \centering
-  \includegraphics[width=.32\linewidth]{plots/lisafom_Psiorb.pdf}
-  \includegraphics[width=.32\linewidth]{plots/lisafom_A1orb.pdf}
-  \includegraphics[width=.32\linewidth]{plots/lisafom_dorb.pdf}
-  %
-  \includegraphics[width=.32\linewidth]{plots/lisafom_Psiconst.pdf}
-  \includegraphics[width=.32\linewidth]{plots/lisafom_A1const.pdf}
-  \includegraphics[width=.32\linewidth]{plots/lisafom_dconst.pdf}
+%  \includegraphics[width=.32\linewidth]{plots/lisafom_Psiorb.pdf}
+%  \includegraphics[width=.32\linewidth]{plots/lisafom_A1orb.pdf}
+%  \includegraphics[width=.32\linewidth]{plots/lisafom_dorb.pdf}
+%  %
+%  \includegraphics[width=.32\linewidth]{plots/lisafom_Psiconst.pdf}
+%  \includegraphics[width=.32\linewidth]{plots/lisafom_A1const.pdf}
+%  \includegraphics[width=.32\linewidth]{plots/lisafom_dconst.pdf}
+  \includegraphics[width=.98\linewidth]{plots/lisafom_py.pdf}
   \caption{Error estimates as defined in~\eqref{eq:deffom}, for an equal-mass, non-spinning system and for total masses $M=10^{7} \Msol$, $10^{4} \Msol$ and $10^{2} \Msol$. The top row corresponds to the orbital delay part of the response~\eqref{eq:defresponse0}, and the lower row shows the LISA-centered constellation response~\eqref{eq:defresponseL}. The error measures $\epsilon_{\Psi}$ for the phase corrections, $\epsilon_{A1}$ for the amplitude, $\epsilon_{d}$ for the delay are shown from left to right. The central line and interval are the mean and $1\sigma$ standard deviation of the logarithm of $\epsilon$ computed with numerical derivatives over 400 random values for the position in the sky, inclination and polarization. The starting frequency is set by an observation time of $\Delta t = 10 \text{yrs}$ before merger. We overlay in dashed the analytical estimates obtained from from~\eqref{eq:timescalesNfstart} and~\eqref{eq:estimatederivorb}-\eqref{eq:estimatederivconst}.}
   \label{fig:fomLISA}
 \end{figure*}
@@ -758,7 +763,7 @@ Note that if we consider that the frequency band of the instrument starts at a m
 
 An important distinction needs to be made between what we will call merging binaries, systems close to coalescence that will merge during the LISA mission lifetime or a few years later, and slowly-chirping binaries still in the deep inspiral phase, of which we observe only a small snapshot in Fourier domain as they do not sweep to the end of the frequency band. The massive black hole binaries (MBH) that will be observed by LISA~\cite{LISA17} fall within the first category, with their merger in band, while the proposed population of stellar-origin black hole binaries (SOBH)~\cite{Sesana16}, with masses comparable to the LIGO/Virgo detections, will comprise both merging binaries, i.e. exiting the LISA band towards larger frequencies during observations, and slowly-chirping binaries hundereds or thousands of years away from merger. Galactic binaries (GB) fall entirely within the second category, and are very close to monochromatic over the lifetime of LISA~\cite{LISA17} \SM{[C: complete]}.
 
-We turn first to the slowly-chirping binaries. For these systems, we will focus on $\epsilon_{\Psi}$, which will be the most important error measure. Fig.~\ref{fig:lisafomPsiMcDeltat} shows contour levels for the value of our simple analytical estimate for $\epsilon_{\Psi}$ at the beginning of the observations, as a function of the chirp mass and time to merger, for both the orbital and the constellation response. The limit $\epsilon_{\Psi} = 1$ is used to single out areas where the perturbative treatment of Sec.~\ref{sec:formalism} is expected to break down, although the precise location of this boundary will vary, depending on the accuracy level required and on the orientation angles. We find that, in the LIGO/Virgo mass range $10^{1}-10^{2} \Msol$, we reach the limit $\epsilon_{\Psi}=1$ first for the orbital response, for time-to-merger values that we expect to observe~\cite{Sesana16}. We will introduce in Sec~\ref{subsec:comblisa} an alternative approach to deal with those signals. For completeness, we also show the result for intermediate and massive black hole systems, although we expect to observe mainly merging binaries for those masses. 
+We turn first to the slowly-chirping binaries. For these systems, we will focus on $\epsilon_{\Psi}$, which will be the most important error measure. Fig.~\ref{fig:lisafomPsiMcDeltat} shows contour levels for the value of our simple analytical estimate for $\epsilon_{\Psi}$ at the beginning of the observations, as a function of the chirp mass and time to merger, for both the orbital and the constellation response. The limit $\epsilon_{\Psi} = 1$ is used to single out areas where the perturbative treatment of Sec.~\ref{sec:formalism} is expected to break down, although the precise location of this boundary will vary, depending on the accuracy level required and on the orientation angles. We also single out the high-mass region where the start of the signal is set by its entry in the frequency band, taken to be $10^{-5}\Hz$, so that there is no dependence on the time to merger anymore. We find that, in the LIGO/Virgo mass range $10^{1}-10^{2} \Msol$, we reach the limit $\epsilon_{\Psi}=1$ first for the orbital response, for time-to-merger values within the expected observed range~\cite{Sesana16}. We will introduce in Sec~\ref{subsec:comblisa} an alternative approach to deal with those signals. For completeness, we also show in Fig.~\ref{fig:lisafomPsiMcDeltat} the result for intermediate and massive black hole systems, although we expect to observe mainly merging systems for this mass range. 
 
 We now turn to the case of merging binaries, computing this time the three error measures $\epsilon_{\Psi}$, $\epsilon_{A1}$ and $\epsilon_{d}$. To go beyond the crude analytical estimates built from~\eqref{eq:timescalesNfstart} and~\eqref{eq:estimatederivorb}-\eqref{eq:estimatederivconst}, we use numerical derivatives for the timescales~\eqref{eq:defTf}-\eqref{eq:defTA} and for the derivatives in~\eqref{eq:deffom}. We summarize the results in Fig.~\ref{fig:fomLISA}, both for the orbital delay and the constellation response, for an equal-mass system with total masses of $M=10^{7} \Msol$, $10^{4} \Msol$ and $10^{2} \Msol$ and a starting frequency corresponding to $\Delta t =10 \yr$ of observation. Since individual signals can show significant variation depending on the angular parameters, for the full computation with numerical derivatives we show a geometric average of $\epsilon$ over the sky position, inclination and polarization, together with $\pm 1\sigma$ geometric standard deviation. Here and in the following, for completeness we show results on the frequency band from $10^{-5}\Hz$ to $1\Hz$, while the signals are expected to have little signal-to-noise ratio outside of the band from $10^{-4}\Hz$ to $10^{-1}\Hz$, which is sometimes taken as a reference~\cite{LISA17}.
 
@@ -785,7 +790,7 @@ Overall, we find that for merging binaries the perturbative approach presented i
 
 \SM{[say that we take a large number of samples to eliminate spline interpolation errors]}
 
-Having at hand estimates for the relevance of higher-order corrections in the LISA response, we now demonstrate that including these higher-order corrections does indeed reduce the reconstruction error of the Fourier-domain transfer function. We will consider an equal-mass and non-spinning system, with only two values for the total mass, $M=10^{7} \Msol$ and $M=10^{2} \Msol$. For this example, we will also focus on the orbital response and on a single-arm constellation response $y_{132}$, as TDI combinations will appear (within the approximations listed in Sec.~\ref{subsec:modelLISA}) as linear combinations of these basic observables. The orientation angles chosen for this example are $[\lambda,\beta,\iota,\psi] = [\pi/4,\pi/3,\pi/3,0]$.
+Having at hand estimates for the relevance of higher-order corrections in the LISA response, we now demonstrate that including these higher-order corrections does indeed reduce the reconstruction error of the Fourier-domain transfer function. We will consider an equal-mass and non-spinning system, with only two values for the total mass, $M=10^{7} \Msol$ and $M=10^{2} \Msol$. For this example, we will also focus on the orbital response and on a single-arm constellation response $y_{132}$, as TDI combinations will appear (within the approximations listed in Sec.~\ref{subsec:modelLISA}) as linear combinations of these basic observables. The orientation angles chosen for these examples are $[\lambda,\beta,\iota,\psi] = [\pi/4,\pi/3,\pi/3,0]$.
 
 On one hand, we perform a numerical inverse Fourier transform (IFFT) of the Fourier-domain PhenomD waveform, process the signal through the time-domain response~\eqref{eq:defresponse0} or~\eqref{eq:defresponseL}, and perform a numerical Fourier transform (FFT). This gives us the target Fourier-domain waveform, considered to be exact but for possible numerical artifacts (most notably, oscillations induced by the necessary tapering of the signal). On the other hand, we process the Fourier-domain signal through the response summarized in Sec.~\ref{subsec:executivesummary}, including various higher-order corrections. We then compare the output of the two procedures.
 
@@ -793,47 +798,46 @@ We show the results for the orbital response in Figs.~\ref{fig:LISAerrorM1e7orb}
 
 For the constellation response, we show the results in Figs.~\ref{fig:LISAerrorM1e7const} and~\ref{fig:LISAerrorM1e2const}, using directly the real and imaginary part of the transfer function. We find similar features as for the orbital response: including higher-corrections reduces the errors, but in the high-mass case the amplitude and delay corrections should be added together. We also find the same uncontrolled grow of errors at the very end of the signal in the high-mass case, in the region where the amplitude of the signal decays.
 
-\begin{figure*}
+\begin{figure}
   \centering
-  \includegraphics[width=.48\linewidth]{plots/LISAtransferM1e7dOamp.pdf}
-  \hspace{0.2cm}
-  \includegraphics[width=.48\linewidth]{plots/LISAtransferM1e7dOphase.pdf}
-  %
-  \includegraphics[width=.48\linewidth]{plots/LISAerrorM1e7dOamp.pdf}
-  \hspace{0.2cm}
-  \includegraphics[width=.48\linewidth]{plots/LISAerrorM1e7dOphase.pdf}
+%  \includegraphics[width=.8\linewidth]{plots/LISAtransferM1e7dOamp.pdf}
+%  \hspace{0.1cm}
+%  \includegraphics[width=.8\linewidth]{plots/LISAtransferM1e7dOphase.pdf}
+%  \hspace{0.1cm}
+%  \includegraphics[width=.8\linewidth]{plots/LISAerrorM1e7dO.pdf}
+  \includegraphics[width=.98\linewidth]{plots/LISAtransfererrorM1e7dO_py.pdf}
   \caption{Error in the transfer function for the orbital delay $d_{0}$, for $M=10^{7} \Msol$. \SM{[Add line for RD freq]}}
   \label{fig:LISAerrorM1e7orb}
-\end{figure*}
-
-\begin{figure*}
-  \centering
-  \includegraphics[width=.48\linewidth]{plots/LISAtransferM1e2dOamp.pdf}
-  \hspace{0.2cm}
-  \includegraphics[width=.48\linewidth]{plots/LISAtransferM1e2dOphase.pdf}
-  %
-  \includegraphics[width=.48\linewidth]{plots/LISAerrorM1e2dOamp.pdf}
-  \hspace{0.2cm}
-  \includegraphics[width=.48\linewidth]{plots/LISAerrorM1e2dOphase.pdf}
-  \caption{Transfer function and reconstruction error for the orbital delay $d_{0}$, for $M=10^{2} \Msol$.}
-  \label{fig:LISAerrorM1e2orb}
-\end{figure*}
+\end{figure}
 
 \begin{figure}
   \centering
-  \includegraphics[width=.98\linewidth]{plots/LISAtransferM1e7y12LReIm.pdf}
-  %
-  \includegraphics[width=.98\linewidth]{plots/LISAerrorM1e7y12L.pdf}
+%  \includegraphics[width=.8\linewidth]{plots/LISAtransferM1e2dOamp.pdf}
+%  \hspace{0.1cm}
+%  \includegraphics[width=.8\linewidth]{plots/LISAtransferM1e2dOphase.pdf}
+%  \hspace{0.1cm}
+%  \includegraphics[width=.8\linewidth]{plots/LISAerrorM1e2dO.pdf}
+  \includegraphics[width=.98\linewidth]{plots/LISAtransfererrorM1e2dO_py.pdf}
+  \caption{Transfer function and reconstruction error for the orbital delay $d_{0}$, for $M=10^{2} \Msol$.}
+  \label{fig:LISAerrorM1e2orb}
+\end{figure}
+
+\begin{figure}
+  \centering
+  %\includegraphics[width=.98\linewidth]{plots/LISAtransferM1e7y12LReIm.pdf}
+  %\includegraphics[width=.98\linewidth]{plots/LISAerrorM1e7y12L.pdf}
+  \includegraphics[width=.98\linewidth]{plots/LISAtransfererrorM1e7y12L_py.pdf}
   \caption{Error in the transfer function for the basic observable $y_{12}$, for $M=10^{7} \Msol$. \SM{[Add line for RD freq]}}
   \label{fig:LISAerrorM1e7const}
 \end{figure}
 
 \begin{figure}
   \centering
-  \includegraphics[width=.98\linewidth]{plots/LISAtransferM1e2y12LReIm.pdf}
+  %\includegraphics[width=.98\linewidth]{plots/LISAtransferM1e2y12LReIm.pdf}
   %
-  \includegraphics[width=.98\linewidth]{plots/LISAerrorM1e2y12L.pdf}
-  \caption{Transfer function and reconstruction error for the basic observable $y_{12}$, for $M=10^{2} \Msol$.}
+  %\includegraphics[width=.98\linewidth]{plots/LISAerrorM1e2y12L.pdf}
+  \includegraphics[width=.98\linewidth]{plots/LISAtransfererrorM1e2y12L_py.pdf}
+  \caption{Transfer function and reconstruction error for the basic observable $y_{12}$, for $M=10^{2} \Msol$. \SM{[check $\overline{\calT}$ is defined]}}
   \label{fig:LISAerrorM1e2const}
 \end{figure}
 
@@ -843,21 +847,85 @@ For the constellation response, we show the results in Figs.~\ref{fig:LISAerrorM
 
 \subsection{Slowly chirping binaries and direct approach for periodic modulations and delays}\label{subsec:comblisa}
 
+\begin{figure}
+  \centering
+  \includegraphics[width=.98\linewidth]{plots/LISACombExtent_py.pdf}
+  \caption{Extent of the Fourier comb corresponding to truncation levels $\eta=10^{-12}$, $10^{-6}$, $10^{-3}$ according to the criterion~\eqref{eq:criteriontruncationcomb}. Blue corresponds to the orbital delay comb~\eqref{}, while red corresponds to the one-arm constellation response~\eqref{} \SM{[R]}. The result is shown averaged over 100 random orientation angles.}
+  \label{fig:lisacombextent}
+\end{figure}
 
+\begin{figure}
+  \centering
+%  \includegraphics[width=.8\linewidth]{plots/LISAtransferSOBHepsPsi1d0ampcorr.pdf}
+%  \hspace{0.1cm}
+%  \includegraphics[width=.8\linewidth]{plots/LISAtransferSOBHepsPsi1d0phasecorr.pdf}
+%  \hspace{0.1cm}
+%  \includegraphics[width=.8\linewidth]{plots/LISAerrorSOBHepsPsi1d0.pdf}
+  \includegraphics[width=.98\linewidth]{plots/LISAtransfererrorSOBHepsPsi1d0corr_py.pdf}
+  \caption{Error in the transfer function for the orbital delay $d_{0}$, for a SOBH with $\epsilon_{\Psi}\sim 1$.}
+  \label{fig:}
+\end{figure}
 
-In the LISA case, the modulations and delays entering~\eqref{eq:yslr} are periodic, with a period of one year and a frequency $f_{0} = \Omega_{0}/2\pi = 1/\mathrm{yr} \simeq 3.2\times 10^{-8}\mathrm{Hz}$. If the above perturbative formalism cannot be applied, we can still exploit this periodic structure to transform the . \SM{[]}
+\begin{figure}
+  \centering
+%  \includegraphics[width=.8\linewidth]{plots/LISAtransferSOBHepsPsi10d0ampcorr.pdf}
+%  \hspace{0.1cm}
+%  \includegraphics[width=.8\linewidth]{plots/LISAtransferSOBHepsPsi10d0phasecorr.pdf}
+%  \hspace{0.1cm}
+%  \includegraphics[width=.8\linewidth]{plots/LISAerrorSOBHepsPsi10d0.pdf}
+  \includegraphics[width=.98\linewidth]{plots/LISAtransfererrorSOBHepsPsi10d0corr_py.pdf}
+  \caption{Error in the transfer function for the orbital delay $d_{0}$, for a SOBH with $\epsilon_{\Psi}\sim 10$.}
+  \label{fig:}
+\end{figure}
+
+\begin{figure}
+  \centering
+  \includegraphics[width=.8\linewidth]{plots/LISAtransferSOBHepsPsi1y12LReIm.pdf}
+  \hspace{0.1cm}
+  \includegraphics[width=.8\linewidth]{plots/LISAerrorSOBHepsPsi1y12L.pdf}
+  \caption{Error in the transfer function for the constellation response $y_{132}$, for a SOBH with $\epsilon_{\Psi}\sim 1$.}
+  \label{fig:}
+\end{figure}
+
+\begin{figure}
+  \centering
+  \includegraphics[width=.8\linewidth]{plots/LISAtransferSOBHepsPsi10y12LReIm.pdf}
+  \hspace{0.1cm}
+  \includegraphics[width=.8\linewidth]{plots/LISAerrorSOBHepsPsi10y12L.pdf}
+  \caption{Error in the transfer function for the constellation response $y_{132}$, for a SOBH with $\epsilon_{\Psi}\sim 10$.}
+  \label{fig:}
+\end{figure}
+
+As explained in Sec.~\ref{subsec:lisafom}, slowly-chirping binaries can be problematic for the perturbative formalism of Sec.~\ref{sec:formalism}. Indeed, when far enough from merger, SOBH systems~\cite{Sesana16} can have error estimates $\epsilon_{\Psi}$ reaching and exceeding $1$, as shown in Fig.~\ref{fig:lisafomPsiMcDeltat}. Here we investigate these sources in more details, and propose an alternative treatment for their response.
+
+First, we should mention that these signals share similarities, at least qualitatively, with galactic binaries. They are far from merger, slowly chirping, and span only a narrow frequency band over the course of the LISA mission lifetime. For the galactic binaries, an accurate and very efficient numerical treatment of the response has been proposed in~\cite{} \SM{[C]} and widely used in applications (see e.g.~\cite{} \SM{[C]}). This approach is referred to as the fast-slow decomposition, or heterodyning. If the gravitational wave signal extends only on the narrow frequency band $f \in [f_{*}, (1+\eta) f_{*}]$ with $\eta \ll 1$, then scaling out a carrier frequency of the signal by multpilying by $e^{-2 i \pi f_{*} t}$ will eliminate most of the time variability, allowing to process the signal through the time-domain response and to take a FFT with a Nyquist frequency shifted from $(1+\eta) f_{*}$ to $\eta f_{*}$, i.e. with a much smaller number of samples. This multiplication is simply equivalent to a shift in frequency domain, which can be restored after the numerical FFT has been computed. The efficiency of this approach is contingent to the smallness of $\eta$. For galactic binaries, this quantity is typically \SM{[complete]}. For SOBH systems, however, $\eta$ will take a continuous set of values from roughly $10^{-4}$ to $1$ \SM{[check values]}. Although the systems for which $\eta$ is the largest are also the easiest to treat with the perturbative formalism of Sec~\ref{sec:formalism}, we propose here yet a third method for dealing with potentially troublesome systems, leaving for the future a more detailed study of SOBH systems as a population, and the investigation of the precise boundaries and oberlap areas of the three methods as well as their respective computational costs.
+
+This third approach exploits the fact that, in the LISA case, the modulations and delays entering~\eqref{eq:yslr} are periodic, with a period of one year and a frequency $f_{0} = \Omega_{0}/2\pi = 1/\mathrm{yr} \simeq 3.2\times 10^{-8}\mathrm{Hz}$. For any given frequency, $G(f,t)$ is periodic in time, so that~\eqref{eq:defG} becomes a discrete Fourier series
 \be\label{eq:Gdiscretefourier}
-	G(f,t) = \sum_{n} c_{n}(f) e^{-in\Omega_{0}t} \,,
+	G(f,t) = \sum_{n \in \mathbb{Z}} c_{n}(f) e^{-in\Omega_{0}t} \,,
 \ee
 with frequency-dependent discrete Fourier coefficients given by the integrals (we recall our Fourier convention~\eqref{eq:defFT})
 \be\label{eq:defcn}
 	c_{n}(f) = \frac{\Omega_{0}}{2\pi} \int_{0}^{\frac{2\pi}{\Omega_{0}}} \ud t \, e^{i n \Omega_{0} t} G(f,t) \,.
 \ee
 
-This leads to the following generalized discrete convolution: \SM{[]}
-\be
+In the case of the orbital delay, with $G_{0}(f,t)$ given by~\eqref{eq:G0} and~\eqref{eq:delay0}, the particularly simple expression of the delay gives an analytic expression for the coefficients $c_{n}^{0}$ in terms of Bessel functions of the first kind, as
+\be\label{eq:cn0}
+	c_{n}^{0} = i^{n} e^{i n \lambda} J_{n} \left[ -2 \pi f R \cos \beta \right]\,.
+\ee
+For the constellation response, by contrast, to our knowledge the coefficients $c_{n}^{L}$ do not admit such a simple close-form expression, and they must be computed numerically using the integrand given by~\eqref{eq:GslrL}. Truncating~\eqref{eq:Gdiscretefourier} to a finite order $N$, this computation reduces to a DFT \SM{[acronym]}, and the $c_{n}$ coefficients are given by~\eqref{eq:ykDFT} and~\eqref{eq:ckyk}. 
+
+Inserting~\eqref{eq:Gdiscretefourier} into the convolution~\eqref{eq:FDkernel} leads to the following generalized discrete convolution:
+\be\label{eq:transferdiscreteconvolution}
 	\tilde{s}(f) = \sum_{n \in \mathbb{Z}} c_{n}(f - n f_{0}) \tilde{h} (f - n f_{0}) \,.
 \ee
+In practice, this sum is to be truncated at $|n|\leq N$, for some finite order $N$ determining the accuracy of the approximation. To assess the expected truncation error, we use a simple criterion based on the $L^{1}$-norm of the $\{c_{n}\}$ sequence. For a given target truncation error $\eta$, we define the truncation $N(f, \eta)$ as the smallest integer such that 
+\be\label{eq:criteriontruncationcomb}
+	\sum_{|n| > N(f, \eta)} |c_{n}(f)| < \eta \,.
+\ee
+The truncation order $N(f,\eta)$ is frequency-dependent, and also depends on the orientation angles. For $c_{n}^{L}$, it also determines the number of function evaluations and the cost of the DFT. For $c_{n}^{0}$, the expression~\eqref{eq:cn0} can provide an asymptotic estimate. For large values of $n$ we have indeed the equivalent $| J_{n}[z] | \sim (e z/2n)^{n}/\sqrt{2\pi n} \; \left[ n\rightarrow + \infty \right]$~\cite{} \SM{[C: dlmf?]}, so that a conservative estimate for the truncation order (almost independent of $\eta$) is given by $N \geq  |e \pi f R \cos \beta|$. Fig.~\ref{fig:lisacombextent} shows numerical computations for $N(f,\eta)$, averaged over orientation angles, for both the constellation and the orbital response and for the truncation levels  $\eta=10^{-12}$, $10^{-6}$, $10^{-3}$. We see that, especially at high frequencies, the orbital response requires more coefficients than the constellation response due to the longer baseline of the delay. At the frequency $f=0.1\Hz$, we have for the orbital response $N \simeq 200$.
+
+An important point is that, since the signals from slowly-chirping binaries extend on a narrow frequency band, for both responses the frequency-dependence of $c_{n}^{0}(f)$, $c_{n}^{L}(f)$ will be very mild, so that the coefficients can be computed at two or three frequencies and interpolated in-between. The computational cost of this approach is set by the truncation order $N$, and the number of intermediate frequencies where the transfer function resulting from the sum~\eqref{eq:transferdiscreteconvolution} must be computed for later interpolation, with the necessary waveform evaluations \SM{[possibly refer to appendix on interpolation errors here]}. We leave for future work a proper assessment of the computational performance of this method compared to the others \SM{[say a bit more ?]}. 
 
 Although straightforward and generic, this writing of the Fourier-domain response function will be in general more expansive to compute than the perturbative transfer function approach of Sec.~\ref{sec:formalism}.
 
@@ -1470,10 +1538,14 @@ Overall, we find that all the corrections we investigated, perturbative in phase
 
 \SM{[add appendix with discrete Fourier coeffs]}
 
-The convention we will be using for the Fourier transform of a signal $h(t)$ is
-\be\label{eq:defFT}
-	\tilde{h}(f) = \mathrm{FT}[h](f) =  \int \ud t \, e^{+2i\pi f t} h(t) \,.
-\ee
+The convention we will be using for the Fourier transform of a signal $h(t)$ and its inverse is
+\begin{subequations}
+\label{eq:defFT}
+\begin{align}
+	\tilde{h}(f) &= \mathrm{FT}[h](f) =  \int \ud t \, e^{+2i\pi f t} h(t) \,, \\
+	h(t) &= \mathrm{IFT}[\tilde{h}](t) =  \int \ud f \, e^{-2i\pi f t} \tilde{h}(f) \,.
+\end{align}
+\end{subequations}
 Notice that this sign convention is not the most frequently used in the literature. We chose it to ensure that, with the conventions of~\cite{BlanchetLiving}, spin-weighted spherical modes $h_{\ell m}$ with $m>0$ will have support mostly for positive frequencies. One can revert to the more usual convention by taking $f\rightarrow -f$.
 
 The effect of a shift in time of the time-domain signal translates into a linear phase contribution added to the Fourier-domain signal. For $h_{\Delta t}(t) \equiv h(t+\Delta t)$ with $\Delta t$ a constant, in our convention we have
@@ -1504,7 +1576,7 @@ Since we will work in the Fourier domain, it will be useful to write the contrib
 	\tilde{h}_{\times}(f) &= \frac{i}{2} \sum\limits_{\ell \geq 2} \sum\limits_{m=-\ell}^{\ell} \left[ {}_{-2}Y_{\ell m} \tilde{h}_{\ell m}(f) - {}_{-2}Y_{\ell m}^{*} \tilde{h}_{\ell m}(-f)^{*} \right] \,,
 \end{align}
 \end{subequations}
-where we used $\widetilde{h_{\ell m}^{*}}(f) = \tilde{h}_{\ell m}(-f)^{*}$. An additional approximation often used in waveform models consists in considering that the Fourier transforms $\tilde{h}_{\ell m}$ have support only on one side of the spectrum, either for positive of for negative frequencies depending on the sign of $m$. This holds in particular within the stationary phase approximation, as explained below. With our sign convention~\eqref{eq:defFT}, this approximation reads
+where we used $\widetilde{h_{\ell m}^{*}}(f) = \tilde{h}_{\ell m}(-f)^{*}$. An additional approximation often used in waveform models consists in considering that the Fourier transforms $\tilde{h}_{\ell m}$ have support only on one side of the spectrum, either for positive of for negative frequencies depending on the sign of $m$. This holds in particular within the stationary phase approximation, as explained below \SM{[change here]}. With our sign convention~\eqref{eq:defFT}, this approximation reads
 \begin{align}\label{eq:zeronegativef}
 	\tilde{h}_{\ell m} (f) &\simeq 0 \text{ for } f<0, \; m>0 \nn\,,\\
 	\tilde{h}_{\ell m} (f) &\simeq 0 \text{ for } f>0, \; m<0 \,.
@@ -1536,6 +1608,22 @@ We recall that, with our sign convention, the effect of a positive shift in time
 	\tilde{h}'(f) = e^{2i\pi f \Delta t} \tilde{h}(f) \,.
 \ee
 If we also allow for a global shift in phase of the signal, which corresponds to a rotation of the unit vector pointing towards the observer in the frame of the gravitational waves source, a constant term can also be added (note that the effect of such a rotation gives different phase changes $e^{\pm i m \delta \phi}$ for the different modes of the radiation). We see that both a constant and a linear term in the Fourier-domain phase can be adjusted by changing extrinsic parameters. Thus, as is well known, apart from the relative phases of the modes for waveforms that include higher harmonics, the intrinsic information on the phasing is contained in the second derivative of the Fourier-domain phase $\Psi(f)$. \SM{[rewrite this paragraph]}
+
+In our convention, the link between the Discrete Fourier Transform (DFT) \SM{[check acronym]} and the trigonometric polynomial representation of a function goes as follows. For a periodic function $F(x)$ defined on $x\in [x_{0}, x_{0} + \Delta x]$, and represented by $N$ samples $x_{j} = \ov{x} + j \Delta x/N$, $j=0,\dots,N-1$, with $N$ large enough to satisfy, at least approximately, the Nyquist criterion, we can build a trigonometric interpolant $P(x)$ as
+\be
+	P(x) = \sum\limits_{k=-M}^{+M} c_{k} e^{2i\pi k \frac{x-x_{0}}{\Delta x}} \,,
+\ee
+that will satisfy the system $P(x_{j}) = F(x_{j})$ for $j=0,\dots, N-1$. Here we set $M=N/2$, assuming N is even. This trigonometric polynomial representation is equivalent to truncating the formal Fourier series, representing the full signal, to a finite order $M$. The coefficients $c_{k}$, in the full series, are defined as integrals over the interval of $F$ weighted by the appropriate exponential (as in~\eqref{eq:defcn}). In both interpretations, either the truncated approximation of the Fourier series or  the trigonometric interpolation formulation, these coefficients are related to the coefficients of the inverse DFT. If we set $\omega \equiv e^{2i\pi/N}$ and define
+\be\label{eq:ykDFT}
+	y_{k} = \frac{1}{N} \sum\limits_{j=0}^{N-1} F(x_{j}) \omega^{jk} \,,
+\ee
+which is the expression of the inverse DFT in our sign convention~\eqref{eq:defFT}, the coefficients $c_{k}$ are given by
+\begin{align}\label{eq:ckyk}
+	c_{k} &= y_{k} \text{ for } k=0,\dots, M-1 \,, \nn\\
+	c_{k} &= y_{k+N} \text{ for } k=-M+1,\dots, -1 \,, \nn\\
+	c_{M} &= c_{-M} = \frac{y_{M}}{2} \,,
+\end{align}
+where the condition $c_{M} = c_{-M}$ is an arbitrary condition enforced to match the number of degrees of freedom. In practice, a good representation of the Fourier series of the signal is achieved when the truncation order $M$ is sufficient so that the coefficients $c_{|n|\geq M}$ become negligibly small.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
