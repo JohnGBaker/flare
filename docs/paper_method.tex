@@ -807,7 +807,7 @@ For the constellation response, we show the results in Figs.~\ref{fig:LISAerrorM
 %  \hspace{0.1cm}
 %  \includegraphics[width=.8\linewidth]{plots/LISAerrorM1e7dO.pdf}
   \includegraphics[width=.98\linewidth]{plots/LISAtransfererrorM1e7dO_py.pdf}
-  \caption{Error in the transfer function for the orbital delay $d_{0}$, for $M=10^{7} \Msol$. \SM{[Add line for RD freq]}}
+  \caption{Error in the transfer function for the orbital delay $d_{0}$, for $M=10^{7} \Msol$.}
   \label{fig:LISAerrorM1e7orb}
 \end{figure}
 
@@ -828,7 +828,7 @@ For the constellation response, we show the results in Figs.~\ref{fig:LISAerrorM
   %\includegraphics[width=.98\linewidth]{plots/LISAtransferM1e7y12LReIm.pdf}
   %\includegraphics[width=.98\linewidth]{plots/LISAerrorM1e7y12L.pdf}
   \includegraphics[width=.98\linewidth]{plots/LISAtransfererrorM1e7y12L_py.pdf}
-  \caption{Error in the transfer function for the basic observable $y_{12}$, for $M=10^{7} \Msol$. \SM{[Add line for RD freq]}}
+  \caption{Error in the transfer function for the basic observable $y_{12}$, for $M=10^{7} \Msol$.}
   \label{fig:LISAerrorM1e7const}
 \end{figure}
 
@@ -851,7 +851,7 @@ For the constellation response, we show the results in Figs.~\ref{fig:LISAerrorM
 \begin{figure}
   \centering
   \includegraphics[width=.98\linewidth]{plots/LISACombExtent_py.pdf}
-  \caption{Extent of the Fourier comb corresponding to truncation levels $\eta=10^{-12}$, $10^{-6}$, $10^{-3}$ according to the criterion~\eqref{eq:criteriontruncationcomb}. Blue corresponds to the orbital delay comb~\eqref{}, while red corresponds to the one-arm constellation response~\eqref{} \SM{[R]}. The result is shown averaged over 100 random orientation angles.}
+  \caption{Extent of the Fourier-domain comb entering the convolution~\eqref{eq:transferdiscreteconvolution}, determined from the criterion~\eqref{eq:criteriontruncationcomb} with truncation levels $\eta=10^{-12}$, $10^{-6}$, $10^{-3}$. Blue corresponds to the orbital delay comb coefficients $c_{n}^{0}$ given by~\eqref{eq:cn0}, and red to the constellation comb $c_{n}^{L}$ for the response~\eqref{eq:GslrL}. The result is shown averaged over 100 random orientation angles.}
   \label{fig:lisacombextent}
 \end{figure}
 
@@ -899,15 +899,15 @@ For the constellation response, we show the results in Figs.~\ref{fig:LISAerrorM
   \label{fig:}
 \end{figure}
 
-As explained in Sec.~\ref{subsec:lisafom}, slowly-chirping binaries can be problematic for the perturbative formalism of Sec.~\ref{sec:formalism}. Indeed, when far enough from merger, SOBH systems~\cite{Sesana16} can have error estimates $\epsilon_{\Psi}$ reaching and exceeding $1$, as shown in Fig.~\ref{fig:lisafomPsiMcDeltat}. Here we investigate these sources in more details, and propose an alternative treatment for their response.
+As explained in Sec.~\ref{subsec:lisafom}, slowly-chirping binaries can be problematic for the perturbative formalism of Sec.~\ref{sec:formalism}. Indeed, when far enough from merger, SOBH systems~\cite{Sesana16} can have error estimates $\epsilon_{\Psi}$ reaching and exceeding $1$, as shown in Fig.~\ref{fig:lisafomPsiMcDeltat}. Here we investigate these sources in more details, and propose an alternative treatment for their instrument response.
 
-First, we should mention that these signals share similarities, at least qualitatively, with galactic binaries. They are far from merger, slowly chirping, and span only a narrow frequency band over the course of the LISA mission lifetime. For the galactic binaries, an accurate and very efficient numerical treatment of the response has been proposed in~\cite{} \SM{[C]} and widely used in applications (see e.g.~\cite{} \SM{[C]}). This approach is referred to as the fast-slow decomposition, or heterodyning. If the gravitational wave signal extends only on the narrow frequency band $f \in [f_{*}, (1+\eta) f_{*}]$ with $\eta \ll 1$, then scaling out a carrier frequency of the signal by multpilying by $e^{-2 i \pi f_{*} t}$ will eliminate most of the time variability, allowing to process the signal through the time-domain response and to take a FFT with a Nyquist frequency shifted from $(1+\eta) f_{*}$ to $\eta f_{*}$, i.e. with a much smaller number of samples. This multiplication is simply equivalent to a shift in frequency domain, which can be restored after the numerical FFT has been computed. The efficiency of this approach is contingent to the smallness of $\eta$. For galactic binaries, this quantity is typically \SM{[complete]}. For SOBH systems, however, $\eta$ will take a continuous set of values from roughly $10^{-4}$ to $1$ \SM{[check values]}. Although the systems for which $\eta$ is the largest are also the easiest to treat with the perturbative formalism of Sec~\ref{sec:formalism}, we propose here yet a third method for dealing with potentially troublesome systems, leaving for the future a more detailed study of SOBH systems as a population, and the investigation of the precise boundaries and oberlap areas of the three methods as well as their respective computational costs.
+First, we should mention that these signals share similarities with the galactic binaries that will provide numerous quasi-monochromatic signals in the LISA band~\cite{LISA17}. They are far from merger, slowly chirping, and span only a narrow frequency band over the course of the LISA mission lifetime. For the galactic binaries, an accurate and very efficient numerical treatment of the response has been proposed in~\cite{} \SM{[C]} and widely used in applications (see e.g.~\cite{} \SM{[C]}). This treatment is referred to as the fast-slow decomposition, or heterodyning approach. If the gravitational wave signal extends only on the narrow frequency band $f \in [f_{*}, (1+\eta) f_{*}]$ with $\eta \ll 1$, then scaling out a carrier frequency of the signal by multpilying by $e^{-2 i \pi f_{*} t}$ will eliminate most of the time variability, allowing to process the signal through the time-domain response and to take a FFT with a Nyquist frequency shifted from $(1+\eta) f_{*}$ to $\eta f_{*}$, i.e. with a much smaller number of samples. This multiplication is simply equivalent to a shift in frequency domain, which can be restored after the numerical FFT has been computed. The efficiency of this approach is contingent to the smallness of $\eta$. For galactic binaries, this quantity is typically \SM{[complete]}. For SOBH systems, however, $\eta$ will take a continuous set of values from roughly $10^{-4}$ to $1$ \SM{[check values]}. Although the systems for which $\eta$ is the largest are also the easiest to treat with the perturbative formalism of Sec~\ref{sec:formalism}, we propose here yet a third method for dealing with potentially troublesome systems. We leave for the future a more detailed study of SOBH systems as a population, and the investigation of the precise boundaries and overlap areas of the three methods as well as their respective computational costs.
 
-This third approach exploits the fact that, in the LISA case, the modulations and delays entering~\eqref{eq:yslr} are periodic, with a period of one year and a frequency $f_{0} = \Omega_{0}/2\pi = 1/\mathrm{yr} \simeq 3.2\times 10^{-8}\mathrm{Hz}$. For any given frequency, $G(f,t)$ is periodic in time, so that~\eqref{eq:defG} becomes a discrete Fourier series
+The third approach we propose here exploits the fact that, in the LISA case, the modulations and delays entering~\eqref{eq:yslr} are periodic, with a period of one year and a frequency $f_{0} = \Omega_{0}/2\pi = 1/\mathrm{yr} \simeq 3.2\times 10^{-8}\mathrm{Hz}$. For any given frequency $f$, $G(f,t)$ is periodic in time, so that~\eqref{eq:defG} becomes a discrete Fourier series
 \be\label{eq:Gdiscretefourier}
 	G(f,t) = \sum_{n \in \mathbb{Z}} c_{n}(f) e^{-in\Omega_{0}t} \,,
 \ee
-with frequency-dependent discrete Fourier coefficients given by the integrals (we recall our Fourier convention~\eqref{eq:defFT})
+with frequency-dependent discrete Fourier coefficients (that we will also call comb coefficients) given by the integrals (we recall our Fourier convention~\eqref{eq:defFT})
 \be\label{eq:defcn}
 	c_{n}(f) = \frac{\Omega_{0}}{2\pi} \int_{0}^{\frac{2\pi}{\Omega_{0}}} \ud t \, e^{i n \Omega_{0} t} G(f,t) \,.
 \ee
@@ -922,11 +922,11 @@ Inserting~\eqref{eq:Gdiscretefourier} into the convolution~\eqref{eq:FDkernel} l
 \be\label{eq:transferdiscreteconvolution}
 	\tilde{s}(f) = \sum_{n \in \mathbb{Z}} c_{n}(f - n f_{0}) \tilde{h} (f - n f_{0}) \,.
 \ee
-In practice, this sum is to be truncated at $|n|\leq N$, for some finite order $N$ determining the accuracy of the approximation. To assess the expected truncation error, we use a simple criterion based on the $L^{1}$-norm of the $\{c_{n}\}$ sequence. For a given target truncation error $\eta$, we define the truncation $N(f, \eta)$ as the smallest integer such that 
+Thus, computing the Fourier-domain response now requires to convolve the signal with a discrete comb with frequency-dependent coefficients $c_{n}$. In practice, this sum is to be truncated at $|n|\leq N$, for some finite order $N$ determining the accuracy of the approximation. To assess the expected truncation error, we use a simple criterion based on the $L^{1}$-norm of the $\{c_{n}\}$ sequence. For a given target truncation error $\eta$, we define the truncation $N(f, \eta)$ as the smallest integer such that 
 \be\label{eq:criteriontruncationcomb}
 	\sum_{|n| > N(f, \eta)} |c_{n}(f)| < \eta \,.
 \ee
-The truncation order $N(f,\eta)$ is frequency-dependent, and also depends on the orientation angles. For $c_{n}^{L}$, it also determines the number of function evaluations and the cost of the DFT. For $c_{n}^{0}$, the expression~\eqref{eq:cn0} can provide an asymptotic estimate. For large values of $n$ we have indeed the equivalent $| J_{n}[z] | \sim (e z/2n)^{n}/\sqrt{2\pi n} \; \left[ n\rightarrow + \infty \right]$~\cite{} \SM{[C: dlmf?]}, so that a conservative estimate for the truncation order (almost independent of $\eta$) is given by $N \geq  |e \pi f R \cos \beta|$. Fig.~\ref{fig:lisacombextent} shows numerical computations for $N(f,\eta)$, averaged over orientation angles, for both the constellation and the orbital response and for the truncation levels  $\eta=10^{-12}$, $10^{-6}$, $10^{-3}$. We see that, especially at high frequencies, the orbital response requires more coefficients than the constellation response due to the longer baseline of the delay. At the frequency $f=0.1\Hz$, we have for the orbital response $N \simeq 200$.
+The truncation order $N(f,\eta)$ is frequency-dependent, and also depends on the orientation angles. For $c_{n}^{L}$, it also determines the number of function evaluations and the cost of the DFT. For $c_{n}^{0}$, the expression~\eqref{eq:cn0} can provide an asymptotic bound on the width of the comb. For large values of $n$ we have indeed the equivalent $| J_{n}[z] | \sim (e z/2n)^{n}/\sqrt{2\pi n} \; \left[ n\rightarrow + \infty \right]$~\cite{} \SM{[C: dlmf?]}, so that a conservative estimate for the truncation order (almost independent of $\eta$) is given by $N \geq  |e \pi f R \cos \beta|$. Fig.~\ref{fig:lisacombextent} shows numerical computations for $N(f,\eta)$, averaged over orientation angles, for both the constellation and the orbital response and for the truncation levels  $\eta=10^{-12}$, $10^{-6}$, $10^{-3}$. We see that, especially at high frequencies, the orbital response requires more coefficients than the constellation response due to the longer baseline of the delay. At the frequency $f=0.1\Hz$, we have for the orbital response $N \simeq 200$.
 
 An important point is that, since the signals from slowly-chirping binaries extend on a narrow frequency band, for both responses the frequency-dependence of $c_{n}^{0}(f)$, $c_{n}^{L}(f)$ will be very mild, so that the coefficients can be computed at two or three frequencies and interpolated in-between. The computational cost of this approach is set by the truncation order $N$, and the number of intermediate frequencies where the transfer function resulting from the sum~\eqref{eq:transferdiscreteconvolution} must be computed for later interpolation, with the necessary waveform evaluations \SM{[possibly refer to appendix on interpolation errors here]}. We leave for future work a proper assessment of the computational performance of this method compared to the others \SM{[say a bit more ?]}. 
 
@@ -941,6 +941,8 @@ Note that for slowly-chirping binaries, the large features in the orbital transf
 \label{sec:precession}
 
 \SM{[explain somewhere the fact that the modulation has support for negative f, convolution has support to larger f - pretty important for direct convolution]}
+
+\SM{[cite GWFrames]}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -1118,14 +1120,15 @@ Another caveat is that for the precessing-frame waveform, the assumption~\eqref{
 
 In the following, we will illustrate our formalism by applying it to three examples. The parameters of these example cases are summarized in Table~\ref{table:precparams}. We consider a mass ratio of $q=4$, close-to-maximal spins of $\chi_{1} = \chi_{2} = 0.95$, and vary both spins misalignmnent angles to be $\pi/6$ (close to spin-aligned), $\pi/2$ (spins in the plane) and $5\pi/6$ (close to anti-aligned spins). Table~\ref{table:precparams} also shows the remnant spins that are internally computed in both the SEOB and the PhenomD/PhenomP codes, as well as the QNM frequencies and the resulting frame precession frequency $\Omega_{\rm frame}$. Note that the case $--$ shows a larger variation in the direction of $\bm{J}$, and the spin of the remnant is almost 0, due to the fact that the spin is large and antialigned, with a large mass ratio. This example therefore serves the purpose of lying at the edge of validity of the picture of standard precession along a cone around an almost-fixed direction, and the standard hierarchy between mode contributions is not valid in this case. \SM{[soundness of trajectories, particularly in this case, are to be checked again]}
 
-\begin{figure*}
+\begin{figure}
   \centering
-  \includegraphics[width=.45\linewidth]{plots/eulerSXS0058alphagamma.pdf}
-  \hspace{0.2cm}
-  \includegraphics[width=.45\linewidth]{plots/eulerSXS0058beta.pdf}
+%  \includegraphics[width=.45\linewidth]{plots/eulerSXS0058alphagamma.pdf}
+%  \hspace{0.2cm}
+%  \includegraphics[width=.45\linewidth]{plots/eulerSXS0058beta.pdf}
+  \includegraphics[width=.98\linewidth]{plots/eulerSXS0058_py.pdf}
   \caption{Evolution of Euler angles $(\alpha, \beta, \gamma)$ near merger for the example waveform SXS:BBH:0058~\cite{} \SM{[C]}. Full, dashed and dotted lines represent the NR, SEOB and extended SEOB waveforms respectively. The vertical line at $t=0$ indicates the time of merger. In the left panel the full and dashed black lines indicate the asymptotic behaviour~\eqref{eq:OmegaframeQNM} for the rotation of the frame around the direction of the final $\bm{J}$. The difference between NR and SEOB there is due to the value of the final spin, with $\chi_{f}^{\rm NR} = 0.54$ and $\chi_{f}^{\rm SEOB} = 0.42$, which leads to a different $\Omega_{\rm frame}$. In the right panel, $\beta$ is asymptotically constant in our toy model. \SM{[Add amplitude/$\omega$ plots comparing NR/SEOB, and possibly PhenomD for the 22 mode ? Add Euler angles produced by IFFT of PhenomP ?]}}
   \label{fig:prectoymodel}
-\end{figure*}
+\end{figure}
 
 %\begin{figure*}
 %  \centering
@@ -1424,7 +1427,7 @@ Overall, we find that all the corrections we investigated, perturbative in phase
   \includegraphics[width=.32\linewidth]{plots/precerrors_++_32_noconv_col.pdf}
   \hspace{0.cm}
   \includegraphics[width=.32\linewidth]{plots/precerrors_++_32_conv_col.pdf}
-  \caption{Amplitude of the inertial-frame modes $h^{I}_{2m}$ and errors in the Fourier-domain transfer fonctions $\calT^{2}_{m2}$ for the configuration $++$. The columns show the orders of approximation $\{\Psi:0,A:0\}$, $\{\Psi:2,A:2\}$, $\{\Psi:2,A:2,\text{conv}\}$. \SM{[Compact the columns to share the x axis, add vertical line for merger frequency and shaded area for stitching pert/conv]} \SM{[check: where is the phase of the orange, mode 20 ?]}}
+  \caption{Amplitude of the inertial-frame modes $h^{I}_{2m}$ and errors in the Fourier-domain transfer fonctions $\calT^{2}_{m2}$ for the configuration $++$. The columns show the orders of approximation $\{\Psi:0,A:0\}$, $\{\Psi:2,A:2\}$, $\{\Psi:2,A:2,\text{conv}\}$. \SM{[Compact the columns to share the x axis, add vertical line for merger frequency and shaded area for stitching pert/conv]} \SM{[check: where is the phase of the orange, mode 20 ?]} \SM{[add vertical lines for merger and RD freqs]}}
   \label{fig:precerrors++}
 \end{figure*}
 
@@ -1435,7 +1438,7 @@ Overall, we find that all the corrections we investigated, perturbative in phase
   \includegraphics[width=.32\linewidth]{plots/precerrors_pp_32_noconv_col.pdf}
   \hspace{0.cm}
   \includegraphics[width=.32\linewidth]{plots/precerrors_pp_32_conv_col.pdf}
-  \caption{Amplitude of the inertial-frame modes $h^{I}_{2m}$ and errors in the Fourier-domain transfer fonctions $\calT^{2}_{m2}$ for the configuration $pp$. The columns show the orders of approximation $\{\Psi:0,A:0\}$, $\{\Psi:2,A:2\}$, $\{\Psi:2,A:2,\text{conv}\}$. \SM{[Compact the columns to share the x axis, add vertical line for merger frequency and shaded area for stitching pert/conv]}}
+  \caption{Amplitude of the inertial-frame modes $h^{I}_{2m}$ and errors in the Fourier-domain transfer fonctions $\calT^{2}_{m2}$ for the configuration $pp$. The columns show the orders of approximation $\{\Psi:0,A:0\}$, $\{\Psi:2,A:2\}$, $\{\Psi:2,A:2,\text{conv}\}$. \SM{[Compact the columns to share the x axis, add vertical line for merger frequency and shaded area for stitching pert/conv]} \SM{[add vertical lines for merger and RD freqs]}}
   \label{fig:precerrorspp}
 \end{figure*}
 
@@ -1446,7 +1449,7 @@ Overall, we find that all the corrections we investigated, perturbative in phase
   \includegraphics[width=.32\linewidth]{plots/precerrors_--_32_noconv_col.pdf}
   \hspace{0.cm}
   \includegraphics[width=.32\linewidth]{plots/precerrors_--_32_conv_col.pdf}
-  \caption{Amplitude of the inertial-frame modes $h^{I}_{2m}$ and errors in the Fourier-domain transfer fonctions $\calT^{2}_{m2}$ for the configuration $--$. The columns show the orders of approximation $\{\Psi:0,A:0\}$, $\{\Psi:2,A:2\}$, $\{\Psi:2,A:2,\text{conv}\}$. \SM{[Compact the columns to share the x axis, add vertical line for merger frequency and shaded area for stitching pert/conv. Check the post-merger frame trajectory for - -.]}}
+  \caption{Amplitude of the inertial-frame modes $h^{I}_{2m}$ and errors in the Fourier-domain transfer fonctions $\calT^{2}_{m2}$ for the configuration $--$. The columns show the orders of approximation $\{\Psi:0,A:0\}$, $\{\Psi:2,A:2\}$, $\{\Psi:2,A:2,\text{conv}\}$. \SM{[Compact the columns to share the x axis, add vertical line for merger frequency and shaded area for stitching pert/conv. Check the post-merger frame trajectory for - -.]} \SM{[add vertical lines for merger and RD freqs]}}
   \label{fig:precerrors--}
 \end{figure*}
 
@@ -1489,24 +1492,25 @@ Overall, we find that all the corrections we investigated, perturbative in phase
 
 \begin{figure*}
   \centering
-  %
-  \includegraphics[width=.32\linewidth]{plots/mismatches_++_inc0.pdf}
-  \hspace{0.1cm}
-  \includegraphics[width=.32\linewidth]{plots/mismatches_++_incpi3.pdf}
-  \hspace{0.1cm}
-  \includegraphics[width=.32\linewidth]{plots/mismatches_++_incpi2.pdf}
-  %
-  \includegraphics[width=.32\linewidth]{plots/mismatches_pp_inc0.pdf}
-  \hspace{0.1cm}
-  \includegraphics[width=.32\linewidth]{plots/mismatches_pp_incpi3.pdf}
-  \hspace{0.1cm}
-  \includegraphics[width=.32\linewidth]{plots/mismatches_pp_incpi2.pdf}
-  %
-  \includegraphics[width=.32\linewidth]{plots/mismatches_--_inc0.pdf}
-  \hspace{0.1cm}
-  \includegraphics[width=.32\linewidth]{plots/mismatches_--_incpi3.pdf}
-  \hspace{0.1cm}
-  \includegraphics[width=.32\linewidth]{plots/mismatches_--_incpi2.pdf}
+%  %
+%  \includegraphics[width=.32\linewidth]{plots/mismatches_++_inc0.pdf}
+%  \hspace{0.1cm}
+%  \includegraphics[width=.32\linewidth]{plots/mismatches_++_incpi3.pdf}
+%  \hspace{0.1cm}
+%  \includegraphics[width=.32\linewidth]{plots/mismatches_++_incpi2.pdf}
+%  %
+%  \includegraphics[width=.32\linewidth]{plots/mismatches_pp_inc0.pdf}
+%  \hspace{0.1cm}
+%  \includegraphics[width=.32\linewidth]{plots/mismatches_pp_incpi3.pdf}
+%  \hspace{0.1cm}
+%  \includegraphics[width=.32\linewidth]{plots/mismatches_pp_incpi2.pdf}
+%  %
+%  \includegraphics[width=.32\linewidth]{plots/mismatches_--_inc0.pdf}
+%  \hspace{0.1cm}
+%  \includegraphics[width=.32\linewidth]{plots/mismatches_--_incpi3.pdf}
+%  \hspace{0.1cm}
+%  \includegraphics[width=.32\linewidth]{plots/mismatches_--_incpi2.pdf}
+  \includegraphics[width=.98\linewidth]{plots/precMM_py.pdf}
   \caption{Unfaithfulness. Computed here with $f_{\rm min} = 20\mathrm{Hz}$, for masses between 20 and 400 $\Msol$, using the standard aLIGO noise curve \SM{[reference for that curve]}. \SM{[Extend computation to fmin=10 and Mmin=10]} \SM{[relate unfaithfulness levels to future detectors in the text]} }
   \label{fig:precunfaithfulness}
 \end{figure*}
@@ -1595,7 +1599,7 @@ We will further decompose $\tilde{h}$ into a Fourier-domain amplitude $A$ and a 
 	\tilde{h}(f) \equiv A(f) e^{-i\Psi(f)} \,.
 \ee
 
-Since we intend to work in the Fourier domain, we will use PhenomD waveforms~\cite{Khan+15}. These phenomenological waveforms provide analytic fits for both the Fourier-domain amplitude and phase of the 22 mode, with fit coefficients that were calibrated on EOB/NR hybrids [describe smoothing across intervals]. Fig.~\ref{fig:ampphase} shows an example of amplitude and phase in geometric units for an equal-mass binary. \SM{[remove that and point to appendix on interpolation errors]}
+Since we intend to work in the Fourier domain, we will use PhenomD waveforms~\cite{Khan+15}. These phenomenological waveforms provide analytic fits for both the Fourier-domain amplitude and phase of the 22 mode, with fit coefficients that were calibrated on EOB/NR hybrids \SM{[describe smoothing across intervals ?]}. Fig.~\ref{fig:ampphase} shows an example of amplitude and phase in geometric units for an equal-mass binary. \SM{[remove that and point to appendix on interpolation errors]}
 
 %\begin{figure*}
 %  \centering
