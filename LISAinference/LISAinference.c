@@ -449,58 +449,58 @@ int main(int argc, char *argv[])
 
 	/* set the MultiNest sampling parameters */
 
-	int mmodal = runParams.mmodal;			/* do mode separation? */
+	int mmodal = runParams.mmodal;		/* do mode separation? */
 
-	int ceff = 0;					/* run in constant efficiency mode? */
+	int ceff = runParams.consteff;		/* run in constant efficiency mode? */
 
 	int nlive = runParams.nlive;			/* number of live points */
 
-	double efr = runParams.eff;			/* set the required efficiency */
+	double efr = runParams.eff;		  	/* set the required efficiency */
 
-	double tol = runParams.tol;			/* tol, defines the stopping criteria */
+	double tol = runParams.tol;			  /* tol, defines the stopping criteria */
 
-	/* int ndim = 9; */				        /*dimensionality (no. of free parameters) */
-	/* int nPar = 9; */					/* total no. of parameters including free & derived parameters */
+	/* int ndim = 9; */				        /* dimensionality (no. of free parameters) */
+	/* int nPar = 9; */					      /* total no. of parameters including free & derived parameters */
 
-	int nClsPar = runParams.nclspar;            	/* no. of parameters to do mode separation on */
+	int nClsPar = runParams.nclspar;  /* no. of parameters to do mode separation on */
 
-	int updInt = 50;				/* after how many iterations feedback is required & the output files should be updated */
-							/* note: posterior files are updated & dumper routine is called after every updInt*10 iterations */
+	int updInt = 50;			           	/* after how many iterations feedback is required & the output files should be updated */
+							                      /* note: posterior files are updated & dumper routine is called after every updInt*10 iterations */
 
-	double Ztol = runParams.ztol;	       		/* all the modes with logZ < Ztol are ignored */
+	double Ztol = runParams.ztol;	    /* all the modes with logZ < Ztol are ignored */
 
-	int maxModes = runParams.maxcls;		/* expected max no. of modes (used only for memory allocation) */
+	int maxModes = runParams.maxcls;	/* expected max no. of modes (used only for memory allocation) */
 
-	int pWrap[ndim];				/* which parameters to have periodic boundary conditions? */
-	for(i = 0; i < ndim; i++) { /* If non-default limiting values have been set for lambda, phase, pol, do not treat them as periodic */
+	int pWrap[ndim];			           	/* which parameters to have periodic boundary conditions? */
+	for(i = 0; i < ndim; i++) {       /* If non-default limiting values have been set for lambda, phase, pol, do not treat them as periodic */
 	  if(freeparamsmap[i]==4 && priorParams->phase_min == 0. && priorParams->phase_max == 2.*PI) pWrap[i] = 1;
 	  else if(freeparamsmap[i]==6 && priorParams->lambda_min == 0. && priorParams->lambda_max == 2.*PI) pWrap[i] = 1;
 	  else if(freeparamsmap[i]==8 && priorParams->pol_min == 0. && priorParams->pol_max == PI) pWrap[i] = 1;
 	  else pWrap[i] = 0;
 	}
 
-	strcpy(root, runParams.outroot);		/* root for output files */
+	strcpy(root, runParams.outroot);	/* root for output files */
 	strcpy(networkinputs, runParams.netfile);	/* file with input parameters for network training */
 
-	int seed = -1;					/* random no. generator seed, if < 0 then take the seed from system clock */
+	int seed = -1;				           	/* random no. generator seed, if < 0 then take the seed from system clock */
 
-	int fb = 1;					/* need feedback on standard output? */
+	int fb = 1;				               	/* need feedback on standard output? */
 
-	resume = runParams.resume;			/* resume from a previous job? */
+	resume = runParams.resume;			  /* resume from a previous job? */
 
-	int outfile = 1;				/* write output files? */
+	int outfile = 1;				          /* write output files? */
 
-	int initMPI = 0;				/* initialize MPI routines?, relevant only if compiling with MPI */
-							/* set it to F if you want your main program to handle MPI initialization */
+	int initMPI = 0;			          	/* initialize MPI routines?, relevant only if compiling with MPI */
+						                       	/* set it to F if you want your main program to handle MPI initialization */
 
-	logZero = -1E90;				/* points with loglike < logZero will be ignored by MultiNest */
+	logZero = -1E90;			          	/* points with loglike < logZero will be ignored by MultiNest */
 
-	int maxiter = runParams.maxiter;				/* max no. of iterations, a non-positive value means infinity. MultiNest will terminate if either it */
-							/* has done max no. of iterations or convergence criterion (defined through tol) has been satisfied */
+	int maxiter = runParams.maxiter;  /* max no. of iterations, a non-positive value means infinity */
+                                    /* MultiNest will terminate if either it has done max no. of iterations or convergence criterion (defined through tol) has been satisfied */
 
-	/* void *context = 0; */				/* not required by MultiNest, any additional information user wants to pass */
+	/* void *context = 0; */				  /* not required by MultiNest, any additional information user wants to pass */
 
-	doBAMBI = runParams.bambi;			/* BAMBI? */
+	doBAMBI = runParams.bambi;		  	/* BAMBI? */
 
 	useNN = 0;
 

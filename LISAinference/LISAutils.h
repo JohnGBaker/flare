@@ -169,6 +169,7 @@ typedef struct tagLISAPrior {
 typedef struct tagLISARunParams {
   double eff;                /* target efficiency (default 0.1) */
   double tol;                /* logZ tolerance (default 0.5) */
+  int    consteff;           /* constant efficiency mode (default 0) */
   int    nlive;              /* number of live points (default 1000) */
   int    writeparams;        /* Write params - if 1, write run parameters to file (default 1) */
   char   outroot[200];       /* output root (default "chains/LISAinference_") */
@@ -231,9 +232,9 @@ int print_rescaleddist_to_file_LISA(
   LISAGlobalParams* globalparams,
   LISAPrior* prior,
   LISARunParams* run);
+int print_snrlogZ_to_file_LISA(LISARunParams* run, double SNR, double logZ);
 /* Function printing injection/signal parameters to stdout */
-void report_LISAParams(
-  LISAParams* params);
+void report_LISAParams(LISAParams* params);
 
 /* Initialization and clean-up for LISASignal structures */
 void LISASignalCAmpPhase_Cleanup(LISASignalCAmpPhase* signal);
@@ -334,7 +335,7 @@ extern LISAParams* injectedparams;
 extern LISAGlobalParams* globalparams;
 extern LISAPrior* priorParams;
 extern LISAAddParams* addparams;
-double logZdata;
+extern double logZdata; /* TODO: not used */
 extern SimpleLikelihoodPrecomputedValues* simplelikelihoodinjvals;
 
 #if 0

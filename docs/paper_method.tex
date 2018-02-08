@@ -842,8 +842,6 @@ For the constellation response, we show the results in Figs.~\ref{fig:LISAerrorM
   \label{fig:LISAerrorM1e2const}
 \end{figure}
 
-\SM{[say a word of resampling needed at low and high f, refer to paper PE - discussion section at the end ?]}
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsection{Slowly chirping binaries and direct approach for periodic modulations and delays}\label{subsec:comblisa}
@@ -851,7 +849,7 @@ For the constellation response, we show the results in Figs.~\ref{fig:LISAerrorM
 \begin{figure}
   \centering
   \includegraphics[width=.98\linewidth]{plots/LISACombExtent_py.pdf}
-  \caption{Extent of the Fourier-domain comb entering the convolution~\eqref{eq:transferdiscreteconvolution}, determined from the criterion~\eqref{eq:criteriontruncationcomb} with truncation levels $\eta=10^{-12}$, $10^{-6}$, $10^{-3}$. Blue corresponds to the orbital delay comb coefficients $c_{n}^{0}$ given by~\eqref{eq:cn0}, and red to the constellation comb $c_{n}^{L}$ for the response~\eqref{eq:GslrL}. The result is shown averaged over 100 random orientation angles.}
+  \caption{Extent of the Fourier-domain comb entering the convolution~\eqref{eq:transferdiscreteconvolution}, determined from the criterion~\eqref{eq:criteriontruncationcomb} with truncation levels $\eta=10^{-12}$, $10^{-6}$, $10^{-3}$. Blue corresponds to the orbital delay comb coefficients $c_{n}^{0}$ given by~\eqref{eq:cn0}, and red to the constellation comb $c_{n}^{L}$ for the response~\eqref{eq:GslrL}. The result is shown after averaging over 100 random orientation angles.}
   \label{fig:lisacombextent}
 \end{figure}
 
@@ -916,7 +914,7 @@ In the case of the orbital delay, with $G_{0}(f,t)$ given by~\eqref{eq:G0} and~\
 \be\label{eq:cn0}
 	c_{n}^{0} = i^{n} e^{i n \lambda} J_{n} \left[ -2 \pi f R \cos \beta \right]\,.
 \ee
-For the constellation response, by contrast, to our knowledge the coefficients $c_{n}^{L}$ do not admit such a simple close-form expression, and they must be computed numerically using the integrand given by~\eqref{eq:GslrL}. Truncating~\eqref{eq:Gdiscretefourier} to a finite order $N$, this computation reduces to a DFT \SM{[acronym]}, and the $c_{n}$ coefficients are given by~\eqref{eq:ykDFT} and~\eqref{eq:ckyk}. 
+By contrast, for the constellation response, to our knowledge the coefficients $c_{n}^{L}$ do not admit such a simple close-form expression, and they must be computed numerically using the integrand given by~\eqref{eq:GslrL}. Truncating~\eqref{eq:Gdiscretefourier} to a finite order $N$, this computation reduces to a DFT \SM{[acronym]}, and the $c_{n}$ coefficients are given by~\eqref{eq:ykDFT} and~\eqref{eq:ckyk}. 
 
 Inserting~\eqref{eq:Gdiscretefourier} into the convolution~\eqref{eq:FDkernel} leads to the following generalized discrete convolution:
 \be\label{eq:transferdiscreteconvolution}
@@ -1314,10 +1312,11 @@ Overall, the conclusion to be drawn of Fig.~\ref{} is that for the $++$ and $pp$
 
 \begin{figure*}
   \centering
-  \includegraphics[width=.48\linewidth]{plots/trig_amp.pdf}
-  \hspace{0.2cm}
-  \includegraphics[width=.48\linewidth]{plots/trig_phase.pdf}
-  \caption{Amplitude (left panel) and phase (right panel), compared to its trigonometric polynomial representation for the three cases listed in Table~\ref{table:precexamples}. The vertical lines indicate the merger frequencies. \SM{[color for vertical lines at fpeak]} \SM{[add bottom panel with residual ?]}}
+%  \includegraphics[width=.48\linewidth]{plots/trig_amp.pdf}
+%  \hspace{0.2cm}
+%  \includegraphics[width=.48\linewidth]{plots/trig_phase.pdf}
+  \includegraphics[width=.98\linewidth]{plots/trigopoly_py.pdf}
+  \caption{Amplitude (left panel) and phase (right panel), compared to its trigonometric polynomial representation for the three cases listed in Table~\ref{table:precexamples}. The vertical lines indicate the merger frequencies. \SM{[color for vertical lines at fpeak]} \SM{[add bottom panel with residual ?]} \SM{[check definition of A]}}
   \label{fig:trigopoly}
 \end{figure*}
 
@@ -1547,7 +1546,9 @@ Overall, we find that all the corrections we investigated, perturbative in phase
 \section{Notation and conventions}
 \label{app:notation}
 
-\SM{[add appendix with discrete Fourier coeffs]}
+\SM{[say a word of resampling needed at low and high f for LISA, and in general interpolation errors, appendix or refer to paper PE ?]}
+
+\SM{[clean up part on discrete Fourier coeffs]}
 
 The convention we will be using for the Fourier transform of a signal $h(t)$ and its inverse is
 \begin{subequations}

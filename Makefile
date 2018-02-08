@@ -2,6 +2,7 @@ MESSAGE="Specify which machine to compile for in the Makefile."
 MACHINE="sylvainsmac"
 #MACHINE="discover"
 #MACHINE="johnsmac"
+#MACHINE="minerva"
 
 ifeq ($(MACHINE),"sylvainsmac")
   MESSAGE="Compiling for Sylvain's Mac"
@@ -94,6 +95,51 @@ else ifeq ($(MACHINE),"datura")
   LD = mpif90
 	LDFLAGS += -L$(FFTWLIB)
   LDFLAGS += -cxxlib -nofor_main -g -traceback -C -fopenmp
+  CFLAGS += -I$(MKLINC) -I$(FFTWINC) -fopenmp
+  CPPFLAGS += -I$(MKLINC) -I$(FFTWINC) -fopenmp
+else ifeq ($(MACHINE),"minerva")
+  #based on modules:
+  #module add Compiler/intel/ips_xe_2015/ips_xe_2015_intel15 mpi/openmpi/1.10.0-intel15 hdf5/1.8.13-intel15 gsl/1.15
+  #environment:
+  #AEI_GSL_HOME=/cluster/gsl/SL6/1.15 AEI_MKLROOT=/cluster/Compiler/Intel/ips_xe_2015/composer_xe_2015.1.133/mkl
+  #AEI_FFTW_HOME=/cluster/fftw/3.3
+  #export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$AEI_MKLROOT/lib/intel64
+  MESSAGE="Compiling for Minerva at AEI"
+	# note: gcc-4.9.3 is default gcc
+	# modules to be loaded in environment:
+	# module purge
+	# module load gcc/4.9.3
+	# module load gsl/gcc-4.9.3/1.16
+	# module load intel/compiler/2017.4/64/2017.4
+	# module load intel/mkl/2017.4/64/2017.4
+	# module load intel/mpi/2017.4/64/2017.4
+	# module load fftw3/gcc-4.9.3/3.3.6-pl1
+	GSLROOT = $(GSL_ROOT)
+	GSLLIB = $(GSL_ROOT)/lib
+	#GSLINC = 3D -I$(GSLROOT)/include -DHAVE_INLINE -DGSL_C99_INLINE -DGSL_RANGE_CHECK_OFF
+	#GSLINC = 3D -I$(GSL_ROOT)/include -DHAVE_INLINE -DGSL_C99_INLINE -DGSL_RANGE_CHECK_OFF
+	FFTWROOT = $(FFTW3_ROOT)
+	FFTWLIB = $(FFTW3_ROOT)/lib
+	FFTWINC = $(FFTW3_ROOT)/include
+	MKLINC = $(MKLROOT)/include
+	#LAPACKROOT = $(LAPACK_ROOT)
+	LAPACKLIB = $(MKLROOT)/lib/intel64
+  BAMBIROOT = $(HOME)/build/bambi
+  FC = mpiif90 -DPARALLEL
+  CC = mpiicc -DPARALLEL
+  CPP = mpiicpc -DPARALLEL
+  #MPILIBS = -lmpi -lmpi_cxx -lmpi_mpifh
+	MPILIBS = -lmpi -lmpicxx -lmpifort
+  IFORTLIBS = -lifcore
+	LAPACKLIBS = -lmkl_intel_lp64 -lmkl_intel_thread -liomp5 -lpthread -lm -lmkl_core -lmkl_lapack95_lp64
+  #LAPACKLIB = -L$(AEI_MKLROOT)/lib/intel64 -lmkl_intel_lp64 -lmkl_intel_thread -liomp5 -lpthread -lm -lmkl_core -lmkl_lapack95_lp64
+  MPILIBS += $(IFORTLIBS)
+  MPILIBS += $(LAPACKLIBS)
+  #LD = mpif90
+	LD = $(CPP)
+	LDFLAGS += -L$(GSLLIB) -L$(FFTWLIB) -L$(LAPACKLIB)
+  LDFLAGS += -cxxlib -g -traceback -C -fopenmp
+	#LDFLAGS += -cxxlib -nofor_main -g -traceback -C -fopenmp
   CFLAGS += -I$(MKLINC) -I$(FFTWINC) -fopenmp
   CPPFLAGS += -I$(MKLINC) -I$(FFTWINC) -fopenmp
 endif

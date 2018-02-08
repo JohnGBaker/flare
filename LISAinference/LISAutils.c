@@ -7,6 +7,7 @@ LISAParams* injectedparams = NULL;
 LISAGlobalParams* globalparams = NULL;
 LISAPrior* priorParams = NULL;
 LISAAddParams* addparams = NULL;
+double logZdata = 0.;
 SimpleLikelihoodPrecomputedValues* simplelikelihoodinjvals = NULL;
 
 /***************** Pasring string to choose what masses set to sample for *****************/
@@ -225,6 +226,7 @@ Syntax: --PARAM-min\n\
 --------------------------------------------------\n\
  --eff                 Target efficiency of sampling (default=0.1)\n\
  --tol                 Tolerance for evidence calculation convergence (default=0.5)\n\
+ --consteff            Option to use constant efficiency mode\n\
  --nlive               Number of live points for sampling (default=1000)\n\
  --bambi               Use BAMBI's neural network logL learning (no option, default off)\n\
  --resume              Resume from a previous run (no option, default off)\n\
@@ -337,6 +339,7 @@ Syntax: --PARAM-min\n\
     /* set default values for the run settings */
     run->eff = 0.1;
     run->tol = 0.5;
+    run->consteff = 0;
     run->nlive = 1000;
     run->writeparams = 1;
     strcpy(run->outroot, "chains/LISAinference_");
@@ -527,6 +530,8 @@ Syntax: --PARAM-min\n\
             run->eff = atof(argv[++i]);
         } else if (strcmp(argv[i], "--tol") == 0) {
             run->tol = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--consteff") == 0) {
+            run->consteff = 1;
         } else if (strcmp(argv[i], "--nlive") == 0) {
             run->nlive = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--bambi") == 0) {
@@ -749,6 +754,7 @@ int print_parameters_to_file_LISA(
   fprintf(f, "-----------------------------------------------\n");
   fprintf(f, "eff:            %g\n", run->eff);
   fprintf(f, "tol:            %g\n", run->tol);
+  fprintf(f, "consteff:       %d\n", run->consteff);
   fprintf(f, "nlive:          %d\n", run->nlive);
   fprintf(f, "bambi:          %d\n", run->bambi);
   fprintf(f, "resume:         %d\n", run->resume);
@@ -779,7 +785,6 @@ int print_rescaleddist_to_file_LISA(
   FILE *f = fopen(path, "a");
   if (f == NULL) printf("Error. Failed to open file '%s'\n",path);
 
-
   /* Print rescaled distance and dist prior */
   fprintf(f, "\n");
   fprintf(f, "-----------------------------------------------\n");
@@ -788,6 +793,30 @@ int print_rescaleddist_to_file_LISA(
   fprintf(f, "dist_resc: %.16e\n", params->distance);
   fprintf(f, "dist_min:  %.16e\n", prior->dist_min);
   fprintf(f, "dist_max:  %.16e\n", prior->dist_max);
+  fprintf(f, "-----------------------------------------------\n");
+
+  /* Close output file */
+  fclose(f);
+  return SUCCESS;
+}
+
+/* Function printing distance parameters (used if they have been rescaled to a target snr) */
+int print_snrlogZ_to_file_LISA(LISARunParams* run, double SNR, double logZ)
+{
+  printf("Saving injection SNR and logZ info to file.\n");
+  /* Output file */
+  char *path=malloc(strlen(run->outroot)+64);
+  sprintf(path,"%sparams.txt", run->outroot);
+  FILE *f = fopen(path, "a");
+  if (f == NULL) printf("Error. Failed to open file '%s'\n",path);
+
+  /* Print rescaled distance and dist prior */
+  fprintf(f, "\n");
+  fprintf(f, "-----------------------------------------------\n");
+  fprintf(f, "SNR and logZ of the injection:\n");
+  fprintf(f, "-----------------------------------------------\n");
+  fprintf(f, "SNR:   %.16e\n", SNR);
+  fprintf(f, "logZ:  %.16e\n", logZ);
   fprintf(f, "-----------------------------------------------\n");
 
   /* Close output file */

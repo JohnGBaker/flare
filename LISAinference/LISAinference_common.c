@@ -31,9 +31,13 @@ void addendum(int argc, char *argv[],LISARunParams *runParams, int *ndim, int *n
   /* Parse commandline to read parameters of injection - copy the number of modes demanded for the injection */
   parse_args_LISA(argc, argv, injectedparams, globalparams, priorParams, runParams, addparams);
   injectedparams->nbmode = globalparams->nbmodeinj;
-
   //int notLISAlike=strstr(argv[0],"LISAlike")==0;
   if(myid == 0 && runParams->writeparams /*&& notLISAlike*/) print_parameters_to_file_LISA(injectedparams, globalparams, priorParams, runParams);
+  if(myid == 0) {
+    printf("Injected params\n");
+    report_LISAParams(injectedparams);
+  }
+
   /* Initialize the data structure for the injection */
   LISAInjectionCAmpPhase* injectedsignalCAmpPhase = NULL;
   LISAInjectionReIm* injectedsignalReIm = NULL;
@@ -51,10 +55,8 @@ void addendum(int argc, char *argv[],LISARunParams *runParams, int *ndim, int *n
   else if(globalparams->tagint==1) {
     LISAGenerateInjectionReIm(injectedparams, globalparams->minf, globalparams->nbptsoverlap, 1, injectedsignalReIm); /* Use here logarithmic sampling as a default */
   }
-  printf("Injected params\n");
-  report_LISAParams(injectedparams);
 
-  /* Define SNR */
+  /* Compute SNR */
   double SNR123, SNR1, SNR2, SNR3;
   if(globalparams->tagint==0) {
     SNR123 = sqrt(injectedsignalCAmpPhase->TDI123ss);
@@ -67,8 +69,7 @@ void addendum(int argc, char *argv[],LISARunParams *runParams, int *ndim, int *n
   }
 
   /* Rescale distance to match SNR */
-  //
-  printf("isnan(priorParams->snr_target) : %d\n", isnan(priorParams->snr_target));
+  //printf("isnan(priorParams->snr_target) : %d\n", isnan(priorParams->snr_target));
   if (!isnan(priorParams->snr_target)) {
     printf("SNR=%g\n",SNR123);
     if (myid == 0) printf("Rescaling the distance to obtain a network SNR of %g\n", priorParams->snr_target);
@@ -91,8 +92,10 @@ void addendum(int argc, char *argv[],LISARunParams *runParams, int *ndim, int *n
       SNR3 = sqrt(FDOverlapReImvsReIm(injectedsignalReIm->TDI3Signal, injectedsignalReIm->TDI3Signal, injectedsignalReIm->noisevalues3));
       SNR123 = sqrt(SNR1*SNR1 + SNR2*SNR2 + SNR3*SNR3);
     }
-    printf("Rescaled injected params\n");
-    report_LISAParams(injectedparams);
+    if(myid == 0) {
+      printf("Rescaled injected params\n");
+      report_LISAParams(injectedparams);
+    }
   }
 
   /* If using simple likelihood, initialize precomputed values - note that the other initializations for the injection are done anyway, but will be ignored */
@@ -107,13 +110,8 @@ void addendum(int argc, char *argv[],LISARunParams *runParams, int *ndim, int *n
   }
 
   /* Calculate logL of data */
-  /*double dist_store = injectedparams->distance;
-    injectedparams->distance = 1.0e9;
-    logZdata = CalculateLogL(injectedparams, injectedsignal);
-    printf("logZdata = %lf\n", logZdata);
-    injectedparams->distance = dist_store;*/
-  logZdata = 0.0;
   *logZtrue = 0.;
+  logZdata = 0.; /* TODO: not used */
   if(globalparams->tagint==0) {
     *logZtrue = CalculateLogLCAmpPhase(injectedparams, injectedsignalCAmpPhase);
   }
@@ -122,7 +120,10 @@ void addendum(int argc, char *argv[],LISARunParams *runParams, int *ndim, int *n
   }
   /* printf("Compared params\n");
   report_LISAParams(injectedparams); */
-  if(myid == 0) printf("logZtrue = %lf\n", *logZtrue-logZdata);
+  if(myid == 0) printf("logZtrue = %lf\n", *logZtrue);
+
+  /* Write to file the SNR and logZ of the injection */
+  if (myid == 0 && runParams->writeparams /*&& notLISAlike*/) print_snrlogZ_to_file_LISA(runParams, SNR123, *logZtrue);
 
   /* Set the context pointer */
   if((globalparams->tagint==0) && (!globalparams->tagsimplelikelihood)) {
