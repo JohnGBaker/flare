@@ -173,7 +173,7 @@ Arguments are as follows:\n\
  --tagint              Tag choosing the integrator: 0 for Fresnel (default), 1 for linear integration\n\
  --tagtdi              Tag choosing the set of TDI variables to use (default TDIAETXYZ)\n\
  --nbptsoverlap        Number of points to use for linear integration (default 32768)\n\
- --variant             String representing the variant of LISA to be applied (default LISA2017)\n\
+ --variant             String representing the variant of LISA to be applied (default LISAProposal)\n\
  --zerolikelihood      Zero out the likelihood to sample from the prior for testing purposes (default 0)\n\
  --frozenLISA          Freeze the orbital configuration to the time of peak of the injection (default 0)\n\
  --responseapprox      Approximation in the GAB and orb response - choices are full (full response, default), lowfL (keep orbital delay frequency-dependence but simplify constellation response) and lowf (simplify constellation and orbital response) - WARNING : at the moment noises are not consistent, and TDI combinations from the GAB are unchanged\n\
@@ -278,7 +278,7 @@ Syntax: --PARAM-min\n\
     globalparams->tagint = 0;
     globalparams->tagtdi = TDIAETXYZ;
     globalparams->nbptsoverlap = 32768;
-    globalparams->variant = &LISA2017;
+    globalparams->variant = &LISAProposal;
     globalparams->zerolikelihood = 0;
     globalparams->frozenLISA = 0;
     globalparams->responseapprox = full;
@@ -558,15 +558,16 @@ Syntax: --PARAM-min\n\
             run->seed = 1;
         } else if (strcmp(argv[i], "--variant") == 0) {
 	  i++;
-	  if (strcmp(argv[i], "LISA2017") == 0) globalparams->variant=&LISA2017;
-	  else if (strcmp(argv[i], "LISA2010") == 0) globalparams->variant=&LISA2010;
-	  else if (strcmp(argv[i], "fastOrbitLISA") == 0) globalparams->variant=&fastOrbitLISA;
-	  else if (strcmp(argv[i], "slowOrbitLISA") == 0) globalparams->variant=&slowOrbitLISA;
-	  else if (strcmp(argv[i], "tinyOrbitLISA") == 0) globalparams->variant=&tinyOrbitLISA;
-	  else if (strcmp(argv[i], "bigOrbitLISA") == 0) globalparams->variant=&bigOrbitLISA;
+	  if (strcmp(argv[i], "LISAProposal") == 0) globalparams->variant = &LISAProposal;
+    else if (strcmp(argv[i], "LISA2017") == 0) globalparams->variant = &LISA2017;
+	  else if (strcmp(argv[i], "LISA2010") == 0) globalparams->variant = &LISA2010;
+	  else if (strcmp(argv[i], "fastOrbitLISA") == 0) globalparams->variant = &fastOrbitLISA;
+	  else if (strcmp(argv[i], "slowOrbitLISA") == 0) globalparams->variant = &slowOrbitLISA;
+	  else if (strcmp(argv[i], "tinyOrbitLISA") == 0) globalparams->variant = &tinyOrbitLISA;
+	  else if (strcmp(argv[i], "bigOrbitLISA") == 0) globalparams->variant = &bigOrbitLISA;
 	  else {
 	    printf("Error: --variant option '%s' not recognized\n",argv[i]);
-	    goto fail;
+	    exit(1);
 	  }
         } else if (strcmp(argv[i], "--addparams") == 0) {
             /* Must be followed by the values of m1 m2 tRef distance phiRef inclination lambda beta polarization */
@@ -593,7 +594,7 @@ Syntax: --PARAM-min\n\
           strcpy(addparams->outfile, argv[++i]);
         } else {
             printf("Error: invalid option: %s\n", argv[i]);
-            goto fail;
+            exit(1);
         }
     }
 
@@ -615,9 +616,6 @@ Syntax: --PARAM-min\n\
     }
 
     return;
-
-    fail:
-    exit(1);
 }
 
 /* Function printing injection/signal parameters to stdout */

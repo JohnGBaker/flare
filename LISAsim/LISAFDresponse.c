@@ -477,14 +477,13 @@ int LISASimFDResponseTDI3Chan(
       //double phaseRdelay = -2*PI*R_SI/C_SI*f*cos(beta)*cos(Omega_SI*tf - lambda) * (1 + R_SI/C_SI*cos(beta)*Omega_SI*sin(Omega_SI*tf - lambda));
       double phaseRdelay;
       if(tagtRefatLISA==0){//delay so that tinj=torb refers to arrival time at SSB
-	phaseRdelay = -2*PI*OrbitRoC*f*cos(beta)*cos(phase) * (1 + cos(beta)*OrbitRoC*variant->OrbitOmega*sin(phase));
+        phaseRdelay = -2*PI*OrbitRoC*f*cos(beta)*cos(phase) * (1 + cos(beta)*OrbitRoC*variant->OrbitOmega*sin(phase));
       } else {
-	//In this version we delay so that tinj=torb is relative to LISAcenter arrival time, so there is no orbital delay when tf = tinj
-	//If the original delay realized td=t+d(t), now we want td=t+d(t)-d(t0), that we we change d(t) -> d(t) + d(t0)
-	//Then with the approximation d(td)=d(t)(1-ddot(t)),
-	double phase0=variant->OrbitOmega*torb+variant->OrbitPhi0-lambda;
-	phaseRdelay =
-	  - 2*PI*OrbitRoC*f*cos(beta)*( cos(phase) -cos(phase0) ) * (1 + cos(beta)*OrbitRoC*variant->OrbitOmega*sin(phase));
+        //In this version we delay so that tinj=torb is relative to LISAcenter arrival time, so there is no orbital delay when tf = tinj
+        //If the original delay realized td=t+d(t), now we want td=t+d(t)-d(t0), that we we change d(t) -> d(t) + d(t0)
+        //Then with the approximation d(td)=d(t)(1-ddot(t)),
+        double phase0 = variant->OrbitOmega*torb + variant->OrbitPhi0 - lambda;
+        phaseRdelay = -2*PI*OrbitRoC*f*cos(beta)*( cos(phase)-cos(phase0) ) * (1 + cos(beta)*OrbitRoC*variant->OrbitOmega*sin(phase));
       }
       if(responseapprox==lowf) { /* In the full low-f approximation, ignore this delay term */
         phaseRdelay = 0.;
@@ -503,8 +502,8 @@ int LISASimFDResponseTDI3Chan(
       gsl_vector_set(phase3, j, phasewithRdelay);
     }
     //clock_t tendconstellation = clock();
-  //printf("Set constellation time: %g s\n", (double)(tendconstellation - tbegconstellation) / CLOCKS_PER_SEC);
-  //printf("GAB cumulated time: %g s\n", timingcumulativeGABmode);
+    //printf("Set constellation time: %g s\n", (double)(tendconstellation - tbegconstellation) / CLOCKS_PER_SEC);
+    //printf("GAB cumulated time: %g s\n", timingcumulativeGABmode);
 
     /* Copying the vectors of frequencies - we have to allow for the case where it has been shortened */
     gsl_vector_view freq_resample_subview = gsl_vector_subvector(freq_resample, 0, len_resample);

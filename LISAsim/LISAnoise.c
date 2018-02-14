@@ -42,7 +42,6 @@
 
 /* Proof mass and optic noises - f in Hz */
 /* Taken from (4) in McWilliams&al_0911 */
-
 static double SpmLISA2010(const double f) {
   double invf2 = 1./(f*f);
   //return 2.5e-48 * invf2 * sqrt(1. + 1e-8*invf2);
@@ -52,18 +51,16 @@ static double SpmLISA2010(const double f) {
   double invf8=invf2*invf2*invf2*invf2;
   //Here we add an eyeball approximation based on 4yrs integration with L3LISAReferenceMission looking at a private comm from Neil Cornish 2016.11.12
   double WDWDnoise=5000.0/sqrt(1e-21*invf8 + invf2 + 3e28/invf8)*SaccelFF*invf2;
-  return SaccelFF * invf2 * sqrt(1. + 1e-8*invf2) + WDWDnoise; 
+  return SaccelFF * invf2 * sqrt(1. + 1e-8*invf2) + WDWDnoise;
 }
-
 static double SopLISA2010(const double f) {
   const double Dop=2.0e-11; //Optical path noise in m/rtHz (Standard LISA)
   const double SopFF=Dop*Dop*4.0*PI*PI/C_SI/C_SI; //f^2 coeff for OP frac-freq noise PSD.  Yields 1.76e-37 for Dop=2e-11.
   return SopFF * f * f;
 }
 
-
-// Proof mass and optical noises - f in Hz
-// L3 Reference Mission, from Petiteau LISA-CST-TN-0001
+/* Proof mass and optical noises - f in Hz */
+/* L3 Reference Mission, from Petiteau LISA-CST-TN-0001 */
 static double SpmLISA2017(const double f) {
   double invf2 = 1./(f*f);
   //double invf4=invf2*invf2;
@@ -85,7 +82,6 @@ static double SpmLISA2017(const double f) {
   double Spm_vel = ( Saccel_red + Sloc + S4yrWDWD );
   return Spm_vel / C2;//finally convert from velocity noise to fractional-frequency doppler noise.
 }
-
 static double SopLISA2017(const double f) {
   //double invf2 = 1./(f*f);
   const double twopi2=4.0*PI*PI;
@@ -99,80 +95,120 @@ static double SopLISA2017(const double f) {
   return Sop;
 }
 
+/* Proof mass and optical noises - f in Hz */
+/* LISA Proposal, copied from the LISA Data Challenge pipeline */
+static double SpmLISAProposal(const double f) {
+  /* Acceleration noise */
+  double noise_Sa_a = 9.e-30; /* m^2/sec^4 /Hz */
+  /* In acceleration */
+  double Sa_a = noise_Sa_a * (1.0 + pow(0.4e-3/f, 2)) * (1.0 + pow((f/8e-3), 4));
+  /* In displacement */
+  double Sa_d = Sa_a * pow(2.*PI*f, -4);
+  /* In relative frequency unit */
+  double Sa_nu = Sa_d * pow(2.*PI*f/C_SI, 2);
+  double Spm = Sa_nu;
+  return Spm;
+}
+static double SopLISAProposal(const double f) {
+  /* Optical Metrology System noise */
+  double noise_Soms_d = pow((10e-12), 2); /* m^2/Hz */
+  /* In displacement */
+  double Soms_d = noise_Soms_d * (1. + pow(2.e-3/f, 4));
+  /* In relative frequency unit */
+  double Soms_nu = Soms_d * pow(2.*PI*f/C_SI, 2);
+  double Sop = Soms_nu;
+  return Sop;
+}
+
+/* Compute proof mass and optical noises, for a given choice of noise - f in Hz */
+static void ComputeLISASpmSop(double* Spm, double* Sop, const double f, LISANoiseType noise) {
+  if(noise==LISAProposalnoise) {
+    *Spm = SpmLISAProposal(f);
+    *Sop = SopLISAProposal(f);
+  }
+  else if(noise==LISA2017noise) {
+    *Spm = SpmLISA2017(f);
+    *Sop = SopLISA2017(f);
+  }
+  else if(noise==LISA2010noise) {
+    *Spm = SpmLISA2010(f);
+    *Sop = SopLISA2010(f);
+  }
+  else {
+    printf("Error in ComputeLISASpmSop: LISANoiseType not recognized.\n");
+    exit(1);
+  }
+}
 
 /* Noise Sn for TDI observables - factors have been scaled out both in the response and the noise */
 /* Rescaled by 4*sin2pifL^2 */
 double SnXYZ(const LISAconstellation *variant, double f) {
   double twopifL = 2.*PI*variant->ConstL/C_SI*f;
   double c2 = cos(twopifL);
-  if(variant->noise==LISA2010noise)
-    return 4*( 2*(1. + c2*c2)*SpmLISA2010(f) + SopLISA2010(f) );
-  else     
-    return 4*( 2*(1. + c2*c2)*SpmLISA2017(f) + SopLISA2017(f) );
+  double Spm = 0., Sop = 0.;
+  ComputeLISASpmSop(&Spm, &Sop, f, variant->noise);
+  return 4*( 2*(1. + c2*c2)*Spm + Sop );
 }
 /* No rescaling */
 double Snalphabetagamma(const LISAconstellation *variant, double f) {
   double pifL = PI*variant->ConstL/C_SI*f;
   double s1 = sin(pifL);
   double s3 = sin(3*pifL);
-  if(variant->noise==LISA2010noise)
-    return 2*( (4*s3*s3 + 8*s1*s1)*SpmLISA2010(f) + 3*SopLISA2010(f) );
-  return 2*( (4*s3*s3 + 8*s1*s1)*SpmLISA2017(f) + 3*SopLISA2017(f) );
+  double Spm = 0., Sop = 0.;
+  ComputeLISASpmSop(&Spm, &Sop, f, variant->noise);
+  return 2*( (4*s3*s3 + 8*s1*s1)*Spm + 3*Sop );
 }
 /* Rescaled by 2*sin2pifL^2 */
 double SnAXYZ(const LISAconstellation *variant, double f) {
   double twopifL = 2.*PI*variant->ConstL/C_SI*f;
   double c2 = cos(twopifL);
   double c4 = cos(2*twopifL);
-  if(variant->noise==LISA2010noise)
-    return 2*(3. + 2*c2 + c4)*SpmLISA2010(f) + (2 + c2)*SopLISA2010(f);
-  return 2*(3. + 2*c2 + c4)*SpmLISA2017(f) + (2 + c2)*SopLISA2017(f);
+  double Spm = 0., Sop = 0.;
+  ComputeLISASpmSop(&Spm, &Sop, f, variant->noise);
+  return 2*(3. + 2*c2 + c4)*Spm + (2 + c2)*Sop;
 }
 /* Rescaled by 2*sin2pifL^2 */
 double SnEXYZ(const LISAconstellation *variant, double f) {
   double twopifL = 2.*PI*variant->ConstL/C_SI*f;
   double c2 = cos(twopifL);
   double c4 = cos(2*twopifL);
-  if(variant->noise==LISA2010noise)
-    return 2*(3. + 2*c2 + c4)*SpmLISA2010(f) + (2 + c2)*SopLISA2010(f);
-  return 2*(3. + 2*c2 + c4)*SpmLISA2017(f) + (2 + c2)*SopLISA2017(f);
+  double Spm = 0., Sop = 0.;
+  ComputeLISASpmSop(&Spm, &Sop, f, variant->noise);
+  return 2*(3. + 2*c2 + c4)*Spm + (2 + c2)*Sop;
 }
 /* Rescaled by 8*sin2pifL^2*sinpifL^2 */
 double SnTXYZ(const LISAconstellation *variant, double f) {
   double pifL = PI*variant->ConstL/C_SI*f;
   double s1 = sin(pifL);
-  //printf("L=%g, C=%g, PI=%g\n",variant->ConstL,C_SI,PI);
-  //printf("f=%g,s1=%g,pfl=%g,sop=%g -> SnTXYZ=%g\n",f,s1,pifL,SopLISA2017(f),4*s1*s1*SpmLISA2017(f) + SopLISA2017(f));
-  if(variant->noise==LISA2010noise)
-    return 4*s1*s1*SpmLISA2010(f) + SopLISA2010(f);
-  return 4*s1*s1*SpmLISA2017(f) + SopLISA2017(f);
-
+  double Spm = 0., Sop = 0.;
+  ComputeLISASpmSop(&Spm, &Sop, f, variant->noise);
+  return 4*s1*s1*Spm + Sop;
 }
 /* Rescaled by 8*sin2pifL^2 */
 double SnAalphabetagamma(const LISAconstellation *variant, double f) {
   double twopifL = 2.*PI*variant->ConstL/C_SI*f;
   double c2 = cos(twopifL);
   double c4 = cos(2*twopifL);
-  if(variant->noise==LISA2010noise)
-    return 2*(3. + 2*c2 + c4)*SpmLISA2010(f) + (2 + c2)*SopLISA2010(f);
-  return 2*(3. + 2*c2 + c4)*SpmLISA2017(f) + (2 + c2)*SopLISA2017(f);
+  double Spm = 0., Sop = 0.;
+  ComputeLISASpmSop(&Spm, &Sop, f, variant->noise);
+  return 2*(3. + 2*c2 + c4)*Spm + (2 + c2)*Sop;
 }
 /* Rescaled by 8*sin2pifL^2 */
 double SnEalphabetagamma(const LISAconstellation *variant, double f) {
   double twopifL = 2.*PI*variant->ConstL/C_SI*f;
   double c2 = cos(twopifL);
   double c4 = cos(2*twopifL);
-  if(variant->noise==LISA2010noise)
-    return 2*(3. + 2*c2 + c4)*SpmLISA2010(f) + (2 + c2)*SopLISA2010(f);
-  return 2*(3. + 2*c2 + c4)*SpmLISA2017(f) + (2 + c2)*SopLISA2017(f);
+  double Spm = 0., Sop = 0.;
+  ComputeLISASpmSop(&Spm, &Sop, f, variant->noise);
+  return 2*(3. + 2*c2 + c4)*Spm + (2 + c2)*Sop;
 }
 /* Rescaled by sin3pifL^2/sinpifL^2 */
 double SnTalphabetagamma(const LISAconstellation *variant, double f) {
   double pifL = PI*variant->ConstL/C_SI*f;
   double s1 = sin(pifL);
-  if(variant->noise==LISA2010noise)
-    return 8*s1*s1*SpmLISA2010(f) + 2*SopLISA2010(f);
-  return 8*s1*s1*SpmLISA2017(f) + 2*SopLISA2017(f);
+  double Spm = 0., Sop = 0.;
+  ComputeLISASpmSop(&Spm, &Sop, f, variant->noise);
+  return 8*s1*s1*Spm + 2*Sop;
 }
 
 /* Noise functions for AET(XYZ) without rescaling */
@@ -182,8 +218,8 @@ double SnAXYZNoRescaling(const LISAconstellation *variant, double f) {
   double c2 = cos(twopifL);
   double c4 = cos(2*twopifL);
   double s2 = sin(twopifL);
-  if(variant->noise==LISA2010noise)
-    return 2*s2*s2 * (2*(3. + 2*c2 + c4)*SpmLISA2010(f) + (2 + c2)*SopLISA2010(f));
+  double Spm = 0., Sop = 0.;
+  ComputeLISASpmSop(&Spm, &Sop, f, variant->noise);
   return 2*s2*s2 * (2*(3. + 2*c2 + c4)*SpmLISA2017(f) + (2 + c2)*SopLISA2017(f));
 }
 /* Scaling by 2*sin2pifL^2 put back */
@@ -192,18 +228,18 @@ double SnEXYZNoRescaling(const LISAconstellation *variant, double f) {
   double c2 = cos(twopifL);
   double c4 = cos(2*twopifL);
   double s2 = sin(twopifL);
-  if(variant->noise==LISA2010noise)
-    return 2*s2*s2 * (2*(3. + 2*c2 + c4)*SpmLISA2010(f) + (2 + c2)*SopLISA2010(f));
-  return 2*s2*s2 * (2*(3. + 2*c2 + c4)*SpmLISA2017(f) + (2 + c2)*SopLISA2017(f));
+  double Spm = 0., Sop = 0.;
+  ComputeLISASpmSop(&Spm, &Sop, f, variant->noise);
+  return 2*s2*s2 * (2*(3. + 2*c2 + c4)*Spm + (2 + c2)*Sop);
 }
 /* Scaling by 8*sin2pifL^2*sinpifL^2 put back*/
 double SnTXYZNoRescaling(const LISAconstellation *variant, double f) {
   double pifL = PI*variant->ConstL/C_SI*f;
   double s1 = sin(pifL);
   double s2 = sin(2*pifL);
-  if(variant->noise==LISA2010noise)
-    return 8*s1*s1*s2*s2 * (4*s1*s1*SpmLISA2010(f) + SopLISA2010(f));
-  return 8*s1*s1*s2*s2 * (4*s1*s1*SpmLISA2017(f) + SopLISA2017(f));
+  double Spm = 0., Sop = 0.;
+  ComputeLISASpmSop(&Spm, &Sop, f, variant->noise);
+  return 8*s1*s1*s2*s2 * (4*s1*s1*Spm + Sop);
 }
 
 /* The noise functions themselves

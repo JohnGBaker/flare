@@ -45,14 +45,14 @@ struct tagLISAconstellation {
 }
 */
 
-LISAconstellation LISA2010 = {
+LISAconstellation LISAProposal = {
   EarthOrbitOmega_SI,
   0,
   AU_SI,
   EarthOrbitOmega_SI,
   0,
-  5e9,
-  LISA2010noise
+  2.5e9,
+  LISAProposalnoise
 };
 
 LISAconstellation LISA2017 = {
@@ -63,6 +63,16 @@ LISAconstellation LISA2017 = {
   0,
   2.5e9,
   LISA2017noise
+};
+
+LISAconstellation LISA2010 = {
+  EarthOrbitOmega_SI,
+  0,
+  AU_SI,
+  EarthOrbitOmega_SI,
+  0,
+  5e9,
+  LISA2010noise
 };
 
 LISAconstellation slowOrbitLISA = {
@@ -639,8 +649,8 @@ int EvaluateGABmode(
   const int tagdelayR,                     /* Tag: when 1, include the phase term of the R-delay */
   const ResponseApproxtag responseapprox)  /* Tag to select possible low-f approximation level in FD response */
 {
-  double phase=variant->ConstOmega*t + variant->ConstPhi0;
-
+  double phase = variant->ConstOmega*t + variant->ConstPhi0;
+  
   /* Precompute array of sine/cosine */
   for(int j=0; j<4; j++) {
     cosarray[j] = cos((j+1) * phase);
