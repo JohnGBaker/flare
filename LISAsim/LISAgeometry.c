@@ -650,7 +650,7 @@ int EvaluateGABmode(
   const ResponseApproxtag responseapprox)  /* Tag to select possible low-f approximation level in FD response */
 {
   double phase = variant->ConstOmega*t + variant->ConstPhi0;
-  
+
   /* Precompute array of sine/cosine */
   for(int j=0; j<4; j++) {
     cosarray[j] = cos((j+1) * phase);
@@ -1044,7 +1044,7 @@ int RestoreInPlaceScaledFactorTDI(
 /*********************** Time-domain response ************************/
 
 /* Processing single mode in amp/phase form through orbital time delay */
-double hOTDAmpPhase(
+static double hOTDAmpPhase(
   const LISAconstellation *variant,    /* Description of LISA variant */
   double* amp,                             /* Output: amplitude */
   double* phase,                           /* Output: phase */
@@ -1073,9 +1073,9 @@ double hOTDAmpPhase(
   *phase = gsl_spline_eval(splinephase, t+delay, accelphase);
 }
 
-/* Functions evaluating yAB observables in time domain */
+/* Functions evaluating yAB observables in time domain - constellation response only */
 /* Note: includes both h22 and h2m2 contributions, assuming planar orbits so that h2-2 = h22* */
-double y12LTDfromh22AmpPhase(
+static double y12LTDfromh22AmpPhase(
   const LISAconstellation *variant,    /* Description of LISA variant */
   gsl_spline* splineamp,                   /* Input spline for h22 TD amp */
   gsl_spline* splinephase,                 /* Input spline for h22 TD phase */
@@ -1112,6 +1112,73 @@ double y12LTDfromh22AmpPhase(
   double factorc = (1./(1.-kn3)) * 0.5*n3Pn3cross;
   double firstdelay = -((kp1 + 1)*variant->ConstL)/C_SI;
   double seconddelay = -(kp2*variant->ConstL)/C_SI;
+
+  /* Values of Y22*h22 + Y2-2*h2-2 at 1 and 2 with delays, and hplus, hcross */
+  /* Note: includes both h22 and h2m2 contributions, assuming planar orbits so that h2-2 = h22* */
+  double A22at1 = gsl_spline_eval(splineamp, t+firstdelay, accelamp);
+  double phi22at1 = gsl_spline_eval(splinephase, t+firstdelay, accelphase);
+  double A22at2 = gsl_spline_eval(splineamp, t+seconddelay, accelamp);
+  double phi22at2 = gsl_spline_eval(splinephase, t+seconddelay, accelphase);
+  double complex Y22h22at1 = Y22 * A22at1 * cexp(I*phi22at1);
+  double complex Y22h22at2 = Y22 * A22at2 * cexp(I*phi22at2);
+  double complex Y2m2h2m2at1 = Y2m2 * A22at1 * cexp(-I*phi22at1);
+  double complex Y2m2h2m2at2 = Y2m2 * A22at2 * cexp(-I*phi22at2);
+  double hp1 = creal(Y22h22at1 + Y2m2h2m2at1);
+  double hc1 = -cimag(Y22h22at1 + Y2m2h2m2at1);
+  double hp2 = creal(Y22h22at2 + Y2m2h2m2at2);
+  double hc2 = -cimag(Y22h22at2 + Y2m2h2m2at2);
+
+  /* Result */
+  double y12 = factorp*(hp1 - hp2) + factorc*(hc1 - hc2);
+  return y12;
+}
+
+/* Functions evaluating yAB observables in time domain - orbital and constellation response */
+/* Note: includes both h22 and h2m2 contributions, assuming planar orbits so that h2-2 = h22* */
+static double y12TDfromh22AmpPhase(
+  const LISAconstellation *variant,    /* Description of LISA variant */
+  gsl_spline* splineamp,                   /* Input spline for h22 TD amp */
+  gsl_spline* splinephase,                 /* Input spline for h22 TD phase */
+  gsl_interp_accel* accelamp,              /* Accelerator for amp spline */
+  gsl_interp_accel* accelphase,            /* Accelerator for phase spline */
+  double complex Y22,                      /* Y22 factor needed to convert h22 to hplus, hcross */
+  double complex Y2m2,                     /* Y2-2 factor needed to convert h2-2 to hplus, hcross */
+  const double t)                          /* Time */
+{
+  /* Precompute array of sine/cosine */
+  double phase=variant->ConstOmega*t + variant->ConstPhi0;
+  for(int j=0; j<4; j++) {
+    cosarray[j] = cos((j+1) * phase);
+    sinarray[j] = sin((j+1) * phase);
+  }
+  /* Scalar product k.R */
+  double kR = coeffkRconst;
+  for(int j=0; j<2; j++) {
+    kR += cosarray[j] * coeffkRcos[j] + sinarray[j] * coeffkRsin[j];
+  }
+  /* Common factor and delay */
+  double delay0 = -(kR*variant->OrbitR)/C_SI;
+  /* Scalar products with k */
+  double n3Pn3plus = coeffn3Hn3plusconst;
+  double n3Pn3cross = coeffn3Hn3crossconst;
+  for(int j=0; j<4; j++) {
+    n3Pn3plus += cosarray[j] * coeffn3Hn3pluscos[j] + sinarray[j] * coeffn3Hn3plussin[j];
+    n3Pn3cross += cosarray[j] * coeffn3Hn3crosscos[j] + sinarray[j] * coeffn3Hn3crosssin[j];
+  }
+  /* Scalar products with k */
+  double kn3 = coeffkn3const;
+  double kp1 = coeffkp1const;
+  double kp2 = coeffkp2const;
+  for(int j=0; j<2; j++) {
+    kn3 += cosarray[j] * coeffkn3cos[j] + sinarray[j] * coeffkn3sin[j];
+    kp1 += cosarray[j] * coeffkp1cos[j] + sinarray[j] * coeffkp1sin[j];
+    kp2 += cosarray[j] * coeffkp2cos[j] + sinarray[j] * coeffkp2sin[j];
+  }
+  /* Common factor and delay */
+  double factorp = (1./(1.-kn3)) * 0.5*n3Pn3plus;
+  double factorc = (1./(1.-kn3)) * 0.5*n3Pn3cross;
+  double firstdelay = delay0 - ((kp1 + 1)*variant->ConstL)/C_SI;
+  double seconddelay = delay0 - (kp2*variant->ConstL)/C_SI;
 
   /* Values of Y22*h22 + Y2-2*h2-2 at 1 and 2 with delays, and hplus, hcross */
   /* Note: includes both h22 and h2m2 contributions, assuming planar orbits so that h2-2 = h22* */
@@ -1573,6 +1640,45 @@ int Generatey12LTD(
   for(int i=nbptmargin; i<nbpt-nbptmargin; i++) {
     t = tval[i];
     y12val[i] = y12LTDfromh22AmpPhase(variant, splineamp, splinephase, accelamp, accelphase, Y22, Y2m2, t);
+  }
+
+  return SUCCESS;
+}
+
+/* Generate y12 from original h22 in amp/phase form, including both  */
+/* Here no approximation made as to the decomposition of the response in two steps, all the response is evaluated at once */
+/* Note: includes both h22 and h2m2 contributions, assuming planar orbits so that h2-2 = h22* */
+int Generatey12TD(
+  const LISAconstellation *variant,    /* Description of LISA variant */
+  RealTimeSeries** y12td,                 /* Output: real time series for y12L */
+  gsl_spline* splineamp,                   /* Input spline for h22 TD amplitude */
+  gsl_spline* splinephase,                 /* Input spline for h22 TD phase */
+  gsl_interp_accel* accelamp,              /* Accelerator for h22 amp spline */
+  gsl_interp_accel* accelphase,            /* Accelerator for h22 phase spline */
+  gsl_vector* times,                       /* Vector of times to evaluate */
+  double Theta,                            /* Inclination */
+  double Phi,                              /* Phase */
+  int nbptmargin)                          /* Margin set to 0 on both side to avoid problems with delays out of the domain */
+{
+  /* Initialize output */
+  int nbpt = times->size;
+  RealTimeSeries_Init(y12td, nbpt);
+  gsl_vector_memcpy((*y12td)->times, times);
+  gsl_vector_set_zero((*y12td)->h);
+
+  /* Spin-weighted spherical harmonic Y22 and Y2-2 */
+  double complex Y22 = SpinWeightedSphericalHarmonic(Theta, Phi, -2, 2, 2);
+  double complex Y2m2 = SpinWeightedSphericalHarmonic(Theta, Phi, -2, 2, -2);
+
+  /* Loop over time samples - we take a margin to avoid problems with the domain */
+  double t;
+  double* tval = times->data;
+  double* y12val = (*y12td)->h->data;
+
+  /* Loop over time samples */
+  for(int i=nbptmargin; i<nbpt-nbptmargin; i++) {
+    t = tval[i];
+    y12val[i] = y12TDfromh22AmpPhase(variant, splineamp, splinephase, accelamp, accelphase, Y22, Y2m2, t);
   }
 
   return SUCCESS;

@@ -150,7 +150,7 @@ int main(int argc, char *argv[])
   int ret;
 
   LISAconstellation *variant = &LISAProposal;
-  
+
   /* Initialize structure for parameters */
   GenTDITDparams* params;
   params = (GenTDITDparams*) malloc(sizeof(GenTDITDparams));
@@ -164,7 +164,7 @@ int main(int argc, char *argv[])
 
   /* Set aside the cases of the orbital delay and constellation response - written with TD amp/phase */
   /* If not using those tags, use the old processing that uses TD hplus, hcross interpolated */
-  if(!(params->tagtdi==delayO) && !(params->tagtdi==y12L)) {
+  if(!(params->tagtdi==delayO) && !(params->tagtdi==y12L) && !(params->tagtdi==y12)) {
 
     /* Load TD hp, hc from file */
     RealTimeSeries* hptd = NULL;
@@ -200,7 +200,7 @@ int main(int argc, char *argv[])
 
   /* Set aside the cases of the orbital delay and constellation response - written with TD amp/phase */
   /* NOTE: for now supports only single-mode (22) waveforms in amp/phase form */
-  else if((params->tagtdi==delayO) || (params->tagtdi==y12L)) {
+  else if((params->tagtdi==delayO) || (params->tagtdi==y12L) || (params->tagtdi==y12)) {
     /* Load 22-mode TD - can be the orbital-delayed 22 mode in the case of y12L */
     AmpPhaseTimeSeries* h22td = NULL;
     Read_AmpPhaseTimeSeries(&h22td, params->indir, params->infile, params->nsamplesinfile, params->binaryin);
@@ -234,6 +234,15 @@ int main(int argc, char *argv[])
       /* Evaluate y12 signal - constellation response only, input assumed to be h22tdO already */
       RealTimeSeries* y12td = NULL;
       Generatey12LTD(variant, &y12td, spline_amp, spline_phase, accel_amp, accel_phase, times, params->inclination, params->phiRef, nptmargin);
+
+      /* Output */
+      Write_RealTimeSeries(params->outdir, params->outfile, y12td, params->binaryout);
+    }
+
+    else if(params->tagtdi==y12) {
+      /* Evaluate y12 signal - constellation response only, input assumed to be h22tdO already */
+      RealTimeSeries* y12td = NULL;
+      Generatey12TD(variant, &y12td, spline_amp, spline_phase, accel_amp, accel_phase, times, params->inclination, params->phiRef, nptmargin);
 
       /* Output */
       Write_RealTimeSeries(params->outdir, params->outfile, y12td, params->binaryout);

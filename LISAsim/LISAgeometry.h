@@ -187,17 +187,6 @@ int RestoreInPlaceScaledFactorTDI(
 
 /* Functions for the response in time domain */
 
-/* Processing single mode in amp/phase form through orbital time delay */
-double hOTDAmpPhase(
-  const LISAconstellation *variant,    /* Description of LISA variant */
-  double* amp,                             /* Output: amplitude */
-  double* phase,                           /* Output: phase */
-  gsl_spline* splineamp,                   /* Input spline for TD mode amplitude */
-  gsl_spline* splinephase,                 /* Input spline for TD mode phase */
-  gsl_interp_accel* accelamp,              /* Accelerator for amp spline */
-  gsl_interp_accel* accelphase,            /* Accelerator for phase spline */
-  const double t);                         /* Time */
-
 /* Basic yslr observables (including orbital delay) from hplus, hcross */
 double y12TD(
   const LISAconstellation *variant,    /* Description of LISA variant */

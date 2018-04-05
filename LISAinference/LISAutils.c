@@ -337,7 +337,7 @@ Syntax: --PARAM-min\n\
     prior->logflat_massprior = 0;
 
     /* set default values for the run settings */
-    run->eff = 0.1;
+    run->eff = 0.5;
     run->tol = 0.5;
     run->consteff = 0;
     run->nlive = 1000;
