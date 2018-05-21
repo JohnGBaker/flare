@@ -92,6 +92,16 @@ typedef struct tagReImFrequencySeries
   gsl_vector* h_imag;
 } ReImFrequencySeries;
 
+/* Uniform grid complex frequency series in real/imaginary part representation (for one mode, or their sum) */
+typedef struct tagReImUniformFrequencySeries
+{
+  int N;
+  double fmin;
+  double df;
+  gsl_vector* h_real;
+  gsl_vector* h_imag;
+} ReImUniformFrequencySeries;
+
 /* Complex frequency series in real/imaginary part representation (for one mode, or their sum) */
 /* NOTE: for now, exact duplicata of ReImFrequencySeries - differentiated for readability of the code */
 typedef struct tagReImTimeSeries
@@ -207,6 +217,11 @@ void ReImFrequencySeries_Init(
 	 ReImFrequencySeries** freqseries,      /* double pointer for initialization */
 	 const int n );                         /* length of the frequency series */
 void ReImFrequencySeries_Cleanup(ReImFrequencySeries* freqseries);
+void ReImUniformFrequencySeries_Init(
+	 ReImUniformFrequencySeries** freqseries,      /* double pointer for initialization */
+	 const int n );                                /* length of the frequency series */
+void ReImUniformFrequencySeries_Cleanup(ReImUniformFrequencySeries* freqseries);
+double  Get_UniformFrequency(const ReImUniformFrequencySeries* freqseries, const int index);
 void ReImTimeSeries_Init(
 	 ReImTimeSeries** timeseries,           /* double pointer for initialization */
 	 const int n );                         /* length of the time series */
@@ -227,7 +242,10 @@ void RealTimeSeries_Cleanup(RealTimeSeries* timeseries);
 int Read_RealTimeSeries(RealTimeSeries** timeseries, const char dir[], const char file[], const int nblines, const int binary);
 int Read_AmpPhaseTimeSeries(AmpPhaseTimeSeries** timeseries, const char dir[], const char file[], const int nblines, const int binary);
 int Read_ReImTimeSeries(ReImTimeSeries** timeseries, const char dir[], const char file[], const int nblines, const int binary);
+int Read_ReImFrequencySeries(ReImFrequencySeries** freqseries, const char dir[], const char file[], const int nblines, const int binary);
+int Read_ReImUniformFrequencySeries(ReImUniformFrequencySeries** freqseries, const char dir[], const char file[], const int nblines, const int binary);
 int Write_ReImFrequencySeries(const char dir[], const char file[], ReImFrequencySeries* freqseries, const int binary);
+int Write_ReImUniformFrequencySeries(const char dir[], const char file[], ReImUniformFrequencySeries* freqseries, const int binary);
 int Write_RealTimeSeries(const char dir[], const char file[], RealTimeSeries* timeseries, int binary);
 int Write_AmpPhaseTimeSeries(const char dir[], const char file[], AmpPhaseTimeSeries* timeseries, int binary);
 int Write_ReImTimeSeries(const char dir[], const char file[], ReImTimeSeries* timeseries, int binary);

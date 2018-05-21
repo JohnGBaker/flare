@@ -1,5 +1,6 @@
 /**
  * \author Sylvain Marsat, University of Maryland - NASA GSFC
+ * \author John Baker - NASA-GSFC
  *
  * \brief C code for structures representing a waveform as a list of modes in amplitude/phase form.
  *
@@ -311,6 +312,32 @@ void ReImFrequencySeries_Cleanup(ReImFrequencySeries *freqseries) {
   free(freqseries);
 }
 
+/******** Functions to initialize and clean up ReImUniformFrequencySeries structure ********/
+void ReImUniformFrequencySeries_Init(ReImUniformFrequencySeries **freqseries, const int n) {
+  if(!freqseries) exit(1);
+  /* Create storage for structures */
+  if(!*freqseries) *freqseries=malloc(sizeof(ReImUniformFrequencySeries));
+  else
+  {
+    ReImUniformFrequencySeries_Cleanup(*freqseries);
+  }
+  gsl_set_error_handler(&Err_Handler);
+  (*freqseries)->N = n;
+  (*freqseries)->h_real = gsl_vector_alloc(n);
+  (*freqseries)->h_imag = gsl_vector_alloc(n);
+}
+void ReImUniformFrequencySeries_Cleanup(ReImUniformFrequencySeries *freqseries) {
+  if(freqseries->h_real) gsl_vector_free(freqseries->h_real);
+  if(freqseries->h_imag) gsl_vector_free(freqseries->h_imag);
+  free(freqseries);
+}
+
+/* Function to provide frequency from Uniform grid data */
+double  Get_UniformFrequency(const ReImUniformFrequencySeries* freqseries, const int index){
+  return freqseries->fmin + index*freqseries->df;
+}
+
+
 /******** Functions to initialize and clean up ReImTimeSeries structure ********/
 void ReImTimeSeries_Init(ReImTimeSeries **timeseries, const int n) {
   if(!timeseries) exit(1);
@@ -586,6 +613,59 @@ int Read_ReImTimeSeries(ReImTimeSeries** timeseries, const char dir[], const cha
   return ret;
 }
 
+/* Read waveform Re/Im freq series (untested)*/
+int Read_ReImFrequencySeries(ReImFrequencySeries** freqseries, const char dir[], const char file[], const int nblines, const int binary)
+{
+  /* Initalize and read input */
+  int ret;
+  gsl_matrix* inmatrix =  gsl_matrix_alloc(nblines, 3);
+  if(!binary) ret = Read_Text_Matrix(dir, file, inmatrix);
+  else ret = Read_Matrix(dir, file, inmatrix);
+
+  /* Initialize structures */
+  ReImFrequencySeries_Init(freqseries, nblines);
+
+  /* Set values */
+  gsl_vector_view freqsview = gsl_matrix_column(inmatrix, 0);
+  gsl_vector_view hrealview = gsl_matrix_column(inmatrix, 1);
+  gsl_vector_view himagview = gsl_matrix_column(inmatrix, 2);
+  gsl_vector_memcpy((*freqseries)->freq, &freqsview.vector);
+  gsl_vector_memcpy((*freqseries)->h_real, &hrealview.vector);
+  gsl_vector_memcpy((*freqseries)->h_imag, &himagview.vector);
+
+  /* Clean up */
+  gsl_matrix_free(inmatrix);
+
+  return ret;
+}
+
+/* Read waveform Re/Im uniform freq series (untested)*/
+int Read_ReImUniformFrequencySeries(ReImUniformFrequencySeries** freqseries, const char dir[], const char file[], const int nblines, const int binary)
+{
+  /* Initalize and read input */
+  int ret;
+  gsl_matrix* inmatrix =  gsl_matrix_alloc(nblines, 3);
+  if(!binary) ret = Read_Text_Matrix(dir, file, inmatrix);
+  else ret = Read_Matrix(dir, file, inmatrix);
+
+  /* Initialize structures */
+  ReImUniformFrequencySeries_Init(freqseries, nblines);
+
+  /* Set values */
+  gsl_vector_view freqsview = gsl_matrix_column(inmatrix, 0);
+  gsl_vector_view hrealview = gsl_matrix_column(inmatrix, 1);
+  gsl_vector_view himagview = gsl_matrix_column(inmatrix, 2);
+  int f0 = gsl_vector_get(&freqsview.vector,0);
+  int df = ( gsl_vector_get(&freqsview.vector, nblines-1) - f0 ) / ( nblines - 1.0 );
+  gsl_vector_memcpy((*freqseries)->h_real, &hrealview.vector);
+  gsl_vector_memcpy((*freqseries)->h_imag, &himagview.vector);
+
+  /* Clean up */
+  gsl_matrix_free(inmatrix);
+
+  return ret;
+}
+
 /* Output Re/Im frequency series */
 int Write_ReImFrequencySeries(const char dir[], const char file[], ReImFrequencySeries* freqseries, const int binary)
 {
@@ -603,6 +683,35 @@ int Write_ReImFrequencySeries(const char dir[], const char file[], ReImFrequency
   int ret;
   if (!binary) ret = Write_Text_Matrix(dir, file, outmatrix);
   else ret = Write_Matrix(dir, file, outmatrix);
+
+  return ret;
+}
+
+/* Output Re/Im frequency series */
+// (untested)
+int Write_ReImUniformFrequencySeries(const char dir[], const char file[], ReImUniformFrequencySeries* freqseries, const int binary)
+{
+  /* Initialize output */
+  /* Note: assumes hplus, hcross have same length as expected */
+  int nbfreq = freqseries->N;
+  gsl_matrix* outmatrix = gsl_matrix_alloc(nbfreq, 3);
+  gsl_vector *freq = gsl_vector_alloc(nbfreq);
+  int i;
+  for(i=0;i<nbfreq;i++)gsl_vector_set(freq,i,Get_UniformFrequency(freqseries,i));
+
+  /* Set output matrix */
+  gsl_matrix_set_col(outmatrix, 0, freq);
+  gsl_matrix_set_col(outmatrix, 1, freqseries->h_real);
+  gsl_matrix_set_col(outmatrix, 2, freqseries->h_imag);
+
+  /* Output */
+  int ret;
+  if (!binary) ret = Write_Text_Matrix(dir, file, outmatrix);
+  else ret = Write_Matrix(dir, file, outmatrix);
+
+  /* Clean up */
+  gsl_vector_free(freq);
+  gsl_matrix_free(outmatrix);
 
   return ret;
 }
