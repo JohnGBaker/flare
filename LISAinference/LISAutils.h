@@ -16,6 +16,7 @@
 #include "splinecoeffs.h"
 #include "fresnel.h"
 #include "likelihood.h"
+#include "data_likelihood.h"
 #include "LISAFDresponse.h"
 #include "LISAnoise.h"
 
@@ -112,6 +113,17 @@ typedef struct tagLISAInjectionReIm /* Storing the vectors of frequencies and no
   gsl_vector* noisevalues2;                    /* Vector of noise values on freq for TDI channel 2 */
   gsl_vector* noisevalues3;                    /* Vector of noise values on freq for TDI channel 3 */
 } LISAInjectionReIm;
+
+typedef struct tagLISADataFD
+{
+  ReImUniformFrequencySeries* TDI1Data;   /* Data in the TDI channel 1, in the form of a list of the contribution of each mode */
+  ReImUniformFrequencySeries* TDI2Data;   /* Data in the TDI channel 2, in the form of a list of the contribution of each mode */
+  ReImUniformFrequencySeries* TDI3Data;   /* Data in the TDI channel 3, in the form of a list of the contribution of each mode */
+  double TDI123dd;    /* Combined Inner product (d|d) for TDI channels 123 (not adjusted by whitening) */
+  ReImUniformFrequencySeries* TDI1WData;   /* Whitened data in the TDI channel 1, in the form of a list of the contribution of each mode */
+  ReImUniformFrequencySeries* TDI2WData;   /* Whitened data in the TDI channel 2, in the form of a list of the contribution of each mode */
+  ReImUniformFrequencySeries* TDI3WData;   /* Whitened data in the TDI channel 3, in the form of a list of the contribution of each mode */
+} LISADataFD;
 
 typedef struct tagLISAPrior {
   SampleMassParamstag samplemassparams;   /* Choose the set of mass params to sample from - options are m1m2 and Mchirpeta (default m1m2) */

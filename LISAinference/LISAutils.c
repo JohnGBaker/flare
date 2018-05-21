@@ -125,6 +125,26 @@ void LISAInjectionReIm_Init(LISAInjectionReIm** signal) {
   (*signal)->noisevalues3 = NULL;
 }
 
+void LISADataFD_Cleanup(LISADataFD* data) {
+  if(data->TDI1Data) ReImUniformFrequencySeries_Cleanup(data->TDI1Data);
+  if(data->TDI2Data) ReImUniformFrequencySeries_Cleanup(data->TDI2Data);
+  if(data->TDI3Data) ReImUniformFrequencySeries_Cleanup(data->TDI3Data);
+  free(data);
+}
+
+void LISADataFD_Init(LISADataFD** data) {
+  if(!data) exit(1);
+  /* Create storage for structures */
+  if(!*data) *data = malloc(sizeof(LISAInjectionReIm));
+  else
+  {
+    LISADataFD_Cleanup(*data);
+  }
+  (*data)->TDI1Data = NULL;
+  (*data)->TDI2Data = NULL;
+  (*data)->TDI3Data = NULL;
+}
+
 
 /************ Parsing arguments function ************/
 
@@ -1254,6 +1274,69 @@ int LISAGenerateInjectionReIm(
   return SUCCESS;
 }
 
+/* Function generating a LISA signal as a list of modes in CAmp/Phase form, from LISA parameters */
+int LISAGenerateDataFD(
+  struct tagLISAParams* params,   /* Input: set of LISA parameters of the template */
+  struct tagLISADataFD* data)     /* Output: structure for the data containing the injected signal */
+{
+
+  /* Determine the limits of frequency vector which will be used by LISAGenerateInjectionReIm */
+  double fstartobs = 0.;
+  if(!(globalparams->deltatobs==0.)) fstartobs = Newtonianfoft(params->m1, params->m2, globalparams->deltatobs);
+  double fLow = fmax(fmax(__LISASimFD_Noise_fLow, fLow), fstartobs);
+  double fHigh = fmin(__LISASimFD_Noise_fHigh, globalparams->maxf);
+
+  /* Now set the duration we want and use it to determine the number of points we need */
+  // for the duration, we aff 1000M to the deltatobs 
+  double duration = globalparams->deltatobs + 1000.0 * ( params->m1 + params->m2 ) * MTSUN_SI;
+  //target df = 1/duration
+  double npts = (fHigh-fLow)*duration;
+  
+  LISAInjectionReIm* injReIm = NULL;
+  LISAInjectionReIm_Init(&injReIm);
+  int ret = LISAGenerateInjectionReIm(injectedparams, 0, npts, 0, injReIm); /* Hardcoded linear sampling */
+
+  double SNRA2 = FDOverlapReImvsReIm(injReIm->TDI1Signal, injReIm->TDI1Signal, injReIm->noisevalues1);
+  double SNRE2 = FDOverlapReImvsReIm(injReIm->TDI2Signal, injReIm->TDI2Signal, injReIm->noisevalues2);
+  double SNRT2 = FDOverlapReImvsReIm(injReIm->TDI3Signal, injReIm->TDI3Signal, injReIm->noisevalues3);
+  double SNR = sqrt(SNRA2 + SNRE2 + SNRT2);
+
+  //Now transfer the results
+  int nn    = injReIm->freq->size;
+  double f0 = gsl_vector_get(injReIm->freq,0);
+  double df = ( gsl_vector_get(injReIm->freq,nn-1) - f0 ) / ( nn - 1.0 );
+  ReImUniformFrequencySeries_Init(&data->TDI1Data,nn);
+  ReImUniformFrequencySeries_Init(&data->TDI2Data,nn);
+  ReImUniformFrequencySeries_Init(&data->TDI3Data,nn);
+  data->TDI1Data->fmin = f0;
+  data->TDI2Data->fmin = f0;
+  data->TDI3Data->fmin = f0;
+  data->TDI1Data->df = df;
+  data->TDI1Data->df = df;
+  data->TDI1Data->df = df;
+  int i;
+  for(i=0;i<nn;i++){
+    gsl_vector_set(data->TDI1Data->h_real,i, gsl_vector_get(injReIm->TDI1Signal->h_real,i));
+    gsl_vector_set(data->TDI2Data->h_real,i, gsl_vector_get(injReIm->TDI2Signal->h_real,i));
+    gsl_vector_set(data->TDI3Data->h_real,i, gsl_vector_get(injReIm->TDI3Signal->h_real,i));
+    gsl_vector_set(data->TDI1Data->h_imag,i, gsl_vector_get(injReIm->TDI1Signal->h_imag,i));
+    gsl_vector_set(data->TDI2Data->h_imag,i, gsl_vector_get(injReIm->TDI2Signal->h_imag,i));
+    gsl_vector_set(data->TDI3Data->h_imag,i, gsl_vector_get(injReIm->TDI3Signal->h_imag,i));
+  }
+  data->TDI123dd = SNR;
+
+  /* whiten data */
+  ReImUniformFrequencySeries* wdatachan = NULL;
+  ObjectFunction NoiseSn1 = NoiseFunction(globalparams->variant,globalparams->tagtdi, 1);
+  ObjectFunction NoiseSn2 = NoiseFunction(globalparams->variant,globalparams->tagtdi, 2);
+  ObjectFunction NoiseSn3 = NoiseFunction(globalparams->variant,globalparams->tagtdi, 3);
+  WhitenData(&data->TDI1WData, data->TDI1Data, &NoiseSn1, 0 ,0 );
+  WhitenData(&data->TDI2WData, data->TDI2Data, &NoiseSn2, 0 ,0 );
+  WhitenData(&data->TDI3WData, data->TDI3Data, &NoiseSn3, 0 ,0 );
+
+  return ret;
+}
+
 /* Log-Likelihood function */
 
 // Routines for simplified likelihood 22 mode, frozen LISA, lowf
@@ -1362,6 +1445,40 @@ double CalculateLogLCAmpPhase(LISAParams *params, LISAInjectionCAmpPhase* inject
       printf("logL=%g\n",logL);
       printf("overlapTDI123=%g, injection->TDI123ss=%g, generatedsignal->TDI123hh=%g\n", overlapTDI123, injection->TDI123ss, generatedsignal->TDI123hh);
       report_LISAParams(params);
+    }
+  }
+  /* Clean up */
+  LISASignalCAmpPhase_Cleanup(generatedsignal);
+
+  return logL;
+}
+
+double CalculateLogLDataCAmpPhase(LISAParams *modelparams, LISADataFD *data)
+{
+  double logL = -DBL_MAX;
+  int ret;
+
+  /* Generating the signal in the three detectors for the input parameters */
+  LISASignalCAmpPhase* generatedsignal = NULL;
+  LISASignalCAmpPhase_Init(&generatedsignal);
+  ret = LISAGenerateSignalCAmpPhase(modelparams, generatedsignal);
+  //printf("in CalculateLogLCAmpPhase: tRef= %g\n", params->tRef);
+
+  /* If LISAGenerateSignal failed (e.g. parameters out of bound), silently return -Infinity logL */
+  if(ret==FAILURE) {
+    logL = -DBL_MAX;
+  }
+  else if(ret==SUCCESS) {
+    /* Computing the likelihood for each TDI channel */
+    /* (m|d/S) - 1/2 (m|m/S) - 1/2 (d|d/S), with m the model, d/S the whitened data */
+    double overlap = FDDataOverlap(generatedsignal->TDI1Signal, data->TDI1Data);
+    overlap += FDDataOverlap(generatedsignal->TDI2Signal, data->TDI2Data);
+    overlap += FDDataOverlap(generatedsignal->TDI3Signal, data->TDI3Data);
+    logL = overlap - 1./2*(data->TDI123dd) - 1./2*(generatedsignal->TDI123hh);
+    if(logL>0){
+      printf("logL=%g\n",logL);
+      printf("overlapTDI123=%g, injection->TDI123dd=%g, generatedsignal->TDI123hh=%g\n", overlap, data->TDI123dd, generatedsignal->TDI123hh);
+      report_LISAParams(modelparams);
     }
   }
   /* Clean up */
