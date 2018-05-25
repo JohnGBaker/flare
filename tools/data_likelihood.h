@@ -60,7 +60,16 @@ void WhitenData(
   double fLow,                                /* if fLow/fHigh > 0 restrict whitented data to withing that range */  
   double fHigh);
 
+extern int IntProdStyle;
+extern int NratioCut;
+
 double ReIntProdCAmpPhaseSpline(
+  CAmpPhaseSpline* splines,                    //input "model"
+  ReImUniformFrequencySeries* Dfreqseries,  //input defines ReIm frequency series to be multiplied with spline evals and summed
+  int imin,  // min/max  index-range of the freqseries to use include in the sum 
+  int imax);
+
+double ReIntProdCAmpPhaseSplineB(
   CAmpPhaseSpline* splines,                    //input "model"
   ReImUniformFrequencySeries* Dfreqseries,  //input defines ReIm frequency series to be multiplied with spline evals and summed
   int imin,  // min/max  index-range of the freqseries to use include in the sum 

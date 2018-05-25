@@ -1512,6 +1512,9 @@ int LISAGenerateDataFD(
   }
   data->TDI123dd = SNR2;
 
+  /*clean up*/
+  gsl_vector_free(freq);
+  
   return ret;
 }
 
@@ -1708,6 +1711,7 @@ double CalculateLogLDataReIm(LISAParams *modelparams, LISADataFD *data)
   }
   /* Clean up */
   LISASignalReIm_Cleanup(generatedsignal);
+  gsl_vector_free(freq);
 
   return logL;
 }

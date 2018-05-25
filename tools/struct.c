@@ -317,7 +317,6 @@ void ReImUniformFrequencySeries_Init(ReImUniformFrequencySeries **freqseries, co
   if(!freqseries) exit(1);
   /* Create storage for structures */
   if(!*freqseries){
-    printf("allocating Uniform Fre series with N=%i\n",n);
     *freqseries=malloc(sizeof(ReImUniformFrequencySeries));
   }
   else
@@ -348,8 +347,11 @@ ReImUniformFrequencySeries * ReImFrequencySeries_ConvertToUniform(ReImFrequencyS
   freqseries->df = (gsl_vector_get(oldfreqseries->freq,freqseries->N-1)-freqseries->fmin)/(freqseries->N-1.0);
 
   /* Transfer and clean up */
+  gsl_vector_free( freqseries->h_real);
   freqseries->h_real = oldfreqseries->h_real;
+  gsl_vector_free( freqseries->h_imag);
   freqseries->h_imag = oldfreqseries->h_imag;
+  if(oldfreqseries->freq)gsl_vector_free(oldfreqseries->freq);
   free(oldfreqseries);
   return freqseries;
 }

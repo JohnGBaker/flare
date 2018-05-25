@@ -223,6 +223,7 @@ int main(int argc, char *argv[])
     injectedparams->lambda = gsl_matrix_get(inmatrix, 0, 6);
     injectedparams->beta = gsl_matrix_get(inmatrix, 0, 7);
     injectedparams->polarization = gsl_matrix_get(inmatrix, 0, 8);
+    gsl_matrix_free(inmatrix);
   }
   globalparams = (LISAGlobalParams*) malloc(sizeof(LISAGlobalParams));
   memset(globalparams, 0, sizeof(LISAGlobalParams));
@@ -309,7 +310,32 @@ int main(int argc, char *argv[])
   double logL;
   logL = CalculateLogLDataCAmpPhase(injectedparams, data);
   printf("Amp/Phase: logL=%g\n",logL);
+  IntProdStyle=1;
+  clock_t tbeg, tend;
+  int ncuts=20,ntry=15;
+  double cutpower=1.5;
+  double times[ncuts];
+  double times2[ncuts];
+  for(int n=0;n<ncuts;n++)times[n]=times2[n]=0;
+  for(int i=0;i<ntry;i++){
+    for(int n=0;n<ncuts;n++){
+      NratioCut=(int)pow(n,cutpower);
+      tbeg = clock();
+      logL = CalculateLogLDataCAmpPhase(injectedparams, data);
+      tend = clock();
+      double t=(double) (tend-tbeg)/CLOCKS_PER_SEC;
+      printf(" t=%g\n",t);
+      times[n]+=t;
+      times2[n]+=t*t;
+    }
+  }
+  for(int n=0;n<ncuts;n++)
+    printf("n=%i nCut = %2i: mean = %10.6g  std = %10.6g\n", n,(int)pow(n,cutpower),times[n]/ntry,sqrt((times2[n]-times[n]*times[n]/ntry)/(ntry-1)));
+  printf("Amp/Phase B: logL=%g\n",logL);
   logL = CalculateLogLDataReIm(injectedparams, data);
   printf("ReIm: logL=%g\n",logL);
-    
+
+  free(params);
+  LISADataFD_Cleanup(data);
+  LISASignalCAmpPhase_Cleanup(sigCAmpPhase);
 }
