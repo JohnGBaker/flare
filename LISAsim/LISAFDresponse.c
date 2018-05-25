@@ -350,7 +350,8 @@ int LISASimFDResponseTDI3Chan(
     gsl_vector* amp_imag_resample = freqseriesr->amp_imag;
     gsl_vector* phase_resample = freqseriesr->phase;
     int len_resample = (int) freq_resample->size;
-
+    printf("max f = %g\n",gsl_vector_get(freqseriesr->freq,freqseriesr->freq->size-1));
+    
     // /* Determine frequencies to use */
     // /* Because we will need the interpolation on the Re/Im amplitude to resolve the structure of the L-response at high fequencies, we add points beyond 0.01 Hz, with a linear sampling */
     // /* WARNING : It seemed 600 points between 0.1 and 3 Hz (deltaf=0.005) should give interpolation errors below 1e-4 - considering a simple sin(2 pi f L) */

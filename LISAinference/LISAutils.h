@@ -248,6 +248,9 @@ int print_snrlogZ_to_file_LISA(LISARunParams* run, double SNR, double logZ);
 /* Function printing injection/signal parameters to stdout */
 void report_LISAParams(LISAParams* params);
 
+int Write_LISADataFD(const char dir[], const char file[], LISADataFD * data);
+int Read_LISADataFD(const char dir[], const char fname[], LISADataFD ** data);
+  
 /* Initialization and clean-up for LISASignal structures */
 void LISASignalCAmpPhase_Cleanup(LISASignalCAmpPhase* signal);
 void LISASignalCAmpPhase_Init(LISASignalCAmpPhase** signal);
@@ -257,6 +260,8 @@ void LISASignalReIm_Cleanup(LISASignalReIm* signal);
 void LISASignalReIm_Init(LISASignalReIm** signal);
 void LISAInjectionReIm_Cleanup(LISAInjectionReIm* signal);
 void LISAInjectionReIm_Init(LISAInjectionReIm** signal);
+void LISADataFD_Cleanup(LISADataFD* data);
+void LISADataFD_Init(LISADataFD** data);
 
 //Function to restrict range of the signal/injection to within desired limits.
 int listmodesCAmpPhaseTrim(ListmodesCAmpPhaseFrequencySeries* listSeries);
@@ -281,6 +286,12 @@ int LISAGenerateInjectionReIm(
   int nbpts,                                  /* Input: number of frequency samples */
   int tagsampling,                            /* Input: tag for using linear (0) or logarithmic (1) sampling */
   struct tagLISAInjectionReIm* signal);       /* Output: structure for the generated signal */
+/* Function generating a LISA signal on uniform freq grid, from LISA parameters */
+int LISAGenerateDataFD(
+  struct tagLISAParams* params,   /* Input: set of LISA parameters of the template */
+  double fLow,                    /* Input: additional lower frequency limit (argument minf) */
+  struct tagLISADataFD* data);     /* Output: structure for the data containing the injected signal */
+
 
 /*Wrapper for waveform generation with possibly a combination of EOBNRv2HMROM and TaylorF2*/
 /* Note: GenerateWaveform accepts masses and distances in SI units, whereas LISA params is in solar masses and Mpc */
@@ -336,7 +347,9 @@ double CosPriorToCube(double y, double x1, double x2);
 /* log-Likelihood functions */
 double CalculateLogLCAmpPhase(LISAParams *params, LISAInjectionCAmpPhase* injection);
 double CalculateLogLReIm(LISAParams *params, LISAInjectionReIm* injection);
-
+double CalculateLogLDataCAmpPhase(LISAParams *modelparams, LISADataFD *data);
+double CalculateLogLDataReIm(LISAParams *modelparams, LISADataFD *data);
+  
 /* Functions for simplified likelihood using precomputing relevant values */
 int LISAComputeSimpleLikelihoodPrecomputedValues(SimpleLikelihoodPrecomputedValues* simplelikelihoodvals, LISAParams* params);
 double CalculateLogLSimpleLikelihood(SimpleLikelihoodPrecomputedValues* simplelikelihoodvals, LISAParams* params);

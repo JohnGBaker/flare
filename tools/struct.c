@@ -72,7 +72,7 @@ int Read_Vector(const char dir[], const char fname[], gsl_vector *v) {
   return(SUCCESS);
 }
 int Read_Matrix(const char dir[], const char fname[], gsl_matrix *m) {
-  char *path=malloc(strlen(dir)+64);
+  char *path=malloc(strlen(dir)+256);
   sprintf(path,"%s/%s", dir, fname);
   FILE *f = fopen(path, "rb");
   if (!f) {
@@ -111,11 +111,11 @@ int Read_Text_Vector(const char dir[], const char fname[], gsl_vector *v) {
   return(SUCCESS);
 }
 int Read_Text_Matrix(const char dir[], const char fname[], gsl_matrix *m) {
-  char *path=malloc(strlen(dir)+64);
+  char *path=malloc(strlen(dir)+256);
   sprintf(path,"%s/%s", dir, fname);
   FILE *f = fopen(path, "rb");
   if (!f) {
-    fprintf(stderr, "Error reading data from %s\n", path);
+    fprintf(stderr, "Error opening data file %s\n", path);
     free(path);
     return(FAILURE);
   }
@@ -135,7 +135,7 @@ int Write_Vector(const char dir[], const char fname[], gsl_vector *v) {
   sprintf(path,"%s/%s", dir, fname);
   FILE *f = fopen(path, "w");
   if (!f) {
-    fprintf(stderr, "Error writing data to %s\n", path);
+    fprintf(stderr, "Error opening output data file %s\n", path);
     free(path);
     return(FAILURE);
   }
@@ -190,7 +190,7 @@ int Write_Text_Vector(const char dir[], const char fname[], gsl_vector *v) {
   return(SUCCESS);
 }
 int Write_Text_Matrix(const char dir[], const char fname[], gsl_matrix *m) {
-  char *path=malloc(strlen(dir)+64);
+  char *path=malloc(strlen(dir)+256);
   int ret = 0;
 
   sprintf(path,"%s/%s", dir, fname);
@@ -316,13 +316,18 @@ void ReImFrequencySeries_Cleanup(ReImFrequencySeries *freqseries) {
 void ReImUniformFrequencySeries_Init(ReImUniformFrequencySeries **freqseries, const int n) {
   if(!freqseries) exit(1);
   /* Create storage for structures */
-  if(!*freqseries) *freqseries=malloc(sizeof(ReImUniformFrequencySeries));
+  if(!*freqseries){
+    printf("allocating Uniform Fre series with N=%i\n",n);
+    *freqseries=malloc(sizeof(ReImUniformFrequencySeries));
+  }
   else
   {
     ReImUniformFrequencySeries_Cleanup(*freqseries);
   }
   gsl_set_error_handler(&Err_Handler);
   (*freqseries)->N = n;
+  (*freqseries)->fmin=-1;
+  (*freqseries)->df=0;
   (*freqseries)->h_real = gsl_vector_alloc(n);
   (*freqseries)->h_imag = gsl_vector_alloc(n);
 }
@@ -332,8 +337,29 @@ void ReImUniformFrequencySeries_Cleanup(ReImUniformFrequencySeries *freqseries) 
   free(freqseries);
 }
 
+ReImUniformFrequencySeries * ReImFrequencySeries_ConvertToUniform(ReImFrequencySeries *oldfreqseries){
+  //This frees oldfreqseries
+  ReImUniformFrequencySeries *freqseries;
+
+  //Now prepare the result
+  ReImUniformFrequencySeries_Init(&freqseries, 0);
+  freqseries->N = oldfreqseries->freq->size;
+  freqseries->fmin = gsl_vector_get(oldfreqseries->freq,0);
+  freqseries->df = (gsl_vector_get(oldfreqseries->freq,freqseries->N-1)-freqseries->fmin)/(freqseries->N-1.0);
+
+  /* Transfer and clean up */
+  freqseries->h_real = oldfreqseries->h_real;
+  freqseries->h_imag = oldfreqseries->h_imag;
+  free(oldfreqseries);
+  return freqseries;
+}
+
 /* Function to provide frequency from Uniform grid data */
 double  Get_UniformFrequency(const ReImUniformFrequencySeries* freqseries, const int index){
+  if(freqseries->df==0){
+    printf("Get_UniformFrequency: Error frequency not set up.\n");
+    exit(1);
+  }
   return freqseries->fmin + index*freqseries->df;
 }
 

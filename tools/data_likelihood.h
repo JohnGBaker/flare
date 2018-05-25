@@ -70,10 +70,13 @@ double FDSinglemodeDataOverlap(
   CAmpPhaseFrequencySeries* model,     
   ReImUniformFrequencySeries* datachan);
 
-double FDDataOverlap(
-  ListmodesCAmpPhaseFrequencySeries *listmodelchan, /* Waveform channel channel, list of modes in amplitude/phase form */
-  ReImUniformFrequencySeries *datachan);                  /* Data channel channel */
+double FDCAmpPhaseModelDataOverlap(
+  ListmodesCAmpPhaseFrequencySeries *listmodelchan, /* Waveform channel, list of modes in amplitude/phase form */
+  ReImUniformFrequencySeries *datachan);                  /* Data channel */
 
+double FDReImModelDataOverlap(
+  ReImFrequencySeries *modelchan, /* Waveform model channel, ReIm form */
+  ReImUniformFrequencySeries *datachan);                  /* Data channel */
 
 #if 0
 { /* so that editors will match succeeding brace */

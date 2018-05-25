@@ -2,7 +2,7 @@
 
 /************ Parsing arguments function ************/
 
-/* Parse command line to initialize GenTDITDparams object */
+
 /* Masses are input in solar masses and distances in Mpc - converted in SI for the internals */
 static void parse_args_ComputeLISASNR(ssize_t argc, char **argv, ComputeLISASNRparams* params)
 {
@@ -40,13 +40,9 @@ Arguments are as follows:\n\
  --minf                Minimal frequency (Hz, default=0) - when set to 0, use the lowest frequency where the detector noise model is trusted __LISASimFD_Noise_fLow (set somewhat arbitrarily)\n\
  --maxf                Maximal frequency (Hz, default=0) - when set to 0, use the highest frequency where the detector noise model is trusted __LISASimFD_Noise_fHigh (set somewhat arbitrarily)\n\
  --tagextpn            Tag to allow PN extension of the waveform at low frequencies (default=1)\n\
- --tagtdi              Tag choosing the set of TDI variables to use (default TDIAETXYZ)\n\
- --tagint              Tag choosing the integrator: 0 for Fresnel (default), 1 for linear integration\n\
  --nbptsoverlap        Number of points to use for linear integration (default 32768)\n\
- --fromtditdfile       Option for loading time series for TDI observables and FFTing (default: false)\n\
- --nlinesinfile        Number of lines of inputs file when loading TDI time series from file\n\
- --indir               Input directory when loading TDI time series from file\n\
- --infile              Input file name when loading TDI time series from file\n\
+ --indir               Input directory when loading TDI freq series from file\n\
+ --infile              Input file name when loading TDI freq series from file\n\
  --loadparamsfile      Option to load physical parameters from file and to output result to file (default false)\n\
  --nlinesparams        Number of lines in params file\n\
  --paramsdir           Directory for input/output file\n\
@@ -132,10 +128,6 @@ Arguments are as follows:\n\
       params->tagint = atoi(argv[++i]);
     } else if (strcmp(argv[i], "--nbptsoverlap") == 0) {
       params->nbptsoverlap = atoi(argv[++i]);
-    } else if (strcmp(argv[i], "--fromtditdfile") == 0) {
-      params->fromtditdfile = 1;
-    } else if (strcmp(argv[i], "--nlinesinfile") == 0) {
-      params->nlinesinfile = atoi(argv[++i]);
     } else if (strcmp(argv[i], "--indir") == 0) {
       strcpy(params->indir, argv[++i]);
     } else if (strcmp(argv[i], "--infile") == 0) {
@@ -148,6 +140,7 @@ Arguments are as follows:\n\
       strcpy(params->paramsdir, argv[++i]);
     }  else if (strcmp(argv[i], "--paramsfile") == 0) {
       strcpy(params->paramsfile, argv[++i]);
+      params->loadparamsfile = 1;
     } else if (strcmp(argv[i], "--outputfile") == 0) {
       strcpy(params->outputfile, argv[++i]);
     }  else {
@@ -165,37 +158,6 @@ Arguments are as follows:\n\
 
  fail:
   exit(1);
-}
-
-/************ Functions to read waveforms from file ************/
-
-/* Read waveform time series in Re/Im form for hpFD and hcFD a single file */
-/* NOTE: assumes the same number of points is used to represent each mode */
-static void Read_Text_TDITD3Chan( RealTimeSeries** TDI1, RealTimeSeries** TDI2, RealTimeSeries** TDI3, const char dir[], const char file[], const int nblines)
-{
-  /* Initalize and read input */
-  gsl_matrix* inmatrix =  gsl_matrix_alloc(nblines, 4);
-  Read_Text_Matrix(dir, file, inmatrix);
-
-  /* Initialize structures */
-  RealTimeSeries_Init(TDI1, nblines);
-  RealTimeSeries_Init(TDI2, nblines);
-  RealTimeSeries_Init(TDI3, nblines);
-
-  /* Set values */
-  gsl_vector_view timesview = gsl_matrix_column(inmatrix, 0);
-  gsl_vector_view TDI1view = gsl_matrix_column(inmatrix, 1);
-  gsl_vector_view TDI2view = gsl_matrix_column(inmatrix, 2);
-  gsl_vector_view TDI3view = gsl_matrix_column(inmatrix, 3);
-  gsl_vector_memcpy((*TDI1)->times, &timesview.vector);
-  gsl_vector_memcpy((*TDI2)->times, &timesview.vector);
-  gsl_vector_memcpy((*TDI3)->times, &timesview.vector);
-  gsl_vector_memcpy((*TDI1)->h, &TDI1view.vector);
-  gsl_vector_memcpy((*TDI2)->h, &TDI2view.vector);
-  gsl_vector_memcpy((*TDI3)->h, &TDI3view.vector);
-
-  /* Clean up */
-  gsl_matrix_free(inmatrix);
 }
 
 /***************** Function to control that the TDI tag is allowed *****************/
@@ -236,16 +198,32 @@ int main(int argc, char *argv[])
   /* NOTE: injectedparams and globalparams are declared as extern in LISAutils.h, and used by generation functions */
   injectedparams = (LISAParams*) malloc(sizeof(LISAParams));
   memset(injectedparams, 0, sizeof(LISAParams));
-  injectedparams->tRef = params->tRef;
-  injectedparams->phiRef = params->phiRef;
-  injectedparams->m1 = params->m1;
-  injectedparams->m2 = params->m2;
-  injectedparams->distance = params->distance;
-  injectedparams->lambda = params->lambda;
-  injectedparams->beta = params->beta;
-  injectedparams->inclination = params->inclination;
-  injectedparams->polarization = params->polarization;
   injectedparams->nbmode = params->nbmode;
+  if(params->loadparamsfile==0) {
+    injectedparams->tRef = params->tRef;
+    injectedparams->phiRef = params->phiRef;
+    injectedparams->m1 = params->m1;
+    injectedparams->m2 = params->m2;
+    injectedparams->distance = params->distance;
+    injectedparams->lambda = params->lambda;
+    injectedparams->beta = params->beta;
+    injectedparams->inclination = params->inclination;
+    injectedparams->polarization = params->polarization;
+  } else {
+    printf(" params from file %s\n",params->paramsfile);
+    gsl_matrix* inmatrix =  gsl_matrix_alloc(1, 9);
+    Read_Text_Matrix(params->paramsdir, params->paramsfile, inmatrix);
+    /* Format (same as in the internals): m1, m2, tRef, dist, phase, inc, lambda, beta, pol, SNR */
+    injectedparams->m1 = gsl_matrix_get(inmatrix, 0, 0);
+    injectedparams->m2 = gsl_matrix_get(inmatrix, 0, 1);
+    injectedparams->tRef = gsl_matrix_get(inmatrix, 0, 2);
+    injectedparams->distance = gsl_matrix_get(inmatrix, 0, 3);
+    injectedparams->phiRef = gsl_matrix_get(inmatrix, 0, 4);
+    injectedparams->inclination = gsl_matrix_get(inmatrix, 0, 5);
+    injectedparams->lambda = gsl_matrix_get(inmatrix, 0, 6);
+    injectedparams->beta = gsl_matrix_get(inmatrix, 0, 7);
+    injectedparams->polarization = gsl_matrix_get(inmatrix, 0, 8);
+  }
   globalparams = (LISAGlobalParams*) malloc(sizeof(LISAGlobalParams));
   memset(globalparams, 0, sizeof(LISAGlobalParams));
   globalparams->fRef = params->fRef;
@@ -269,7 +247,9 @@ int main(int argc, char *argv[])
   
   double DataSNRA2,DataSNRE2,DataSNRT2;
   double ModelSNRA2,ModelSNRE2,ModelSNRT2;
-  
+  LISADataFD * data = NULL;
+  LISASignalCAmpPhase* sigCAmpPhase = NULL;
+	
 
   /* NOTE: supports only AET(XYZ) (orthogonal) */
 
@@ -281,233 +261,55 @@ int main(int argc, char *argv[])
 
   } else {
 
-    if(params->fromtditdfile) {
-      /* Load TD TDI from file (so the result will be the "recovered" SNR with the specified params) */
-      RealTimeSeries* TDI1 = NULL;
-      RealTimeSeries* TDI2 = NULL;
-      RealTimeSeries* TDI3 = NULL;
-      Read_Text_TDITD3Chan(&TDI1, &TDI2, &TDI3, params->indir, params->infile, params->nlinesinfile);
-
-      /* Compute FFT */
-      ReImFrequencySeries* TDI1FFT = NULL;
-      ReImFrequencySeries* TDI2FFT = NULL;
-      ReImFrequencySeries* TDI3FFT = NULL;
-      gsl_vector* times = TDI1->times;
-      double twindowbeg = 0.05 * (gsl_vector_get(times, times->size - 1) - gsl_vector_get(times, 0)); /* Here hardcoded relative window lengths */
-      double twindowend = 0.01 * (gsl_vector_get(times, times->size - 1) - gsl_vector_get(times, 0)); /* Here hardcoded relative window lengths */
-      FFTRealTimeSeries(&TDI1FFT, TDI1, twindowbeg, twindowend, 2); /* Here hardcoded 0-padding */
-      FFTRealTimeSeries(&TDI2FFT, TDI2, twindowbeg, twindowend, 2); /* Here hardcoded 0-padding */
-      FFTRealTimeSeries(&TDI3FFT, TDI3, twindowbeg, twindowend, 2); /* Here hardcoded 0-padding */
-
-      /* Restrict FFT on frequency interval of interest - no limitation put on the upper bound */
-      ReImFrequencySeries* TDI1FFTrestr = NULL;
-      ReImFrequencySeries* TDI2FFTrestr = NULL;
-      ReImFrequencySeries* TDI3FFTrestr = NULL;
-      RestrictFDReImFrequencySeries(&TDI1FFTrestr, TDI1FFT, params->minf, __LISASimFD_Noise_fHigh);
-      RestrictFDReImFrequencySeries(&TDI2FFTrestr, TDI2FFT, params->minf, __LISASimFD_Noise_fHigh);
-      RestrictFDReImFrequencySeries(&TDI3FFTrestr, TDI3FFT, params->minf, __LISASimFD_Noise_fHigh);
-
-      /* Compute SNR with linear integration, weighting with non-rescaled noise functions */
-      /* Note: assumes same lengths for all FD FFT frequency series */
-      /* Note: non-rescaled noise functions */
-      int sizeA = TDI1FFTrestr->freq->size;
-      int sizeE = TDI2FFTrestr->freq->size;
-      int sizeT = TDI3FFTrestr->freq->size;
-      gsl_vector* noisevaluesA = gsl_vector_alloc(sizeA);
-      gsl_vector* noisevaluesE = gsl_vector_alloc(sizeE);
-      gsl_vector* noisevaluesT = gsl_vector_alloc(sizeT);
-      for(int i=0; i<sizeA; i++) {
-        gsl_vector_set(noisevaluesA, i, SnAXYZNoRescaling(variant, gsl_vector_get(TDI1FFTrestr->freq, i)));
-      }
-      for(int i=0; i<sizeE; i++) {
-        gsl_vector_set(noisevaluesE, i, SnEXYZNoRescaling(variant, gsl_vector_get(TDI2FFTrestr->freq, i)));
-      }
-      for(int i=0; i<sizeT; i++) {
-        gsl_vector_set(noisevaluesT, i, SnTXYZNoRescaling(variant, gsl_vector_get(TDI3FFTrestr->freq, i)));
-      }
-      DataSNRA2 = FDOverlapReImvsReIm(TDI1FFTrestr, TDI1FFTrestr, noisevaluesA);
-      DataSNRE2 = FDOverlapReImvsReIm(TDI2FFTrestr, TDI2FFTrestr, noisevaluesE);
-      DataSNRT2 = FDOverlapReImvsReIm(TDI3FFTrestr, TDI3FFTrestr, noisevaluesT);
-      SNR = sqrt(DataSNRA2 + DataSNRE2 + DataSNRT2);
-
+    if(strlen(params->infile)>0) {
+      
+      Read_LISADataFD(params->indir, params->infile, &data);
+      SNR = sqrt(data->TDI123dd);
       /* Print SNR to stdout */
-      printf("Data SNR %.8f\n", SNR);
+      printf("File Data SNR %.8f\n", SNR);
     }
 
-    else {       /* Compute TDI Data ( so this should give the model SNR ) */
+    else {       /* Generate TDI Data from params */
 
-      if(params->loadparamsfile==0) {
+      printf("Generating data from params\n");
+      LISADataFD_Init(&data);
+      LISAGenerateDataFD(injectedparams,0,data);
+      SNR = sqrt(data->TDI123dd);
+      
+      /* Print SNR to stdout */
+      printf("Generated data with params:\n");report_LISAParams(injectedparams);
+      printf("Generated Data SNR %.8f\n", SNR);
 
-        /* Branch between the Fresnel or linear computation */
-        if(params->tagint==0) {
-          LISAInjectionCAmpPhase* injCAmpPhase = NULL;
-          LISAInjectionCAmpPhase_Init(&injCAmpPhase);
-          LISAGenerateInjectionCAmpPhase(injectedparams, injCAmpPhase);
-          SNR = sqrt(injCAmpPhase->TDI123ss);
-        }
-        else if(params->tagint==1) {
-          LISAInjectionReIm* injReIm = NULL;
-          LISAInjectionReIm_Init(&injReIm);
-          LISAGenerateInjectionReIm(injectedparams, params->minf, params->nbptsoverlap, 0, injReIm); /* Hardcoded linear sampling */
-
-          DataSNRA2 = FDOverlapReImvsReIm(injReIm->TDI1Signal, injReIm->TDI1Signal, injReIm->noisevalues1);
-          DataSNRE2 = FDOverlapReImvsReIm(injReIm->TDI2Signal, injReIm->TDI2Signal, injReIm->noisevalues2);
-          DataSNRT2 = FDOverlapReImvsReIm(injReIm->TDI3Signal, injReIm->TDI3Signal, injReIm->noisevalues3);
-          SNR = sqrt(DataSNRA2 + DataSNRE2 + DataSNRT2);
-        }
-        else {
-          printf("Error in ComputeLISASNR: integration tag not recognized.\n");
-          exit(1);
-        }
-
-        /* Print SNR to stdout */
-        printf("Data SNR %.8f\n", SNR);
-      }
-      else {
-
-        int nlines = params->nlinesparams;
-	//Multiplicity suppoer copied from ComputeSNR code.  Not clear that we need it here.
-	
-        /* Load parameters file */
-        /* Format (same as in the internals): m1, m2, tRef, dist, phase, inc, lambda, beta, pol */
-        gsl_matrix* inmatrix =  gsl_matrix_alloc(nlines, 9);
-        Read_Text_Matrix(params->paramsdir, params->paramsfile, inmatrix);
-
-        /* Initialize output matrix */
-        /* Format (same as in the internals): m1, m2, tRef, dist, phase, inc, lambda, beta, pol, SNR */
-        gsl_matrix* outmatrix =  gsl_matrix_alloc(nlines, 10);
-
-        for(int i=0; i<nlines; i++) {
-          injectedparams->m1 = gsl_matrix_get(inmatrix, i, 0);
-          injectedparams->m2 = gsl_matrix_get(inmatrix, i, 1);
-          injectedparams->tRef = gsl_matrix_get(inmatrix, i, 2);
-          injectedparams->distance = gsl_matrix_get(inmatrix, i, 3);
-          injectedparams->phiRef = gsl_matrix_get(inmatrix, i, 4);
-          injectedparams->inclination = gsl_matrix_get(inmatrix, i, 5);
-          injectedparams->lambda = gsl_matrix_get(inmatrix, i, 6);
-          injectedparams->beta = gsl_matrix_get(inmatrix, i, 7);
-          injectedparams->polarization = gsl_matrix_get(inmatrix, i, 8);
-
-          /* Branch between the Fresnel or linear computation */
-          double SNR = 0;
-          if(params->tagint==0) {
-            LISAInjectionCAmpPhase* injCAmpPhase = NULL;
-            LISAInjectionCAmpPhase_Init(&injCAmpPhase);
-            LISAGenerateInjectionCAmpPhase(injectedparams, injCAmpPhase);
-            SNR = sqrt(injCAmpPhase->TDI123ss);
-          }
-          else if(params->tagint==1) {
-            LISAInjectionReIm* injReIm = NULL;
-            LISAInjectionReIm_Init(&injReIm);
-            LISAGenerateInjectionReIm(injectedparams, params->minf, params->nbptsoverlap, 0, injReIm); /* Hardcoded linear sampling */
-
-            double SNRA2 = FDOverlapReImvsReIm(injReIm->TDI1Signal, injReIm->TDI1Signal, injReIm->noisevalues1);
-            double SNRE2 = FDOverlapReImvsReIm(injReIm->TDI2Signal, injReIm->TDI2Signal, injReIm->noisevalues2);
-            double SNRT2 = FDOverlapReImvsReIm(injReIm->TDI3Signal, injReIm->TDI3Signal, injReIm->noisevalues3);
-            SNR = sqrt(SNRA2 + SNRE2 + SNRT2);
-          }
-          else {
-            printf("Error in ComputeLISASNR: integration tag not recognized.\n");
-            exit(1);
-          }
-
-          /* Set values in output matrix */
-          gsl_matrix_set(outmatrix, i, 0, injectedparams->m1);
-          gsl_matrix_set(outmatrix, i, 1, injectedparams->m2);
-          gsl_matrix_set(outmatrix, i, 2, injectedparams->tRef);
-          gsl_matrix_set(outmatrix, i, 3, injectedparams->distance);
-          gsl_matrix_set(outmatrix, i, 4, injectedparams->phiRef);
-          gsl_matrix_set(outmatrix, i, 5, injectedparams->inclination);
-          gsl_matrix_set(outmatrix, i, 6, injectedparams->lambda);
-          gsl_matrix_set(outmatrix, i, 7, injectedparams->beta);
-          gsl_matrix_set(outmatrix, i, 8, injectedparams->polarization);
-          gsl_matrix_set(outmatrix, i, 9, SNR);
-        }
-
-        /* Output matrix */
-        Write_Text_Matrix(params->paramsdir, params->outputfile, outmatrix);
-      }
+      /* Output Data */
+      if(params->outputfile!="")
+	Write_LISADataFD(params->paramsdir, params->outputfile, data);
     }
 
     //Now generate the model signal for comparison. This one will be based on whichever params were last used
+
+    /* Branch between the Fresnel or linear computation */
+    if(params->tagint==0) {
+      printf("&sigCAmpPhase=%p\n", &sigCAmpPhase);
+      printf("*&sigCAmpPhase=%p\n", *&sigCAmpPhase);
+      LISASignalCAmpPhase_Init(&sigCAmpPhase);
+      LISAGenerateSignalCAmpPhase(injectedparams, sigCAmpPhase);
+      SNR = sqrt(sigCAmpPhase->TDI123hh);
+    } else {
+      printf("Error in ComputeLISASNR: integration tag not recognized.\n");
+      exit(1);
+    }
+
+    /* Print SNR to stdout */
+    printf("Signal params:\n");report_LISAParams(injectedparams);
+    printf("Model Data SNR %.8f\n", SNR);
+
     
-      if(params->loadparamsfile==0) {
-
-        /* Branch between the Fresnel or linear computation */
-        if(params->tagint==0) {
-          LISASignalCAmpPhase* sigCAmpPhase = NULL;
-          LISASignalCAmpPhase_Init(&sigCAmpPhase);
-          LISAGenerateSignalCAmpPhase(injectedparams, sigCAmpPhase);
-          SNR = sqrt(sigCAmpPhase->TDI123hh);
-        } else {
-          printf("Error in ComputeLISASNR: integration tag not recognized.\n");
-          exit(1);
-        }
-
-        /* Print SNR to stdout */
-        printf("Data SNR %.8f\n", SNR);
-      }
-      else {
-	int nlines=1; //no support for multiple param sets here.
-	/* Load parameters file */
-	/* Format (same as in the internals): m1, m2, tRef, dist, phase, inc, lambda, beta, pol */
-	gsl_matrix* inmatrix =  gsl_matrix_alloc(nlines, 9);
-	Read_Text_Matrix(params->paramsdir, params->paramsfile, inmatrix);
-
-        /* Initialize output matrix */
-        /* Format (same as in the internals): m1, m2, tRef, dist, phase, inc, lambda, beta, pol, SNR */
-        gsl_matrix* outmatrix =  gsl_matrix_alloc(nlines, 10);
-
-        for(int i=0; i<nlines; i++) {
-          injectedparams->m1 = gsl_matrix_get(inmatrix, i, 0);
-          injectedparams->m2 = gsl_matrix_get(inmatrix, i, 1);
-          injectedparams->tRef = gsl_matrix_get(inmatrix, i, 2);
-          injectedparams->distance = gsl_matrix_get(inmatrix, i, 3);
-          injectedparams->phiRef = gsl_matrix_get(inmatrix, i, 4);
-          injectedparams->inclination = gsl_matrix_get(inmatrix, i, 5);
-          injectedparams->lambda = gsl_matrix_get(inmatrix, i, 6);
-          injectedparams->beta = gsl_matrix_get(inmatrix, i, 7);
-          injectedparams->polarization = gsl_matrix_get(inmatrix, i, 8);
-
-          /* Branch between the Fresnel or linear computation */
-          double SNR = 0;
-          if(params->tagint==0) {
-            LISAInjectionCAmpPhase* injCAmpPhase = NULL;
-            LISAInjectionCAmpPhase_Init(&injCAmpPhase);
-            LISAGenerateInjectionCAmpPhase(injectedparams, injCAmpPhase);
-            SNR = sqrt(injCAmpPhase->TDI123ss);
-          }
-          else if(params->tagint==1) {
-            LISAInjectionReIm* injReIm = NULL;
-            LISAInjectionReIm_Init(&injReIm);
-            LISAGenerateInjectionReIm(injectedparams, params->minf, params->nbptsoverlap, 0, injReIm); /* Hardcoded linear sampling */
-
-            double SNRA2 = FDOverlapReImvsReIm(injReIm->TDI1Signal, injReIm->TDI1Signal, injReIm->noisevalues1);
-            double SNRE2 = FDOverlapReImvsReIm(injReIm->TDI2Signal, injReIm->TDI2Signal, injReIm->noisevalues2);
-            double SNRT2 = FDOverlapReImvsReIm(injReIm->TDI3Signal, injReIm->TDI3Signal, injReIm->noisevalues3);
-            SNR = sqrt(SNRA2 + SNRE2 + SNRT2);
-          }
-          else {
-            printf("Error in ComputeLISASNR: integration tag not recognized.\n");
-            exit(1);
-          }
-
-          /* Set values in output matrix */
-          gsl_matrix_set(outmatrix, i, 0, injectedparams->m1);
-          gsl_matrix_set(outmatrix, i, 1, injectedparams->m2);
-          gsl_matrix_set(outmatrix, i, 2, injectedparams->tRef);
-          gsl_matrix_set(outmatrix, i, 3, injectedparams->distance);
-          gsl_matrix_set(outmatrix, i, 4, injectedparams->phiRef);
-          gsl_matrix_set(outmatrix, i, 5, injectedparams->inclination);
-          gsl_matrix_set(outmatrix, i, 6, injectedparams->lambda);
-          gsl_matrix_set(outmatrix, i, 7, injectedparams->beta);
-          gsl_matrix_set(outmatrix, i, 8, injectedparams->polarization);
-          gsl_matrix_set(outmatrix, i, 9, SNR);
-        }
-
-        /* Output matrix */
-        Write_Text_Matrix(params->paramsdir, params->outputfile, outmatrix);
-      }
-
   }
+
+  double logL;
+  logL = CalculateLogLDataCAmpPhase(injectedparams, data);
+  printf("Amp/Phase: logL=%g\n",logL);
+  logL = CalculateLogLDataReIm(injectedparams, data);
+  printf("ReIm: logL=%g\n",logL);
+    
 }

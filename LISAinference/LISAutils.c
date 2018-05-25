@@ -129,13 +129,21 @@ void LISADataFD_Cleanup(LISADataFD* data) {
   if(data->TDI1Data) ReImUniformFrequencySeries_Cleanup(data->TDI1Data);
   if(data->TDI2Data) ReImUniformFrequencySeries_Cleanup(data->TDI2Data);
   if(data->TDI3Data) ReImUniformFrequencySeries_Cleanup(data->TDI3Data);
+  if(data->TDI1WData) ReImUniformFrequencySeries_Cleanup(data->TDI1WData);
+  if(data->TDI2WData) ReImUniformFrequencySeries_Cleanup(data->TDI2WData);
+  if(data->TDI3WData) ReImUniformFrequencySeries_Cleanup(data->TDI3WData);
   free(data);
 }
 
 void LISADataFD_Init(LISADataFD** data) {
-  if(!data) exit(1);
+  if(!data){
+    printf("LISADataFD_Init: no pointer\n");
+    exit(1);
+  }
   /* Create storage for structures */
-  if(!*data) *data = malloc(sizeof(LISAInjectionReIm));
+  if(!*data){
+    *data = malloc(sizeof(LISADataFD));
+  }
   else
   {
     LISADataFD_Cleanup(*data);
@@ -143,8 +151,125 @@ void LISADataFD_Init(LISADataFD** data) {
   (*data)->TDI1Data = NULL;
   (*data)->TDI2Data = NULL;
   (*data)->TDI3Data = NULL;
+  (*data)->TDI1WData = NULL;
+  (*data)->TDI2WData = NULL;
+  (*data)->TDI3WData = NULL;
 }
 
+/********************** I/O ************************/
+
+/* Output LISA Data series */
+int Write_LISADataFD(const char dir[], const char fname[], LISADataFD * data)
+{
+  //Open output channel
+  char *path=malloc(strlen(dir)+256);
+  if(strlen(dir)>0)
+    sprintf(path,"%s/%s", dir, fname);
+  else
+    sprintf(path,"%s", fname);
+  FILE *f = fopen(path, "w");
+  if (!f) {
+    fprintf(stderr, "Error opening output file %s\n", path);
+    free(path);
+    return(FAILURE);
+  }
+  int N=data->TDI1Data->N;
+  for(int i=0;i<N;i++)
+    fprintf(f,"%22.16g\t%22.16g\t%22.16g\t%22.16g\t%22.16g\t%22.16g\t%22.16g\n",
+	    Get_UniformFrequency(data->TDI1Data,i),
+	    gsl_vector_get(data->TDI1Data->h_real,i),gsl_vector_get(data->TDI1Data->h_imag,i),
+	    gsl_vector_get(data->TDI2Data->h_real,i),gsl_vector_get(data->TDI2Data->h_imag,i),
+	    gsl_vector_get(data->TDI3Data->h_real,i),gsl_vector_get(data->TDI3Data->h_imag,i)
+	    );
+  fclose(f);
+  free(path);
+  return(SUCCESS);
+}
+
+int Read_LISADataFD(const char dir[], const char fname[], LISADataFD ** data)
+{
+  //Open input channel
+  char *path=malloc(strlen(dir)+256);
+  if(strlen(dir)>0)
+    sprintf(path,"%s/%s", dir, fname);
+  else
+    sprintf(path,"%s", fname);
+  FILE *f = fopen(path, "r");
+  if (!f) {
+    fprintf(stderr, "Error opening output file %s\n", path);
+    free(path);
+    return(FAILURE);
+  }
+  //count lines and set up.
+  int N=0;(*data)->TDI1Data->N;
+  double f0,freq,h1r,h1i,h2r,h2i,h3r,h3i;
+  while(fscanf(f,"%la %la %la %la %la %la %la ",&freq,&h1r,&h1i,&h2r,&h2i,&h3r,&h3i)>0){
+    //printf("%i %g: %g %g %g %g %g %g\n",N,freq,h1r,h1i,h2r,h2i,h3r,h3i);
+    if(N==0)f0=freq;
+    N++;
+  }
+  double df=(freq-f0)/(N-1.0);
+  LISADataFD_Init(data);
+  ReImUniformFrequencySeries_Init(&(*data)->TDI1Data,N);
+  ReImUniformFrequencySeries_Init(&(*data)->TDI2Data,N);
+  ReImUniformFrequencySeries_Init(&(*data)->TDI3Data,N);
+  (*data)->TDI1Data->fmin = f0;
+  (*data)->TDI2Data->fmin = f0;
+  (*data)->TDI3Data->fmin = f0;
+  (*data)->TDI1Data->df = df;
+  (*data)->TDI2Data->df = df;
+  (*data)->TDI3Data->df = df;
+  printf("Reading in LISADataFD: N=%i, f0=%g, df=%g\n",N,f0,df);
+  
+  //now read in rawdata
+  rewind(f);
+  int i=0;
+  while(fscanf(f,"%la %la %la %la %la %la %la ",&freq,&h1r,&h1i,&h2r,&h2i,&h3r,&h3i)>0){
+    gsl_vector_set((*data)->TDI1Data->h_real,i,h1r);
+    gsl_vector_set((*data)->TDI1Data->h_imag,i,h1i);
+    gsl_vector_set((*data)->TDI2Data->h_real,i,h2r);
+    gsl_vector_set((*data)->TDI2Data->h_imag,i,h2i);
+    gsl_vector_set((*data)->TDI3Data->h_real,i,h3r);
+    gsl_vector_set((*data)->TDI3Data->h_imag,i,h3i);
+    i++;
+  }
+  fclose(f);
+  free(path);
+
+  /* whiten data */
+  ReImUniformFrequencySeries* wdatachan = NULL;
+  ObjectFunction NoiseSn1 = NoiseFunction(globalparams->variant,globalparams->tagtdi, 1);
+  ObjectFunction NoiseSn2 = NoiseFunction(globalparams->variant,globalparams->tagtdi, 2);
+  ObjectFunction NoiseSn3 = NoiseFunction(globalparams->variant,globalparams->tagtdi, 3);
+  WhitenData(&(*data)->TDI1WData, (*data)->TDI1Data, &NoiseSn1, 0 ,0 );
+  WhitenData(&(*data)->TDI2WData, (*data)->TDI2Data, &NoiseSn2, 0 ,0 );
+  WhitenData(&(*data)->TDI3WData, (*data)->TDI3Data, &NoiseSn3, 0 ,0 );
+
+  /*compute SNR */
+  double snr2=0;
+  for(int i=0;i<N;i++){
+    double delta=df;
+    if(i==0||i+1==N)delta=df/2.0;
+    double dsnr2=0;
+    dsnr2 += gsl_vector_get((*data)->TDI1Data->h_real,i)*gsl_vector_get((*data)->TDI1WData->h_real,i);
+    dsnr2 += gsl_vector_get((*data)->TDI1Data->h_imag,i)*gsl_vector_get((*data)->TDI1WData->h_imag,i);
+    dsnr2 += gsl_vector_get((*data)->TDI2Data->h_real,i)*gsl_vector_get((*data)->TDI2WData->h_real,i);
+    dsnr2 += gsl_vector_get((*data)->TDI2Data->h_imag,i)*gsl_vector_get((*data)->TDI2WData->h_imag,i);
+    dsnr2 += gsl_vector_get((*data)->TDI3Data->h_real,i)*gsl_vector_get((*data)->TDI3WData->h_real,i);
+    dsnr2 += gsl_vector_get((*data)->TDI3Data->h_imag,i)*gsl_vector_get((*data)->TDI3WData->h_imag,i);
+    snr2 += 4.0*delta*dsnr2;
+    /*printf("%i %g: %g %g %g %g %g %g\n",delta,
+	   gsl_vector_get((*data)->TDI1Data->h_real,i),
+	   gsl_vector_get((*data)->TDI1Data->h_imag,i),
+	   gsl_vector_get((*data)->TDI2Data->h_real,i),
+	   gsl_vector_get((*data)->TDI2Data->h_imag,i),
+	   gsl_vector_get((*data)->TDI3Data->h_real,i),
+	   gsl_vector_get((*data)->TDI3Data->h_imag,i));
+	   printf("   dsnr2*delta=%g\n",i,delta*dsnr2);*/
+  }
+  (*data)->TDI123dd = snr2;
+  return(SUCCESS);
+}
 
 /************ Parsing arguments function ************/
 
@@ -960,7 +1085,7 @@ int LISAGenerateSignalCAmpPhase(
   //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //exit(0);
   //
-
+  
   /* Pre-interpolate the injection, building the spline matrices */
   ListmodesCAmpPhaseSpline* listsplinesgen1 = NULL;
   ListmodesCAmpPhaseSpline* listsplinesgen2 = NULL;
@@ -1274,57 +1399,93 @@ int LISAGenerateInjectionReIm(
   return SUCCESS;
 }
 
-/* Function generating a LISA signal as a list of modes in CAmp/Phase form, from LISA parameters */
+/* Function generating a LISA signal on uniform freq grid, from LISA parameters */
 int LISAGenerateDataFD(
   struct tagLISAParams* params,   /* Input: set of LISA parameters of the template */
+  double fLow,                    /* Input: additional lower frequency limit (argument minf) */
   struct tagLISADataFD* data)     /* Output: structure for the data containing the injected signal */
 {
-
-  /* Determine the limits of frequency vector which will be used by LISAGenerateInjectionReIm */
-  double fstartobs = 0.;
+  int ret;
+  //Set instrument and globally specified maximum frequency ranges
+  double fstartobs = 0.; /* Starting frequency corresponding to duration of observation deltatobs */
   if(!(globalparams->deltatobs==0.)) fstartobs = Newtonianfoft(params->m1, params->m2, globalparams->deltatobs);
-  double fLow = fmax(fmax(__LISASimFD_Noise_fLow, fLow), fstartobs);
+  fLow = fmax(fmax(__LISASimFD_Noise_fLow, fLow), fmax(fstartobs,globalparams->minf));
   double fHigh = fmin(__LISASimFD_Noise_fHigh, globalparams->maxf);
 
-  /* Now set the duration we want and use it to determine the number of points we need */
-  // for the duration, we aff 1000M to the deltatobs 
-  double duration = globalparams->deltatobs + 1000.0 * ( params->m1 + params->m2 ) * MTSUN_SI;
-  //target df = 1/duration
-  double npts = (fHigh-fLow)*duration;
-  
-  LISAInjectionReIm* injReIm = NULL;
-  LISAInjectionReIm_Init(&injReIm);
-  int ret = LISAGenerateInjectionReIm(injectedparams, 0, npts, 0, injReIm); /* Hardcoded linear sampling */
+  //*********************************************
+  //Generate the waveform
+  ListmodesCAmpPhaseFrequencySeries* listROM = NULL;
+  ListmodesCAmpPhaseFrequencySeries* listTDI1 = NULL;
+  ListmodesCAmpPhaseFrequencySeries* listTDI2 = NULL;
+  ListmodesCAmpPhaseFrequencySeries* listTDI3 = NULL;
 
-  double SNRA2 = FDOverlapReImvsReIm(injReIm->TDI1Signal, injReIm->TDI1Signal, injReIm->noisevalues1);
-  double SNRE2 = FDOverlapReImvsReIm(injReIm->TDI2Signal, injReIm->TDI2Signal, injReIm->noisevalues2);
-  double SNRT2 = FDOverlapReImvsReIm(injReIm->TDI3Signal, injReIm->TDI3Signal, injReIm->noisevalues3);
-  double SNR = sqrt(SNRA2 + SNRE2 + SNRT2);
-
-  //Now transfer the results
-  int nn    = injReIm->freq->size;
-  double f0 = gsl_vector_get(injReIm->freq,0);
-  double df = ( gsl_vector_get(injReIm->freq,nn-1) - f0 ) / ( nn - 1.0 );
-  ReImUniformFrequencySeries_Init(&data->TDI1Data,nn);
-  ReImUniformFrequencySeries_Init(&data->TDI2Data,nn);
-  ReImUniformFrequencySeries_Init(&data->TDI3Data,nn);
-  data->TDI1Data->fmin = f0;
-  data->TDI2Data->fmin = f0;
-  data->TDI3Data->fmin = f0;
-  data->TDI1Data->df = df;
-  data->TDI1Data->df = df;
-  data->TDI1Data->df = df;
-  int i;
-  for(i=0;i<nn;i++){
-    gsl_vector_set(data->TDI1Data->h_real,i, gsl_vector_get(injReIm->TDI1Signal->h_real,i));
-    gsl_vector_set(data->TDI2Data->h_real,i, gsl_vector_get(injReIm->TDI2Signal->h_real,i));
-    gsl_vector_set(data->TDI3Data->h_real,i, gsl_vector_get(injReIm->TDI3Signal->h_real,i));
-    gsl_vector_set(data->TDI1Data->h_imag,i, gsl_vector_get(injReIm->TDI1Signal->h_imag,i));
-    gsl_vector_set(data->TDI2Data->h_imag,i, gsl_vector_get(injReIm->TDI2Signal->h_imag,i));
-    gsl_vector_set(data->TDI3Data->h_imag,i, gsl_vector_get(injReIm->TDI3Signal->h_imag,i));
+  /* Generate the waveform with the ROM */
+  /* NOTE: SimEOBNRv2HMROM accepts masses and distances in SI units, whereas LISA params is in solar masses and Mpc */
+  /* If extending, taking into account both fstartobs and minf */
+  if(!(globalparams->tagextpn)) {
+    ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+  } else {
+    ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, globalparams->Mfmatch, fLow, 0, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
   }
-  data->TDI123dd = SNR;
 
+  /* If the ROM waveform generation failed (e.g. parameters were out of bounds) return FAILURE */
+  if(ret==FAILURE){
+    exit(1);
+    return FAILURE;
+  }
+
+  /* Process the waveform through the LISA response */
+  //WARNING: tRef is ignored for now, i.e. set to 0
+  LISASimFDResponseTDI3Chan(globalparams->tagtRefatLISA, globalparams->variant, &listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, fHigh, globalparams->tagtdi, globalparams->frozenLISA, globalparams->responseapprox);
+
+  /* Find the min/max frequencies needed for the signals */
+  ListmodesCAmpPhaseFrequencySeries* listelem = listTDI1;
+  double signalminf=fHigh;
+  double signalmaxf=0;
+  while(listelem){
+    double elemminf=gsl_vector_get(listelem->freqseries->freq,0);
+    double elemmaxf=gsl_vector_get(listelem->freqseries->freq,listelem->freqseries->freq->size-1);
+    if(elemminf<signalminf)signalminf=elemminf;
+    if(elemmaxf>signalmaxf)signalmaxf=elemmaxf;
+    listelem=listelem->next;
+  }
+  fHigh = fmin(fHigh,signalmaxf);
+  fLow  = fmax(fLow,signalminf);
+    
+  /* Determine the frequency vector - uses the fact that the detector limiting frequencies are the same in all channels - takes into account the length of the observation with deltatobs */
+  // for the duration, we add 1000M to the deltatobs 
+  double duration = globalparams->deltatobs * YRSID_SI + 1000.0 * ( params->m1 + params->m2 ) * MTSUN_SI;
+  int npts = (fHigh-fLow)*duration;
+  double f0 = fLow;
+  double df = (fHigh-fLow) / ( npts - 1.0 );
+  gsl_vector* freq = gsl_vector_alloc(npts);
+  for(int i=0;i<npts;i++)gsl_vector_set(freq,i,f0+i*df);
+  printf("Generating Data over f in (%g,%g) with duration = %g s  N=%i\n",fLow,fHigh,duration,npts);
+
+  /* Initialize temporary structures for the ReIm frequency series */
+  ReImFrequencySeries* TDI1 = NULL;
+  ReImFrequencySeries* TDI2 = NULL;
+  ReImFrequencySeries* TDI3 = NULL;
+  ReImFrequencySeries_Init(&TDI1, npts);
+  ReImFrequencySeries_Init(&TDI2, npts);
+  ReImFrequencySeries_Init(&TDI3, npts);
+
+  /* Compute the Re/Im frequency series */
+  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(TDI1, listTDI1, freq, fLow, fHigh, fstartobs);
+  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(TDI2, listTDI2, freq, fLow, fHigh, fstartobs);
+  ReImFrequencySeries_SumListmodesCAmpPhaseFrequencySeries(TDI3, listTDI3, freq, fLow, fHigh, fstartobs);
+
+  printf("prep\n");
+  //Now transfer results and clean up
+  data->TDI1Data=ReImFrequencySeries_ConvertToUniform(TDI1);
+  data->TDI2Data=ReImFrequencySeries_ConvertToUniform(TDI2);
+  data->TDI3Data=ReImFrequencySeries_ConvertToUniform(TDI3);
+  ListmodesCAmpPhaseFrequencySeries_Destroy(listROM);
+  ListmodesCAmpPhaseFrequencySeries_Destroy(listTDI1);
+  ListmodesCAmpPhaseFrequencySeries_Destroy(listTDI2);
+  ListmodesCAmpPhaseFrequencySeries_Destroy(listTDI3);
+
+  printf("white\n");
   /* whiten data */
   ReImUniformFrequencySeries* wdatachan = NULL;
   ObjectFunction NoiseSn1 = NoiseFunction(globalparams->variant,globalparams->tagtdi, 1);
@@ -1333,6 +1494,23 @@ int LISAGenerateDataFD(
   WhitenData(&data->TDI1WData, data->TDI1Data, &NoiseSn1, 0 ,0 );
   WhitenData(&data->TDI2WData, data->TDI2Data, &NoiseSn2, 0 ,0 );
   WhitenData(&data->TDI3WData, data->TDI3Data, &NoiseSn3, 0 ,0 );
+
+  /* Compute SNR */
+  printf("snr\n");  
+  double SNR2=0;
+  for(int i=0;i<npts;i++){
+    double delta=df;
+    if(i==0||i+1==npts)delta=df/2.0;
+    double dsnr2=0;
+    dsnr2 += gsl_vector_get(data->TDI1Data->h_real,i)*gsl_vector_get(data->TDI1WData->h_real,i);
+    dsnr2 += gsl_vector_get(data->TDI1Data->h_imag,i)*gsl_vector_get(data->TDI1WData->h_imag,i);
+    dsnr2 += gsl_vector_get(data->TDI2Data->h_real,i)*gsl_vector_get(data->TDI2WData->h_real,i);
+    dsnr2 += gsl_vector_get(data->TDI2Data->h_imag,i)*gsl_vector_get(data->TDI2WData->h_imag,i);
+    dsnr2 += gsl_vector_get(data->TDI3Data->h_real,i)*gsl_vector_get(data->TDI3WData->h_real,i);
+    dsnr2 += gsl_vector_get(data->TDI3Data->h_imag,i)*gsl_vector_get(data->TDI3WData->h_imag,i);
+    SNR2 += 4.0*delta*dsnr2;
+  }
+  data->TDI123dd = SNR2;
 
   return ret;
 }
@@ -1462,8 +1640,7 @@ double CalculateLogLDataCAmpPhase(LISAParams *modelparams, LISADataFD *data)
   LISASignalCAmpPhase* generatedsignal = NULL;
   LISASignalCAmpPhase_Init(&generatedsignal);
   ret = LISAGenerateSignalCAmpPhase(modelparams, generatedsignal);
-  //printf("in CalculateLogLCAmpPhase: tRef= %g\n", params->tRef);
-
+  
   /* If LISAGenerateSignal failed (e.g. parameters out of bound), silently return -Infinity logL */
   if(ret==FAILURE) {
     logL = -DBL_MAX;
@@ -1471,18 +1648,66 @@ double CalculateLogLDataCAmpPhase(LISAParams *modelparams, LISADataFD *data)
   else if(ret==SUCCESS) {
     /* Computing the likelihood for each TDI channel */
     /* (m|d/S) - 1/2 (m|m/S) - 1/2 (d|d/S), with m the model, d/S the whitened data */
-    double overlap = FDDataOverlap(generatedsignal->TDI1Signal, data->TDI1Data);
-    overlap += FDDataOverlap(generatedsignal->TDI2Signal, data->TDI2Data);
-    overlap += FDDataOverlap(generatedsignal->TDI3Signal, data->TDI3Data);
+    clock_t tbeg, tend;
+    tbeg = clock();
+    double overlap = FDCAmpPhaseModelDataOverlap(generatedsignal->TDI1Signal, data->TDI1WData);
+    overlap += FDCAmpPhaseModelDataOverlap(generatedsignal->TDI2Signal, data->TDI2WData);
+    overlap += FDCAmpPhaseModelDataOverlap(generatedsignal->TDI3Signal, data->TDI3WData);
     logL = overlap - 1./2*(data->TDI123dd) - 1./2*(generatedsignal->TDI123hh);
     if(logL>0){
       printf("logL=%g\n",logL);
-      printf("overlapTDI123=%g, injection->TDI123dd=%g, generatedsignal->TDI123hh=%g\n", overlap, data->TDI123dd, generatedsignal->TDI123hh);
+      printf("overlapTDI123=%g, data->TDI123dd=%g, generatedsignal->TDI123hh=%g\n", overlap, data->TDI123dd, generatedsignal->TDI123hh);
       report_LISAParams(modelparams);
     }
+    tend = clock();
+    printf("time: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   }
   /* Clean up */
   LISASignalCAmpPhase_Cleanup(generatedsignal);
+
+  return logL;
+}
+
+double CalculateLogLDataReIm(LISAParams *modelparams, LISADataFD *data)
+{
+  double logL = -DBL_MAX;
+  int ret;
+
+  /* Frequency vector - Taken fromt the first TDI channel of the data. All channels assumed the same. */
+  gsl_vector* freq = gsl_vector_alloc(data->TDI1Data->N);
+  for(int i=0;i<data->TDI1Data->N;i++)gsl_vector_set(freq,i,Get_UniformFrequency(data->TDI1Data,i));
+
+  /* Generating the signal in the three detectors for the input parameters */
+  LISASignalReIm* generatedsignal = NULL;
+  LISASignalReIm_Init(&generatedsignal);
+  ret = LISAGenerateSignalReIm(modelparams, freq, generatedsignal);
+
+  double modelSNR2=data->TDI123dd;//HACK; not correct since this is just for sanity checking test.
+  
+  /* If LISAGenerateSignal failed (e.g. parameters out of bound), silently return -Infinity logL */
+  if(ret==FAILURE) {
+    logL = -DBL_MAX;
+  }
+  else if(ret==SUCCESS) {
+    /* Computing the likelihood for each TDI channel */
+    /* (m|d/S) - 1/2 (m|m/S) - 1/2 (d|d/S), with m the model, d/S the whitened data */
+    clock_t tbeg, tend;
+    tbeg = clock();
+    double overlap = FDReImModelDataOverlap(generatedsignal->TDI1Signal, data->TDI1WData);
+    overlap += FDReImModelDataOverlap(generatedsignal->TDI2Signal, data->TDI2WData);
+    overlap += FDReImModelDataOverlap(generatedsignal->TDI3Signal, data->TDI3WData);
+    logL = overlap - 1./2*(data->TDI123dd) - 1./2*modelSNR2;
+    if(logL>0){
+      printf("logL=%g\n",logL);
+      printf("overlapTDI123=%g, data->TDI123dd=%g, generatedsignal->TDI123hh=%g\n", overlap, data->TDI123dd, modelSNR2);
+      report_LISAParams(modelparams);
+    }
+    tend = clock();
+    printf("time: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
+
+  }
+  /* Clean up */
+  LISASignalReIm_Cleanup(generatedsignal);
 
   return logL;
 }
