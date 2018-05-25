@@ -162,7 +162,7 @@ LISADataFD* LISADataFD_Decimate2(LISADataFD* data) {
     exit(1);
   }
   LISADataFD *newdata = NULL;
-  int newN=data->TDI1Data->N/2;
+  int newN=(data->TDI1Data->N+1)/2;
   double minf=data->TDI1Data->fmin;
   double newdf=data->TDI1Data->df*2.0;
   LISADataFD_Init(&newdata);
@@ -184,7 +184,7 @@ LISADataFD* LISADataFD_Decimate2(LISADataFD* data) {
   ReImUniformFrequencySeries_Init(&newdata->TDI3WData,newN);
   newdata->TDI3WData->fmin=minf;
   newdata->TDI3WData->df=newdf;
-  for(int i=0;i<newN;i++){
+  for(int i=0;i<data->TDI1Data->N/2;i++){
     gsl_vector_set(newdata->TDI1Data->h_real,i,(gsl_vector_get(data->TDI1Data->h_real,2*i)+gsl_vector_get(data->TDI1Data->h_real,2*i+1))/2);
     gsl_vector_set(newdata->TDI1Data->h_imag,i,(gsl_vector_get(data->TDI1Data->h_imag,2*i)+gsl_vector_get(data->TDI1Data->h_imag,2*i+1))/2);
     gsl_vector_set(newdata->TDI2Data->h_real,i,(gsl_vector_get(data->TDI2Data->h_real,2*i)+gsl_vector_get(data->TDI2Data->h_real,2*i+1))/2);
@@ -198,6 +198,21 @@ LISADataFD* LISADataFD_Decimate2(LISADataFD* data) {
     gsl_vector_set(newdata->TDI3WData->h_real,i,(gsl_vector_get(data->TDI3WData->h_real,2*i)+gsl_vector_get(data->TDI3WData->h_real,2*i+1))/2);
     gsl_vector_set(newdata->TDI3WData->h_imag,i,(gsl_vector_get(data->TDI3WData->h_imag,2*i)+gsl_vector_get(data->TDI3WData->h_imag,2*i+1))/2);
   }
+  if(data->TDI1Data->N>2*newN){
+    int i=newN-1;
+    gsl_vector_set(newdata->TDI1Data->h_real,i,(gsl_vector_get(data->TDI1Data->h_real,2*i))/2);
+    gsl_vector_set(newdata->TDI1Data->h_imag,i,(gsl_vector_get(data->TDI1Data->h_imag,2*i))/2);
+    gsl_vector_set(newdata->TDI2Data->h_real,i,(gsl_vector_get(data->TDI2Data->h_real,2*i))/2);
+    gsl_vector_set(newdata->TDI2Data->h_imag,i,(gsl_vector_get(data->TDI2Data->h_imag,2*i))/2);
+    gsl_vector_set(newdata->TDI3Data->h_real,i,(gsl_vector_get(data->TDI3Data->h_real,2*i))/2);
+    gsl_vector_set(newdata->TDI3Data->h_imag,i,(gsl_vector_get(data->TDI3Data->h_imag,2*i))/2);
+    gsl_vector_set(newdata->TDI1WData->h_real,i,(gsl_vector_get(data->TDI1WData->h_real,2*i))/2);
+    gsl_vector_set(newdata->TDI1WData->h_imag,i,(gsl_vector_get(data->TDI1WData->h_imag,2*i))/2);
+    gsl_vector_set(newdata->TDI2WData->h_real,i,(gsl_vector_get(data->TDI2WData->h_real,2*i))/2);
+    gsl_vector_set(newdata->TDI2WData->h_imag,i,(gsl_vector_get(data->TDI2WData->h_imag,2*i))/2);
+    gsl_vector_set(newdata->TDI3WData->h_real,i,(gsl_vector_get(data->TDI3WData->h_real,2*i))/2);
+    gsl_vector_set(newdata->TDI3WData->h_imag,i,(gsl_vector_get(data->TDI3WData->h_imag,2*i))/2);
+    }
   newdata->TDI123dd = data->TDI123dd;
   return newdata;
 }

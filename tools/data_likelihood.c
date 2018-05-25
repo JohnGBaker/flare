@@ -256,15 +256,15 @@ double FDSinglemodeDataOverlap(
   double* mf = mfreq->data;
   double modelfmin = mf[0];
   double modelfmax = mf[ mfreq->size - 1 ];
-  printf("model range %g < f < %g\n",modelfmin,modelfmax);
+  //printf("model range %g < f < %g\n",modelfmin,modelfmax);
   if(bandcut>0)FDSinglemodeEstimateBand( model, bandSnoise, bandcut, &modelfmin, &modelfmax);
-  printf("--> range %g < f < %g\n",modelfmin,modelfmax);
+  //printf("--> range %g < f < %g\n",modelfmin,modelfmax);
 
   /* Determining the boundaries of indices */
   /* i runs over the spline elements, k runs over the data grid */
   double datafmin = Get_UniformFrequency( datachan, 0 );
   double datafmax = Get_UniformFrequency( datachan, datachan->N - 1 );
-  printf("data range %g < f < %g\n",datafmin,datafmax);
+  //printf("data range %g < f < %g\n",datafmin,datafmax);
   double df = datachan->df;
   double kmin=0,kmax=datachan->N-1;
   //set limits to reference the data just within model limits
