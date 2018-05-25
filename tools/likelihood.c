@@ -852,9 +852,9 @@ int ComputeIntegrandValues3Chan(
 double FDSinglemodeFresnelOverlap(
   struct tagCAmpPhaseFrequencySeries *freqseries1, /* First mode h1, in amplitude/phase form */
   struct tagCAmpPhaseSpline *splines2,             /* Second mode h2, already interpolated in matrix form */
-  ObjectFunction * Snoise,                  /* Noise function */
-  double fLow,                                     /* Lower bound of the frequency window for the detector */
-  double fHigh)                                    /* Upper bound of the frequency window for the detector */
+  ObjectFunction * Snoise,                         /* Noise function */
+  double fLow,                 /* Lower bound of the frequency window for the detector */
+  double fHigh)                /* Upper bound of the frequency window for the detector */
 {
   /* Computing the integrand values, on the frequency grid of h1 */
   CAmpPhaseFrequencySeries* integrand = NULL;
@@ -878,6 +878,70 @@ double FDSinglemodeFresnelOverlap(
   CAmpPhaseFrequencySeries_Cleanup(integrand);
 
   return overlap;
+}
+
+/* Function for estimating the relevant band for a model signal */
+void FDSinglemodeEstimateBand(
+  CAmpPhaseFrequencySeries* model,     /* Signal model h, already interpolated in matrix form */
+  ObjectFunction * Snoise,     /* Noise function */
+  double bandcut,              /* Target SNR value that we'd like to assure the excluded region does not attain*/
+  double *bandminf,            /* Output if bandcut>0 */
+  double *bandmaxf
+  )            
+{
+  int nmax=model->freq->size;
+  double sum=0;
+  double f=gsl_vector_get(model->freq,0);
+  double df=0;
+  int i;
+  //printf("counting up:\n");
+  for(i=0;i<nmax;i++){
+    double invSn = 1./ObjectFunctionCall(Snoise,f);
+    double Ar=gsl_vector_get(model->amp_real,i);
+    double Ai=gsl_vector_get(model->amp_imag,i); 
+    double fnext=0;
+    double dfnext=0;
+    if(i+1<nmax){
+      fnext=gsl_vector_get(model->freq,i+1);
+      dfnext=fnext-f;
+    }
+    sum+=4.0*(Ar*Ar+Ai*Ai)*invSn*(df+dfnext)/2.0;
+    //printf(" i=%i, f=%g, sum=%g\n",i,f,sum);
+    df=dfnext;
+    f=fnext;
+    if(sum>bandcut)break;
+  }
+  if(i==nmax){
+    *bandminf=0;
+    *bandmaxf=0;
+  } else {
+    int imin=i-1;
+    if(imin<0)imin=0;
+    *bandminf=gsl_vector_get(model->freq,imin);
+    sum=0;
+    df=0;
+    f=gsl_vector_get(model->freq,nmax-1);
+    //printf("counting down:\n");
+    for(i=nmax-1;i>imin;i--){
+      double invSn = 1./ObjectFunctionCall(Snoise,f);
+      double Ar=gsl_vector_get(model->amp_real,i);
+      double Ai=gsl_vector_get(model->amp_imag,i);
+      double fnext=0;
+      double dfnext=0;
+      if(i>0){
+	fnext=gsl_vector_get(model->freq,i-11);
+	dfnext=f-fnext;
+      }
+      sum+=4.0*(Ar*Ar+Ai*Ai)*invSn*(df+dfnext)/2.0;
+      //printf(" i=%i, f=%g, df=%g, Ar=%g, Ai=%g, invSn=%g, sum=%g\n",i,f,(df+dfnext)/2.0,Ar,Ai,invSn,sum);
+      df=dfnext;
+      f=fnext;
+      if(sum>bandcut)break;
+    }
+    int imax=i+1;
+    if(imax>nmax-1)imax=nmax-1;
+    *bandmaxf=gsl_vector_get(model->freq,imax);
+  }
 }
 
 /* Function computing the overlap (h1|h2) between two given modes in amplitude/phase form for each non-correlated channel 1,2,3, one being already interpolated, for a given noise function - uses the amplitude/phase representation (Fresnel) */

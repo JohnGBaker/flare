@@ -240,6 +240,15 @@ double FDListmodesFresnelOverlap3Chan(
   double fstartobs1,                                    /* Starting frequency for the 22 mode of wf 1 - as determined from a limited duration of the observation - set to 0 to ignore */
   double fstartobs2);                                    /* Starting frequency for the 22 mode of wf 2 - as determined from a limited duration of the observation - set to 0 to ignore */
 
+/* Function for estimating the relevant band for a model signal */
+void FDSinglemodeEstimateBand(
+  CAmpPhaseFrequencySeries* model,     /* Signal model h, already interpolated in matrix form */
+  ObjectFunction * Snoise,     /* Noise function */
+  double bandcut,              /* Target SNR value that we'd like to assure the excluded region does not attain*/
+  double *bandminf,            /* Output if bandcut>0 */
+  double *bandmaxf
+			      );            
+
 #if 0
 { /* so that editors will match succeeding brace */
 #elif defined(__cplusplus)
