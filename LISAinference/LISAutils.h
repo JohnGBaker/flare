@@ -263,6 +263,9 @@ void LISAInjectionReIm_Init(LISAInjectionReIm** signal);
 void LISADataFD_Cleanup(LISADataFD* data);
 void LISADataFD_Init(LISADataFD** data);
 
+//Function to decimate the data in a LISADataFD struct by a factor of 2 and return a pointer to the new struct
+LISADataFD* LISADataFD_Decimate2(LISADataFD* data);
+
 //Function to restrict range of the signal/injection to within desired limits.
 int listmodesCAmpPhaseTrim(ListmodesCAmpPhaseFrequencySeries* listSeries);
 

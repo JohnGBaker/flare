@@ -311,6 +311,7 @@ int main(int argc, char *argv[])
   logL = CalculateLogLDataCAmpPhase(injectedparams, data);
   printf("Amp/Phase: logL=%g\n",logL);
   IntProdStyle=1;
+  if(0){
   clock_t tbeg, tend;
   int ncuts=20,ntry=15;
   double cutpower=1.5;
@@ -331,7 +332,20 @@ int main(int argc, char *argv[])
   }
   for(int n=0;n<ncuts;n++)
     printf("n=%i nCut = %2i: mean = %10.6g  std = %10.6g\n", n,(int)pow(n,cutpower),times[n]/ntry,sqrt((times2[n]-times[n]*times[n]/ntry)/(ntry-1)));
+  }
+  
+  logL = CalculateLogLDataCAmpPhase(injectedparams, data);
   printf("Amp/Phase B: logL=%g\n",logL);
+  logL = CalculateLogLDataReIm(injectedparams, data);
+  LISADataFD * dataD2 = LISADataFD_Decimate2(data); 
+  logL = CalculateLogLDataCAmpPhase(injectedparams, dataD2);
+  printf("Amp/Phase B (decimated by 2): logL=%g\n",logL);
+  LISADataFD * dataD4 = LISADataFD_Decimate2(dataD2); 
+  logL = CalculateLogLDataCAmpPhase(injectedparams, dataD4);
+  printf("Amp/Phase B (decimated by 4): logL=%g\n",logL);
+  LISADataFD * dataD8 = LISADataFD_Decimate2(dataD4); 
+  logL = CalculateLogLDataCAmpPhase(injectedparams, dataD8);
+  printf("Amp/Phase B (decimated by 4): logL=%g\n",logL);
   logL = CalculateLogLDataReIm(injectedparams, data);
   printf("ReIm: logL=%g\n",logL);
 

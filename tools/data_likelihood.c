@@ -157,6 +157,7 @@ double ReIntProdCAmpPhaseSplineB(
   int ispline=0;
   int nspline=splines->quadspline_phase->size1;
   double sum=0;
+  double dTmin,dTmax;
   double df = Dfreqseries->df;
   double f0 = Dfreqseries->fmin;
   //printf("%i < i <%i \n",imin,imax);
@@ -224,7 +225,18 @@ double ReIntProdCAmpPhaseSplineB(
     if(i==imin||i+1==imax)
       delta=df/2;
     sum += prod * delta;
+    
+    /*diagnostic about time*/
+    if(i==imin||i==imax){
+      double p1=gsl_matrix_get(splines->quadspline_phase, ispline,2);
+      double p2=gsl_matrix_get(splines->quadspline_phase, ispline,3);
+      double dT=-(p1+p2*eps)/2.0/M_PI;
+      if(i==imin)dTmin=dT;
+      else dTmax=dT;
+    }
   }
+  printf(" %g < dT < %g\n",dTmin, dTmax);
+    
   return sum;
 };
 
@@ -233,20 +245,26 @@ double ReIntProdCAmpPhaseSplineB(
    using the data series as a the gird for the integral. */
 double FDSinglemodeDataOverlap(
   CAmpPhaseFrequencySeries* model,     
-  ReImUniformFrequencySeries* datachan)
+  ReImUniformFrequencySeries* datachan,
+  double bandcut,                                   /*target SNR value that we'd like to assure the excluded region does not attain*/
+  ObjectFunction * bandSnoise)                      /* Noise function to use for the band cut calculation*/
 {
   gsl_set_error_handler(&Err_Handler);
 
+  //First estimate the relevant band
+  gsl_vector* mfreq = model->freq;
+  double* mf = mfreq->data;
+  double modelfmin = mf[0];
+  double modelfmax = mf[ mfreq->size - 1 ];
+  printf("model range %g < f < %g\n",modelfmin,modelfmax);
+  if(bandcut>0)FDSinglemodeEstimateBand( model, bandSnoise, bandcut, &modelfmin, &modelfmax);
+  printf("--> range %g < f < %g\n",modelfmin,modelfmax);
+
   /* Determining the boundaries of indices */
   /* i runs over the spline elements, k runs over the data grid */
-  gsl_vector* freq1 = model->freq;
-  int imin1 = 0;
-  int imax1 = freq1->size - 1;
-  double* f1 = freq1->data;
-  double modelfmin = f1[0];
-  double modelfmax = f1[ freq1->size - 1 ];
   double datafmin = Get_UniformFrequency( datachan, 0 );
   double datafmax = Get_UniformFrequency( datachan, datachan->N - 1 );
+  printf("data range %g < f < %g\n",datafmin,datafmax);
   double df = datachan->df;
   double kmin=0,kmax=datachan->N-1;
   //set limits to reference the data just within model limits
@@ -270,18 +288,21 @@ double FDSinglemodeDataOverlap(
   return overlap;
 }
 
-/* Function computing the overlap (data|model) between tabulared any uniformly space Fourier domain data and a waveform given as list of modes for each channel 1,2,3.  No handling yet for gap where the signal is in band before the beginning of the data */
+/* Function computing the overlap (data|model) between tabulared any uniformly space Fourier domain data and a waveform given as list of modes for each channel 1,2,3
+ This version will also estimate the relevant band of the signal and use that information to accelerate the computation.*/
 double FDCAmpPhaseModelDataOverlap(
   ListmodesCAmpPhaseFrequencySeries *listmodelchan, /* Waveform channel channel, list of modes in amplitude/phase form */
-  ReImUniformFrequencySeries *datachan)                  /* Data channel channel */
-{
+  ReImUniformFrequencySeries *datachan,             /* Data channel channel */
+  double bandcut,                                   /*target SNR value that we'd like to assure the excluded region does not attain*/
+  ObjectFunction * bandSnoise)                      /* Noise function to use for the band cut calculation*/
+  {
   double overlap = 0;
 
   /* Main loop over the modes - goes through all the modes present, the same for all three channels 1,2,3 */
   ListmodesCAmpPhaseFrequencySeries* listelementmodelchan = listmodelchan;
   while(listelementmodelchan) { 
-    //printf("computing overlap for element with max f = %g\n",gsl_vector_get(listelementmodelchan->freqseries->freq,listelementmodelchan->freqseries->freq->size-1));
-    double overlapmode = FDSinglemodeDataOverlap(listelementmodelchan->freqseries, datachan);
+    printf("mode (%i,%i)\n",listelementmodelchan->l,listelementmodelchan->m);
+    double overlapmode = FDSinglemodeDataOverlap(listelementmodelchan->freqseries, datachan, bandcut, bandSnoise);
     overlap += overlapmode;
 
     listelementmodelchan = listelementmodelchan->next;
