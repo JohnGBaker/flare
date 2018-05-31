@@ -2,7 +2,7 @@
 #This code is adaped from
 # https://github.com/dfm/corner.py
 # git hash 5c2cd63  on May 25
-# Modifications by John Baker NASA-GSFC (2016)
+# Modifications by John Baker NASA-GSFC (2016-18)
 #Copyright (c) 2013-2016 Daniel Foreman-Mackey
 #All rights reserved.
 #
@@ -247,7 +247,7 @@ def corner(xs, bins=20, range=None, weights=None, cov=None, color="k",
 
         
     #idea is to pass in covariance, otherwise concoct something from the 1-sigma range.
-    if(cov==None):
+    if(cov==[]):
         print("concocting covar elements from 1-sigma ranges")
         cov=np.zeros((K,K))
         for k in np.arange(K):
@@ -278,14 +278,19 @@ def corner(xs, bins=20, range=None, weights=None, cov=None, color="k",
             ax = axes
         else:
             ax = axes[i, i]
+        #This is to normalize the histogram so that different data can be compared
+        if(weights is None):
+            hist1d_wts=[1.0/len(x) for w in x]
+        else:
+            hist1d_wts=[w*1.0/len(x) for w in weights]
         # Plot the histograms.
         if smooth1d is None:
-            n, _, _ = ax.hist(x, bins=bins[i], weights=weights,
+            n, _, _ = ax.hist(x, bins=bins[i], weights=hist1d_wts,
                               range=np.sort(range[i]), **hist_kwargs)
         else:
             if gaussian_filter is None:
                 raise ImportError("Please install scipy for smoothing")
-            n, b = np.histogram(x, bins=bins[i], weights=weights,
+            n, b = np.histogram(x, bins=bins[i], weights=hist1d_wts,
                                 range=np.sort(range[i]))
             n = gaussian_filter(n, smooth1d)
             x0 = np.array(list(zip(b[:-1], b[1:]))).flatten()
@@ -379,41 +384,45 @@ def corner(xs, bins=20, range=None, weights=None, cov=None, color="k",
             #center
             cx=truths[j]#need to add checking for availability of truths?
             cy=truths[i]
-            #ang=math.acos(cov[0,1]/math.sqrt(cov[0,0]*cov[1,1]))*180/math.pi
+
+            #add covariance ellipses
+            if(cov is not None):
+             #ang=math.acos(cov[0,1]/math.sqrt(cov[0,0]*cov[1,1]))*180/math.pi
             #print (j,i,labels[j],labels[i],"center=",cx,cy)
             #add an error ellipse
-            N_thetas=60
-            dtheta=2.0*math.pi/(N_thetas-1)
-            thetas=np.arange(0,(2.0*math.pi+dtheta),dtheta)
+                N_thetas=60
+                dtheta=2.0*math.pi/(N_thetas-1)
+                thetas=np.arange(0,(2.0*math.pi+dtheta),dtheta)
             #Cplus=(cov[i,i]+cov[j,j])/2.0
             #Cminus=(-cov[i,i]+cov[j,j])/2.0
             #print("cov[ii],cov[ij],cov[jj],Cplus,Cminus:",cov[i,i],cov[i,j],cov[j,j],Cplus,Cminus)
-            ang=-math.pi/4.
-            root=cov[i,j]/math.sqrt(cov[i,i]*cov[j,j])
-            if(root>1):root=1
-            if(root<-1):root=-1
-            acoeff=math.sqrt(1-root)
-            bcoeff=math.sqrt(1+root)
-            xcoeff=math.sqrt(cov[j,j])
-            ycoeff=math.sqrt(cov[i,i])
+                ang=-math.pi/4.
+                root=cov[i,j]/math.sqrt(cov[i,i]*cov[j,j])
+                if(root>1):root=1
+                if(root<-1):root=-1
+                acoeff=math.sqrt(1-root)
+                bcoeff=math.sqrt(1+root)
+                xcoeff=math.sqrt(cov[j,j])
+                ycoeff=math.sqrt(cov[i,i])
             #print("a2,b2",acoeff*acoeff,bcoeff*bcoeff)
             #print("a,b,ang, xcoeff,ycoeff, root=",acoeff,bcoeff,ang,xcoeff,ycoeff,root)
-            if "levels" in hist2d_kwargs:
-                levels= hist2d_kwargs["levels"]
-            else:
-                levels== 1.0 - np.exp(-0.5 * np.arange(0.5, 2.1, 0.5) ** 2)
+                if "levels" in hist2d_kwargs:
+                    levels= hist2d_kwargs["levels"]
+                else:
+                    levels== 1.0 - np.exp(-0.5 * np.arange(0.5, 2.1, 0.5) ** 2)
 
-            for xlev in levels:
+                for xlev in levels:
                 #in the next line we convert the credibility limit
                 #to a "sigma" limit for a 2-d normal
                 #this becomes a scale-factor for the error ellipse
                 #1-exp(x^2/(-2)=y
                 #-2*log(1-y)=x^2
-                lev_fac = math.sqrt( -2 * math.log( 1 - xlev ) )
+                    lev_fac = math.sqrt( -2 * math.log( 1 - xlev ) )
                 #print ("scales for quantile level = ",xlev," -> ",lev_fac,": (",xcoeff*lev_fac,",",ycoeff*lev_fac,")")
-                elxs=[cx+lev_fac*xcoeff*(acoeff*math.cos(th)*math.cos(ang)-bcoeff*math.sin(th)*math.sin(ang)) for th in thetas] 
-                elys=[cy+lev_fac*ycoeff*(acoeff*math.cos(th)*math.sin(ang)+bcoeff*math.sin(th)*math.cos(ang)) for th in thetas] 
-                ax.plot(elxs,elys,color='r')
+                    elxs=[cx+lev_fac*xcoeff*(acoeff*math.cos(th)*math.cos(ang)-bcoeff*math.sin(th)*math.sin(ang)) for th in thetas] 
+                    elys=[cy+lev_fac*ycoeff*(acoeff*math.cos(th)*math.sin(ang)+bcoeff*math.sin(th)*math.cos(ang)) for th in thetas] 
+                    ax.plot(elxs,elys,color='r')
+
             ax.grid()
             if truths is not None:
                 if truths[i] is not None and truths[j] is not None:

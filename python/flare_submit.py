@@ -116,7 +116,7 @@ def generate(system,argv,rcname=""):
     parser.add_argument('--lm22',help="Use only the 22 mode.",action="store_true")
     parser.add_argument('--live',help="Set number of nested sampling live points for bambi default=4000).",default=4000)
     parser.add_argument('--nonMultimodal',help="Do not use BAMBI multimodal option",action="store_true")
-    parser.add_argument('-r',help="Restart label (default ""=no restart)",default="")
+    parser.add_argument('-r',help="Restart directory (default ""=no restart)",default="")
     parser.add_argument('--noFish',help="Skip initial fisher call",action="store_true")
     
     
@@ -142,7 +142,7 @@ def generate(system,argv,rcname=""):
     else:
         params=args.p
     flags=flare.set_flare_flags(args.snr,params)
-    if(args.lm22):flags+=" --nbmodeinj 1 --nbmodetemp 1" #for no higher modes in injection and template
+    if(args.lm22):flags+=" --nbmodeinj 1 --nbmodetemp 1 " #for no higher modes in injection and template
 
     #generate fisher command
     fcmd   = flare.getFisherCommand(name+"-Fisher")+" "+flags
@@ -150,14 +150,29 @@ def generate(system,argv,rcname=""):
     #tidy-up commands
     if(rcname==""):
         running_cmd=""
-        restart_cmd="echo 'Need to restart'"
-        done_cmd="echo 'Done'"
+        restart_cmd="echo Need to restart"
+        done_cmd="echo Done"
     else:
         run_control="python "+flare_path+"/python/run_control.py "+rcname+" --set "+name+" "
         running_cmd=run_control+"running"
         restart_cmd=run_control+"restart_at_${res}"
         done_cmd=run_control+"done"
-        
+
+    #process time info
+    if args.d:
+        debug="#SBATCH --qos=debug\n"
+        if(60*hours+minutes>60):
+            hours=1
+            minutes=0
+    else:
+        debug=""
+
+    total_seconds=3600*hours+60*minutes-200
+    checkp_seconds=(int)((total_seconds-200)*0.99)
+    checkp_hours=checkp_seconds/3600.0
+    print "checkp_secs=",checkp_seconds
+    print "checkp_hours=",checkp_hours
+
     #generate the sampler command
     if(not args.mcmc):
         sampler="bambi"
@@ -181,12 +196,17 @@ def generate(system,argv,rcname=""):
         tasks=1
         exec_name   = "/LISAinference/LISAinference_ptmcmc"
         flags += flare.set_mcmc_flags(name,60) + " --noFisher "
-        flags += "--checkp_at_time="+str(checkp_seconds)+" "
-        if(len(args.r)>0):flags += "--restart_from="+args.r+" "
+        flags += "--checkp_at_time="+str(checkp_hours)+" "
+        if(len(args.r)>0):
+            if("X" in args.r):
+                flags += "--restart_dir=`ls -1rtd *-cp|tail -n 1`"
+            else:
+                flags += "--restart_dir="+args.r+" "
         #flags += "--covariance_file="+name+"-Fisher_fishcov.dat"
-        test_cmd="if ( ls -ort | tail -n 3 | grep 'step_.*-cp' - ) ; then "+restart_cmd+"; else "+done_cmd+"; fi "
-        restart_cmd="res=`ls -rt test0-ptmcmc-nt1/ | tail -n 3 | grep 'step_.*-cp'`"
-        
+        #test_cmd="if ( ls -ort | tail -n 3 | grep 'step_.*-cp' - ) ; then "+restart_cmd+"; else "+done_cmd+"; fi "
+        #restart_cmd="res=`ls -rt test0-ptmcmc-nt1/ | tail -n 3 | grep 'step_.*-cp'`"
+        test_cmd="echo test "
+        restart_cmd="echo restart"
     #finish commands
     cmd = flare_path+"/"+exec_name+" "+flags
     fcmd = "export OMP_NUM_THREADS="+str(fthreads)+" ; "+fcmd+" 1>"+name+"-Fisher.out 2>&1"
@@ -197,16 +217,6 @@ def generate(system,argv,rcname=""):
         fcmd="echo"
     
 
-    if args.d:
-        debug="#SBATCH --qos=debug\n"
-        if(60*hours+minutes>60):
-            hours=1
-            minutes=0
-    else:
-        debug=""
-
-    total_seconds=3600*hours+60*minutes-200
-    checkp_seconds=(int)((total_seconds-300)*0.99)
     log_name=name
     if(len(args.r)>0):log_name=name+"."+args.r
     
