@@ -140,6 +140,10 @@ We seek to overcome two limitations in such previous approaches.  The first is t
 
 The plan of the paper is as follows. In Sec.~\ref{sec:motivation}, we provide a general presentation of problem of Fourier-domain modulation and introduce the relevant timescales for both the response of LISA-type detectors and the modulation of precessing signals. In Sec.~\ref{sec:formalism}, we present our general formalism, give its leading order approximation as well as higher-order corrections, introduce new timescales based on the Fourier-domain signal, refine the previous results for both the quadratic-in-phase corrections and the treatment of the delays, and make the connection to previous approaches of the problem. We then apply our formalism to the response of the LISA detector in Sec.~\ref{sec:LISA}, and to the case of signals from precessing binaries in Sec~\ref{sec:precession}. We discuss and summarize our results in Sec.~\ref{sec:discussion}.
 
+\SM{[say that we reverse point of view: waveform is given FD, modulation TD, instead of waveform+modulation TD]}
+
+\SM{[say a word of how to gauge relevance of a given error: 1/SNR in direct error ? We won't give anything but waveform reconstruction errors...]}
+
 \SM{[style: below use texttt for models and codes (like \texttt{SpEC})]}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -233,7 +237,7 @@ In Eq.~\eqref{eq:defmodulationprec} above, the modulation function $F$ has time 
 \subsection{Stationary phase approximation}
 \label{subsec:SPA}
 
-As a preliminary step, we recall here an approximation widely used for similar purposes in treating gravitational waves signals emitted by inspiraling binaries, the Stationary Phase Approximation (thereafter SPA, and also sometimes called the steepest-descent method). It applies in general to chirping signals, and we refer the reader to~\ref{} for details. One first writes the time-domain signal in amplitude and phase form as $h(t) = a(t) e^{-2i\varphi(t)}$, where for gravitational wave signals $\varphi$ will correspond to the orbital phase, with the orbital frequency being $\omega = \dot{\varphi}$. In order to keep close to the notation used in the gravitational wave literature, we introduced a factor of 2 in the phase of the wave, which is appropriate for the dominant 22 harmonic of the signal. The approximation then applies to signals verifying the conditions \SM{[say that the third is sometimes missing ?]} \SM{[add reference to Finn-Chernoff, Cutler-Flanagan where the third one is missing]}
+As a preliminary step, we recall here an approximation widely used for similar purposes in treating gravitational waves signals emitted by inspiraling binaries, the Stationary Phase Approximation (thereafter SPA, and also sometimes called the steepest-descent method). It applies in general to chirping signals, and we refer the reader to~\cite{FC93, CF94} for details. One first writes the time-domain signal in amplitude and phase form as $h(t) = a(t) e^{-2i\varphi(t)}$, where for gravitational wave signals $\varphi$ will correspond to the orbital phase, with the orbital frequency being $\omega = \dot{\varphi}$. In order to keep close to the notation used in the gravitational wave literature, we introduced a factor of 2 in the phase of the wave, which is appropriate for the dominant 22 harmonic of the signal. The approximation then applies to signals verifying the conditions\footnote{Note that the third condition is not always written explicitly, in particular not in Refs.~\cite{FC93, CF94}. It becomes important if we generalize $a$ to be an envelope function incorporating a modulation.} \SM{[say that the third is sometimes missing ?]} \SM{[add reference to Finn-Chernoff, Cutler-Flanagan where the third one is missing]}
 \be\label{eq:conditionsSPA}
 	\left| \frac{\dot{a}/a}{\omega} \right| \ll 1\,, \quad \left|\frac{\dot{\omega}}{\omega^{2}} \right| \ll 1\,, \quad \left| \frac{(\dot{a}/a)^{2}}{\dot{\omega}} \right| \ll 1 \,.
 \ee
@@ -246,7 +250,7 @@ For a chirping signal of increasing phase, $\omega>0$ and $\dot{\omega}>0$, ther
 	\tilde{h}_{\rm SPA} (f) &\simeq a(\tfSPA) \exp\left[2i\pi f \tfSPA-2i\varphi(\tfSPA) \right] \nn\\
 	& \qquad \cdot \int \ud t \, e^{-i \dot{\omega} (\tfSPA) (t-\tfSPA)^{2}} \,.
 \end{align}
-Note that to be able to treat the amplitude as a constant in the integral above, we used the third condition in~\eqref{eq:conditionSPA}. The resulting complex Gaussian integral yields\footnote{Note that the expressions given here are valid for the dominant mode $h_{22}$ of the waveform. They can be readily generalized to other modes $h_{\ell m}$ with phase $e^{-im\varphi}$.}
+Note that to be able to treat the amplitude as a constant in the integral above, we used the third condition in~\eqref{eq:conditionSPA}. The resulting complex Gaussian integral yields\footnote{The expressions given here are valid for the dominant mode $h_{22}$ of the waveform. They can be generalized to other modes $h_{\ell m}$, $m\neq 0$ with phase $e^{-im\varphi}$ as follows: $\Psi$ acquires a factor $m/2$, $A$ a factor $\sqrt{2/m}$, and $v$ (see~\eqref{eq:SPAN}) has to be replaced by $(2/m)^{1/3} v$.}
 \begin{subequations}
 \begin{align}
 	\tilde{h}_{\rm SPA}(f) &= A_{\rm SPA}(f) e^{-i\Psi_{\rm SPA}(f)} \,, \\
@@ -265,16 +269,16 @@ To understand the separation of timescales in the problem, it will be useful to 
 \end{subequations}
 As for the leading-order time-domain amplitude of the $22$ mode, we have~\cite{BlanchetLiving}
 \be\label{eq:a22N}
-	a_{22}^{\rm N} (t) = \frac{2 G M \nu x}{D c^{2}} \sqrt{\frac{16 \pi}{5}} \,,
+	a_{22}^{\rm N} (t) = \frac{2 G M \nu v^{2}}{D c^{2}} \sqrt{\frac{16 \pi}{5}} \,,
 \ee
-where we set $x = (G M\omega/c^{3})^{2/3}$ and where $D$ is the luminosity distance to the observer. For this Newtonian inspiral, applying the SPA gives for the $22$ mode $\tilde{h}(f) = A_{\rm N}(f)e^{-i\Psi_{\rm N}(f)}$ with \SM{[check that total mass convention is $M$ everywhere]}
+where we set $v = (G M\omega/c^{3})^{1/3}$ and where $D$ is the luminosity distance to the observer. For this Newtonian inspiral, applying the SPA gives for the $22$ mode $\tilde{h}(f) = A_{\rm N}(f)e^{-i\Psi_{\rm N}(f)}$ with \SM{[check that total mass convention is $M$ everywhere]}
 \begin{subequations}\label{eq:SPAN}
 \begin{align}
 	A_{N}(f) &= \frac{G^{2}M^{2} \pi}{Dc^{5}} \sqrt{\frac{2\nu}{3}} v^{-7/2}\,, \label{eq:ASPAN}\\
 	\Psi_{\rm SPA}^{\rm N}(f) &= \phi_{0} - 2\pi f t_{0} - \frac{3}{128\nu v^{5}} \,, \label{eq:PsiSPAN} 
 \end{align}
 \end{subequations}
-where we used the notation $v=(G M \pi f/c^{3})^{1/3}$ ($x=v^{2}$ with the SPA correspondence~\eqref{eq:deftfSPA}), and where $t_{0}, \phi_{0}$ are constants. It is also customary to rewrite the above relations in terms of the chirp mass $\Mchirp \equiv M\nu^{3/5}$, which is the only mass combination characterizing the signal at the leading PN order.
+where $v=(G M \pi f/c^{3})^{1/3}$ according to the SPA correspondence~\eqref{eq:deftfSPA}, and where $t_{0}, \phi_{0}$ are constants. It is also customary to rewrite the above relations in terms of the chirp mass $\Mchirp \equiv M\nu^{3/5}$, which is the only mass combination characterizing the signal at the leading PN order.
 
 In this Newtonian, low-frequency limit one can check that each of the combinations \eqref{eq:conditionsSPA} indeed vanish at $\calO{(v^5)}$. but as the system approaches merger, these condition are no-longer satisfied. Near and after the merger, the SPA treatment is not applicable.
 %, as can be seen by the breakdown of the relation~\eqref{eq:deftfSPA} as $\omega$ asymptotes the quasi-normal mode frequency in the ringdown. Because of this limitation, we aim at developing a formalism that would not rely on this approximation.
@@ -454,7 +458,7 @@ Then, taking two derivatives of~\eqref{eq:PsiSPA}, we find
 \be\label{eq:TfSPA}
 	\Tf^{\rm SPA} \equiv \frac{1}{\sqrt{2\dot{\omega}(\tfSPA)}} \,.
 \ee
-Thus, when the SPA applies, $\Tf$ corresponds to} the radiation-reaction timescale: the shorter this timescale, the faster the binary chirps to higher frequencies on its quasi-circular inspiral. 
+Thus, when the SPA applies, $\Tf$ corresponds to} the radiation-reaction timescale \SM{[make the connection to $Q$ used for SEOB comparisons in the Nagar group]}: the shorter this timescale, the faster the binary chirps to higher frequencies on its quasi-circular inspiral. 
 
 However, in the same way that our definition~\eqref{eq:deftf} for the time-of-frequency function $t_{f}$ generalizes the SPA definition~\eqref{eq:deftfSPA}, the definition~\eqref{eq:defTf} only refers to the phase of the Fourier-domain signal and does not require introducing a time-domain frequency like $\omega$. This defintion thus extends naturally to the merger-ringdown part of the signal. In this part of the signal, its physical interpretation as the timescale of radiation reaction is obscured, and the second derivative $\ud^{2}\Psi/\ud f^{2}$ can go through zero and change sign, as shown in Fig.~\ref{fig:TfTA}. We include an absolute value in the definition~\eqref{eq:defTf} to allow for this possibility, and keep track of the sign via $\epsilon$.
 
@@ -470,14 +474,14 @@ Although the above is written for a generic $p\geq 0$, in practice only the firs
 
 \jgb{By contrast, the impact of higher-order terms in the kernel function on the transfer function}~\eqref{eq:resulttaylordelay} is signal-independent. It does not lead to the introduction of new timescales since the coupled time and frequency derivatives are dimensionless. We will see however in Sec.~\ref{subsec:lisafom} that treating delays \jgb{does require limiting} dimensionless factors of the type $2\pi f d$.
 
-We can obtain useful estimates for these timescales from the leading order post-Newtonian expressions~\eqref{eq:SPAN}. The leading-order radiation-reaction and amplitude timescales are:
+We can obtain useful estimates for these timescales from the leading order post-Newtonian expressions~\eqref{eq:SPAN}, valid for the dominant harmonic $h_{22}$. The leading-order radiation-reaction and amplitude timescales are:
 \begin{subequations}\label{eq:timescalesN}
 \begin{align}
-	\Tf^{\rm N} &= \frac{1}{8} \sqrt{\frac{5}{3\nu}} \frac{G m}{c^{3}} v^{-11/2} \,, \label{eq:TfN}\\
+	\Tf^{\rm N} &= \frac{1}{8} \sqrt{\frac{5}{3\nu}} \frac{G M}{c^{3}} v^{-11/2} \,, \label{eq:TfN}\\
 	T_{A1}^{\rm N} &= \frac{7}{6} \frac{1}{2\pi f}\,, \quad T_{A2}^{\rm N} = \frac{\sqrt{91}}{6} \frac{1}{2\pi f} \,. \label{eq:TA1N-TA2N}
 \end{align}
 \end{subequations}
-One can check explicitly that this expression for $\Tf$ agrees with~\eqref{eq:TfSPA}. With a simple power-law amplitude as in~\eqref{eq:ASPAN}, all higher-order amplitude timescales are also simply proportional to $1/f$ and differ only by their numerical factor.
+One can check explicitly that this expression for $\Tf$ agrees with~\eqref{eq:TfSPA}. With a simple power-law amplitude as in~\eqref{eq:ASPAN}, all higher-order amplitude timescales are also simply proportional to $1/f$ and differ only by their numerical factor. For higher harmonics $h_{\ell m}$ with $m\neq 0$, as discussed in Sec.~\ref{subsec:SPA}, $T_{f}$ acquires a factor $m/2$, and $v$ has to be replaced by $(2/m)^{1/3} v$. The amplitude of higher harmonics starts at a higher PN order~\cite{BlanchetLiving}, differing from~\eqref{eq:a22N} by a different constant and an additional scaling $v^{\kappa_{\ell m}}$ with $\kappa_{\ell m} = \ell - 2 + (\ell + m \; \mathrm{mod} \; 2)$, which changes the constant in the amplitude timescale as $7/6 \rightarrow (7-2\kappa_{\ell m})/6$ in $T_{A1}^{\rm N}$ and $\sqrt{91}/6 \rightarrow \sqrt{(7-2\kappa_{\ell m})(13-2\kappa_{\ell m})}/6$ in $T_{A2}^{\rm N}$.
 
 We show in Fig.~\ref{fig:TfTA} the timescales $\Tf$, $T_{A1}$, $T_{A2}$ for an equal-mass and non-spinning system. In the inspiral, they follow the scalings~\eqref{eq:timescalesN} and $\Tf$ is much larger than the other two. For frequencies above the merger frequency, $\Tf$ can go through zero while the amplitude-related timescales become comparable or larger.
 
@@ -623,7 +627,7 @@ In the context of precessing binaries, the delays are absent and we will go up t
 \end{align}
 \end{subequations}
 
-In the following, it will be convenient to introduce error estimates built from the Taylor-like series~\eqref{eq:resulttaylorPsi},~\eqref{eq:resulttaylorA} and~\eqref{eq:resulttaylordelay}. We simply define  this error estimates at a certain level of approximation as the magnitude of the first term ignored in the original Taylor series. Thus we define, with $G(f,t) = F(t) e^{-2i\pi f d(t)}$,
+In the following, it will be convenient to introduce error estimates built from the Taylor-like series~\eqref{eq:resulttaylorPsi},~\eqref{eq:resulttaylorA} and~\eqref{eq:resulttaylordelay}. We simply define these error estimates at a certain level of approximation as the magnitude of the first term ignored in the original Taylor series. To give these quantities a relative meaning, we divide by the leading term. Thus we define, with $G(f,t) = F(t) e^{-2i\pi f d(t)}$,
 \begin{subequations}\label{eq:deffom}
 \begin{align}
 	\epsilon_{\Psi 2} &\equiv \frac{1}{2} \Tf^{2} \left| \frac{1}{G}\partial_{tt}G \right| \,, \\
@@ -996,7 +1000,7 @@ Note that for slowly-chirping binaries, the large features in the orbital transf
 
 \SM{[check error estimates with single-spin configurations $+$, $\perp$, $-$]}
 
-In this Section, we illustrate the application of the formalism described in~\ref{sec:formalism} to signals from precessing binaries, with modulations induced by the precession. We investigate how the separation of the relevant timescales evolves in the late inspiral and after the merger occurs. 
+In this Section, we illustrate the application of the formalism described in~\ref{sec:formalism} to signals from precessing binaries, with modulations induced by the precession. We investigate how the separation of the relevant timescales evolves in the late inspiral and after the merger occurs. We will also give in App.~\ref{app:precpreviousapproaches} a short overview of previous approaches to this problem of the Fourier-domain precession, and how they relate to our formalism.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -1065,7 +1069,7 @@ When using the approximations~\eqref{eq:approxsymmetryhlminusm}-\eqref{eq:approx
 \ee
 Since for a function $g$ we have in general for its conjugate
 \be
-	\mathrm{FT}[g^{*}](f) = \tilde{g}(-f)^{*} \,,
+	\mathrm{FT}[g^{*}](-f) = \tilde{g}(f)^{*} \,,
 \ee
 we can write, using~\eqref{eq:approxsymmetryhlminusm},
 \be
@@ -1075,16 +1079,16 @@ or, for transfer functions,
 \be
 	\calT^{\ell}_{mm'}(f) = (-1)^{m+m'} \calT^{\ell *}_{-m,-m'}(-f) \,.
 \ee
-This means that such a model is required to cover only the positive frequency band and the values $m'>0$, the negative frequencies being deduced from
-\begin{align}
+This means that such a model is required to cover only the positive frequency band and the values $m'>0$, since
+\begin{align}\label{eq:hIlmposnegfreq}
 	\tilde{h}^{\rm I}_{\ell m}(f) &= \sum_{m'>0} \calT^{\ell}_{mm'}(f) \tilde{h}^{\rm P}_{\ell, m'}(f) \text{ for } f>0 \,, \nn\\
 	\tilde{h}^{\rm I}_{\ell m}(f) &= \sum_{m'>0} (-1)^{\ell+m+m'} \calT^{\ell *}_{-m,m'}(-f) \tilde{h}^{\rm P *}_{\ell, m'}(-f) \text{ for } f<0 \,.
 \end{align}
 
-Further simplifications occur when including only the dominant harmonics $h^{\rm P}_{22}$, $h^{\rm P}_{2,-2}$ in the precessing-frame waveform (as is done for instance in PhenomP~\cite{Hannam+13}, as well as in our toy model~\ref{subsec:precmodel}), we have in this case for $f<0$
+Further simplifications occur when including only the dominant harmonics $h^{\rm P}_{22}$, $h^{\rm P}_{2,-2}$ in the precessing-frame waveform (as is done for instance in PhenomP~\cite{Hannam+13}, as well as in our toy model~\ref{subsec:precmodel}), we have in this case for $f<0$ \SM{[all $f$ ?]}
 \begin{subequations}
 \begin{align}
-	\calT^{2}_{m,-2}(f) &= (-1)^{m} \calT^{\ell *}_{-m,2}(-f) \,, \\
+	\calT^{2}_{m,-2}(f) &= (-1)^{m} \calT^{2 *}_{-m,2}(-f) \,, \\
 	\tilde{h}^{\rm I}_{2 m}(f) &= (-1)^{m} \tilde{h}^{\rm I *}_{2,-m}(-f) \,. \label{eq:symmetryhIfor22only}
 \end{align}
 \end{subequations}
@@ -1127,13 +1131,13 @@ In our model, after reaching the time of peak amplitude as defined in~\eqref{eq:
 	\gamma_{\rm post-merger}(t) &= \gamma(t_{\rm peak}) - (\alpha(t) - \alpha(t_{\rm peak}) )\cos \beta \,,
 \end{align}
 \end{subequations}
-where we use the minimal-rotation condition~\eqref{eq:gammadot} for a constant $\beta$. For the QNM frequencies as a function of the final spin, we use values computed in Ref.~\cite{Berti+05}. The final spin is taken to be the same as the one computed internally to the SEOBNRv3 code~\cite{Pan+13, BTB16}, where the final-spin fit formula of Ref.~\cite{} \SM{[C]}, built for spin-aligned systems, is applied to the spin components projected on the orbital angular momentum $\bm{L}$ at merger.
+where we use the minimal-rotation condition~\eqref{eq:gammadot} for a constant $\beta$. To compute the QNM frequencies as a function of the final spin $\chi_{f}$, we use fits constructed in Ref.~\cite{Berti+05}, illustrated in Fig.~\ref{fig:QNM}. The final spin is taken to be the same as the one computed internally to the SEOBNRv3 code~\cite{Pan+13, BTB16}, where the final-spin fit formula of Ref.~\cite{BR09} \SM{[see if we can update the final-spin formula]}, built for spin-aligned systems, is applied to the spin components projected on the orbital angular momentum $\bm{L}$ at merger.
 
-Fig.~\ref{fig:precmodel} presents a comparison of the frame trajectory at merger for the SEOBNRv3, NR waveforms and for our model~\eqref{eq:eulerQNM}. The example catalog waveform is SXS:BBH:0058, generated with SpEC~\cite{SXScatalog, SpEC, Mroue+12, Mroue+13}, with a mass ratio of $q=5$, and a single in-plane spin of $\chi_{1} = 0.5$. The NR and SEOB post-merger frames disagree mainly due to a different value of the final spin $\chi_{f}$\footnote{The fitting formulas used to compute $\chi_{f}$ in the next version of the SEOB code, which is expected to reduce or remove this disagreement~\cite{Ossokine+18}. \SM{[update this reference in prep.]}}, which leads to a different $\Omega_{\rm frame}$. Given their different value of $\chi_{f}$, however, both agree with the qualitative description~\eqref{eq:OmegaframeQNM}. The oscillations developing after $t\sim 50 M$ occur in a regime where the overall waveform amplitude has decayed to small values. Our simple model~\eqref{eq:eulerQNM} follows well the SEOBNRv3 behaviour for $\alpha$ and $\gamma$, but departs more for $\beta$ as we do not model its variation at merger.
+Fig.~\ref{fig:precmodel} presents a comparison of the frame trajectory at merger for the SEOBNRv3, NR waveforms and for our model~\eqref{eq:eulerQNM}. The example catalog waveform is SXS:BBH:0058, generated with SpEC~\cite{SXScatalog, SpEC, Mroue+12, Mroue+13}, with a mass ratio of $q=5$, and a single in-plane spin of $\chi_{1} = 0.5$. The NR and SEOB post-merger frames disagree mainly due to a different value of the final spin $\chi_{f}$\footnote{To compute $\chi_{f}$, SEOBNRv3 uses fitting formulas from~\cite{BR09}. These formulas will be updated to more recent fits incorporating additional NR data (see e.g.~\cite{HBR16}) in the next version of the SEOB code~\cite{Ossokine+18}, which is expected to reduce or remove this disagreement. \SM{[update this reference in prep.]}}, which leads to a different $\Omega_{\rm frame}$. Given their different value of $\chi_{f}$, however, both agree with the qualitative description~\eqref{eq:OmegaframeQNM}. The oscillations developing after $t\sim 50 M$ occur in a regime where the overall waveform amplitude has decayed to small values. Our simple model~\eqref{eq:eulerQNM} follows well the SEOBNRv3 behaviour for $\alpha$ and $\gamma$, but departs more for $\beta$ as we do not model its variation at merger.
 
 We would now like to underline a number of caveats and limitations of our simplified model. First, it is clear from Fig.~\ref{fig:precmodel} that the acceleration of the precession post-merger is going to be the most challenging feature for the separation of timescales at the basis of Sec.~\ref{sec:formalism}. While we checked the qualitative soundness of the decomposition outlined in Sec.~\ref{subsec:precdef} and of the post-merger precession~\eqref{eq:OmegaframeQNM} in some of the available numerical relativity waveforms~\cite{SXScatalog}, it is important to stress that there is no guarantee that another prescription for the precessing frame would not yield a better separation of timescales. Secondly, approximating the precessing-frame waveform by a spin-aligned one comes with known limitations, ignoring for instance mode asymmetries departing from~\eqref{eq:approxsymmetryhlminusm} as shown in~\cite{Boyle+14}. Thirdly, more exploration of the parameter space would be needed, as the QNM frequencies entering~\eqref{eq:OmegaframeQNM} vary rapidly for large $\chi_{f}$. Finally, we ensure the smoothness both of the Fourier-domain precessing-frame waveform and of the time-domain modulation, allowing us to take the derivatives required by the formalism of Sec.~\ref{sec:formalism}, which is an idealization.
 
-Leaving aside the question of a more in-depth investigation of the best representation of precessing waveforms in their post-merger phase, we will proceed to investigating the separation of timescales in three chosen examples. The parameters of these example cases are summarized in Table~\ref{table:precparams}. We consider a mass ratio of $q=4$, close-to-maximal spins of $\chi_{1} = \chi_{2} = 0.95$, and vary both spins misalignmnent angles to be $\pi/6$ (case labeled $++$, close to aligned spins), $\pi/2$ ($\perp\perp$, spins in the plane) and $5\pi/6$ ($--$, close to anti-aligned spins). Table~\ref{table:precparams} also shows the remnant spins that are internally computed in both the SEOBNRv3 and the PhenomD/PhenomP codes, as well as the QNM frequencies and the resulting frame precession frequency $\Omega_{\rm frame}$. Note that the case $--$ shows a larger variation in the direction of $\bm{J}$, and the spin of the remnant is almost 0, due to the fact that the spin is large and antialigned with a large mass ratio. This example therefore serves the purpose of lying at the edge of validity of the picture of standard precession along a cone around an almost-fixed direction, and the standard hierarchy between mode contributions is not valid in this case. \SM{[soundness of trajectories, particularly in this case, are to be checked again]}
+Leaving aside the question of a more in-depth investigation of the best representation of precessing waveforms in their post-merger phase, we will proceed to investigating the separation of timescales in three chosen examples. The parameters of these example cases are summarized in Table~\ref{tab:precparams}. We consider a mass ratio of $q=4$, close-to-maximal spins of $\chi_{1} = \chi_{2} = 0.95$, and vary both spins misalignmnent angles to be $\pi/6$ (case labeled $++$, close to aligned spins), $\pi/2$ ($\perp\perp$, spins in the plane) and $5\pi/6$ ($--$, close to anti-aligned spins). Table~\ref{tab:precparams} also shows the remnant spins that are internally computed in both the SEOBNRv3 and the PhenomD/PhenomP codes, as well as the QNM frequencies and the resulting frame precession frequency $\Omega_{\rm frame}$. Note that the case $--$ shows a larger variation in the direction of $\bm{J}$, and the spin of the remnant is almost 0, due to the fact that the spin is large and antialigned with a large mass ratio. This example therefore serves the purpose of lying at the edge of validity of the picture of standard precession along a cone around an almost-fixed direction, and the standard hierarchy between mode contributions is not valid in this case. \SM{[soundness of trajectories, particularly in this case, are to be checked again]}
 
 \begin{figure}
   \centering
@@ -1159,9 +1163,9 @@ Leaving aside the question of a more in-depth investigation of the best represen
 %In Eq.~\eqref{eq:defmodulationprec} above, the modulation function $F$ evolves on the precessional timescale, which evolves throughout the inspiral. The separation between the precessional timescale and the orbital timescale will be crucial for our analysis. In the limit of low frequencies, we will see in Sec.~\ref{} below that, although these timescales become more and more separated, the decrease in the chirping rate gives raise to a corrective contribution that does not vanish in this limit. In the other limit, as the system gets close to merger, the separation of timescales becomes weaker, and we will explore in Sec.~\ref{} the application of our formalism to the merger and ringdown phase.
 
 \begin{table}[t]
-\begin{ruledtabular}\caption{Parameters of of the three example cases that we use to illustrate our formalism. The three cases differ by their spin alignment angles $\theta_{A} = \bm{\chi}_{A} \cdot \hat{\bm{L}}_{i}$, the spins being in the orbital plane, almost aligned and almost anti-aligned. The table gives also the final spins magnitudes (for SEOB as well as PhenomD for comparison), angles between the initial and final angular momenta $\theta(\bm{J}_{i}, \bm{J}_{f})$, as well as QNM frequencies and frame rotation velocity used for the post-merger extension. \SM{[To be updated with longer waveforms, 10Hz 10Msol. ?]} \SM{[add misalignment angles $(\ell, \bm{J}_{i})$?]}}\label{table:precparams}
+\begin{ruledtabular}\caption{Parameters of of the three example cases that we use to illustrate our formalism. The three cases differ by their spin alignment angles $\theta_{A} = \bm{\chi}_{A} \cdot \hat{\bm{L}}_{i}$, the spins being in the orbital plane, almost aligned and almost anti-aligned. The table gives also the final spins magnitudes (for SEOB as well as PhenomD for comparison), angles between the initial and final angular momenta $\theta(\bm{J}_{i}, \bm{J}_{f})$, as well as QNM frequencies and frame rotation velocity used for the post-merger extension. \SM{[To be updated with longer waveforms, 10Hz 10Msol. ?]} \SM{[add misalignment angles $(\ell, \bm{J}_{i})$?]}}\label{tab:precparams}
 %\begin{tabular}{C{.2\columnwidth}C{.24\columnwidth}C{.15\columnwidth}}
-\begin{tabular}{ccccccc}\label{table:precexamples}
+\begin{tabular}{ccccccc}\label{tab:precexamples}
 	$f_{\rm min}$ & $ M_{\rm min} $ & $q$ & $\chi_{1}$ & $\chi_{2}$ & $ \phi_{1} $ & $ \phi_{2} $ \\
 	\hline
 	$20\mathrm{Hz}$ & $20\Msol$ & $ 4.0 $ & $ 0.95 $ & $ 0.95 $ & $0$ & $\pi/2$ \\
@@ -1182,7 +1186,7 @@ Leaving aside the question of a more in-depth investigation of the best represen
 \end{table}
 
 %\begin{table}[t]
-%\begin{ruledtabular}\caption{Parameters of the three example cases that we use to illustrate our formalism.}\label{table:precparams}
+%\begin{ruledtabular}\caption{Parameters of the three example cases that we use to illustrate our formalism.}\label{tab:precparams}
 %%\begin{tabular}{C{.2\columnwidth}C{.24\columnwidth}C{.15\columnwidth}}
 %\begin{tabular}{cccc}
 %	Case & pp & $++$ & $--$ \\
@@ -1221,8 +1225,8 @@ Leaving aside the question of a more in-depth investigation of the best represen
 \begin{figure}
   \centering
   \includegraphics[width=.98\linewidth]{plots/postmergeromega_py.pdf}
-  \caption{Quasi-normal mode frequencies for the 0th overtone of the modes $22$ and $21$, as a function of the dimensionless spin of the final black hole $\chi_{f}$. We also show their difference $\Omega_{\rm frame}$ (see~\eqref{eq:OmegaframeQNM}), and the ratio $\Omega_{\rm frame} / \omega^{\rm QNM}_{220}$ characteristic of the separation of timescales between the the phase of the modulation~\eqref{eq:wignerphasesimpleprec} and the P-frame waveform phase.}
-  \label{fig:precmodel}
+  \caption{\SM{[label y axis]} Quasi-normal mode frequencies for the 0th overtone of the modes $22$ and $21$, as a function of the dimensionless spin of the final black hole $\chi_{f}$, as well as their difference $\Omega_{\rm frame}$ (see~\eqref{eq:OmegaframeQNM}). The lower panel shows the  ratio $\Omega_{\rm frame} / \omega^{\rm QNM}_{220}$ characteristic of the separation of timescales between the phase of the modulation~\eqref{eq:wignerphasesimpleprec} and the P-frame waveform phase.}
+  \label{fig:QNM}
 \end{figure}
 
 %We show in Fig~\ref{} the frequencies $\omega_{220}^{\rm QNM}$, $\omega_{210}^{\rm QNM}$ and their difference $\Omega_{\rm frame}$. The behaviour for near-to-extremal spin of the remnant would require more exploration, as the QNM frequencies vary a lot when approaching extremality.
@@ -1233,67 +1237,67 @@ Leaving aside the question of a more in-depth investigation of the best represen
 
 \SM{[write somewhere that we require mainly FD smoothness]}
 
-We now turn to the magnitude of higher-order corrections in the case of precessing binaries, as can be estimated by the quantities $\epsilon_{\Psi 2}$, $\epsilon_{A1}$ and $\epsilon_{A 2}$ introduced in~\eqref{eq:deffom}.
+We now turn to the separation of timescales and to the magnitude of the higher-order corrections derived in Sec.~\ref{sec:formalism} in the case of precessing binaries, as can be estimated by the quantities $\epsilon_{\Psi 2}$, $\epsilon_{A1}$ and $\epsilon_{A 2}$ introduced in~\eqref{eq:deffom}.
 
-For the inspiral phase of the dynamics, one can read the quantities $\epsilon_{\Psi 2}$, $\epsilon_{A1}$ and $\epsilon_{A 2}$ from the outcome of post-Newtonian computations. To obtain a qualitative picture of the timescales involved, here we will consider the most simple setting for precession in the post-Newtonian framework: at leading PN order and for a single-spin system, both the orbital angular momentum $\bm{L}$ and the spin vector $\bm{S}$ undergo what is called simple precession around the total angular momentum, $\bm{J}$ (see e.g.~\cite{Apostolatos+94, Kidder95}). By neglecting the slow evolution of the orbit under radiation reaction, ignoring higher-order corrections that are quadratic and higher in the spins, and orbit-averaging the precession equations (thus eliminating nutations in the precession of the orbital plane, which occur at the orbital timescale) \SM{[no nutation for single spin?]}, the trajectories of $\bm{L}$ and $\bm{S}$ become cones around the direction of $\bm{J}$, with a constant precession velocity $\Omega_{\rm prec}$ that we will use to define the timescale of variations of the modulation functions $F$. Note that the presence of two spins complicates the evolution of the system, but the picture of a precession cone for $\bm{\ell}$ remains approximately valid (see~\cite{} \SM{[C]} for a classification of the morphologies of precessing trajectories).
+In the inspiral phase, we can obtain a qualitative picture of the timescales involved by using well-known leading-order post-Newtonian results. To simplify things further, we will consider a single-spin system, and use orbit-averaged precession equations. In this configuration, both the orbital angular momentum $\bm{L}$ and the spin vector $\bm{S}$ undergo simple precession on a cone around the total angular momentum $\bm{J}$ (see e.g.~\cite{Apostolatos+94, Kidder95}), with an opening angle of the cone and a precession velocity $\Omega_{\rm prec}$ that vary only on the radiation reaction timescale. In the general case, the presence of two spins complicates the evolution of the system, but the picture of a precession cone for $\bm{L}$ remains approximately valid (see~\cite{Kesden+14} for a classification of generic precession trajectories).
 
-In the following, we will use the notation \SM{[use M instead of m]} $m=m_{1}+m_{2}$, $\nu=m_{1}m_{2}/m^{2}$, $\delta = (m_{1}-m_{2})/m$, $|\bm{S}_{A}|=Gm_{A}^{2} \chi_{A}$ for $A=1,2$. We take the convention $m_{1} \geq m_{2}$. We define $\bm{\ell}$ as the unit vector normal to the orbital plane, and assume that only the more massive object has a spin, so that $\bm{S}_{2} = 0$. A factor $c$ is scaled out of the spins so that $S_{A} = G m_{A}^{2} \chi$, with $\chi$ the dimensionless spin between $0$ and $1$ for Kerr black holes. We will use the notation $v = (G m \omega/c^{3})^{1/3}$ with $\omega$ the orbital frequency, which is equivalent to the frequency-domain definition $v=(G \pi m f/c^{3})^{1/3}$ when the SPA applies. \SM{[Check redundancy with notations of previous sections]} The Newtonian order orbital angular momentum is $\bm{L} = L_{N} \bm{\ell}$, with
+We will use the following notations: for $m_{1}$, $m_{2}$ the masses of the two bodies, we set $M=m_{1}+m_{2}$, $\nu=m_{1}m_{2}/M^{2}$, $\delta = (m_{1}-m_{2})/M$, and $|\bm{S}_{A}|=Gm_{A}^{2} \chi_{A}$ for $A=1,2$, with $\chi$ the dimensionless spin between $0$ and $1$ for Kerr black holes. We define $\bm{\ell}$ as the unit vector normal to the orbital plane. We take the convention $m_{1} \geq m_{2}$ and assume that only the more massive object has a spin, $\bm{S}_{2} = 0$. As in Sec.~\ref{subsec:SPA}, we will use the notation $v = (G M \omega/c^{3})^{1/3}$ with $\omega = \dot{\varphi}$ the orbital frequency, which translates to $v=(G \pi M f/c^{3})^{1/3}$ for the 22 mode when the SPA applies. At the Newtonian order, the orbital angular momentum is $\bm{L} = L_{N} \bm{\ell}$, with
 \be\label{eq:defLN}
-	L_{N} = \frac{G m^{2} \nu}{c v} \,.
+	L_{N} = \frac{G M^{2} \nu}{c v} \,.
 \ee
-Since we neglect radiation reaction, $\bm{J}$ is treated a constant that we use to set the z-axis so that $\bm{J} = J \bm{e}_{z}$, and we decompose the spin in its aligned and perpendicular components as $\bm{S}_{1} = S_{1}^{z} \bm{e}_{z} + \bm{S}_{1}^{\perp}$. At leading order, the precession equations read
+Since we neglect radiation reaction, $\bm{J} = \bm{L} + \bm{S}_{1}/c$ is treated a constant that we use to set the z-axis so that $\bm{J} = J \bm{e}_{z}$, and we decompose the spin in its aligned and perpendicular components as $\bm{S}_{1} = S_{1}^{z} \bm{e}_{z} + \bm{S}_{1}^{\perp}$. At leading order, the precession equations read
 \begin{align}
 	\dot{\bm{S}}_{1} &= \bm{\Omega}_{1} \times \bm{S}_{1} \,, \nn\\
-	\dot{\bm{\ell}} &= - \frac{1}{c L_{N}}  \dot{\bm{S}}_{1}\,, \nn\\
+	\dot{\bm{\ell}} &= - \frac{1}{c L_{N}}  \dot{\bm{S}}_{1}\,,
 \end{align}
-with the spin precession velocity \cite{} \SM{[C]}
+with the spin precession velocity~\cite{Kidder95}
 \be
-	\bm{\Omega}_{1} = \Omega_{1} \bm{\ell} = \frac{c^{3}}{G m} \left( \frac{3}{4} + \frac{\nu}{2} - \frac{3\delta}{4} \right) v^{5} \bm{\ell} \,.
+	\bm{\Omega}_{1} = \Omega_{1} \bm{\ell} = \frac{c^{3}}{G M} \left( \frac{3}{4} + \frac{\nu}{2} - \frac{3\delta}{4} \right) v^{5} \bm{\ell} \,.
 \ee
-which is formally a 1PN quantity. Decomposing the vectors in their in-plane component and projection on $z$, and using $\delta^{2} = 1-4\nu$ to make explicit the overall scaling in $\nu$, we obtain for the frame precession velocity (defined such that $\dot{\alpha} = \Omega_{\rm prec}$)
+which is formally a 1PN quantity. Considering only the leading PN order, we ignore effects quadratic in the spin that would enter here at 1.5PN. Decomposing the vectors in their in-plane component and projection on $z$, and using $\delta^{2} = 1-4\nu$ to make explicit the overall scaling in $\nu$, we obtain for the frame precession velocity~\cite{Kidder95}
 \be
-	\Omega_{\rm prec} = \frac{c^{4}}{G^{2} m^{3}} \frac{7+\delta}{2(1+\delta)} v^{6} J\,.
+	\dot{\alpha} \equiv \Omega_{\rm prec} = \frac{c^{4}}{G^{2} M^{3}} \frac{7+\delta}{2(1+\delta)} v^{6} J\,.
 \ee
-For convenience, we will use the notation
-\begin{subequations}
-\begin{align}
-	\Lambda &\equiv \frac{7+\delta}{4(1+\delta)} \,, \\
-	\xi &\equiv 1 + \frac{v S_{1}^{z}}{G m^{2} \nu} \,.
-\end{align}
-\end{subequations}
-$\Lambda$ is a mass ratio-dependent factor chosen to be of order 1, varying from $7/4$ for equal masses to $1$ in the test-mass limit. The factor $\xi$ shows how the contribution of the spin to the total angular momentum affects the precession rate. With this notation,
+Separating the factors as
+\be\label{eq:defLambdaxi}
+	\Lambda \equiv \frac{7+\delta}{4(1+\delta)} \,, \quad	\xi \equiv 1 + \frac{v S_{1}^{z}}{G M^{2} \nu} \,,
+\ee
+we see that $\Lambda$ is a mass ratio-dependent factor chosen to be always of order 1, varying from $7/4$ for equal masses to $1$ in the test-mass limit, while the factor $\xi$ contains the contribution of the aligned component of the spin to the precession rate. With this notation,
 \be\label{eq:Omegaprec}
-	\Omega_{\rm prec} = \frac{2c^{3} \nu}{G m} \Lambda \xi v^{5} \,.
+	\Omega_{\rm prec} = \frac{2c^{3} \nu}{G M} \Lambda \xi v^{5} \,.
 \ee
-If precession effects are in general larger for larger mass ratios, as the precession cones widens, the overall scaling of $\nu$ in~\eqref{eq:Omegaprec} above ($\Lambda$ has a mild variation with masses, which is also decreasing with increasing mass ratio) shows that, as long as the orbital angular momentum still dominates the spin, high mass ratio systems have also a slower precession rate.
+If precession effects are in general larger for larger mass ratios, as the precession cones widens, the overall scaling of $\nu$ in~\eqref{eq:Omegaprec} above shows that, as long as the orbital angular momentum still dominates the spin in $\xi$, increasing the mass ratio yields a slower precession rate. For high mass ratios and spins, the correction to $\xi$ in~\eqref{eq:defLambdaxi} starts to become important.
 
-We now turn to the Euler angles and modulation functions $\calD^{\ell *}_{mm'}(\alpha, \beta, \gamma)$, given explicitly in~\eqref{eq:defWignerD}. In the case of simple precession, the opening angle of the precession cone, $\beta$, evolves solely due to radiation reaction. If we treat it as a constant, the minimal rotation condition relates $\gamma$ to $\alpha$ by $\gamma  = -\alpha \cos \beta$ (up to a constant), and the only variable part of the modulation functions~\eqref{} \SM{[R]} are the phases. The constant rate of rotation around $\bm{J}$ translates into $\dot{\alpha} = \Omega_{\rm prec}$. From the closure relation $\bm{J} = \bm{L} + \bm{S}_{1}$, we have
+We now turn to the Euler angles and modulation functions $\calD^{\ell *}_{mm'}(\alpha, \beta, \gamma)$, given explicitly in~\eqref{eq:defWignerD}. As explained in~\ref{subsec:precdef}, in the case of simple precession, the opening angle of the precession cone $\beta$ is essentially constant, so that the minimal rotation condition~\eqref{eq:gammadot} gives $\gamma  = -\alpha \cos \beta$ (up to a constant), and the only variable part of the precession modulation functions in~\eqref{eq:wignerrot} are the phases, according to~\eqref{eq:wignerphasesimpleprec}. The constant rate of rotation around $\bm{J}$ translates into $\dot{\alpha} = \Omega_{\rm prec}$. From the closure relation $\bm{J} = \bm{L} + \bm{S}_{1}/c$, we have
 \be\label{eq:betaconst}
-	\cos \beta = \sqrt{1 - \left( \frac{S_{1}^{\perp}}{c L_{N}} \right)^{2}}\,.
+	\cos \beta = \sqrt{1 - \left( \frac{vS_{1}^{\perp}}{G M^{2}\nu} \right)^{2}}\,.
 \ee
-For each mode contribution $\calD^{\ell *}_{mm'}$, we have \SM{[said before]}
-\be
-	\calD^{\ell *}_{mm'} (\alpha, \beta, \gamma) \propto e^{i(m' \cos\beta - m) \alpha}
-\ee
-which gives an additional geometric factors of $(m' \cos\beta - m)$.
-Under our assumptions of simple precession, ignoring radiation reaction, and using the leading-order expressions~\eqref{} \SM{[R]} for the Fourier-domain timescales, we finally obtain the following error estimates for individual modes \SM{[recall what $m$, $m'$ mean]}:
-\begin{subequations}
+For a given mode contribution $\calD^{\ell *}_{mm'}$, \eqref{eq:wignerphasesimpleprec} shows that we will have factors of $(m' \cos\beta - m)$ when taking derivatives.
+
+We have now everything we need to compute the error estimates~\eqref{eq:deffom} for the transfer function $\calT^{\ell}_{mm'}$~\eqref{eq:defprectransfer} with $m' \neq 0$. Given our restrictive  assumptions of orbit-averaged leading-order PN and single-spin simple precession, the result will only be a crude order-of-magnitude estimate. Using the Fourier-domain leading-order timescales generalized for modes $h^{\rm P}_{\ell m'}$ in the text below~\eqref{eq:timescalesN} yields: \SM{[check]}
+\begin{subequations}\label{eq:precfomPN}
 \begin{align}
-	\epsilon_{\Psi 2} &= \frac{5\nu}{96} \Lambda^{2} \xi^{2} (m' \cos\beta - m)^{2} v^{-1} \,, \\
-	\epsilon_{A 1} &=  \frac{7\nu}{6} \Lambda \xi |m' \cos\beta - m| v^{2} \,, \\
-	\epsilon_{A 2} &= \frac{91 \nu^{2}}{72} \Lambda^{2} \xi^{2} (m' \cos\beta - m)^{2} v^{4} \,.
+	\epsilon_{\Psi 2} &= \frac{m'}{2} \frac{5\nu}{96} \Lambda^{2} \xi^{2} (m' \cos\beta - m)^{2} v^{-1} \,, \\
+	\epsilon_{A 1} &=  \frac{(7 - 2\kappa_{\ell m'})\nu}{6} \Lambda \xi |m' \cos\beta - m| v^{2} \,, \\
+	\epsilon_{A 2} &= \frac{(7 - 2\kappa_{\ell m'}) (13 - 2\kappa_{\ell m'}) \nu^{2}}{72} \Lambda^{2} \xi^{2} (m' \cos\beta - m)^{2} v^{4} \,,
 \end{align}
 \end{subequations}
-As noted in Section~\ref{} \SM{[R]}, $\epsilon_{\Psi 2}$ has a factor $v^{-1}$, formally at $-0.5$PN order, which means that the relative size of this correction grows towards smaller frequencies, away from merger. Remember however that the opening angle of the precession cone, giving the overall normalization for precession effects in the waveform, also goes to 0 as $v$ in that limit. The amplitude error estimates $\epsilon_{A1}$, $\epsilon_{A2}$, by contrast, have the more usual behaviour of PN corrections (of order 1PN and 2PN respectively) growing towards merger. The geometric factors $(m' \cos\beta - m)$ show that higher $|m-m'|$ mode contributions are harder to model, with larger $\epsilon$, although they also have smaller amplitudes for small $\beta$. The overall $\nu$ scalings indicate a better separation of timescales for larger mass ratio systems. These expressions also show that, since the total angular momentum appear as a factor in $\Omega_{\rm prec}$, higher-order corrections will be larger for spin-aligned systems than for anti-aligned spins, an effect that becomes significant for large mass ratios. Note that when $\xi$ gets close to 0, it means that the system is in the transitional precession range, with the spin of the primary compensating the orbital angular momentum, and our analysis based on simple precession is not valid anymore.
+where $v = (G M \omega/c^{3})^{1/3}$ is related to the Fourier frequency $f$ by $v = (2/m')^{1/3} (GM \pi f/c^{3})^{1/3}$ for a mode $h^{\rm P}_{\ell m'}$. It is worth noting that $\epsilon_{\Psi 2}$ has an overall frequency scaling of $v^{-1}$, formally at $-0.5$PN order, which means that the relative size of this correction grows towards smaller frequencies, away from merger. Remember however that the quantities $\epsilon$ are meant to measure errors relatively to the leading order, and the opening angle of the precession cone, giving the overall normalization for precession effects in the waveform, also goes to 0 as $v$ in that limit. The amplitude error estimates $\epsilon_{A1}$, $\epsilon_{A2}$, by contrast, have the more usual behaviour of PN corrections growing towards merger. The geometric factors $(m' \cos\beta - m)$ show that mode contributions with a larger $|m-m'|$ are harder to model, again in a relative sense, but those contributions are however suppressed in amplitude (see discussion below~\eqref{eq:defprechIsum}).
 
-Note that these figures are to be understood as merely order-of-magnitude estimates, and that they rely on computing derivatives of the time-domain modulation, which can be sensitive to oscillatory features.
+The overall $\nu$ scaling indicates a better separation of timescales for larger mass ratio systems. These expressions also show that, since the total angular momentum appears as a factor in $\Omega_{\rm prec}$, higher-order corrections will be larger for spin-aligned systems than for anti-aligned spins, an effect that becomes significant for large mass ratios. Note that the regime where $\xi$ gets close to 0 corresponds to the transitional precession range~\cite{Apostolatos+94}, with the spin of the primary compensating the orbital angular momentum, and our analysis based on simple precession is not valid anymore.
 
-\SM{[this is crude anyway]}
-The previous expressions for the error estimate only aim at providing a crude order-of-magnitude picture. We now present a more complete numerical computation of these quantities for our post-merger extended precession model presented in Sec.~\ref{subsec:precmodel}, for the three examples summarized in Table.~\ref{table:precexamples}. Here and in the following we present only the $h^{\rm I}_{2 m}$ mode contributions induced by $h^{\rm P}_{22}$, knowing that the ones induced by $h^{\rm P}_{2,-2}$ can be deduced from~\eqref{} \SM{[R]}. We compute the Fourier-domain based timescales $\Tf$, $T_{A1}$ and $T_{A2}$ from the analytic derivatives of the PhenomD phase and amplitude (modified to be of class $C^{2}$). The time derivatives of the time-domain modulation are computed from an interpolating cubic spline. The results are shown in Fig.~\ref{fig:fomprec}, using the frequency at merger, shown by the vertical lines, to give an idea of the separation between the inspiral and post-merger phases. The first two cases, $++$ and $\perp\perp$, have \SM{[come back to this after having checked trajectories]} the usual behaviour of precession on a cone, with a larger opening angle for $\perp\perp$ due to the larger in-plane spin components. After merger, the case $++$ shows a much faster frame rotation than the $\perp\perp$ case, as shown by the values of $\Omega_{\rm frame}$ in Table~\ref{table:precexamples}, due to the larger remnant spin that incorporates the aligned spin components. The case $--$ is qualitatively different, with a larger variation of $\bm{J}$ in direction, and a large and varying $\beta$. Since the $\epsilon$ quantities are the magnitude of the first or second term in a Taylor series, we will take $\epsilon \sim 1$ as an indication of the breakdown of a perturbative treatment. We recall an important point about Fig.~\ref{fig:fomprec}: since the error estimates are computed on a mode-by-mode basis and normalized by the transfer function for this mode, the amplitude hierarchy between mode contributions is erased here. What is plotted is an error estimate in relative sense, and one should keep in mind that higher $|m-m'|$ modes, which we will find harder to model accurately, can be very subdominant in the final waveform.
+We can somewhat complement this picture for the post-merger precession by considering the accelerated frame rotation rate described by the model~\eqref{eq:OmegaframeQNM} and illustrated in Fig.~\ref{fig:precmodel}. We show in Fig.~\ref{fig:QNM} the dependency of the QNM frequencies $\omega_{220}^{\rm QNM}$, $\omega_{210}^{\rm QNM}$ with the final spin of the remnant black hole $\chi_{f}$, together with the ratio $\Omega_{\rm frame} / \omega^{\rm QNM}_{220}$. This ratio is characteristic of the separation of timescales, in the ringdown regime, between the phase of the modulation~\eqref{eq:wignerphasesimpleprec} and the P-frame waveform phase, and increases monotonically with $\chi_{f}$, reaching $\sim 0.4$ for $\chi_{f} \rightarrow 1$. We cannot translate readily the time-domain separation of timescales in the ringdown regime to the Fourier-domain error measures defined in~\eqref{eq:deffom}, as the time-to-frequency correspondence~\eqref{eq:deftf} does not reach times beyond the merger, as shown by Fig.~\ref{fig:tf}. However, a faster frame rotation will yield a more extended Fourier transform of the modulation~\eqref{eq:defG}, and will be more challenging to accomodate with the formalism of Sec.~\ref{sec:formalism}.
 
-The resulting magnitude of the error estimates in Fig.~\ref{fig:fomprec} is roughly in agreement with the PN-inspired computation~\ref{eq:} \SM{[R]} above for the inspiral \SM{[check if the PN is quantitatively ok -- overlay it on the plot ?]}. For the inspiral, the magnitude of the quadratic phase term $\epsilon_{\Psi 2}$ has a negative slope $v^{-1}=(Mf)^{-1/3}$ \SM{[check the slope on the figure]}, with a clear hierarchy that is due to the prefactor of $\alpha$ in the phase of the modulation, as explained above. This hierarchy is not respected for $--$. The mode $m=2$, the most important to model once the amplitudes are refactored in, is mainly in the perturbative regime, but we see that the perturbative treatment can be challenged for modes $m\leq 0$ and also for $m=1$ in the case $++$, especially for the post-merger. The amplitude corrections are found to be in the perturbative regime for all cases during the inspiral, however both the $++$ and $\perp\perp$ cases show a sharp increase of $\epsilon_{A1}$, $\epsilon_{A2}$ post-merger. The case $--$, with its small remnant spin and mild post-merger frame rotation, shows no such increase.
+To go beyond the above order-of-magnitude picture, we now present a numerical computation of the error estimates~\eqref{eq:deffom} for our post-merger extended precession model presented in Sec.~\ref{subsec:precmodel}, for the three examples summarized in Table.~\ref{tab:precexamples}. Here and in the following we consider only the $h^{\rm I}_{2 m}$ mode contributions induced by $h^{\rm P}_{22}$ for positive frequencies, knowing that the ones induced by $h^{\rm P}_{2,-2}$ for negative frequencies can be deduced using~\eqref{eq:hIlmposnegfreq}. We use analytic derivatives of the PhenomD phase and amplitude for the Fourier-domain based timescales $\Tf$, $T_{A1}$ and $T_{A2}$, and numerical derivatives for the time-domain modulation.
 
-Overall, the conclusion to be drawn of Fig.~\ref{} is that for the $++$ and $\perp\perp$ cases we expect the perturbative approach to be applicable only during the inspiral, with a possible breakdown for the post-merger phase, especially for the case $++$ with its fast post-merger frame rotation. The higher $|m-m'|$ modes are expected to be more challenging to compute accurately, including during the inspiral. To make this picture quantitative, we need a full comparison of the signals processed at different orders of approximation against a numerical Fourier transform, which will be presented in Sec.~\ref{subsec:precerror} below.
+\SM{[Describe the difference in morphology of the precession in the three cases ?]}
+%The first two cases, $++$ and $\perp\perp$, have \SM{[come back to this after having checked trajectories]} the usual behaviour of precession on a cone, with a larger opening angle for $\perp\perp$ due to the larger in-plane spin components. After merger, the case $++$, with a lerger remnant spin, displays a much faster frame rotation $\Omega_{\rm frame}$ than the other cases, as shown by Table~\ref{tab:precexamples}. The case $--$ is qualitatively different, close to the transitional precession regime, with a large and varying $\beta$ and a significant change in the direction of $\bm{J}$.
+
+The results are shown in Fig.~\ref{fig:fomprec}, using the merger frequency and the ringdown frequency, shown by the vertical lines, to give an idea of the separation between the inspiral and post-merger phases. We can take $\epsilon \sim 1$ as an order-of-magnitude indication of the breakdown of a perturbative treatment. An important point about Fig.~\ref{fig:fomprec} is that the error estimates are relative for each mode, thus higher $|m-m'|$ modes, which are found to be the hardest to model precisely, can be very subdominant in the final waveform. 
+
+The magnitude of the error estimates for $++$ and $\perp\perp$ is roughly in agreement with the PN-inspired computation~\eqref{eq:precfomPN} above for the inspiral part of the signal \SM{[check if the PN is quantitatively ok -- overlay it on the plot ?]}, with $\epsilon_{\Psi 2}$ showing a negative slope $v^{-1}=(Mf)^{-1/3}$, and with a hierarchy between modes due to the factors of $|m' \cos \beta - m|$. The case $--$ departs from the simple precession picture, and~\eqref{eq:precfomPN} does not apply. Before merger, we see that amplitude corrections are within the preturbative regime, contrarily to $\epsilon_{\Psi 2}$ that can exceed $1$ for subdominant modes in the $++$ and $\perp\perp$ cases. The amplitude corrections are found to be in the perturbative regime for all cases during the inspiral, however both the $++$ and $\perp\perp$ cases show a sharp increase of $\epsilon_{A1}$, $\epsilon_{A2}$ post-merger. The case $--$, with its small remnant spin and mild post-merger frame rotation, shows no such increase.
+
+Overall, the conclusion to be drawn of Fig.~\ref{fig:fomprec} is that for the $++$ and $\perp\perp$ cases we expect the perturbative approach to be applicable only during the inspiral, with a possible breakdown for the post-merger phase, especially for the case $++$ with its fast post-merger frame rotation. The higher $|m-m'|$ modes are expected to be more challenging for the perturbative formalism, including during the inspiral. To make this picture quantitative, we need a full comparison of the signals processed at different orders of approximation against a numerical Fourier transform, which will be presented in Sec.~\ref{subsec:precerror} below.
 
 \SM{[Pb: scaling of FOM might be dominated here by SS oscillations, notably for 2nd der. ? To check - check also geometric scaling from mode to mode]}
 
@@ -1317,7 +1321,7 @@ Overall, the conclusion to be drawn of Fig.~\ref{} is that for the $++$ and $\pe
 %  \hspace{0cm}
 %  \includegraphics[width=.32\linewidth]{plots/fom_--_A2.pdf}
   \includegraphics[width=.98\linewidth]{plots/precfom_py.pdf}
-  \caption{Error estimates of the approximation as defined in~\eqref{eq:deffom} for the precession modulations. \SM{[complete caption]}}
+  \caption{Error estimates of the approximation as defined in~\eqref{eq:deffom} for the precession modulations, for the three cases listed in Table~\ref{tab:precexamples} \SM{[complete caption]}}
   \label{fig:fomprec}
 \end{figure*}
 
@@ -1345,7 +1349,7 @@ Overall, the conclusion to be drawn of Fig.~\ref{} is that for the $++$ and $\pe
 %  \hspace{0.2cm}
 %  \includegraphics[width=.48\linewidth]{plots/trig_phase.pdf}
   \includegraphics[width=.98\linewidth]{plots/trigopoly_py.pdf}
-  \caption{Amplitude (left panel) and phase (right panel), compared to its trigonometric polynomial representation for the three cases listed in Table~\ref{table:precexamples}. The vertical lines indicate the merger frequencies. \SM{[check definition of A]}}
+  \caption{Amplitude (left panel) and phase (right panel), compared to its trigonometric polynomial representation for the three cases listed in Table~\ref{tab:precexamples}. The thick and thin vertical lines indicate the frequency of the merger and ringdown (the QNM frequency) respectively. \SM{[thin lines ?]} \SM{[check definition of A]}}
   \label{fig:trigopoly}
 \end{figure*}
 
@@ -1416,9 +1420,9 @@ In terms of performance, the implementation of~\eqref{eq:ykDFT} and~\eqref{eq:re
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsection{Error control for the Fourier-domain modulation}
-\label{subsec:errorsPrec}
+\label{subsec:precerror}
 
-We now assess the accuracy of the transfer function computation, applying the formalism of Secs.~\ref{} and \ref{} to our three examples listed in Table~\ref{table:precexamples} and comparing the result to a reference numerical computation.
+We now assess the accuracy of the transfer function computation, applying the formalism of Secs.~\ref{} and \ref{} to our three examples listed in Table~\ref{tab:precexamples} and comparing the result to a reference numerical computation.
 
 To numerically compute the transfer functions, we first have to perform an IFFT of our Fourier-domain P-frame waveform, to obtain $h^{\rm P}_{22}$ as a function of time. To mitigate the effect of the necessary tapering of the waveform when computing this numerical inverse Fourier transform, we apply a Planck-window tapering on the range $f\in 16-20 \Hz$, using a total mass of $M=20 \Msol$. \SM{[Update this to $f_{\rm min} = 10\Hz$]}. In parallel, we generate an SEOB waveform with the appropriate length in time. Both are aligned to peak at $t=0$, we build the post-merger extended modulation functions as explained in Sec.~\ref{} \SM{[R]}, and we compute the Fourier-domain modes $h^{\rm I}_{2m}$ with an FFT. The transfer functions are then computed using~\eqref{eq:defprectransfer}.
 
@@ -1561,6 +1565,8 @@ Overall, we find that all the corrections we investigated, perturbative in phase
 
 []
 
+\SM{[discuss the shortcoming of our LISA treatment for precessing signals]}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -1702,7 +1708,7 @@ where the boundaries of the sum, $k_{\rm min} = \mathrm{max}(0, m-m')$ and $k_{\
 \label{app:stencil}
 
 \begin{table}[t]
-\begin{ruledtabular}\caption{Stencil coefficients $a_{N,k}^{\epsilon}$ entering the formula~\eqref{eq:stencilfresnel}, given here for $\epsilon=1$. The case $\epsilon=-1$ is obtained by complex conjugation.}\label{table:stencil}
+\begin{ruledtabular}\caption{Stencil coefficients $a_{N,k}^{\epsilon}$ entering the formula~\eqref{eq:stencilfresnel}, given here for $\epsilon=1$. The case $\epsilon=-1$ is obtained by complex conjugation.}\label{tab:stencil}
 \begin{tabular}{c|cccccc}
 	$N \backslash k$ & $0$ & $1$ & $2$ & $3$ & $4$ & $5$ \\
 	\hline
@@ -1732,12 +1738,10 @@ The expression of the inverse of a Vandermonde matrix in terms of symmetric poly
 \begin{align}
 	a_{N,k}^{\epsilon} &= \frac{1}{\prod\limits_{\substack{q=0 \\ q\neq k}}^{N} (q^{2}-k^{2})} \sum\limits_{p=0}^{N} (i\epsilon)^{p}(2p-1)!! \nn\\ & \quad \cdot \sum\limits_{\substack{ 0 \leq j_{1} < \dots < j_{N-p} \leq N \\ j_{1}, \dots, j_{N-p} \neq k}} j_{1}^{2}\dots j_{N-p}^{2}
 \end{align}
-The two cases $\epsilon\pm 1$ correspond simply to a complex conjugation of the coefficients $a_{N,k}^{\epsilon}$. Table~\ref{table:stencil} gives the resulting complex rational values for these coefficients for $N\leq 5$.
+The two cases $\epsilon\pm 1$ correspond simply to a complex conjugation of the coefficients $a_{N,k}^{\epsilon}$. Table~\ref{tab:stencil} gives the resulting complex rational values for these coefficients for $N\leq 5$.
 
 \section{Precession in current Fourier-domain waveform models}
-\label{subsec:precpreviousapproaches}
-
-\SM{[citation O'Shaugnessy]}
+\label{app:precpreviousapproaches}
 
 In this Appendix, we give a more detailed overview of the treatment of precession in existing waveform models that generate signals directly in the Fourier domain. Our objective is not to give an exhaustive account of the various existing models, but rather to highlight how their treatment relates to ours.
 
@@ -1759,7 +1763,7 @@ While keeping implictly the same level of approximation, one can also use freque
 \ee
 When the SPA is valid for the underlying signal $h^{\rm P}_{\ell m}$, the condition $\omega(t) = \pi f$ is equivalent by definition to $t=t^{\rm SPA}_{f}$. In~\cite{LOS13}, only the inspiral phase is modelled, and only single-spin configurations, for which the system undergoes simple precession~\cite{Apostolatos+94, Kidder95}. The PhenomP model~\cite{Hannam+13} uses Euler angles computed in the limit of a small opening angle of the precession cone and at the spin-orbit level (see also~\cite{BBF11, MBBB13}).
 
-In the PhenomP model~\cite{Hannam+13}, the frequency-based transfer function~\eqref{eq:precPhenomP} is used as an effective prescription covering the whole Fourier-domain frequency band, including the merger and ringdown. Note that this procedure amounts to using PN \SM{[check acronym]} results outside of their range of validity, since in the merger-ringdown phase both the PN perturbative treatment and the SPA approximation break down. In particular, when computed as a function of time from the balance equation between emitted flux and orbital energy $\calF = -dE/dt$, the orbital $\omega^{\rm PN}(t)$ blows up and cannot be extended through merger. In practice, one finds however that the extended frequency-based expressions~\eqref{eq:precPhenomP} are mildly varying when extrapolating to higher frequencies, and this approach has been validated by comparisons to numerical relativity waveforms~\cite{Hannam+13}. \SM{[refer to PhenomPv3 in prep.]}
+In the PhenomP model~\cite{Hannam+13}, the frequency-based transfer function~\eqref{eq:precPhenomP} is used as an effective prescription covering the whole Fourier-domain frequency band, including the merger and ringdown. Note that this procedure amounts to using PN results outside of their range of validity, since in the merger-ringdown phase both the PN perturbative treatment and the SPA approximation break down. In particular, when computed as a function of time from the balance equation between emitted flux and orbital energy $\calF = -dE/dt$, the orbital $\omega^{\rm PN}(t)$ blows up and cannot be extended through merger. In practice, one finds however that the extended frequency-based expressions~\eqref{eq:precPhenomP} are mildly varying when extrapolating to higher frequencies, and this approach has been validated by comparisons to numerical relativity waveforms~\cite{Hannam+13}. \SM{[refer to PhenomPv3 in prep.]}
 
 In the SUA formalism proposed in~\cite{KCY13, KCY14}, one extends the SPA to incorporate the leading-order correction during the inspiral phase. The transfer function is then computed by evaluating the modulation on a stencil of times centered around the time-of-frequency given by the SPA, arriving at the formula~\eqref{eq:stencilfresnel} with the times $t = \tfSPA$ and $T = \TfSPA$ as defined in~\eqref{eq:deftfSPA} and~\eqref{eq:TfSPA}. As described in Sec.~\ref{sec:formalism}, our formalism reduces to the SUA when keeping only the quadratic phase correction, but the SUA is a priori limited to the inspiral phase of the signal through the definitions of the times $t^{\rm SPA}_{f}$ and $T^{\rm SPA}_{f}$. For inspiral waveforms, Ref.~\cite{KCY14} showed that this treatment improves the accuracy with respect to the 0th-order approximation.
 
