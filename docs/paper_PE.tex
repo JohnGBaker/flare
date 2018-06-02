@@ -1,0 +1,178 @@
+\documentclass[aps,showpacs,twocolumn,prd,superscriptaddress,nofootinbib]{revtex4}
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{latexsym}
+\usepackage{graphicx}
+\usepackage{bm}
+\usepackage{color}
+\usepackage{enumerate}
+\usepackage{ulem}
+
+\newcommand{\be}{\begin{equation}}
+\newcommand{\ee}{\end{equation}}
+\newcommand\ud{{\mathrm{d}}}
+\newcommand\uD{{\mathrm{D}}}
+\newcommand\calO{{\mathcal{O}}}
+\newcommand\bfx{\mathbf{x}}
+\newcommand{\ov}[1]{\overline{#1}}
+\newcommand{\ph}[1]{\phantom{#1}}
+\newcommand{\cte}{\mathrm{cte}}
+\newcommand{\nn}{\nonumber}
+\newcommand{\hatk}{\hat{k}}
+\newcommand{\Hz}{\,\mathrm{Hz}}
+\newcommand{\sinc}{\,\mathrm{sinc}}
+\newcommand{\Msol}{M_{\odot}}
+
+\begin{document}
+
+\title{Bayesian methods for black hole merger parameter estimation with LISA.}
+
+\author{John G. Baker}
+\affiliation{Gravitational Astrophysics Laboratory, NASA Goddard Space Flight Center, 8800 Greenbelt Rd., Greenbelt, MD 20771, USA}
+\author{Sylvain Marsat}
+\affiliation{Department of Physics, University of Maryland, College Park, MD 20742, USA}
+\affiliation{Gravitational Astrophysics Laboratory, NASA Goddard Space Flight Center, 8800 Greenbelt Rd., Greenbelt, MD 20771, USA}
+\affiliation{Max Planck Institute for Gravitational Physics (Albert Einstein Institute), Am M\"uhlenberg 1, Potsdam-Golm, 14476, Germany}
+
+
+\date{\today}
+
+\begin{abstract}
+
+[Abstract]
+
+\end{abstract}
+
+\pacs{
+04.70.Bw, % classical black holes
+04.80.Nn, % Gravitational wave detectors and experiments
+95.30.Sf, % relativity and gravitation
+95.55.Ym, % Gravitational radiation detectors
+97.60.Lf  % black holes (astrophysics)
+}
+
+\maketitle
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Introduction}
+\label{sec:intro}
+
+[Introduction]
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Methodology}
+\label{sec:intro}
+
+\subsection{Fast frequency domain LISA response}
+\label{sec:response}
+
+-- Geometric setting, definitions, summarize the FD response
+
+\subsection{Reduced order model for EOBNRv2 waveforms.}
+\label{sec:waveforms}
+
+-- Waveforms: EOBNRv2HMROM + PNext
+
+\subsection{Fast likelihood computation}
+\label{sec:likelihood}
+
+-- Likelihood computation: fast overlaps
+
+\subsection{Fisher matrix parameter estimation}
+\label{sec:Fisher}
+
+-- Fisher matrices computation: step self-tuning,...
+
+\subsection{Bayesian sampling}
+\label{sec:samplers}
+
+-- Bayesian samplers: Multinest, PTMCMC
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Morphology of the signals}
+\label{sec:morph}
+
+- Morphology of the response
+
+\subsection{Temporal development of SNR}
+\label{sec:timeSNR}
+
+-- SNR accumulation with time or frequency: inspiral/MRD balance across mass range
+
+\subsection{LISAframe parameters}
+\label{sec:LISAframe}
+
+-- LISA frame angles
+
+\subsection{The low-frequency limit}
+\label{sec:low-freq}
+
+-- make the connection to low-f response (2 interferometers)
+
+\subsection{A simplified likelihood model}
+\label{sec:simple-like}
+
+-- simplified response and closed-form likelihood
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Illustrating examples}
+\label{sec:examples}
+
+- Demonstration/examples
+
+\subsection{A non-degenerate case}
+\label{sec:high-M-non-deg}
+
+-- High-mass system, non-degenerate, 22 and HM + Fisher - stacked SNR contours
+eg:
+
+Case 12?
+m1,    m2,    t0,D,     phi0,i,   lam,  bet, psi
+8.89e5,1.11e5,0, 3.67e4,pi/3,pi/2,3pi/4,pi/3,pi/3
+
+Case 0
+
+-- Performance: waveform and likelihood costs, number of sampler evaluations
+
+\subsection{Stellar origin black holes}
+\label{sec:SOBH}
+
+-- SOBH system, SNR sufficient for clean analysis + Fisher - stacked SNR contours
+-- Performance: waveform and likelihood costs, number of sampler evaluations
+
+\subsection{Highlighting degeneracies}
+\label{sec:degen}
+
+- Highlighting degeneracies
+
+-- High-mass degenerate example, 22 vs HM - stacked SNR contours
+-- show degenerate waveforms
+-- simplified response and closed-form likelihood, full degeneracies
+-- (explore simplified response further: parameter maps, other off-the-shelf samplers ?)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Discussion}
+\label{sec:discussion}
+
+- Summary/conclusions
+
+
+----------------
+Other questions:
+- special orientations/sky locations ?
+- Fisher matrix qualification - explore parameter choices
+- continuously increase SNR - include on these examples
+- continuously accumulate information over time
+- full exploration of parameter space for all of the above...
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\end{document}
