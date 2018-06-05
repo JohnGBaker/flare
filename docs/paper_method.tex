@@ -608,7 +608,7 @@ In this result, the Fresnel transform $\calF^{\epsilon}_{\Tf}$ can in turn be ap
 
 In the LISA context, due to the smallness of the corrections we will only go up to $k=1$ in~\eqref{eq:transferfinal}, and in computing the remaining time derivatives in~\eqref{eq:transferfinal} we will neglect the second and higher derivatives. We will also use $F(\tau - d(\tau)) \simeq (F - d \dot{F})(\tau)$. This gives concretely:
 \begin{widetext}
-\begin{subequations}
+\begin{subequations}\label{eq:summaryNAd}
 \begin{align}
 	\{N,A:0,d:0\}&: \; \calT(f) = \calF^{N}_{\Tf, \epsilon} \left[ F e^{-2i\pi f d} \right] (t_{f}) \,, \\
 	\{N,A:1,d:0\}&: \; \calT(f) = \calF^{N}_{\Tf, \epsilon} \left[ \left(F - i T_{A1} \left( \dot{F} - 2i\pi f \dot{d}\right) \right) e^{-2i\pi f d} \right] (t_{f}) \,, \\
@@ -619,7 +619,7 @@ In the LISA context, due to the smallness of the corrections we will only go up 
 \end{widetext}
 
 In the context of precessing binaries, the delays are absent and we will go up to $k=2$ in~\eqref{eq:transferfinal}. The tranfer function at different orders of approximation will be:
-\begin{subequations}
+\begin{subequations}\label{eq:summaryNA}
 \begin{align}
 	\{N,A:0\}&: \; \calT(f) = \calF^{N}_{\Tf, \epsilon} \left[ F \right] (t_{f}) \,, \\
 	\{N,A:1\}&: \; \calT(f) = \calF^{N}_{\Tf, \epsilon} \left[ F - i T_{A1} \dot{F} \right] (t_{f}) \,, \\
@@ -1039,6 +1039,11 @@ such that the complete Fourier-domain inertial-frame waveform will be given as t
 \be\label{eq:defprechIsum}
 	\tilde{h}_{\ell m}^{\rm I} (f) = \sum\limits_{m'=-\ell}^{\ell} \calT^{\ell}_{mm'}(f) \tilde{h}_{\ell m'}^{\rm P} (f) \,.
 \ee
+In the notations that we used in Sec.~\ref{sec:formalism}, in the absence delays, we wish to compute the convolutions
+\be\label{eq:precconvolution}
+	\tilde{s} (f) = \int df' \; \tilde{F}(f') \tilde{h} (f-f') \,,
+\ee
+with $\tilde{s}(f)$ being one mode contribution to $\tilde{h}_{\ell m}^{\rm I} (f)$ in~\eqref{eq:defprechIsum}, $\tilde{h}$ being one of the P-frame modes $\tilde{h}_{\ell m'}^{\rm P} (f)$, and the modulation $F(t)$ being one of the time-dependent Wigner matrices $\calD^{\ell *}_{mm'}$.
 
 An important qualitative observation is that, for small to moderate opening angles, the modulation functions show a clear hierarchy in amplitude. This situation is quite generic, since large misalignments between $\bm{J}$ and $\bm{\ell}$ can only be reached with large spins and large mass ratios. From the explicit expression~\eqref{eq:defWignerdapp}, one can see that $d^{\ell}_{mm'}(\beta)$ is greatly suppressed in the limit $\beta \rightarrow 0$ when increasing $|m-m'|$. Intuitively, this means that, in the limit of a small misalignment between frames, the rotation produces mainly mode contributions with the same mode number. Additionally, when $\beta$ is constant or slowly varying, \eqref{eq:gammadot} gives $\gamma \simeq - \alpha \cos\beta$, and we have in that case
 \be\label{eq:wignerphasesimpleprec}
@@ -1085,14 +1090,25 @@ This means that such a model is required to cover only the positive frequency ba
 	\tilde{h}^{\rm I}_{\ell m}(f) &= \sum_{m'>0} (-1)^{\ell+m+m'} \calT^{\ell *}_{-m,m'}(-f) \tilde{h}^{\rm P *}_{\ell, m'}(-f) \text{ for } f<0 \,.
 \end{align}
 
-Further simplifications occur when including only the dominant harmonics $h^{\rm P}_{22}$, $h^{\rm P}_{2,-2}$ in the precessing-frame waveform (as is done for instance in PhenomP~\cite{Hannam+13}, as well as in our toy model~\ref{subsec:precmodel}), we have in this case for $f<0$ \SM{[all $f$ ?]}
-\begin{subequations}
+Further simplifications occur when including only the dominant harmonics $h^{\rm P}_{22}$, $h^{\rm P}_{2,-2}$ in the precessing-frame waveform (as is done for instance in PhenomP~\cite{Hannam+13}, as well as in our toy model~\ref{subsec:precmodel}), we have in this case for $f<0$
+\be
+	\calT^{2}_{m,-2}(f) = (-1)^{m} \calT^{2 *}_{-m,2}(-f) \,,
+\ee
+which for both $f>0$ and $f<0$ translates into
+\be\label{eq:symmetryhIfor22only}
+	\tilde{h}^{\rm I}_{2 m}(f) = (-1)^{m} \tilde{h}^{\rm I *}_{2,-m}(-f) \,.
+\ee
+When reconstructing the polarizations $h_{+},h_{\times}$ according to~\eqref{eq:hpcfrommodes}, we have in this case
+\be
+	\tilde{h}_{+,\times} (f) = \sum_{m = -2}^{2} L^{+,\times}_{2 m} \tilde{h}^{\rm I}_{2 m}(f) \,,
+\ee
+where we defined
 \begin{align}
-	\calT^{2}_{m,-2}(f) &= (-1)^{m} \calT^{2 *}_{-m,2}(-f) \,, \\
-	\tilde{h}^{\rm I}_{2 m}(f) &= (-1)^{m} \tilde{h}^{\rm I *}_{2,-m}(-f) \,. \label{eq:symmetryhIfor22only}
+	L^{+}_{\ell m} &\equiv \frac{1}{2} \left( {}_{-2}Y_{\ell m} + (-1)^{m} {}_{-2}Y_{\ell, -m}^{*} \right) \,, \nn\\
+	L^{\times}_{\ell m} &\equiv \frac{i}{2} \left( {}_{-2}Y_{\ell m} - (-1)^{m} {}_{-2}Y_{\ell, -m}^{*} \right) \,.
 \end{align}
-\end{subequations}
-With $m' = 2$ in the approximate phase given in Eq.~\eqref{eq:wignerphasesimpleprec}, the coefficient of $\alpha$ is close to $0$ for small $\beta$ for $m=2$, and increasingly positive when going down from $m=1$ to $m=-2$. In our Fourier convention~\eqref{eq:defFT}, the Fourier transforms $\tilde{F}$ thus have most of their support on negative frequencies. This means that the support of the convolution integral~\eqref{eq:FDkernel} extends to the right side for $\tilde{h}$, i.e. $f-f' > f$. This point will become important when considering the high-frequency part of the signal in Sec.~\ref{subsec:trigopoly}.
+
+Finally, we note that with the restriction to $\ell = 2$ and $m' = 2$, in the approximate phase given in Eq.~\eqref{eq:wignerphasesimpleprec}, the coefficient of $\alpha$ is close to $0$ for small $\beta$ for $m=2$, and increasingly positive when going down from $m=1$ to $m=-2$. In our Fourier convention~\eqref{eq:defFT}, the Fourier transforms $\tilde{F}$ thus have most of their support on negative frequencies. This means that the support of the convolution integral~\eqref{eq:precconvolution} extends to the right side for $\tilde{h}$, i.e. $f-f' > f$. This point will become important when considering the high-frequency part of the signal in Sec.~\ref{subsec:trigopoly}. Note, however, that this statement might not be true anymore when including more modes in our model.
 
 \subsection{Simplified model for precessing IMR waveforms}
 \label{subsec:precmodel}
@@ -1286,20 +1302,18 @@ where $v = (G M \omega/c^{3})^{1/3}$ is related to the Fourier frequency $f$ by 
 
 The overall $\nu$ scaling indicates a better separation of timescales for larger mass ratio systems. These expressions also show that, since the total angular momentum appears as a factor in $\Omega_{\rm prec}$, higher-order corrections will be larger for spin-aligned systems than for anti-aligned spins, an effect that becomes significant for large mass ratios. Note that the regime where $\xi$ gets close to 0 corresponds to the transitional precession range~\cite{Apostolatos+94}, with the spin of the primary compensating the orbital angular momentum, and our analysis based on simple precession is not valid anymore.
 
+\SM{[Describe the difference in morphology of the precession in the three cases ?]}
 We can somewhat complement this picture for the post-merger precession by considering the accelerated frame rotation rate described by the model~\eqref{eq:OmegaframeQNM} and illustrated in Fig.~\ref{fig:precmodel}. We show in Fig.~\ref{fig:QNM} the dependency of the QNM frequencies $\omega_{220}^{\rm QNM}$, $\omega_{210}^{\rm QNM}$ with the final spin of the remnant black hole $\chi_{f}$, together with the ratio $\Omega_{\rm frame} / \omega^{\rm QNM}_{220}$. This ratio is characteristic of the separation of timescales, in the ringdown regime, between the phase of the modulation~\eqref{eq:wignerphasesimpleprec} and the P-frame waveform phase, and increases monotonically with $\chi_{f}$, reaching $\sim 0.4$ for $\chi_{f} \rightarrow 1$. We cannot translate readily the time-domain separation of timescales in the ringdown regime to the Fourier-domain error measures defined in~\eqref{eq:deffom}, as the time-to-frequency correspondence~\eqref{eq:deftf} does not reach times beyond the merger, as shown by Fig.~\ref{fig:tf}. However, a faster frame rotation will yield a more extended Fourier transform of the modulation~\eqref{eq:defG}, and will be more challenging to accomodate with the formalism of Sec.~\ref{sec:formalism}.
 
 To go beyond the above order-of-magnitude picture, we now present a numerical computation of the error estimates~\eqref{eq:deffom} for our post-merger extended precession model presented in Sec.~\ref{subsec:precmodel}, for the three examples summarized in Table.~\ref{tab:precexamples}. Here and in the following we consider only the $h^{\rm I}_{2 m}$ mode contributions induced by $h^{\rm P}_{22}$ for positive frequencies, knowing that the ones induced by $h^{\rm P}_{2,-2}$ for negative frequencies can be deduced using~\eqref{eq:hIlmposnegfreq}. We use analytic derivatives of the PhenomD phase and amplitude for the Fourier-domain based timescales $\Tf$, $T_{A1}$ and $T_{A2}$, and numerical derivatives for the time-domain modulation.
 
-\SM{[Describe the difference in morphology of the precession in the three cases ?]}
 %The first two cases, $++$ and $\perp\perp$, have \SM{[come back to this after having checked trajectories]} the usual behaviour of precession on a cone, with a larger opening angle for $\perp\perp$ due to the larger in-plane spin components. After merger, the case $++$, with a lerger remnant spin, displays a much faster frame rotation $\Omega_{\rm frame}$ than the other cases, as shown by Table~\ref{tab:precexamples}. The case $--$ is qualitatively different, close to the transitional precession regime, with a large and varying $\beta$ and a significant change in the direction of $\bm{J}$.
 
 The results are shown in Fig.~\ref{fig:fomprec}, using the merger frequency and the ringdown frequency, shown by the vertical lines, to give an idea of the separation between the inspiral and post-merger phases. We can take $\epsilon \sim 1$ as an order-of-magnitude indication of the breakdown of a perturbative treatment. An important point about Fig.~\ref{fig:fomprec} is that the error estimates are relative for each mode, thus higher $|m-m'|$ modes, which are found to be the hardest to model precisely, can be very subdominant in the final waveform. 
 
-The magnitude of the error estimates for $++$ and $\perp\perp$ is roughly in agreement with the PN-inspired computation~\eqref{eq:precfomPN} above for the inspiral part of the signal \SM{[check if the PN is quantitatively ok -- overlay it on the plot ?]}, with $\epsilon_{\Psi 2}$ showing a negative slope $v^{-1}=(Mf)^{-1/3}$, and with a hierarchy between modes due to the factors of $|m' \cos \beta - m|$. The case $--$ departs from the simple precession picture, and~\eqref{eq:precfomPN} does not apply. Before merger, we see that amplitude corrections are within the preturbative regime, contrarily to $\epsilon_{\Psi 2}$ that can exceed $1$ for subdominant modes in the $++$ and $\perp\perp$ cases. The amplitude corrections are found to be in the perturbative regime for all cases during the inspiral, however both the $++$ and $\perp\perp$ cases show a sharp increase of $\epsilon_{A1}$, $\epsilon_{A2}$ post-merger. The case $--$, with its small remnant spin and mild post-merger frame rotation, shows no such increase.
+The magnitude of the error estimates for $++$ and $\perp\perp$ is roughly in agreement with the PN-inspired computation~\eqref{eq:precfomPN} above for the inspiral part of the signal \SM{[check if the PN is quantitatively ok -- overlay it on the plot ?]} \SM{[Pb: scaling of FOM might be dominated here by SS oscillations, notably for 2nd der. ? To check - check also geometric scaling from mode to mode]}, with $\epsilon_{\Psi 2}$ showing a negative slope $v^{-1}=(Mf)^{-1/3}$, and with a hierarchy between modes due to the factors of $|m' \cos \beta - m|$. The case $--$ departs from the simple precession picture, and~\eqref{eq:precfomPN} does not apply. Before merger, we see that amplitude corrections are within the preturbative regime, contrarily to $\epsilon_{\Psi 2}$ that can exceed $1$ for subdominant modes in the $++$ and $\perp\perp$ cases. The amplitude corrections are found to be in the perturbative regime for all cases during the inspiral, however both the $++$ and $\perp\perp$ cases show a sharp increase of $\epsilon_{A1}$, $\epsilon_{A2}$ post-merger. The case $--$, with its small remnant spin and mild post-merger frame rotation, shows no such increase.
 
 Overall, the conclusion to be drawn of Fig.~\ref{fig:fomprec} is that for the $++$ and $\perp\perp$ cases we expect the perturbative approach to be applicable only during the inspiral, with a possible breakdown for the post-merger phase, especially for the case $++$ with its fast post-merger frame rotation. The higher $|m-m'|$ modes are expected to be more challenging for the perturbative formalism, including during the inspiral. To make this picture quantitative, we need a full comparison of the signals processed at different orders of approximation against a numerical Fourier transform, which will be presented in Sec.~\ref{subsec:precerror} below.
-
-\SM{[Pb: scaling of FOM might be dominated here by SS oscillations, notably for 2nd der. ? To check - check also geometric scaling from mode to mode]}
 
 \begin{figure*}
   \centering
@@ -1321,7 +1335,7 @@ Overall, the conclusion to be drawn of Fig.~\ref{fig:fomprec} is that for the $+
 %  \hspace{0cm}
 %  \includegraphics[width=.32\linewidth]{plots/fom_--_A2.pdf}
   \includegraphics[width=.98\linewidth]{plots/precfom_py.pdf}
-  \caption{Error estimates of the approximation as defined in~\eqref{eq:deffom} for the precession modulations, for the three cases listed in Table~\ref{tab:precexamples} \SM{[complete caption]}}
+  \caption{Error estimates of the approximation as defined in~\eqref{eq:deffom} for the precession modulations, for the three cases $++$, $\perp\perp$ and $--$ listed in Table~\ref{tab:precexamples}. The thick and thin vertical lines show, respectively, the merger frequency and the asymptotic ringdown frequency. The colors correspond to different values of $m$ in $\calT^{2}_{m 2}$ as defined in~\eqref{eq:defprectransfer}. We show the three error estimates $\epsilon_{\Psi 2}$, $\epsilon_{A1}$, $\epsilon_{A2}$ defined in~\eqref{eq:deffom}, and the range $\epsilon \gtrsim 1$ indicates a breakdown of the formalism of Sec.~\ref{sec:formalism}. \SM{[overlay PN simple precession ?]}}
   \label{fig:fomprec}
 \end{figure*}
 
@@ -1349,7 +1363,7 @@ Overall, the conclusion to be drawn of Fig.~\ref{fig:fomprec} is that for the $+
 %  \hspace{0.2cm}
 %  \includegraphics[width=.48\linewidth]{plots/trig_phase.pdf}
   \includegraphics[width=.98\linewidth]{plots/trigopoly_py.pdf}
-  \caption{Amplitude (left panel) and phase (right panel), compared to its trigonometric polynomial representation for the three cases listed in Table~\ref{tab:precexamples}. The thick and thin vertical lines indicate the frequency of the merger and ringdown (the QNM frequency) respectively. \SM{[thin lines ?]} \SM{[check definition of A]}}
+  \caption{Amplitude (left panel) and phase (right panel), compared to its trigonometric polynomial representation for the three cases listed in Table~\ref{tab:precexamples}. The thick and thin vertical lines indicate the frequency of the merger and ringdown (the QNM frequency) respectively. The continuous line show the target signal $\tilde{h}(f)$, while the dashed line shows the artificially symmetrized trigonometric polynomial~\eqref{eq:hsymtrigo}. The dots show the discrete samples entering~\eqref{eq:ykDFTprec}. The lower panels show the amplitude and phase residuals of~\eqref{eq:hsymtrigo} compared to the oringial $\tilde{h}(f)$.}
   \label{fig:trigopoly}
 \end{figure*}
 
@@ -1359,13 +1373,15 @@ Overall, the conclusion to be drawn of Fig.~\ref{fig:fomprec} is that for the $+
 
 \SM{[expand motivation: sharp feature TD $\rightarrow$ smooth in FD $\rightarrow$ hope to have a cheap trigo representation of FD merger range]}
 
-As will be shown by Fig.~\ref{} below, although including higher-order amplitude corrections does capture some effects near merger, it is not sufficiently accurate and seems to be too sensitive to the details of the evolution of the modulation $F(t)$ in the merger region. Motivated by this shortcoming of the Taylor-like expansion approach, here we investigate an alternative way of handling the merger-ringdown part of the signal.
+As shown by Fig.~\ref{fig:fomprec}, the faster evolution of the modulation functions in the post-merger phase and the resulting weaker separation of timescales can be expected to be challenging for the perturbative formalism layed out in Sec.~\ref{sec:formalism}. Motivated by this forecasted shortcoming of the Taylor-like expansion approach, here we investigate an alternative way of handling the merger-ringdown part of the signal.
 
-Thanks to the separation of timescales between the precessional timescale and the orbital timescale, for sufficiently high frequencies the convolution~\eqref{eq:convolution} will have a support that will be entirely comprised in the high-frequency part of the signal $\tilde{h}(f)$, which is rather featureless and slowly varying as a function of $f$. Taking advantage of this smoothness, we will adopt a trigonometric polynomial representation for $\tilde{h}(f)$. For frequencies high enough that the support of the convolution~\eqref{eq:convolution} does not extend beyond the range covered by this trigonometric representation, we will be able to write the result directly as a Discrete Fourier Transform (DFT) with a limited number of samples.
+In the correspondence between the time and Fourier domain, sharp features in the time domain map to extended features in the Fourier domain, and vice versa. The merger and ringdown part of the Fourier-domain signal extends over a wide range of frequencies, while it corresponds to a short interval of times, much shorter than the inspiral phase. One approach would be to separate the waveform between the inspiral and merger phase, build a Fourier-domain model for the inspiral part only, to which the formalism of Sec.~\ref{sec:formalism} could be applied, while the merger and ringdown part could be handled by a direct DFT \SM{[acronym]}, which would be a cheap operation on a limited range in time. Although this approach should be the most robust, here we will use an alternative, simpler to implement and keeping the setting of a Fourier-domain precessing-frame waveform combined with a time-domain precession modulation.
 
-We consider the high-frequency part of the signal above some frequency $f_{0}$, above which the signal has limited amplitude and phase evolution, up to some maximal frequency $f_{\rm max}$ where the Fourier-domain amplitude of the signal has decayed to a negligible level. In practice, we define $f_{\rm knee}$ as the peak of $f^{2}A(f)$, representing the onset of the decay in amplitude, and roughly corresponding to $\omega_{22}^{\rm QNM}/\pi$. We set $f_{0}\equiv 2/3f_{\rm knee}$, which is close to the merger frequency, and $f_{\rm max}$ is chosen so that the amplitude is $10^{-4}$ of the amplitude at $f_{\rm knee}$. We also eliminate a constant and a linear term in the phase by choosing another frequency central to the high-frequency range we want to represent, which we take to be $f_{p} = f_{\rm knee}^{2/3} f_{\rm max}^{1/3}$ with corresponding time $t_{p}\equiv \tf(f_{p})$. Note that the method should only be weakly sensitive to the precise choice of $f_{p}$ and $t_{p}$.
+As argued in Sec.~\ref{subsec:precdef}, the support of the convolution~\eqref{eq:precconvolution} will be mainly one-sided towards the high-frequency part of $\tilde{h}(f)$, which is featureless and slowly varying as a function of $f$. Taking advantage of this, we will adopt a one-sided trigonometric polynomial representation for $\tilde{h}(f)$. For frequencies high enough that the support of the convolution~\eqref{eq:precconvolution} does not extend beyond the range covered by this trigonometric representation, the result will be obtained directly as a DFT \SM{[acronym]} with a limited number of samples. The limitation to the high-frequency range is crucial here: the Fourier-domain amplitude and phase diverge as $f^{-7/6}$ and $f^{-5/3}$ respectively for $f \rightarrow 0$, and our procedure would require a much finer sampling to cover part of the inspiral, going back to being equivalent to an inverse DFT of the full signal if we were to cover all frequencies.
 
-Additionally, we taper the amplitude to artificially flatten the amplitude at $f_{0}$, at the price of introducing a deviation from the amplitude of the original signal. This tapering is built in practice as the discrete integral of a cosine window function on just the first two samples. We taper to 0 the last three samples before $f_{\rm max}$. To ensure good continuity properties, we perform an artificial symmetrization to a fictitious range $f\in [f_{0} - (f_{\rm max} - f_{0}), f_{0}]$, by imposing symmetric amplitudes and phases about $f_{0}$. Defining $\Delta f \equiv 2 (f_{\rm max} - f_{0})$, we write
+We consider the high-frequency part of the signal above some frequency $f_{0}$, above which the signal has limited amplitude and phase evolution, up to some maximal frequency $f_{\rm max}$ where the Fourier-domain amplitude of the signal has decayed to a negligible level. In practice, we define $f_{\rm knee}$ as the peak of $f^{2}A(f)$, representing the onset of the decay in amplitude, and roughly corresponding to $\omega_{22}^{\rm QNM}/\pi$. We set $f_{0}\equiv 2/3f_{\rm knee}$, which is close in practice to the merger frequency, and $f_{\rm max}$ is chosen so that the amplitude is $10^{-4}$ of the amplitude at $f_{\rm knee}$. We also eliminate a constant and a linear term in the phase by choosing another frequency central to the high-frequency range we want to represent, which we take to be $f_{p} = f_{\rm knee}^{2/3} f_{\rm max}^{1/3}$ with corresponding time $t_{p}\equiv \tf(f_{p})$. Note that the method should only be weakly sensitive to the precise choice of $f_{p}$ and $t_{p}$.
+
+Instead of tapering the signal to $0$ at $f_{0}$, to limit the deviation from the original signal we take advantage of the one-sidedness and only flatten the amplitude\footnote{In practice, this is implemented as the discrete integral of a cosine window function on just the first two samples. We also taper to 0 the last three samples before $f_{\rm max}$, and $0$-pad by a factor of 2.}, and artificially symmetrize the signal. To ensure continuity, this artificial symmetrization to a fictitious range $f\in [f_{0} - (f_{\rm max} - f_{0}), f_{0}]$ is done by imposing symmetric amplitudes and phases about $f_{0}$. Defining $\Delta f \equiv 2 (f_{\rm max} - f_{0})$, we write
 \begin{widetext}
 \be\label{eq:defhsym}
 	\tilde{h}_{\rm sym}(f) = 
@@ -1376,72 +1392,53 @@ Additionally, we taper the amplitude to artificially flatten the amplitude at $f
 \ee
 \end{widetext}
 
-Next, we build a a trigonometric polynomial representation of $\tilde{h}_{\rm sym }$. This construction is intimately related to the DFT, but we recall it for completeness. For a periodic function $F(x)$ defined on $x\in [x_{0}, x_{0} + \Delta x]$, and represented by $N$ samples $x_{j} = \ov{x} + j \Delta x/N$ (with $N$ chosen to satisfy the Nyquist criterion \SM{[historically should be called Shannon ?]}), we can build a trigonometric interpolant $P(x)$ as
-\be
-	P(x) = \sum\limits_{k=-M}^{+M} c_{k} e^{2i\pi k \frac{x-x_{0}}{\Delta x}}
-\ee
-that will satisfy the system $P(x_{j}) = F(x_{j})$ for $j=0,\dots, N-1$. Here we set $M=N/2$ (assuming N is even). The coefficients $c_{k}$ are related to the coefficients of the inverse DFT of the series for $F$. If we set $\omega \equiv e^{2i\pi/N}$ and define
-\be
-	y_{k} = \frac{1}{N} \sum\limits_{j=0}^{N-1} F(x_{j}) \omega^{jk} \,,
-\ee
-which is the expression of the inverse DFT in our sign convention~\eqref{eq:defFT}, the coefficients $c_{k}$ are given by \SM{[move generic trigopoly things to the appendix, as it is common with comb approach for LISA]}
-\begin{align}\label{eq:ckyk}
-	c_{k} &= y_{k} \text{ for } k=0,\dots, M-1 \,, \nn\\
-	c_{k} &= y_{k+N} \text{ for } k=-M+1,\dots, -1 \,, \nn\\
-	c_{M} &= c_{-M} = \frac{y_{M}}{2} \,,
-\end{align}
-where the condition $c_{M} = c_{-M}$ is an arbitrary condition enforced to match the number of degrees of freedom. In practice, we also 0-pad by a factor of 2 to high frequencies. Fig~\ref{fig:convolsymmetrized} shows both the original high-frequency part of the signal and its reconstruction as a trigonometric polynomial.
-
-Now, assuming that we wish to compute~\eqref{eq:convolution} for a frequency $f$ such that the extent of the convolution does not extend beyond $[f_{0}, 2f_{\rm max} - f_{0}]$, we can approximate
+Next, we build a a trigonometric polynomial representation of $\tilde{h}_{\rm sym}$, a construction intimately related to the DFT, that we recall in App.~\ref{app:notation}. Over the frequency range $f\in [f_{0}, 2f_{\rm max} - f_{0}]$, we can approximate
 \be\label{eq:hsymtrigo}
-	\tilde{h}_{\rm sym } (f) \simeq \sum\limits_{k=-M}^{+M} (-1)^{k} c_{k} e^{2i\pi k \frac{f-f_{0}}{\Delta f}} \,,
+	\tilde{h}(f) \simeq \tilde{h}_{\rm sym } (f) \simeq \sum\limits_{k=-M}^{+M} (-1)^{k} c_{k} e^{2i\pi k \frac{f-f_{0}}{\Delta f}} \,,
 \ee
 where the factor $(-1)^{k}$ comes from the fact that $f_{0}$ is here at the center of the interval. The coefficients $c_{k}$ are built following the rules~\eqref{eq:ckyk} from the inverse DFT coefficients
-\be\label{eq:ykDFT}
+\be\label{eq:ykDFTprec}
 	y_{k} = \frac{1}{N} \sum\limits_{j=0}^{N-1} \tilde{h}_{\rm sym}\left( f_{0} + \frac{2j - N}{N} \Delta f \right) \omega^{jk} \,.
 \ee
-When inserting this representation~\eqref{eq:defhsym} and~\eqref{eq:hsymtrigo} into~\eqref{eq:convolution}, we obtain
+Taking the point of view of an interpolation problem, Fig~\ref{fig:trigopoly} shows the accuracy of this representation of the high-frequency part of the signal, by comparing the orginal $\tilde{h}(f)$ to its  trigonometric-polynomial representation~\eqref{eq:hsymtrigo}, for the three cases listed in Table~\ref{tab:precexamples}. We see that we can achieve a good agreement already for 32 samples (128 counting the symmetrization and 0-padding) \SM{[check this number]}. Errors in the phase $\Psi$ grow towards high frequencies because they are essentially errors in a relative sense, and amplitudes are decaying in this region.
+
+The crucial point in this approach is that the convolution integral in~\eqref{eq:precconvolution} has support mainly on $f'<0$, as discussed in Sec.~\ref{subsec:precdef}, which means that when we try to compute the transfer function $\calT(f)$ at a given frequency $f$, we only need the trigonometric-polynomial representation~\eqref{eq:hsymtrigo} to be accurate for frequencies $>f$ in Fig.~\ref{fig:trigopoly}. Thus, the trigonometric representation of $\tilde{h}(f)$ can be used to compute the convolution almost all the way down to $f_{0}$, effects of the tapering aside. However, this statement is tied to our restriction to the $22$-mode, and extending the method to a precessing-frame waveform that includes more modes $h^{\rm P}_{\ell m}$ will require care.
+
+When inserting this representation~\eqref{eq:defhsym} and~\eqref{eq:hsymtrigo} into~\eqref{eq:precconvolution}, we obtain
 \begin{align}\label{eq:resultdirectconvol}
 	\tilde{s}(f) &= e^{-i \Psi(f_{0})} e^{2i\pi (f-f_{0}) t_{p}} \nn\\
 	& \qquad \cdot\sum\limits_{k=-M}^{+M} (-1)^{k} c_{k} e^{2i\pi k \frac{f-f_{0}}{\Delta f}} F(t_{p} + k\delta t) \,, 
 \end{align}
-where we defined the time sampling $\delta t \equiv 1/\Delta f$. We see that we are left with a DFT-like expression to compute from $N+1$ time samples of the modulation function $F$, centered around $t_{p}$.
+where we defined the time sampling $\delta t \equiv 1/\Delta f$. We see that we are left with a DFT-like expression to compute from $N+1$ time samples of the modulation function $F$, centered around $t_{p}$. We see that, apart from the conditioning described above with the artificial symmetrization, this is analogous to a DFT of the product of the modulation with the time-domain signal obtained through an inverse DFT. 
 
-The crucial point in this approach is that the convolution integral in~\eqref{eq:convolution} has support mainly on $f'<0$, which means to the right of $f$ in Fig.~\ref{fig:trigopoly} as discussed in Sec.~\ref{subsec:} \SM{[R]}. This means that the trigonometric representation of $\tilde{h}(f)$ can be used to compute the convolution almost all the way down to $f_{0}$, effects of the tapering aside.
-
-In terms of performance, the implementation of~\eqref{eq:ykDFT} and~\eqref{eq:resultdirectconvol} above is expected to have a very reasonable cost. We obtained results with a good accuracy, as shown in Fig.~\ref{fig:trigopoly}, by including $M=64$ samples ($32$ useful samples before 0-padding, $N=128$ samples in total for the artificially symmetrized signal). The calculation described here is done only once for a given waveform and modulation function. The number of samples is of the same order of magnitude as the number of (logarithmically-spaced) frequency samples used to represent the Fourier-domain waveform with its amplitude and phase in the first place, thus the cost is comparable to the Taylor-like approach presented in Sec.~\ref{sec:quadphasedelay} \SM{[R]}.
-
-\SM{[update performance - plots were made with double number of points]}
-
-\SM{[explain what this all means translated in terms of sampling in the time-domain -- better relate this approach to simply IFFT]}
-
-\SM{[for plot illustrating reconstruction trigo of amplitude : what normalization to pick for A FD ?]}
+In terms of computational performance, the implementation of this approach is expected to have a reasonable cost. In the following, we will use $M=64$ samples ($32$ useful samples before 0-padding, $N=128$ samples in total for the artificially symmetrized signal). The computation of~\eqref{eq:ykDFTprec} and~\eqref{eq:resultdirectconvol} amounts to two DFT operations, implemented through an FFT/IFFT, and is done only once for a given waveform and modulation function. The number of samples is of the same order of magnitude as the one required to represent the Fourier-domain waveform with an interpolating cubic spline for its amplitude and phase (a few hundreds for the full frequency band, see e.g~\cite{Puerrer14}), thus the cost should be comparable to the Taylor-like approach presented in Sec.~\ref{subsec:executivesummary}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsection{Error control for the Fourier-domain modulation}
 \label{subsec:precerror}
 
-We now assess the accuracy of the transfer function computation, applying the formalism of Secs.~\ref{} and \ref{} to our three examples listed in Table~\ref{tab:precexamples} and comparing the result to a reference numerical computation.
+\SM{[update to $10 M_{\odot}$ and $10\mathrm{Hz}$ ?]}
 
-To numerically compute the transfer functions, we first have to perform an IFFT of our Fourier-domain P-frame waveform, to obtain $h^{\rm P}_{22}$ as a function of time. To mitigate the effect of the necessary tapering of the waveform when computing this numerical inverse Fourier transform, we apply a Planck-window tapering on the range $f\in 16-20 \Hz$, using a total mass of $M=20 \Msol$. \SM{[Update this to $f_{\rm min} = 10\Hz$]}. In parallel, we generate an SEOB waveform with the appropriate length in time. Both are aligned to peak at $t=0$, we build the post-merger extended modulation functions as explained in Sec.~\ref{} \SM{[R]}, and we compute the Fourier-domain modes $h^{\rm I}_{2m}$ with an FFT. The transfer functions are then computed using~\eqref{eq:defprectransfer}.
+We now assess the accuracy of the transfer function computation, applying the formalism of Secs.~\ref{subsec:executivesummary} and~\ref{subsec:trigopoly} to the three examples listed in Table~\ref{tab:precexamples}, and comparing the result to a reference numerical computation.
 
-In the following, we will either present the errors obtained with the formalism of Sec.~\ref{sec:formalism} applied to the whole frequency band, including the merger and ringdown part of the signal, or cover the high-frequency range with the convolution treatment of Sec.~\ref{subsec:trigopoly}, with a Planckian window on $Mf\in [Mf_{0}, Mf_{\rm knee}]$ for a smooth transition between the two formalisms.
+To numerically compute the reference transfer functions, we first have to perform an IFFT of our Fourier-domain P-frame waveform, to obtain $h^{\rm P}_{22}$ as a function of time. To mitigate the effect of the necessary tapering of the waveform when computing this numerical inverse Fourier transform, we apply a Planck-window tapering on the range $f\in 16-20 \Hz$ for a total mass of $M=20 \Msol$. In parallel, we generate an SEOB waveform with the appropriate length in time. Both are aligned to peak at $t=0$, we build the post-merger extended modulation functions as explained in Sec.~\ref{subsec:precmodel}, compute the inertial-frame modes $h^{\rm I}_{2m}$ following~\eqref{eq:wignerrot} before computing their Fourier-domain counterparts $\tilde{h}^{\rm I}_{2m}$ with an FFT. The Fourier-domain transfer functions are then computed using~\eqref{eq:defprectransfer}.
 
-The figures Fig.~\ref{fig:precerrors++}, Fig.~\ref{fig:precerrorspp} and Fig.~\ref{fig:precerrors--} display three successive approximations: $\{\Psi:0,A:0\}$, which is simply the leading-order transfer function~\eqref{eq:transferlocal}, ignoring all the corrections; $\{\Psi:2,A:2\}$, which incorporates both the phase corrections~\eqref{eq:Fresnelstencil}, using a stencil size $N=3$, and the amplitude corrections up to second order in~\eqref{eq:transferfinal}; and $\{\Psi:2,A:2,\text{conv}\}$, which is the same as the previous for the inspiral but uses the convolution formalism of Sec.~\ref{}. They show the Fourier-domain amplitude for each of the modes, both exact and from the reconstruction, the relative errors in amplitude, and the errors in phase. The errors are given in a relative sense, and the amplitude allows to visualize the mode hierarchy, and give an idea of how much the relative errors matter in an absolute sense.
+The figures Fig.~\ref{fig:precerrors++}, Fig.~\ref{fig:precerrorspp} and Fig.~\ref{fig:precerrors--} show the result for the cases $++$, $\perp\perp$ and $--$ of Table~\ref{tab:precexamples} at three successive approximations, following the notation of~\eqref{eq:summaryNA}: $\{N:0,A:0, \mathrm{No \; Conv.}\}$, which is simply the leading-order transfer function~\eqref{eq:transferlocal}, ignoring all the corrections; $\{N:3,A:2, \mathrm{No \; Conv.}\}$, which incorporates both the phase corrections~\eqref{eq:stencilfresnel}, using a stencil size $N=3$, and the amplitude corrections up to second order in~\eqref{eq:summaryNA}; and $\{\Psi:2,A:2,\text{conv}\}$, which is the same as the previous for the inspiral but uses the convolution formalism of Sec.~\ref{subsec:trigopoly} to cover the high frequency range, with a smooth transition in the shaded range. The panels show the Fourier-domain amplitude for each of the modes, both exact and from the reconstruction, the relative errors in amplitude, and the errors in phase. The errors here are relative to each mode, not to the dominant mode. Thus, the amplitude plots importantly allow to visualize the mode hierarchy, giving an idea of the impact of relative errors in the subdominant modes on the full waveform.
 
-The $++$ case, as expected from the analysis of the previous section, is the most challenging, with large relative errors. Applying higher-order corrections improves the accuracy in the inspiral, but the most difficult modes $m=-1$ and $m=-2$ still show large errors. We also find that higher-order corrections do not reduce the errors in the merger-ringdown region, indicating a breakdown of the perturbative formalism as indicated by Fig.~\ref{fig:fomprec}. Using the convolution treatment improves the main modes $m=2$, $m=1$, but not the most challenging modes $m=-1$ and $m=-2$, which can be seen to depart from the perturbative treatment before the range covered by the convolution. Note however that, as we will show below by computing the full unfaithfulness these large errors for the higher modes do not affect much the full waveform.
-\SM{[explain how the convolution formalism fails - convolution support to the right, in low-amp region, not well controlled]}
+The $++$ case, shown in Fig.~\ref{fig:precerrors++}, is the most challenging. As expected from the analysis of Sec.~\ref{subsec:sizecorrPrec}, the presence of strong aligned spins and a large spin of the remnant degrades the separation of timescales, and the reconstruction shows large relative errors, at least in subdominant mode contributions. Applying the higher-order corrections of Sec.~\ref{subsec:executivesummary} does improve the accuracy in the inspiral, but the most difficult modes $m=-1$ and $m=-2$ still show large errors. We also find that for this case higher-order corrections do not reduce the errors in the merger-ringdown region, consistently with the breakdown of the perturbative formalism indicated by Fig.~\ref{fig:fomprec}. Using the convolution treatment improves the main modes $m=2$, $m=1$, but not the most challenging modes $m=-1$ and $m=-2$, which can be seen to depart from the perturbative treatment before the range covered by the convolution and for which the convolution~\eqref{eq:precconvolution} extends to very high frequencies where our trigonometric polynomial representation of the signal is not accurate (see Fig.~\ref{fig:trigopoly}). Note however that, as will be shown below by unfaithfulness computations, these large relative errors for the subdominant modes do not affect much the full waveform.
 
-For the $\perp\perp$ case, we find a clearer picture. Errors are increasing to larger $|m-m'|$, higher-order corrections improve the reconstruction but are unsufficient for the merger-ringdown, and the convolution works for all modes on the frequency range where it is applied. The errors at the very high end of the frequency band occur when the overall amplitudes are low, and are therefore unimportant. 
+The $\perp\perp$ case is shown in Fig.~\ref{fig:precerrorspp}. Errors are increasing to larger $|m-m'|$, higher-order corrections improve the reconstruction but are unsufficient for the merger-ringdown, and the convolution works for all modes on the frequency range where it is applied. The errors at the very high end of the frequency band occur when the overall amplitudes are low, and are therefore unimportant. 
 
-For the $--$ case, the mode hierarchy is not respected, as the frame trajectory does not quite follow the picture of simple precession \SM{[mention angle Ji-Jf]}. The precession velocity is much milder, leading to smaller errors. Apart from some amplitude errors in the merger-ringdown region, we find that in this case even the leading-order treatment gives very reasonable results.
+In the case $--$, shown in Fig.~\ref{fig:precerrors--}, the mode hierarchy is not respected, as the frame trajectory does not quite follow the picture of simple precession, and the estimates~\eqref{eq:precfomPN} do not apply. The precession velocity is much milder, both in the inspiral and in the merger-ringdown range, thanks to a low remnant spin, and the separation of timescales is better, as shown in Fig.~\ref{fig:fomprec}. This leads to smaller errors, and, apart from some amplitude errors in the merger-ringdown region, we find that in this case even the leading-order treatment gives good results.
 
-In order to illustrate what these errors really mean for the analysis of GW signals, we also compute the unfaithfulness (or mismatch) between various orders of approximation and the exact, numerical result. This unfaithfulness figure, although giving a simplified view of waveform inaccuracies, is commonly used to quantify disagreements between template families and to compare them to numerical relativity waveforms. For real signals $h_{1}$ and $h_{2}$, one introduces the usual noise-weighted scalar product
+In order to illustrate what these errors really mean for the analysis of GW signals, we also compute the unfaithfulness (or mismatch) between various orders of approximation and the exact, numerical result. This unfaithfulness figure, although giving a simplified view of waveform inaccuracies, is commonly used to quantify disagreements between template families and to compare them to numerical relativity waveforms. For real signals $h_{1}$ and $h_{2}$, one introduces the usual noise-weighted scalar product~\cite{CF94}
 \be\label{eq:defoverlap}
 	\left( h_{1} | h_{2} \right) = 4\text{Re} \int_{0}^{+\infty} \ud f \frac{\tilde{h}_{1}(f) \tilde{h}_{2}^{*}(f)}{S_{n}(f)} \,,
 \ee
-with $S_{n}(f)$ the noise power spectral density, for which we use the aLIGO ZDHP noise curve~\cite{} \SM{[R]}.
+with $S_{n}(f)$ the noise power spectral density, for which we use the aLIGO ZDHP noise curve~\cite{LIGOProspects13}.
+
+To define the unfaithfulness, different prescriptions are possible, taking into account or not th edetector response and optimizing over different sets of parameters. Here, we will use a simple prescription~\cite{Blackman+17a} applied directly at the level of $h_{+}$, $h_{\times}$, optimizing over time, phase, and polarization.
 
 For spin-aligned waveforms, the unfaithfulness is customarily defined as the normalized overlap~\eqref{eq:defoverlap} above optimized over the time at coalescence and global phase of the signal. In the precessing case, different prescriptions coexist, differing by the extrinsic parameters that are optimized over. Here we adopt the same prescription that was used in the construction of a numerical relativity surrogate model for precessing waveforms~\cite{} \SM{[R]}. We refer to the Appendix.~\SM{[R]} of~\cite{} for more details \SM{[complete a bit here]}.
 
@@ -1455,7 +1452,7 @@ For the $\perp\perp$ case, both the perturbative corrections and the convolution
 
 The $--$ case does not show the same behaviour with inclination as the other ones, as we measure the inclination angle with respect to the final direction of $\bm{J}$, which moves during the inspiral. The mismatches are small in this case.
 
-Overall, we find that all the corrections we investigated, perturbative in phase, perturbative in amplitude, and the convolution treatment, are relveant in lowering the unfaithfulness. The only exception are second-order amplitude corrections that make little difference, and can even give worse results than first-order in some cases. Using all the tools at our hands, we are able to keep the unfaithfulness of our three example waveforms below $2.10^{-3}$ for all masses and inclinations.
+Overall, we find that all the corrections we investigated, perturbative in phase, perturbative in amplitude, and the convolution treatment, are relevant in lowering the unfaithfulness. The only exception are second-order amplitude corrections that make little difference, and can even give worse results than first-order in some cases. Using all the tools at our hands, we are able to keep the unfaithfulness of our three example waveforms below $2.10^{-3}$ for all masses and inclinations.
 
 \begin{figure*}
   \centering
@@ -1565,7 +1562,11 @@ Overall, we find that all the corrections we investigated, perturbative in phase
 
 []
 
-\SM{[discuss the shortcoming of our LISA treatment for precessing signals]}
+\SM{[discuss the extension of our LISA treatment for precessing signals]}
+
+\SM{[discuss other detectors, e.g. ET]}
+
+\SM{[we should investigate broader parameter space]}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1634,8 +1635,18 @@ where we used $\widetilde{h_{\ell m}^{*}}(f) = \tilde{h}_{\ell m}(-f)^{*}$. An a
 	\tilde{h}_{\ell m} (f) &\simeq 0 \text{ for } f<0, \; m>0 \nn\,,\\
 	\tilde{h}_{\ell m} (f) &\simeq 0 \text{ for } f>0, \; m<0 \,.
 \end{align}
+When both and~\eqref{eq:zeronegativef} apply, \eqref{eq:hpcfrommodes} becomes simpler. For $f>0$, we have then
+\be
+	\tilde{h}_{+,\times} (f) = \sum_{\ell \geq 2} \sum_{m = 1}^{\ell} K^{+,\times}_{\ell m} \tilde{h}_{\ell m}(f) \,,
+\ee
+where we set
+\begin{align}
+	K^{+}_{\ell m} &\equiv \frac{1}{2} \left( {}_{-2}Y_{\ell m} + (-1)^{\ell} {}_{-2}Y_{\ell, -m}^{*} \right) \,, \nn\\
+	K^{\times}_{\ell m} &\equiv \frac{i}{2} \left( {}_{-2}Y_{\ell m} - (-1)^{\ell} {}_{-2}Y_{\ell, -m}^{*} \right) \,.
+\end{align}
+the range $f<0$ being obtained readily, since $h_{+},h_{\times}$ are real quantities, from $\tilde{h}_{+,\times} (-f) = \tilde{h}_{+,\times}(f)^{*}$.
 
-In the following, we will drop the mode indices and the sum over modes, and we will denote generically by $h$ an individual mode of the waveform\footnote{This notation for a generic individual mode is not to be confused with the often encountered notation $h\equiv h_{+} - i h_{\times}$.}. Note that, if we are considering real signals $s(t)$ (such as $h_{+}$, $h_{\times}$, or any detector output), we can focus  on the positive-frequencies range and reconstruct the negative frequencies as $\tilde{s}(-f) = \tilde{s}(f)^{*}$. For positive frequencies $f>0$, we will use the generic notation $h$ as
+In the following, we will drop the mode indices and the sum over modes, and we will denote generically by $h$ an individual mode of the waveform\footnote{This notation for a generic individual mode is not to be confused with the often encountered notation $h\equiv h_{+} - i h_{\times}$.}. Note that, if we are considering real signals $s(t)$ (such as $h_{+}$, $h_{\times}$, or any detector output), we can focus  on the positive-frequencies range and reconstruct the negative frequencies as $\tilde{s}(-f) = \tilde{s}(f)^{*}$. For positive frequencies $f>0$, we will use the generic notation $h$ \SM{[not using the 'generic notation' anymore]} as
 \begin{align}\label{eq:notationhsignm}
 	h(t) &\equiv h_{\ell m}(t) \,, \quad \tilde{h}(f) \equiv \tilde{h}_{\ell m}(f) \text{ for } m>0 \,, \nn\\
 	h(t) &\equiv h_{\ell m}^{*}(t) \,, \quad \tilde{h}(f) \equiv \tilde{h}_{\ell m}(-f)^{*} \text{ for } m<0 \,.
