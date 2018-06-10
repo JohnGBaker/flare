@@ -44,6 +44,7 @@
 //Flags
 int IntProdStyle=0;
 int NratioCut = 4;
+int half_edges = 0;
 
 //Data whitening
 //This function pre-multiplies the data with the inverse of the noise power
@@ -110,6 +111,7 @@ double ReIntProdCAmpPhaseSpline(
   double sum=0;
   double df = Dfreqseries->df;
   //printf("%i < i <%i \n",imin,imax);
+  printf(" IntProd: %g < f < %g\n",Get_UniformFrequency(Dfreqseries,imin),Get_UniformFrequency(Dfreqseries,imax));
   for(int i=imin;i<=imax;i++){
     double f=Get_UniformFrequency(Dfreqseries,i);
     double Dr=gsl_vector_get( Dfreqseries->h_real,i);
@@ -136,9 +138,11 @@ double ReIntProdCAmpPhaseSpline(
     double modelr = Ar*c-Ai*s;
     double modeli = Ar*s+Ai*c;
     double delta=df;
-    if(i==imin||i+1==imax)
-      delta=df/2;
-    //sum += ( Dr*modelr+Di*modeli + I*(Dr*modeli-Di*modelr) ) * delta ; //We never need the image part and can save a few cycles
+    if(half_edges){ //HACK: do we interpret the minimum freq as a "center" or and "edge"; affects above as well
+      if(i==imin||i+1==imax)  
+	delta=df/2;
+    }
+    //sum += ( Dr*modelr+Di*modeli + I*(Dr*modeli-Di*modelr) ) * delta ; //We never need the imaginary part and can save a few cycles
     double dsum = ( Dr*modelr+Di*modeli ) * delta ; 
     sum += dsum;
     //if(i>5000 &&i<5005)printf("AmPh %i %g %g\n",i,delta, ( Dr*modelr+Di*modeli ));
@@ -148,7 +152,294 @@ double ReIntProdCAmpPhaseSpline(
 
 //Perform explicit spline evaluation for inner-product computation of
 //freqseries D with CAmpPhase spline set.  The grid of the D freqseries is summed for a simple integral approximant
+double ReIntProdCAmpPhaseSplineC(
+  CAmpPhaseSpline* splines,                    //input "model"
+  ReImUniformFrequencySeries* Dfreqseries,  //input defines ReIm uniform frequency series to be multiplied with spline evals and summed
+  double mfmin,  // min/max  index-range of the freqseries to use include in the sum 
+  double mfmax)
+{
+  int ispline=0;
+  int nspline=splines->quadspline_phase->size1;
+  double sum=0;
+  double df = Dfreqseries->df;
+  double dfleft=0,dfright=0;
+  int imin=0,imax=Dfreqseries->N-1;
+  //set limits to reference the data just within model limits
+  double datafmin = Get_UniformFrequency( Dfreqseries, imin );
+  double datafmax = Get_UniformFrequency( Dfreqseries, imax );
+  if(mfmin<datafmin-df/2)mfmin=datafmin-df/2;//restrict to data limits (cell centered)
+  if(mfmax>datafmax+df/2)mfmax=datafmax+df/2;//restrict to data limits (cell centered)
+  if(mfmin>datafmin)
+    imin=(mfmin-datafmin)/df+1;
+  dfleft=Get_UniformFrequency(Dfreqseries,imin)-mfmin; //Account for the edge
+  if(mfmax<datafmax)
+    imax=(mfmax-datafmin)/df;
+  dfright=mfmax-Get_UniformFrequency(Dfreqseries,imax); //Account for the edge
+  //printf("%i < i <%i \n",imin,imax);
+  printf(" IntProd: %g < f < %g\n",Get_UniformFrequency(Dfreqseries,imin),Get_UniformFrequency(Dfreqseries,imax));
+  for(int i=imin;i<=imax;i++){
+    double f=Get_UniformFrequency(Dfreqseries,i);
+    double Dr=gsl_vector_get( Dfreqseries->h_real,i);
+    double Di=gsl_vector_get( Dfreqseries->h_imag,i);
+
+    //printf(" f:%g < %g < %g\n",gsl_matrix_get(splines->quadspline_phase, 0, 0),f,gsl_matrix_get(splines->quadspline_phase, splines->quadspline_phase->size1-1, 0));
+
+    /* Adjust the index in the spline if necessary and compute */
+    while(ispline<nspline-1&&gsl_matrix_get(splines->quadspline_phase, ispline+1, 0)<f){
+      ispline++;
+    }
+    double eps = f - gsl_matrix_get(splines->quadspline_phase, ispline, 0);
+    double eps2 = eps*eps;
+    double eps3 = eps2*eps;
+    gsl_vector_view coeffsampreal = gsl_matrix_row(splines->spline_amp_real, ispline);
+    gsl_vector_view coeffsampimag = gsl_matrix_row(splines->spline_amp_imag, ispline);
+    gsl_vector_view coeffsphase = gsl_matrix_row(splines->quadspline_phase, ispline);
+    double Ar = EvalCubic(&coeffsampreal.vector, eps, eps2, eps3);
+    double Ai = EvalCubic(&coeffsampimag.vector, eps, eps2, eps3);
+    double Ph = EvalQuad(&coeffsphase.vector, eps, eps2);
+    
+    double c = cos(Ph); 
+    double s = sin(Ph);
+    double modelr = Ar*c-Ai*s;
+    double modeli = Ar*s+Ai*c;
+    double delta=df;
+    if(half_edges){ //This is consistent with dfleft==dfright==0
+      if(i==imin||i+1==imax)  
+	delta=df/2;
+    } else {
+      if(i==imin){  //This is an order df fix for the edges 
+	printf("df/left/right: %g, %g, %g\n",df, dfleft, dfright);
+	delta=df/2+dfleft;
+      }
+      else if(i+1==imax)  
+	delta=df/2+dfright;
+    }
+    //sum += ( Dr*modelr+Di*modeli + I*(Dr*modeli-Di*modelr) ) * delta ; //We never need the imaginary part and can save a few cycles
+    double dsum = ( Dr*modelr+Di*modeli ) * delta ; 
+    sum += dsum;
+    //if(i>5000 &&i<5005)printf("AmPh %i %g %g\n",i,delta, ( Dr*modelr+Di*modeli ));
+  }
+  return sum;
+};
+
+
+//Perform explicit spline evaluation for inner-product computation of
+//freqseries D with CAmpPhase spline set.  The grid of the D freqseries is summed for a simple integral approximant
 double ReIntProdCAmpPhaseSplineB(
+  CAmpPhaseSpline* splines,                    //input "model"
+  ReImUniformFrequencySeries* Dfreqseries,  //input defines ReIm uniform frequency series to be multiplied with spline evals and summed
+  int imin,  // min/max  index-range of the freqseries to use include in the sum 
+  int imax)
+{
+  int ispline=0;
+  int nspline=splines->quadspline_phase->size1;
+  double sum=0;
+  double dTmin,dTmax;
+  double df = Dfreqseries->df;
+  double f0 = Dfreqseries->fmin;
+  //printf("%i < i <%i \n",imin,imax);
+  double fleft=gsl_matrix_get(splines->quadspline_phase, ispline, 0);
+  double fright=gsl_matrix_get(splines->quadspline_phase, ispline+1, 0);
+  int reset=1,direct=0;
+  if((fright-fleft)/df > NratioCut )direct=1;
+  complex double E,F,G,dG;
+  
+  gsl_vector_view coeffsampreal,coeffsampimag,coeffsphase;
+    for(int i=imin;i<=imax;i++){
+    double f=f0+i*df;
+    double Dr=gsl_vector_get( Dfreqseries->h_real,i);
+    double Di=gsl_vector_get( Dfreqseries->h_imag,i);
+
+    /* Adjust the index in the spline if necessary and reset */
+    while( ispline<nspline-2 && fright<f ){
+      ispline++;
+      reset=1;
+      fleft=fright;
+      //printf("ispline=%i size=%i\n",ispline,splines->quadspline_phase->size1);
+      fright=gsl_matrix_get(splines->quadspline_phase, ispline+1, 0);
+      if((fright-fleft)/df > NratioCut )direct=1;
+      else direct=0;
+    }
+    if(reset){
+      reset=0;
+      coeffsampreal = gsl_matrix_row(splines->spline_amp_real, ispline);
+      coeffsampimag = gsl_matrix_row(splines->spline_amp_imag, ispline);
+      if(!direct)
+	coeffsphase = gsl_matrix_row(splines->quadspline_phase, ispline);
+      else {
+	double eps0 = f - fleft;
+	double p0 = gsl_matrix_get(splines->quadspline_phase, ispline,1);
+	double p1 = gsl_matrix_get(splines->quadspline_phase, ispline,2);
+	double p2 = gsl_matrix_get(splines->quadspline_phase, ispline,3);
+	double phi0 = p0 + eps0 * ( p1 + eps0 * p2 );
+	E = cexp(I*phi0);
+	F = cexp(I*(p1+2*p2*eps0)*df);
+	G = cexp(I*p2*df*df);
+	dG = G*G;
+      }
+    }
+    double eps = f - fleft;
+    double eps2 = eps*eps;
+    double eps3 = eps2*eps;
+    double Ar = EvalCubic(&coeffsampreal.vector, eps, eps2, eps3);
+    double Ai = EvalCubic(&coeffsampimag.vector, eps, eps2, eps3);
+    double c,s;
+    if(!direct){
+      double Ph = EvalQuad(&coeffsphase.vector, eps, eps2);
+      c = cos(Ph); 
+      s = sin(Ph);
+    } else {
+      c = creal(E);
+      s = cimag(E);
+      E *= F*G;
+      G *= dG;
+    }
+    double modelr = Ar*c-Ai*s;
+    double modeli = Ar*s+Ai*c;
+    double delta=df;
+    double prod = Dr*modelr+Di*modeli;
+    
+    if(half_edges){ //HACK: do we interpret the minimum freq as a "center" or and "edge"; affects above as well
+      if(i==imin||i+1==imax)
+	delta=df/2;
+    }
+    sum += prod * delta;
+    
+    /*diagnostic about time*/
+    if(i==imin||i==imax){
+      double p1=gsl_matrix_get(splines->quadspline_phase, ispline,2);
+      double p2=gsl_matrix_get(splines->quadspline_phase, ispline,3);
+      double dT=-(p1+p2*eps)/2.0/M_PI;
+      if(i==imin)dTmin=dT;
+      else dTmax=dT;
+    }
+  }
+  printf(" %g < dT < %g\n",dTmin, dTmax);
+    
+  return sum;
+};
+
+//Perform explicit spline evaluation for inner-product computation of
+//freqseries D with CAmpPhase spline set.  The grid of the D freqseries is summed for a simple integral approximant
+double ReIntProdCAmpPhaseSplineD(
+  CAmpPhaseSpline* splines,                    //input "model"
+  ReImUniformFrequencySeries* Dfreqseries,  //input defines ReIm uniform frequency series to be multiplied with spline evals and summed
+  double mfmin,  // min/max  index-range of the freqseries to use include in the sum 
+  double mfmax)
+{
+  int ispline=0;
+  int nspline=splines->quadspline_phase->size1;
+  double sum=0;
+  double dTmin,dTmax;
+  double df = Dfreqseries->df;
+  double f0 = Dfreqseries->fmin;
+  //printf("%i < i <%i \n",imin,imax);
+  double dfleft=0,dfright=0;
+  int imin=0,imax=Dfreqseries->N-1;
+  //set limits to reference the data just within model limits
+  double datafmin = Get_UniformFrequency( Dfreqseries, imin );
+  double datafmax = Get_UniformFrequency( Dfreqseries, imax );
+  printf("%g < dataf < %g  : %i <= i <= %i  ",datafmin,datafmax,imin,imax);
+  if(mfmin<datafmin-df/2)mfmin=datafmin-df/2;//restrict to data limits (cell centered)
+  if(mfmax>datafmax+df/2)mfmax=datafmax+df/2;//restrict to data limits (cell centered)
+  if(mfmin>datafmin)
+    imin=(mfmin-datafmin)/df+1;
+  dfleft=Get_UniformFrequency(Dfreqseries,imin)-mfmin; //Account for the edge
+  if(mfmax<datafmax)
+    imax=(mfmax-datafmin)/df;
+  dfright=mfmax-Get_UniformFrequency(Dfreqseries,imax); //Account for the edge
+  double fleft=gsl_matrix_get(splines->quadspline_phase, ispline, 0);
+  double fright=gsl_matrix_get(splines->quadspline_phase, ispline+1, 0);
+  int reset=1,direct=0;
+  if((fright-fleft)/df > NratioCut )direct=1;
+  complex double E,F,G,dG;
+  
+  gsl_vector_view coeffsampreal,coeffsampimag,coeffsphase;
+    for(int i=imin;i<=imax;i++){
+    double f=f0+i*df;
+    double Dr=gsl_vector_get( Dfreqseries->h_real,i);
+    double Di=gsl_vector_get( Dfreqseries->h_imag,i);
+
+    /* Adjust the index in the spline if necessary and reset */
+    while( ispline<nspline-2 && fright<f ){
+      ispline++;
+      reset=1;
+      fleft=fright;
+      //printf("ispline=%i size=%i\n",ispline,splines->quadspline_phase->size1);
+      fright=gsl_matrix_get(splines->quadspline_phase, ispline+1, 0);
+      if((fright-fleft)/df > NratioCut )direct=1;
+      else direct=0;
+    }
+    if(reset){
+      reset=0;
+      coeffsampreal = gsl_matrix_row(splines->spline_amp_real, ispline);
+      coeffsampimag = gsl_matrix_row(splines->spline_amp_imag, ispline);
+      if(!direct)
+	coeffsphase = gsl_matrix_row(splines->quadspline_phase, ispline);
+      else {
+	double eps0 = f - fleft;
+	double p0 = gsl_matrix_get(splines->quadspline_phase, ispline,1);
+	double p1 = gsl_matrix_get(splines->quadspline_phase, ispline,2);
+	double p2 = gsl_matrix_get(splines->quadspline_phase, ispline,3);
+	double phi0 = p0 + eps0 * ( p1 + eps0 * p2 );
+	E = cexp(I*phi0);
+	F = cexp(I*(p1+2*p2*eps0)*df);
+	G = cexp(I*p2*df*df);
+	dG = G*G;
+      }
+    }
+    double eps = f - fleft;
+    double eps2 = eps*eps;
+    double eps3 = eps2*eps;
+    double Ar = EvalCubic(&coeffsampreal.vector, eps, eps2, eps3);
+    double Ai = EvalCubic(&coeffsampimag.vector, eps, eps2, eps3);
+    double c,s;
+    if(!direct){
+      double Ph = EvalQuad(&coeffsphase.vector, eps, eps2);
+      c = cos(Ph); 
+      s = sin(Ph);
+    } else {
+      c = creal(E);
+      s = cimag(E);
+      E *= F*G;
+      G *= dG;
+    }
+    double modelr = Ar*c-Ai*s;
+    double modeli = Ar*s+Ai*c;
+    double delta=df;
+    double prod = Dr*modelr+Di*modeli;
+    
+    if(half_edges){ //This is consistent with dfleft==dfright==0
+      if(i==imin||i+1==imax)
+	delta=df/2;
+    } else {
+      if(i==imin){ //This is an order df fix for the edges 
+	//printf("df/left/right: %g, %g, %g\n",df, dfleft, dfright);
+	delta=df/2+dfleft;
+      } else if(i+1==imax) {  
+	delta=df/2+dfright;
+      }
+    }
+    sum += prod * delta;
+    
+    /*diagnostic about time*/
+    if(i==imin||i==imax){
+      double p1=gsl_matrix_get(splines->quadspline_phase, ispline,2);
+      double p2=gsl_matrix_get(splines->quadspline_phase, ispline,3);
+      double dT=-(p1+p2*eps)/2.0/M_PI;
+      if(i==imin)dTmin=dT;
+      else dTmax=dT;
+    }
+  }
+  printf(" %g < dT < %g\n",dTmin, dTmax);
+    
+  return sum;
+};
+
+//Perform explicit spline evaluation for inner-product computation of
+//freqseries Data with CAmpPhase spline set.  The grid of the D freqseries is summed for a simple integral approximant
+//In this case the data are assumed to represent the average values over f0+i*df < f < f0+(i+1)*df
+double ReIntProdCAmpPhaseSplineE(
   CAmpPhaseSpline* splines,                    //input "model"
   ReImUniformFrequencySeries* Dfreqseries,  //input defines ReIm uniform frequency series to be multiplied with spline evals and summed
   int imin,  // min/max  index-range of the freqseries to use include in the sum 
@@ -279,9 +570,13 @@ double FDSinglemodeDataOverlap(
 
   double overlap;
   if(IntProdStyle==1)
-    overlap = 4.0*ReIntProdCAmpPhaseSplineB(modelspline,datachan,kmin,kmax);   
+    if(half_edges)
+      overlap = 4.0*ReIntProdCAmpPhaseSplineB(modelspline,datachan,kmin,kmax);   
+    else
+      overlap = 4.0*ReIntProdCAmpPhaseSplineD(modelspline,datachan,modelfmin,modelfmax);   
   else
-    overlap = 4.0*ReIntProdCAmpPhaseSpline(modelspline,datachan,kmin,kmax);   
+    //overlap = 4.0*ReIntProdCAmpPhaseSpline(modelspline,datachan,kmin,kmax);   
+    overlap = 4.0*ReIntProdCAmpPhaseSplineC(modelspline,datachan,modelfmin,modelfmax);   
 
   CAmpPhaseSpline_Cleanup(modelspline);
   
@@ -302,6 +597,10 @@ double FDCAmpPhaseModelDataOverlap(
   ListmodesCAmpPhaseFrequencySeries* listelementmodelchan = listmodelchan;
   while(listelementmodelchan) { 
     printf("mode (%i,%i)\n",listelementmodelchan->l,listelementmodelchan->m);
+    //Probably need this fstartobs implementation here, but fstartobs itself might need to be passed in
+    //double fstartobs = Newtonianfoft(params->m1, params->m2, globalparams->deltatobs);
+    //int mmax1 = max(2, listelementh1chan1->m);
+    //double fcutLow = fmax(fLow, ((double) mmax1)/2. * fstartobs); 
     double overlapmode = FDSinglemodeDataOverlap(listelementmodelchan->freqseries, datachan, bandcut, bandSnoise);
     overlap += overlapmode;
 

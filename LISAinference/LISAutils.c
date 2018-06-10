@@ -157,32 +157,33 @@ void LISADataFD_Init(LISADataFD** data) {
 }
 
 LISADataFD* LISADataFD_Decimate2(LISADataFD* data) {
+  //Note that we understand the data as "cell-centered" with the frequencies corresponding to midpoints
   if(!data){
     printf("LISADataFD_Decimate2: no pointer\n");
     exit(1);
   }
   LISADataFD *newdata = NULL;
   int newN=(data->TDI1Data->N+1)/2;
-  double minf=data->TDI1Data->fmin;
+  double newminf=data->TDI1Data->fmin+data->TDI1Data->df*0.5;
   double newdf=data->TDI1Data->df*2.0;
   LISADataFD_Init(&newdata);
   ReImUniformFrequencySeries_Init(&newdata->TDI1Data,newN);
-  newdata->TDI1Data->fmin=minf;
+  newdata->TDI1Data->fmin=newminf;
   newdata->TDI1Data->df=newdf;
   ReImUniformFrequencySeries_Init(&newdata->TDI2Data,newN);
-  newdata->TDI2Data->fmin=minf;
+  newdata->TDI2Data->fmin=newminf;
   newdata->TDI2Data->df=newdf;
   ReImUniformFrequencySeries_Init(&newdata->TDI3Data,newN);
-  newdata->TDI3Data->fmin=minf;
+  newdata->TDI3Data->fmin=newminf;
   newdata->TDI3Data->df=newdf;
   ReImUniformFrequencySeries_Init(&newdata->TDI1WData,newN);
-  newdata->TDI1WData->fmin=minf;
+  newdata->TDI1WData->fmin=newminf;
   newdata->TDI1WData->df=newdf;
   ReImUniformFrequencySeries_Init(&newdata->TDI2WData,newN);
-  newdata->TDI2WData->fmin=minf;
+  newdata->TDI2WData->fmin=newminf;
   newdata->TDI2WData->df=newdf;
   ReImUniformFrequencySeries_Init(&newdata->TDI3WData,newN);
-  newdata->TDI3WData->fmin=minf;
+  newdata->TDI3WData->fmin=newminf;
   newdata->TDI3WData->df=newdf;
   for(int i=0;i<data->TDI1Data->N/2;i++){
     gsl_vector_set(newdata->TDI1Data->h_real,i,(gsl_vector_get(data->TDI1Data->h_real,2*i)+gsl_vector_get(data->TDI1Data->h_real,2*i+1))/2);
@@ -1163,6 +1164,7 @@ int LISAGenerateSignalCAmpPhase(
   ObjectFunction NoiseSn3 = NoiseFunction(globalparams->variant,globalparams->tagtdi, 3);
   //TESTING
   //tbeg = clock();
+  printf("compute TDI123hh: fLow, fHigh = %g, %g\n",fLow, fHigh);
   double TDI123hh = FDListmodesFresnelOverlap3Chan(listTDI1, listTDI2, listTDI3, listsplinesgen1, listsplinesgen2, listsplinesgen3, &NoiseSn1, &NoiseSn2, &NoiseSn3, fLow, fHigh, fstartobs, fstartobs);
   //tend = clock();
   //printf("time SNRs: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
@@ -1259,6 +1261,7 @@ int LISAGenerateInjectionCAmpPhase(
   ObjectFunction NoiseSn3 = NoiseFunction(globalparams->variant,globalparams->tagtdi, 3);
   //TESTING
   //tbeg = clock();
+  printf("compute TDI123ss: fLow, fHigh = %g, %g\n",fLow, fHigh);
   double TDI123ss = FDListmodesFresnelOverlap3Chan(listTDI1, listTDI2, listTDI3, listsplinesinj1, listsplinesinj2, listsplinesinj3, &NoiseSn1, &NoiseSn2, &NoiseSn3, fLow, fHigh, fstartobs, fstartobs);
   //tend = clock();
   //printf("time SNRs: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
@@ -1675,7 +1678,8 @@ double CalculateLogLCAmpPhase(LISAParams *params, LISAInjectionCAmpPhase* inject
 
     //
     //printf("fLow, fHigh, fstartobsinjected, fstartobsgenerated = %g, %g, %g, %g\n", fLow, fHigh, fstartobsinjected, fstartobsgenerated);
-
+    
+    printf("compute overlapTDI123: fLow, fHigh = %g, %g\n",fLow, fHigh);
     double overlapTDI123 = FDListmodesFresnelOverlap3Chan(generatedsignal->TDI1Signal, generatedsignal->TDI2Signal, generatedsignal->TDI3Signal, injection->TDI1Splines, injection->TDI2Splines, injection->TDI3Splines, &NoiseSn1, &NoiseSn2, &NoiseSn3, fLow, fHigh, fstartobsinjected, fstartobsgenerated);
     //tend = clock();
     //printf("time Overlaps: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);

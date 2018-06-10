@@ -724,13 +724,16 @@ int ComputeIntegrandValues3Chan(
     return -1;
   }
   /* If starting outside, move the ends of the frequency series to be just outside the final minf and maxf */
-  double minf = fmax(f1[imin1], f2min);
-  double maxf = fmin(f1[imax1], f2max);
-  if(fLow>0) {minf = fmax(fLow, minf);}
-  if(fHigh>0) {maxf = fmin(fHigh, maxf);}
-  while(f1[imin1+1]<=minf) imin1++;
-  while(f1[imax1-1]>=maxf) imax1--;
+  double minf = fmax(f1[imin1], f2min); //minimum explicit freq value of (channel 1 of) either the first signal freqseries or the second signal spline
+  double maxf = fmin(f1[imax1], f2max); //corresponding max
+  //printf("min f1, f2 = %g. %g\n", f1[imin1], f2min);
+  //if(fLow>minf)printf("fLow sets min fLow = %g > %g\n",fLow,minf);
+  if(fLow>0) {minf = fmax(fLow, minf);}   //reduce lower freq bound to fLow if needed
+  if(fHigh>0) {maxf = fmin(fHigh, maxf);} //reduce upper freq bound to fHigh if needed
+  while(f1[imin1+1]<=minf) imin1++; //should end up with     f1[ imin1 ] <= minf <  f1[ imin1 + 1 ]
+  while(f1[imax1-1]>=maxf) imax1--; //should end up with  f1[ imax1 -1 ] <  maxf <= f1[ imax ]
   //printf("imin=%i, imax=%i\n",imin1,imax1);
+  printf("computing integrand minf = %g < %g = maxf\n", minf, maxf);  
   int nbpts = imax1 + 1 - imin1;
   //printf("nbpts=%i\n",nbpts);
   if(nbpts<4)return -1;
@@ -777,7 +780,7 @@ int ComputeIntegrandValues3Chan(
   int i2 = 0; int j = 0;
   for(int i=imin1; i<=imax1; i++) {
     /* Distinguish the case where we are at minf or maxf */
-    if(i==imin1) {
+    if(i==imin1) {  //at left end substitute minf instead of f1[imin]
       f = minf;
       ampreal1chan1 = areal1chan1minf;
       ampimag1chan1 = aimag1chan1minf;
@@ -787,7 +790,7 @@ int ComputeIntegrandValues3Chan(
       ampimag1chan3 = aimag1chan3minf;
       phase1 = phi1minf;
     }
-    else if(i==imax1) {
+    else if(i==imax1) { //at right end substitute maxf instead of f1[imax]
       f = maxf;
       ampreal1chan1 = areal1chan1maxf;
       ampimag1chan1 = aimag1chan1maxf;
@@ -1054,6 +1057,10 @@ double FDListmodesFresnelOverlap3Chan(
       int mmax1 = max(2, listelementh1chan1->m);
       int mmax2 = max(2, listelementsplines2chan1->m);
       double fcutLow = fmax(fLow, fmax(((double) mmax1)/2. * fstartobs1, ((double) mmax2)/2. * fstartobs2));
+      //printf("m1,m2 = %i, %i\n", listelementh1chan1->m, listelementsplines2chan1->m);
+      //double fcutLow = fmax(fLow, fmax( fstartobs1,  fstartobs2)); //HACK?: Discuss with Sylvain
+      //printf("fLow=%g, fcutLow=%g\n",fLow,fcutLow);
+
       double overlapmode = FDSinglemodeFresnelOverlap3Chan(listelementh1chan1->freqseries, listelementh1chan2->freqseries, listelementh1chan3->freqseries, listelementsplines2chan1->splines, listelementsplines2chan2->splines, listelementsplines2chan3->splines, Snoise1, Snoise2, Snoise3, fcutLow, fHigh);
       overlap += overlapmode;
       listelementsplines2chan1 = listelementsplines2chan1->next;
