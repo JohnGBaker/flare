@@ -254,7 +254,7 @@ Note that to be able to treat the amplitude as a constant in the integral above,
 \begin{subequations}
 \begin{align}
 	\tilde{h}_{\rm SPA}(f) &= A_{\rm SPA}(f) e^{-i\Psi_{\rm SPA}(f)} \,, \\
-	A_{\rm SPA}(f) &= a(\tfSPA) \sqrt{\frac{\pi}{\dot{\omega}(\tfSPA)}} \,, \\
+	A_{\rm SPA}(f) &= a(\tfSPA) \sqrt{\frac{\pi}{\dot{\omega}(\tfSPA)}} \,, \label{eq:ASPA} \\
 	\Psi_{\rm SPA}(f) &= 2\varphi(\tfSPA) - 2\pi f \tfSPA + \frac{\pi}{4} \,. \label{eq:PsiSPA}
 \end{align}
 \end{subequations}
@@ -361,7 +361,7 @@ where here and in the rest of the paper, such derivatives with respect to the fr
 It is worth noting that a shift in time of the time-domain signal will, by virtue of~\eqref{eq:shifttime}, be appropriately propagated to $t_{f}$. Because of the freedom of adding a linear term to $\Psi(f)$ by simply shifting the signal in time, no assumption can be made on the smallness of the first derivative of the phase, and this is really a leading order approximation.
 
 The definition~\eqref{eq:deftf} is a straightforward generalization of the time-to-frequency correspondence at the heart of the SPA~\eqref{eq:deftfSPA}. Indeed, using~\eqref{eq:deftfSPA} one can verify that the derivative of the SPA phase $\Psi_{\rm SPA}$~\eqref{eq:PsiSPA} with respect to $f$ yields back $\tfSPA$, as
-\be
+\be\label{eq:tfSPA}
 	\tfSPA = -\frac{1}{2\pi} \frac{\ud \Psi_{\rm SPA}}{\ud f} \,.
 \ee
 However, our defintion~\eqref{eq:deftf} refers only to the Fourier-domain waveform. We do not need to relate the frequency $f$ to a time-domain frequency like the orbital frequency $\omega$, and the defintion is independent of the SPA being valid or not for the underlying signal $\tilde{h}$.
@@ -1285,7 +1285,7 @@ we see that $\Lambda$ is a mass ratio-dependent factor chosen to be always of or
 \be\label{eq:Omegaprec}
 	\Omega_{\rm prec} = \frac{2c^{3} \nu}{G M} \Lambda \xi v^{5} \,.
 \ee
-If precession effects are in general larger for larger mass ratios, as the precession cones widens, the overall scaling of $\nu$ in~\eqref{eq:Omegaprec} above shows that, as long as the orbital angular momentum still dominates the spin in $\xi$, increasing the mass ratio yields a slower precession rate. For high mass ratios and spins, the correction to $\xi$ in~\eqref{eq:defLambdaxi} starts to become important.
+If precession effects are in general larger for larger mass ratios, as the precession cones widens, the overall scaling of $\nu$ in~\eqref{eq:Omegaprec} above shows that, as long as the orbital angular momentum still dominates the spin in $\xi$, increasing the mass ratio yields a slower precession rate. For high mass ratios and spins, the correction to $\xi$ in~\eqref{eq:defLambdaxi} starts to become important. Here, $\Omega_{\rm prec}$ evolves only on the radiation-reaction timescale through its dependence in $v$; this is a consequence of our simple-precession assumption, as $\Omega_{\rm prec}$ varies on the precession timescale in the generic case (see e.g.~\cite{Chatziioannou+17}).
 
 We now turn to the Euler angles and modulation functions $\calD^{\ell *}_{mm'}(\alpha, \beta, \gamma)$, given explicitly in~\eqref{eq:defWignerD}. As explained in~\ref{subsec:precdef}, in the case of simple precession, the opening angle of the precession cone $\beta$ is essentially constant, so that the minimal rotation condition~\eqref{eq:gammadot} gives $\gamma  = -\alpha \cos \beta$ (up to a constant), and the only variable part of the precession modulation functions in~\eqref{eq:wignerrot} are the phases, according to~\eqref{eq:wignerphasesimpleprec}. The constant rate of rotation around $\bm{J}$ translates into $\dot{\alpha} = \Omega_{\rm prec}$. From the closure relation $\bm{J} = \bm{L} + \bm{S}_{1}/c$, we have
 \be\label{eq:betaconst}
@@ -1366,7 +1366,7 @@ Overall, the conclusion to be drawn of Fig.~\ref{fig:fomprec} is that for the $+
 %  \hspace{0.2cm}
 %  \includegraphics[width=.48\linewidth]{plots/trig_phase.pdf}
   \includegraphics[width=.98\linewidth]{plots/trigopoly_py.pdf}
-  \caption{Amplitude (left panel) and phase (right panel), compared to its trigonometric polynomial representation for the three cases listed in Table~\ref{tab:precexamples}. The thick and thin vertical lines indicate the frequency of the merger and ringdown (the QNM frequency) respectively. The continuous line show the target signal $\tilde{h}(f)$, while the dashed line shows the artificially symmetrized trigonometric polynomial~\eqref{eq:hsymtrigo}. The dots show the discrete samples entering~\eqref{eq:ykDFTprec}. The lower panels show the amplitude and phase residuals of~\eqref{eq:hsymtrigo} compared to the oringial $\tilde{h}(f)$.}
+  \caption{Amplitude (left panel) and phase (right panel), compared to its trigonometric polynomial representation for the three cases listed in Table~\ref{tab:precexamples}. The thick and thin vertical lines indicate the frequency of the merger and ringdown (the QNM frequency) respectively. The continuous line show the target signal $\tilde{h}(f)$, while the dashed line shows the artificially symmetrized trigonometric polynomial~\eqref{eq:hsymtrigo}. The dots show the discrete samples entering~\eqref{eq:ykDFTprec}. The lower panels show the amplitude and phase residuals of~\eqref{eq:hsymtrigo} compared to the original $\tilde{h}(f)$.}
   \label{fig:trigopoly}
 \end{figure*}
 
@@ -1444,7 +1444,7 @@ Here, we will use directly the wave polarizations $h_{+}$, $h_{\times}$, optimiz
 	\left( a | b \right) = 2 \int \ud f \frac{\tilde{a}_{1}(f) \tilde{b}_{2}(f)^{*}}{S_{n}(f)} \,,
 \ee
 where the integral extends over all frequencies (in practice, two intervals $[-f_{\rm max}, -f_{\rm min}]$ and $[f_{\rm min}, f_{\rm max}]$). In the above, $S_{n}(f)$ the noise power spectral density, for which we use the aLIGO ZDHP noise curve~\cite{LIGOProspects13}. We use the notation $h \equiv h_{+} - i h_{\times}$ for the complex strain, and write $h[\delta t, \delta \Phi, \delta \psi]$ to represent a signal where we shifted the time of coalescence, the phase of the line of sight to the observer and the polarization angle. The dependencies in time and polarization are given by~\eqref{eq:shifttime} and $h[\delta \psi] = e^{2 i \delta \psi} h$, while the phase $\delta \Phi$ affects differently each waveform mode in~\eqref{eq:defmodes}. In the norm $(h|h)$, only the dependence on $\delta\Phi$ remains. For two signals $h_{1}$ and $h_{2}$, the mismatch between them is then defined as \SM{[check]}
-\be
+\be\label{eq:defMM}
 	\mathrm{MM} \equiv \mathrm{Min}_{\delta t, \delta \varphi, \delta \psi} \left( 1 - \frac{ \mathrm{Re} \left[ (h_{1}[\delta t, \delta \Phi, \delta \psi] | h_{2}) \right]}{\sqrt{(h_{1}|h_{1})[\delta\Phi]}\sqrt{(h_{2}|h_{2})}} \right)
 \ee
 where an optimization over a shift in time, phase and polarization is performed. This definition is the same as in~\cite{Blackman+17a} (see App.~D there), except that we added the optimization over the phase. The target unfaithfulness for waveform models depends on the application. For ground-based detectors like advanced LIGO and Virgo, it is often set to 1\% or 3\%, while detectors of the next generations, including LISA, will require a lower unfaithfulness for their higher SNR \SM{[acronym]} signals.
@@ -1549,7 +1549,7 @@ Overall, we found that, although the configurations listed in Table~\ref{tab:pre
 %  \hspace{0.1cm}
 %  \includegraphics[width=.32\linewidth]{plots/mismatches_--_incpi2.pdf}
   \includegraphics[width=.98\linewidth]{plots/precMM_py.pdf}
-  \caption{Unfaithfulness. Computed here with $f_{\rm min} = 20\mathrm{Hz}$, for masses between 20 and 400 $\Msol$, using the aLIGO ZDHP noise curve~\cite{LIGOProspects13}. The inclination is defined here as tha angle between the line of sight and the final $\bm{J}$. \SM{[reference for that curve]}. \SM{[Extend computation to fmin=10 and Mmin=10]} \SM{[relate unfaithfulness levels to future detectors in the text]} \SM{[check definition of inclination: from $J$ or initial $L$ ?]} \SM{[legend is missing A:2]} \SM{[do we want to show A:2 at all ?]}}
+  \caption{Unfaithfulness at various orders of approximation and a numerical FFT, for the three precessing systems of Table~\ref{tab:precexamples}. The color indicates the order of approximation of the perturbative treatment of Sec.~\ref{subsec:executivesummary}. Dashed lines are obtained applying the treatment of Sec.~\ref{subsec:executivesummary} to the whole frequency band, while full lines are obtained using Sec.~\ref{subsec:trigopoly} for the high frequency range. The computation is done using~\eqref{eq:defMM} with $f_{\rm min} = 20\mathrm{Hz}$, for masses between 20 and 400 $\Msol$, and with the aLIGO ZDHP noise curve~\cite{LIGOProspects13}. The inclination is defined here as the angle between the line of sight and the final $\bm{J}$. \SM{[Extend computation to fmin=10 and Mmin=10 ?]} \SM{[re-check definition of inclination: from $J$ or initial $L$ ?]} }
   \label{fig:precunfaithfulness}
 \end{figure*}
 
@@ -1559,13 +1559,17 @@ Overall, we found that, although the configurations listed in Table~\ref{tab:pre
 \section{Summary and Conclusions}
 \label{sec:discussion}
 
-[]
+We presented a formalism to process 
+
+\SM{[we should investigate broader parameter space]}
+
+\SM{[move to better performance metrics than just waveform error for LISA]}
+
+\SM{[discuss EMRI]}
 
 \SM{[discuss the extension of our LISA treatment for precessing signals]}
 
 \SM{[discuss other detectors, e.g. ET]}
-
-\SM{[we should investigate broader parameter space]}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1776,6 +1780,46 @@ When the SPA is valid for the underlying signal $h^{\rm P}_{\ell m}$, the condit
 In the PhenomP model~\cite{Hannam+13}, the frequency-based transfer function~\eqref{eq:precPhenomP} is used as an effective prescription covering the whole Fourier-domain frequency band, including the merger and ringdown. Note that this procedure amounts to using PN results outside of their range of validity, since in the merger-ringdown phase both the PN perturbative treatment and the SPA approximation break down. In particular, when computed as a function of time from the balance equation between emitted flux and orbital energy $\calF = -dE/dt$, the orbital $\omega^{\rm PN}(t)$ blows up and cannot be extended through merger. In practice, one finds however that the extended frequency-based expressions~\eqref{eq:precPhenomP} are mildly varying when extrapolating to higher frequencies, and this approach has been validated by comparisons to numerical relativity waveforms~\cite{Hannam+13}. \SM{[refer to PhenomPv3 in prep.]}
 
 In the SUA formalism proposed in~\cite{KCY13, KCY14}, one extends the SPA to incorporate the leading-order correction during the inspiral phase. The transfer function is then computed by evaluating the modulation on a stencil of times centered around the time-of-frequency given by the SPA, arriving at the formula~\eqref{eq:stencilfresnel} with the times $t = \tfSPA$ and $T = \TfSPA$ as defined in~\eqref{eq:deftfSPA} and~\eqref{eq:TfSPA}. As described in Sec.~\ref{sec:formalism}, our formalism reduces to the SUA when keeping only the quadratic phase correction, but the SUA is a priori limited to the inspiral phase of the signal through the definitions of the times $t^{\rm SPA}_{f}$ and $T^{\rm SPA}_{f}$. For inspiral waveforms, Ref.~\cite{KCY14} showed that this treatment improves the accuracy with respect to the 0th-order approximation.
+
+\section{Precessing waveform and the LISA Fourier-domain response}
+\label{app:precLISA}
+
+In this Appendix, we present an argument for the applicability of the treatment of Section~\ref{sec:formalism} to a Fourier-domain waveform that already contains precession effects, thus combining our investigations of Secs.~\ref{sec:LISA} and~\ref{sec:precession}. Let us first note that one possible approach would be to incorporate both the precession modulation and the LISA modulation and delay in a single $G(f,t)$ kernel. This is what is done notably in~\cite{Klein+15}, with inspiral-only precessing waveforms (and a low-frequency approximation for the response). In that approach, comparing the results of Secs.~\ref{sec:LISA} and Sec.~\ref{sec:precession}, it appears that the precession is more challenging to model than the LISA response -- thus the accuracy of the final result should depend mainly on the precession treatment. In the following, we take a different route and investigate wether we can directly process Fourier-domain precessing mode contributions of the form $\calT^{\ell}_{m m'}(f) \tilde{h}_{\ell m'}(f)$ through the LISA response. We will make simplifying assumptions, assuming simple precession and keeping to order-of-magnitude estimates only. We leave for future work a more thorough investigation of precessing waveforms for LISA beyond simple precession and for IMR waveforms.
+
+For simplicity, we assume that the precession transfer function has been computed using the leading-order approximation, as including corrections should not change the timescales involved. Thus, we consider the signal
+\be\label{eq:htildeasaprecmodecontrib}
+	\tilde{h} (f) \equiv \calT^{\ell}_{m m'}(f) \tilde{h}_{\ell m'}(f) = \calD^{\ell *}_{m m'}(\alpha, \beta, \gamma)(\tf) \tilde{h}_{\ell m'}(f)
+\ee
+to be processed through the LISA response. If we assume simple precession, we can use the results of Sec.~\ref{subsec:sizecorrPrec} for the behaviour of $(\alpha, \beta, \gamma)$ as a function of $t$. Restricting ourselves to the inspiral part, we will also use the SPA expressions~\eqref{eq:tfSPA} and~\eqref{eq:TfSPA} for the times $\tf$ and $\Tf$. According to~\eqref{eq:wignerphasesimpleprec}, the mode contribution~\eqref{eq:htildeasaprecmodecontrib} above acquires a Fourier-domain phase $\Psi \rightarrow \Psi + \Phi_{\rm prec}$ with
+\be\label{eq:additionalPhiprec}
+	\Phi_{\rm prec} = -(m' \cos \beta(\tf) - m) \alpha(\tf) \,
+\ee
+with $\beta(t)$ varying on the radiation-reaction timescale and $\alpha(t)$ varying on the precession timescale with $\dot{\alpha} = \Omega_{\rm prec}$. The Fourier-domain amplitude becomes $A\rightarrow A \times d^{\ell}_{mm'} (\beta(\tf))$. If $\beta$ varies on the radiation-reaction timescale, this extra factor can be absorbed in a redefinition of the $a(\tf)$ amplitude factor in~\eqref{eq:ASPA}, so that it won't affect the separation of timescales.
+
+Using the derivatives
+\be
+	\frac{\ud \tf}{\ud f} = 2\pi \Tf^{2}
+\ee
+and
+\be
+	\frac{\ud \Tf}{\ud f} = -2\pi \Tf^{5} \ddot{\omega}(\tf) = - 2\pi \frac{11}{12} \frac{\Tf}{\pi f} \,,
+\ee
+where we have used $\ddot{\omega} = 11/3 (\dot{\omega})^{2}/\omega$ following~\eqref{eq:omegaphiN}, the extra Fourier-domain phase contribution~\eqref{eq:additionalPhiprec} cause new contributions in~\eqref{eq:deftf} and~\eqref{eq:defTf} as \SM{[check]}
+\begin{subequations}
+\begin{align}
+	-\frac{1}{2\pi} \frac{\ud \Phi_{\rm prec}}{\ud f} &\sim (m' \cos \beta - m) \Tf^{2} \Omega_{\rm prec} \,, \label{eq:additionaltf}\\
+	-\frac{1}{4\pi^{2}} \frac{\ud^{2} \Phi_{\rm prec}}{\ud f^{2}} &\sim (m' \cos \beta - m) \Tf^{2} \left[ \frac{11}{12} \frac{\Omega_{\rm prec}}{\pi f} - \Tf^{2} \dot{\Omega}_{\rm prec} \right] \,, \label{eq:additionalTf}
+\end{align}
+\end{subequations}
+where we ignored $\dot{\beta}$. The new term~\eqref{eq:additionaltf} means that, when processing the signal through the LISA response, we would attribute a different $\tf$ to each mode contribution.
+
+The new term~\eqref{eq:additionalTf} will enter $\epsilon_{\Psi 2}$ as defined in~\eqref{eq:deffom}. Comparing to $\Tf^{2}$, and ignoring the prefactor depending on the mode number (of order a few), we have two terms in the bracket. The first term is $\Omega_{\rm prec} / \omega$, which is a quantity of order 1PN, and should remain well below 1. The second term is $\dot{\Omega}_{\rm prec} / 2\dot{\omega}$. Under the simple precession assumption, \eqref{eq:Omegaprec} gives $\dot{\Omega}_{\rm prec} \sim \dot{\omega}/\omega \Omega_{\rm prec}$, and this term suppressed like the first term. Thus, in this case the contribution to $\epsilon_{\Psi 2}$ should be subdominant, the findings of Sec.~\ref{sec:LISA} for non-spinning waveforms should apply.   
+
+In the generic case of double-spin precession, however, the above argument does not apply anymore as $\Omega_{\rm prec}$ varies itself on the precessional timescale and $\Omega_{\rm prec} / \dot{\omega}$ is not small in general. In fact, the cases where $\dot{\Omega}_{\rm prec} \sim \dot{\omega}$, with possible cancellations, are the ``catastrophes'' preventing the application of the SPA to the full time-domain precessing signal~\cite{KCY13}. We leave to future work the question of wether this situation could be challenging for the perturbative formalism, after taking into account the appropriate factors for the error estimates as in Sec.~\ref{subsec:lisafom}.
+
+Note that, if we were instead to incorporate the full precession transfer function $\calT^{\ell}_{mm'}$ as an envelope function multiplying $A(f)$, then applying the criterion~\eqref{} would show that, even in the case of simple precession, the perturbative analysis would be challenged at both ends of the mass spectrum, for low-mass and high-mass systems.
+
+\SM{[say: to update with double precession, in particular $\ddot{\Phi}_{\rm prec}$]}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
