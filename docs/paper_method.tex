@@ -144,8 +144,6 @@ The plan of the paper is as follows. In Sec.~\ref{sec:motivation}, we provide a 
 
 \SM{[say a word of how to gauge relevance of a given error: 1/SNR in direct error ? We won't give anything but waveform reconstruction errors...]}
 
-\SM{[style: below use texttt for models and codes (like \texttt{SpEC})]}
-
 \SM{[check citation of Cornish-Rubbo-Poujade early work]}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -341,7 +339,7 @@ In presence of delays, the above is also complicated by the additional delay pha
 \begin{figure}
   \centering
   \includegraphics[width=.98\linewidth]{plots/tf_py.pdf}
-  \caption{Time-to-frequency correspondence $t_{f}$, as defined directly from the phase of the Fourier-domain signal in~\eqref{eq:deftf}, in geometric units. We show only the high-frequency part of the signal, corresponding to the merger region. The \texttt{PhenomD} waveforms have been aligned such that the time-domain amplitude (obtained by an IFFT) peaks at $t=0$. The two aligned spins are equal, with components of $0.95$ ($++$, blue), $0$ ($00$, red), and $-0.95$ ($--$, yellow), for mass ratios $q=1$ (full line) and $q=8$ (dashed). The vertical lines shows the time-domain instantaneous frequency at the peak $\omega^{22}_{\rm peak}/(2\pi)$, and the fact that the curves $t_{f}$ do not pass exactly by the crossing with the $t=0$ horizontal line reflects the fact that the link between time-domain frequency and Fourier frequency $f$ is only approximate at merger. Note that $t_{f}$ increases to at most $\sim 30M$ after the peak, and is not monotonous.}
+  \caption{Time-to-frequency correspondence $t_{f}$, as defined directly from the phase of the Fourier-domain signal in~\eqref{eq:deftf}, in geometric units. We show only the high-frequency part of the signal, corresponding to the merger region. The PhenomD waveforms have been aligned such that the time-domain amplitude (obtained by an IFFT) peaks at $t=0$. The two aligned spins are equal, with components of $0.95$ ($++$, blue), $0$ ($00$, red), and $-0.95$ ($--$, yellow), for mass ratios $q=1$ (full line) and $q=8$ (dashed). The vertical lines shows the time-domain instantaneous frequency at the peak $\omega^{22}_{\rm peak}/(2\pi)$, and the fact that the curves $t_{f}$ do not pass exactly by the crossing with the $t=0$ horizontal line reflects the fact that the link between time-domain frequency and Fourier frequency $f$ is only approximate at merger. Note that $t_{f}$ increases to at most $\sim 30M$ after the peak, and is not monotonous.}
   \label{fig:tf}
 \end{figure}
 
@@ -851,13 +849,13 @@ Overall, we find that for merging binaries the perturbative approach presented i
 
 \SM{[say that we take a large number of samples to eliminate spline interpolation errors]}
 
-Having at hand estimates for the relevance of higher-order corrections in the LISA response, we now demonstrate that including these higher-order corrections does indeed reduce the reconstruction error of the Fourier-domain transfer function. We will consider an equal-mass and non-spinning system, with only two values for the total mass, $M=10^{7} \Msol$ and $M=10^{2} \Msol$. For this example, we will also focus on the orbital response and on a single-arm constellation response $y_{132}$, as TDI combinations will appear (within the approximations listed in Sec.~\ref{subsec:modelLISA}) as linear combinations of these basic observables. The orientation angles chosen for these examples are $[\lambda,\beta,\iota,\psi] = [\pi/4,\pi/3,\pi/3,0]$.
+Having at hand estimates for the relevance of higher-order corrections in the LISA response, we assess the performance of the leading-order treatment and we demonstrate that including higher-order corrections consistently reduces the reconstruction error of the Fourier-domain transfer function. We will consider two equal-mass and non-spinning systems for this illustration. The first will be a high-mass system with $M=10^{7} \Msol$, entering the LISA band at $f=10^{-5}\Hz$ and inspiralling for $\Delta t = 3.8 \yr$ before merging. The second will be a light system with $M=10^{2} \Msol$, close to the mass range of SOBHs~\cite{Sesana16}, starting at $\Delta t = 10\yr$ before merger and exiting the LISA band at $f=1\Hz$. We will discuss SOBH systems farther away from merger in the next section. We will also focus on the orbital response and on the single-arm constellation response $y_{132}$, as TDI combinations will appear (within the approximations listed in Sec.~\ref{subsec:modelLISA}) as linear combinations of these basic observables. The orientation angles chosen for these examples are $[\lambda,\beta,\iota,\psi] = [\pi/4,\pi/3,\pi/3,0]$.
 
-On one hand, we perform a numerical inverse Fourier transform (IFFT) of the Fourier-domain PhenomD waveform, process the signal through the time-domain response~\eqref{eq:defresponse0} or~\eqref{eq:defresponseL}, and perform a numerical Fourier transform (FFT). This gives us the target Fourier-domain waveform, considered to be exact but for possible numerical artifacts (most notably, oscillations induced by the necessary tapering of the signal). On the other hand, we process the Fourier-domain signal through the response summarized in Sec.~\ref{subsec:executivesummary}, including various higher-order corrections. We then compare the output of the two procedures.
+On one hand, we perform a numerical inverse Fourier transform (IFFT) of the Fourier-domain PhenomD waveform, process the signal through the time-domain response~\eqref{eq:defresponse0} or~\eqref{eq:defresponseL}, and perform a numerical Fourier transform (FFT). This gives us the target Fourier-domain waveform, considered to be exact but for possible numerical artifacts\footnote{Numerical Fourier transforms include most notably oscillations induced by the necessary tapering of the signal. In the low-mass case, in practice we stitch together two frequency bands with different sampling rates, which leaves some visible residual in Figs.~\ref{fig:LISAerrorM1e2orb} and~\ref{fig:LISAerrorM1e2const}.}. On the other hand, we process the Fourier-domain signal through the response summarized in Sec.~\ref{subsec:executivesummary}, including various higher-order corrections. We then compare the output of the two procedures.
 
-We show the results for the orbital response in Figs.~\ref{fig:LISAerrorM1e7orb} and~\ref{fig:LISAerrorM1e2orb} in amplitude and phase form. In both cases, in accordance with~\eqref{eq:transfer0local}, the transfer function is essentially a phase, and contains many more cycles in the low-mass case in the higher frequency band. We find that including higher-order corrections does reduce the reconstruction errors, but with the distinctive feature that including only one of the amplitude and delay corrections can make the error actually worse, while including both does improve the accuracy. In the high-mass case, we also find for all orders of approximation an increase in the errors at the very end. This is likely to be due to the fact that the errors in the transfer function are to be interpreted in the relative sense, and the amplitude of the signal is decaying rapidly \SM{[ref to amplitude plot somewhere]} in this post-merger region. Although we did not identify the precise cause of this rise in errors, one possible explanation would be tapering-induced oscillations in the numerical Fourier transforms.
+The results for the orbital response~\eqref{eq:defresponse0} are shown in Figs.~\ref{fig:LISAerrorM1e7orb} and~\ref{fig:LISAerrorM1e2orb} in amplitude and phase form. In both cases, in accordance with~\eqref{eq:transfer0local}, the transfer function is essentially a phase, and contains many more cycles in the low-mass case in the higher frequency band. The leading-order treatment is accurate at $10^{-3}$ in the high-mass case, while in the low-mass case errors reach $10\%$ at the start of observations and a few percent at high frequencies. In both cases, including higher-order corrections does reduce the reconstruction errors, with the distinctive feature that including only one of the amplitude and delay corrections can make the error actually worse, while including both does improve the accuracy down to $10^{-5}$ or better.
 
-For the constellation response, we show the results in Figs.~\ref{fig:LISAerrorM1e7const} and~\ref{fig:LISAerrorM1e2const}, using directly the real and imaginary part of the transfer function. We find similar features as for the orbital response: including higher-corrections reduces the errors, but in the high-mass case the amplitude and delay corrections should be added together. We also find the same growth of errors at the very end of the signal in the high-mass case, in the region where the amplitude of the signal decays.
+For the constellation response~\eqref{eq:defresponseL}, we show the results in Figs.~\ref{fig:LISAerrorM1e7const} and~\ref{fig:LISAerrorM1e2const}, displaying the real and imaginary part of the transfer function. In the high-mass case, we rescale the response by the overall scaling $\pi f L$ in~\eqref{eq:GslrL}. The leading-order treatment reaches an inaccuracy of $\sim 10\%$ at the lowest frequencies of the high-mass case, while it is better than $10^{-3}$ for the low-mass case. Similarly to the orbital response, including all higher-corrections reduces the errors to better than $10^{-5}$, with the only exception of the high-mass case showing errors rising at the low-frequency end and beyond the ringdown frequency.
 
 \begin{figure}
   \centering
@@ -867,7 +865,7 @@ For the constellation response, we show the results in Figs.~\ref{fig:LISAerrorM
 %  \hspace{0.1cm}
 %  \includegraphics[width=.8\linewidth]{plots/LISAerrorM1e7dO.pdf}
   \includegraphics[width=.98\linewidth]{plots/LISAtransfererrorM1e7dO_py.pdf}
-  \caption{Transfer function and residual for the orbital delay $d_{0}$~\eqref{eq:delay0}, for an equal-mass system with $M=10^{7} \Msol$. The first and second panels show the amplitude and phase of the transfer function. The bottom panel shows the relative modulus of the residual of the perturbative treatment~\eqref{eq:summaryNAd}, with the color indicating the order of the approximation, compared to a numerical FFT. The starting frequency is set by the LISA sensitivity band at $10^{-5}\mathrm{Hz}$, corresponding to $3.8\mathrm{yr}$. The thick and thin vertical lines indicate the merger and ringdown frequencies.}
+  \caption{Transfer function and residual for the orbital response~\eqref{eq:defresponse0}, for an equal-mass system with $M=10^{7} \Msol$. The first and second panels show the amplitude and phase of the transfer function. The bottom panel shows the relative modulus of the residual of the perturbative treatment~\eqref{eq:summaryNAd}, with the color indicating the order of the approximation, compared to a numerical FFT. The starting frequency is set by the LISA sensitivity band at $10^{-5}\mathrm{Hz}$, corresponding to $3.8\mathrm{yr}$. The thick and thin vertical lines indicate the merger and ringdown frequencies.}
   \label{fig:LISAerrorM1e7orb}
 \end{figure}
 
@@ -879,7 +877,7 @@ For the constellation response, we show the results in Figs.~\ref{fig:LISAerrorM
 %  \hspace{0.1cm}
 %  \includegraphics[width=.8\linewidth]{plots/LISAerrorM1e2dO.pdf}
   \includegraphics[width=.98\linewidth]{plots/LISAtransfererrorM1e2dO_py.pdf}
-  \caption{Transfer function and residual for the orbital delay $d_{0}$~\eqref{eq:delay0}, for an equal-mass system with $M=10^{2} \Msol$. The panels are as in Fig.~\ref{fig:LISAerrorM1e7orb}. The starting frequency corresponds to four years \SM{[check]} before merger. The ending frequency is set by the LISA sensitivity band at $1\mathrm{Hz}$, and the merger is out of band. The jump in the residuals for $\{N:3|A:1|d:1\}$ is due to the fact that we split the band in two, with two different sampling rates, for the FFT; it shows that, at this level, the details of the conditioning for the FFT start to cause numerical errors in the reference transfer function.}
+  \caption{Transfer function and residual for the orbital response~\eqref{eq:defresponse0}, for an equal-mass system with $M=10^{2} \Msol$. The panels are as in Fig.~\ref{fig:LISAerrorM1e7orb}. The starting frequency corresponds to 10 years before merger. The ending frequency is set by the LISA sensitivity band at $1\mathrm{Hz}$, and the merger is out of band. The jump in the residuals for $\{N:3|A:1|d:1\}$ is due to the fact that we split the band in two, with two different sampling rates, for the FFT; it shows that, at this level, the details of the conditioning for the FFT start to cause numerical errors in the reference transfer function.}
   \label{fig:LISAerrorM1e2orb}
 \end{figure}
 
@@ -888,7 +886,7 @@ For the constellation response, we show the results in Figs.~\ref{fig:LISAerrorM
   %\includegraphics[width=.98\linewidth]{plots/LISAtransferM1e7y12LReIm.pdf}
   %\includegraphics[width=.98\linewidth]{plots/LISAerrorM1e7y12L.pdf}
   \includegraphics[width=.98\linewidth]{plots/LISAtransfererrorM1e7y12L_py.pdf}
-  \caption{Transfer function and residual for the constellation response $y_{132}$~\eqref{eq:GslrL}, for an equal-mass system with $M=10^{7} \Msol$. The top panel shows the real and imaginary parts of the transfer function, rescaled by the overall scaling $\pi f L$ of the response at low frequencies, while the bottom panel shows the relative residuals compared to an FFT. The frequencies are the same as in Fig.~\ref{fig:LISAerrorM1e7orb}.}
+  \caption{Transfer function and residual for the constellation response $y_{132}$~\eqref{eq:defresponseL}, for an equal-mass system with $M=10^{7} \Msol$. The top panel shows the real and imaginary parts of the transfer function, rescaled by the overall scaling $\pi f L$ of the response at low frequencies, while the bottom panel shows the relative residuals compared to an FFT. The frequencies are the same as in Fig.~\ref{fig:LISAerrorM1e7orb}.}
   \label{fig:LISAerrorM1e7const}
 \end{figure}
 
@@ -898,7 +896,7 @@ For the constellation response, we show the results in Figs.~\ref{fig:LISAerrorM
   %
   %\includegraphics[width=.98\linewidth]{plots/LISAerrorM1e2y12L.pdf}
   \includegraphics[width=.98\linewidth]{plots/LISAtransfererrorM1e2y12L_py.pdf}
-  \caption{Transfer function and residual for the constellation response $y_{132}$~\eqref{eq:GslrL}, for an equal-mass system with $M=10^{2} \Msol$. The top panel shows the real and imaginary parts of the transfer function, without the rescaling of Fig.~\ref{fig:LISAerrorM1e7const}. The bottom panels shows the residuals normalized by~\eqref{eq:transferLenvelope} to avoid zero-crossings. The frequencies are the same as in Fig.~\ref{fig:LISAerrorM1e2orb}, and the discontinuity in the residuals for $\{N:3|A:1|d:1\}$ is again due to the conditioning of the FFT.}
+  \caption{Transfer function and residual for the constellation response $y_{132}$~\eqref{eq:defresponseL}, for an equal-mass system with $M=10^{2} \Msol$. The top panel shows the real and imaginary parts of the transfer function, without the rescaling of Fig.~\ref{fig:LISAerrorM1e7const}. The bottom panels shows the residuals normalized by~\eqref{eq:transferLenvelope} to avoid zero-crossings. The frequencies are the same as in Fig.~\ref{fig:LISAerrorM1e2orb}, and the discontinuity in the residuals for $\{N:3|A:1|d:1\}$ is again due to the conditioning of the FFT.}
   \label{fig:LISAerrorM1e2const}
 \end{figure}
 
@@ -921,7 +919,7 @@ For the constellation response, we show the results in Figs.~\ref{fig:LISAerrorM
 %  \hspace{0.1cm}
 %  \includegraphics[width=.8\linewidth]{plots/LISAerrorSOBHepsPsi1d0.pdf}
   \includegraphics[width=.98\linewidth]{plots/LISAtransfererrorSOBHepsPsi1d0corr_py.pdf}
-  \caption{Transfer function and residual for the orbital delay $d_{0}$~\eqref{eq:delay0}, for an SOBH with $\epsilon_{\Psi 2}\sim 1$. The frequency band corresponds to 4 years of observation for this system with $M=50\Msol$, $\Delta t = 200\yr$ away from merger. The top panels show the transfer function amplitude and phase at various orders of approximation in~\eqref{eq:summaryNAd}, with the numerical result of the FFT in black and the comb result~\eqref{eq:transferdiscreteconvolution} in green. The bottom panel shows the relative residuals with respect ot the FFT.}
+  \caption{Transfer function and residual for the orbital delay $d_{0}$~\eqref{eq:delay0}, for an SOBH with $\epsilon_{\Psi 2}\sim 1$ for the orbital response. The frequency band corresponds to 4 years of observation for this system with $M=50\Msol$, $\Delta t = 200\yr$ away from merger. The top panels show the transfer function amplitude and phase at various orders of approximation in~\eqref{eq:summaryNAd}, with the numerical result of the FFT in black and the comb result~\eqref{eq:transferdiscreteconvolution} in green. The bottom panel shows the relative residuals with respect ot the FFT.}
   \label{fig:LISAerrorSOBHepsPsi1d0}
 \end{figure}
 
@@ -933,7 +931,7 @@ For the constellation response, we show the results in Figs.~\ref{fig:LISAerrorM
 %  \hspace{0.1cm}
 %  \includegraphics[width=.8\linewidth]{plots/LISAerrorSOBHepsPsi10d0.pdf}
   \includegraphics[width=.98\linewidth]{plots/LISAtransfererrorSOBHepsPsi10d0corr_py.pdf}
-  \caption{Same as Fig.~\ref{fig:LISAerrorSOBHepsPsi1d0}, but for an SOBH with $\epsilon_{\Psi 2}\sim 10$. The frequency band corresponds to 4 years of observation for this system with $M=15\Msol$, $\Delta t = 1500\yr$ away from merger. The perturbative treatment breaks down in this case, with errors of order 1.}
+  \caption{Same as Fig.~\ref{fig:LISAerrorSOBHepsPsi1d0}, but for an SOBH with $\epsilon_{\Psi 2}\sim 7$ for the orbital response. The frequency band corresponds to 4 years of observation for this system with $M=15\Msol$, $\Delta t = 1500\yr$ away from merger. The perturbative treatment breaks down in this case, with errors of order 1.}
   \label{fig:LISAerrorSOBHepsPsi10d0}
 \end{figure}
 
@@ -943,7 +941,7 @@ For the constellation response, we show the results in Figs.~\ref{fig:LISAerrorM
 %  \hspace{0.1cm}
 %  \includegraphics[width=.8\linewidth]{plots/LISAerrorSOBHepsPsi1y12L.pdf}
   \includegraphics[width=.98\linewidth]{plots/LISAtransfererrorSOBHepsPsi1y12L_py.pdf}
-  \caption{Transfer function and residual for the constellation response $y_{132}$~\eqref{eq:GslrL}, for the same SOBH as in Fig.~\ref{fig:LISAerrorSOBHepsPsi1d0}, with $\epsilon_{\Psi 2}\sim 1$. The top panel shows the real and imaginary part of the transfer function.}
+  \caption{Transfer function and residual for the constellation response $y_{132}$~\eqref{eq:GslrL}, for the same SOBH as in Fig.~\ref{fig:LISAerrorSOBHepsPsi1d0}. Here $\epsilon_{\Psi 2}\sim 0.01$ for the constellation part of the response. The top panel shows the real and imaginary part of the transfer function.}
   \label{fig:}
 \end{figure}
 
@@ -953,7 +951,7 @@ For the constellation response, we show the results in Figs.~\ref{fig:LISAerrorM
 %  \hspace{0.1cm}
 %  \includegraphics[width=.8\linewidth]{plots/LISAerrorSOBHepsPsi10y12L.pdf}
   \includegraphics[width=.98\linewidth]{plots/LISAtransfererrorSOBHepsPsi10y12L_py.pdf}
-  \caption{Same as }
+  \caption{Transfer function and residual for the constellation response $y_{132}$~\eqref{eq:GslrL}, for the same SOBH as in Fig.~\ref{fig:LISAerrorSOBHepsPsi10d0}. Here $\epsilon_{\Psi 2}\sim 0.1$ for the constellation part of the response. The top panel shows the real and imaginary part of the transfer function.}
   \label{fig:}
 \end{figure}
 
