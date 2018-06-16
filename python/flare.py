@@ -171,14 +171,15 @@ def SNRrun(Mtot,q,snr,name="dummy"):
     #setenv="export ROM_DATA_PATH=/discover/nobackup/jgbaker/GW-DA/flare/ROMdata/q1-12_Mfmin_0.0003940393857519091"
     setenv="export ROM_DATA_PATH="+flare_dir+"/"+ROM_DATA_PATH
 
-    print "Executing '"+cmd+"'"
+    print( "Executing '"+cmd+"'")
     code=subprocess.call(setenv+";"+cmd,shell=True)
-    print "Run completed with code(",code,")"
+    print( "Run completed with code(",code,")")
+    print( "CWD=",os.getcwd())
     with open(name+"params.txt",'r') as file:
         lines=file.read()
         #print lines
         dist=re.search("dist_resc:(.*)", lines).group(1)
-        print "distance =",dist
+        print( "distance =",dist)
     return float(dist)
 
 def tSNRrun(Mtot,q,snr,name,data):
@@ -193,18 +194,18 @@ def tSNRrun(Mtot,q,snr,name,data):
     #setenv = "export ROM_DATA_PATH=/Users/jgbaker/Projects/GWDA/LISA-type-response/flare/ROMdata/q1-12_Mfmin_0.0003940393857519091"
     setenv="export ROM_DATA_PATH="+flare_dir+"/"+ROM_DATA_PATH
 
-    print "Executing '"+cmd+"'"
+    print( "Executing '"+cmd+"'")
     code=subprocess.call(setenv+";"+cmd,shell=True)
-    print "Run completed with code(",code,")"
+    print( "Run completed with code(",code,")")
     with open(name+"params.txt",'r') as file:
         lines=file.read()
         #print lines
         dist=re.search("dist_resc:(.*)", lines).group(1)
-        print "distance =",dist
+        print( "distance =",dist)
     if(not math.isnan(float(dist))):
         data.append(float(dist))
     else:
-        print "NAN_DIST with command:",cmd
+        print( "NAN_DIST with command:",cmd)
     return
 
 def threadedSNRrun(Mtot,q,snr,label,Nruns,Nthreads,data):
@@ -213,7 +214,7 @@ def threadedSNRrun(Mtot,q,snr,label,Nruns,Nthreads,data):
     while(irun<Nruns):
         if(Nthreads<Nruns-1):count=Nthreads
         else: count=Nruns-irun
-        print "irun=",irun,"Count=",count,"Nruns=",Nruns,"Nthreads=",Nthreads
+        print( "irun=",irun,"Count=",count,"Nruns=",Nruns,"Nthreads=",Nthreads)
         threads=[];
         ith=0
         for t in range(count):
@@ -224,7 +225,7 @@ def threadedSNRrun(Mtot,q,snr,label,Nruns,Nthreads,data):
         for thread in threads:
             thread.join() #this blocks further execution until the thread has returned
         irun += count
-        print " Batch of runs done, now irun=",irun
+        print( " Batch of runs done, now irun=",irun)
 
 def SNRstudy(outlabel,MtotList,qList,SNRList,Navg,Nthreads=1):
     pp = PdfPages(str(outlabel)+'SNRstudy.pdf')
@@ -238,7 +239,7 @@ def SNRstudy(outlabel,MtotList,qList,SNRList,Navg,Nthreads=1):
             y2=[]
             x=[]
             for Mtot in MtotList:
-                print "Running SNRrun(",Mtot,",",q,",",snr,")"
+                print( "Running SNRrun(",Mtot,",",q,",",snr,")")
                 data=[]
                 if(multithreaded and Nthreads>1):
                     threadedSNRrun(Mtot,q,snr,outlabel+"dummy",Navg,Nthreads,data)
@@ -248,16 +249,16 @@ def SNRstudy(outlabel,MtotList,qList,SNRList,Navg,Nthreads=1):
                         if(not math.isnan(dist)):
                             data.append(dist)
                         else:
-                            print "NAN_DIST!"
+                            print( "NAN_DIST!")
                 zs=np.zeros(0);
                 for dist in data:
                     z=z_at_value(cosmo.luminosity_distance,dist*units.Mpc,zmax=100000,ztol=1e-6)
-                    print "D=",dist," z=",z
+                    print( "D=",dist," z=",z)
                     zs=np.append(zs,math.log10(z))
                     #zs[i]=math.log10(dist)
                 mean=np.mean(zs);
                 std=np.std(zs);
-                print "M=",Mtot," q=",q,"dist=",mean,"+/-",std
+                print( "M=",Mtot," q=",q,"dist=",mean,"+/-",std)
                 x.append(math.log10(Mtot/(1+10**mean)))
                 #x.append(math.log10(Mtot))
                 y1.append(mean-std)
@@ -270,15 +271,16 @@ def SNRstudy(outlabel,MtotList,qList,SNRList,Navg,Nthreads=1):
                 y2=[10**y for y in y2]
                 ylabel="z"
                 ylim=[0,20]
-                xlim=[3.5,8.5]
-            print "x=",x
-            print "y1=",y1
-            print "y2=",y2
-            color=(0.2,0.8/math.sqrt(q),1.0/math.sqrt(count))
+                #xlim=[3.5,8.5]
+                xlim=[3.0,8.0]
+            print( "x=",x)
+            print( "y1=",y1)
+            print( "y2=",y2)
+            color=(0.2,0.8/math.sqrt(q),1.0-count*1.0/len(SNRList))
             plot=plt.fill_between(x, y1, y2, facecolor=color,alpha=0.3, interpolate=True)
             tags.append( Rectangle((0, 0), 1, 1, fc=color,alpha=0.3) )
             labels.append("SNR="+str(snr))
-            print "Finished band for SNR="+str(snr)
+            print( "Finished band for SNR="+str(snr))
         plt.legend(tags,labels)
         plt.ylim(ylim)
         plt.xlim(xlim)
@@ -288,7 +290,7 @@ def SNRstudy(outlabel,MtotList,qList,SNRList,Navg,Nthreads=1):
         #plt.show()
         pp.savefig()
         plt.clf()
-        print "Finished plot for q="+str(q)
+        print( "Finished plot for q="+str(q))
     pp.close()
 
 def getFisherCommand(label,delta=0.1,extrapoints=1.0):
@@ -310,26 +312,26 @@ def FisherRunByParams(snr,params,delta,label,extrapoints=1.0):
     setenv="export ROM_DATA_PATH="+flare_dir+"/"+ROM_DATA_PATH
 
     try:
-        print "Executing '"+cmd+"'"
+        print( "Executing '"+cmd+"'")
         dist=0
         cov=[]
         if not noRun:
             code=subprocess.call(setenv+";"+cmd,shell=True)
-            print "Run "+name+" completed with code(",code,")"
+            print( "Run "+name+" completed with code(",code,")")
             with open(name+"params.txt",'r') as file:
                 lines=file.read()
                 #print lines
                 ##
-                print name+"params.txt"
+                print( name+"params.txt")
                 dist=re.search("dist_resc:(.*)", lines).group(1)
-                print "distance =",dist
+                print( "distance =",dist)
             time.sleep(1)#pause to make sure file is ready to read.
             cov=readCovarFile(name+"_fishcov.dat")
             #v=math.sqrt(np.random.rand()-0.1)#to test behavior under occasional failures
     except (ValueError,ArithmeticError):
-        print "Exception",sys.exc_info()[0]," occurred in run"+name+" for params ",params
+        print( "Exception",sys.exc_info()[0]," occurred in run"+name+" for params ",params)
         FisherRunFailCount+=1
-        print "  FailCount=",FisherRunFailCount
+        print( "  FailCount=",FisherRunFailCount)
         subprocess.call("echo '\n\n***********************\nFailure "+str(FisherRunFailCount)+"\n***********************\n"+cmd+"' |cat - "+name+".out "+name+"_fishcov.out >> fisher_fails.out",shell=True)
     return [float(dist)]+cov
 
@@ -353,7 +355,7 @@ def threadedFisherRun(Mtot,q,snr,delta,label,Nruns,Nthreads,data,extrapoints):
     while(irun<Nruns):
         if(Nthreads<Nruns-1):count=Nthreads
         else: count=Nruns-irun
-        print "irun=",irun,"Count=",count,"Nruns=",Nruns,"Nthreads=",Nthreads
+        print( "irun=",irun,"Count=",count,"Nruns=",Nruns,"Nthreads=",Nthreads)
         threads=[];
         ith=0
         for t in range(count):
@@ -364,7 +366,7 @@ def threadedFisherRun(Mtot,q,snr,delta,label,Nruns,Nthreads,data,extrapoints):
         for thread in threads:
             thread.join() #this blocks further execution until the thread has returned
         irun += count
-        print " Batch of runs done, now irun=",irun
+        print( " Batch of runs done, now irun=",irun)
 
 def readCovarFile(file):
     pars=[]
@@ -408,7 +410,7 @@ def readCovarFile(file):
                     dsky=float('nan')
                     if -val<1e-13*covar[6][6]*covar[7][7]:dsky=0
                 else: dsky=math.sqrt(val)*math.cos(pars[7])
-                print "sky",val,dsky,covar[6][6],covar[7][7]
+                print( "sky",val,dsky,covar[6][6],covar[7][7])
                 val=covar[5][5]*covar[8][8]-covar[5][8]**2
                 if val<0:
                     dori=float('nan')
@@ -422,17 +424,17 @@ def readCovarFile(file):
                 else: dmvol=math.sqrt(val)
             done=True
         except EnvironmentError:
-            print "Something went wrong in trying to open covariance file:",sys.exc_info()[0]
-            print "Try=",trycount
+            print( "Something went wrong in trying to open covariance file:",sys.exc_info()[0])
+            print( "Try=",trycount)
             subprocess.call("ls -ort")
             trycount+=1;
             if(trycount>10):
-                print "giving up!!!"
+                print( "giving up!!!")
                 done=True
                 raise
         except ValueError:
-            print traceback.format_exc(limit=1)
-            print "Continuing after arithmetic error:"
+            print( traceback.format_exc(limit=1))
+            print( "Continuing after arithmetic error:")
         #else: print "...No execption in read covar"
             raise
     return [dm1,dm2,dtRef,dD,dphase,dinc,dlam,dbeta,dpol,dsky,dori,dmvol]
@@ -483,7 +485,7 @@ def FisherStudy(outlabel,MtotList,qList,SNRList,deltalist,Navg,Nthreads,extrapoi
                 for Mtot in MtotList:
                     data=[]
                     logzs=np.zeros(Navg);
-                    print "Running FisherRun(",Mtot,",",q,",",snr,")"
+                    print( "Running FisherRun(",Mtot,",",q,",",snr,")")
                     if(multithreaded):
                         threadedFisherRun(Mtot,q,snr,delta,outlabel+"dummy",Navg,Nthreads,data,extrapoints)
                     else:
@@ -492,19 +494,19 @@ def FisherStudy(outlabel,MtotList,qList,SNRList,deltalist,Navg,Nthreads,extrapoi
                     if noRun: continue
                     for i in range(Navg):
                         distance=cosmo.luminosity_distance,data[i][0]*units.Mpc
-                        print "distance=",distance
+                        print( "distance=",distance)
                         z=z_at_value(cosmo.luminosity_distance,data[i][0]*units.Mpc,zmax=100000,ztol=1e-6)
                         #print "D=",dist," z=",z
                         logzs[i]=math.log10(z)
                     meanz=np.mean(logzs);
                     stdz=np.std(logzs);
-                    print "M=",Mtot," q=",q,"z=",meanz,"+/-",stdz
+                    print( "M=",Mtot," q=",q,"z=",meanz,"+/-",stdz)
                     datafile.write(str(snr)+"\t"+str(delta)+"\t"+str(Mtot)+"\t"+str(q)+"\t"+str(meanz)+"\t"+str(stdz))
                     npdata=np.array(data)
-                    print "data:\n",data
-                    print "npdata:\n",npdata
+                    print( "data:\n",data)
+                    print( "npdata:\n",npdata)
                     Nstats=len(npdata[0,:])-1
-                    print "Nstats=",Nstats
+                    print( "Nstats=",Nstats)
                     #i=0
                     #for d in [npdata[j,:] for j in range(Navg) ]:
                     #    print "d:\n",d
@@ -515,14 +517,14 @@ def FisherStudy(outlabel,MtotList,qList,SNRList,deltalist,Navg,Nthreads,extrapoi
                     means=[]
                     stds=[]
                     for i in range(Nstats):
-                        print "i=",i
+                        print( "i=",i)
                         sel=npdata[:,i+1]
                         v=np.log10(np.array(sel))
                         mean=np.mean(v)
                         std=np.std(v)
                         means.append(mean)
                         stds.append(std)
-                        print"  ",mean," +/- ",std
+                        print("  ",mean," +/- ",std)
                         datafile.write("\t"+str(mean)+"\t"+str(std))
                     datafile.write("\n")
                     datafile.flush()
@@ -532,9 +534,9 @@ def FisherStudy(outlabel,MtotList,qList,SNRList,deltalist,Navg,Nthreads,extrapoi
                     #y2.append(meanz+stdz)
                     y1.append((means[ireport]-stds[ireport]))
                     y2.append((means[ireport]+stds[ireport]))
-                print "x=",x
-                print "y1=",y1
-                print "y2=",y2
+                print( "x=",x)
+                print( "y1=",y1)
+                print( "y2=",y2)
                 color=(0.2,0.8/math.sqrt(q),1.0/math.sqrt(snrcount))
                 if(deltacount==1):
                     plot=plt.fill_between(x, y1, y2, facecolor=color,alpha=0.3, interpolate=True)
@@ -579,7 +581,7 @@ def FisherPlot(outlabel,ipar,qList,SNRList,deltalist,datafile,scaled=False,targe
                     if abs(d[0]/snr-1)<tol and abs(d[1]/delta-1)<tol and abs(d[3]/q-1)<tol:
                         subdata.append(d)
                 subdata=np.array(subdata)
-                print "subdata=",subdata
+                print( "subdata=",subdata)
                 iMtot=2
                 imeanz=4
                 istdz=5
@@ -606,7 +608,7 @@ def FisherPlot(outlabel,ipar,qList,SNRList,deltalist,datafile,scaled=False,targe
                     SNRrescale_factor=targetSNR/snr
                     #next make a new array of redshifts znew=z(D(z)/SNRrescale_factor)
                     meanzarray=np.array([math.log10(z_at_value(cosmo.luminosity_distance,cosmo.luminosity_distance(10**zz/SNRrescale_factor),zmax=100000,ztol=1e-6)) for zz in meanzarray])
-                    print "Rescaling SNR by ",SNRrescale_factor," from ",snr," to ", targetSNR
+                    print( "Rescaling SNR by ",SNRrescale_factor," from ",snr," to ", targetSNR)
                 x=[ math.log10(a/(1+10**b)) for a,b in zip(subdata[:,iMtot],meanzarray) ]
                 #print "x=",x
                 #print "imeanpar=",imeanpar
@@ -641,7 +643,7 @@ def HorizonPlot(outlabel,ipar,qList,snr,delta,datafile,horizonlist,scaled=False,
     rangetag=''
     if(show_range):rangetag='range-'
     name=str(outlabel)+'Horizon-'+rangetag+par_name(ipar)+'.pdf'
-    print "Making plot: "+name
+    print( "Making plot: "+name)
     pp = PdfPages(name);
     #datafile = open(datafile,'r')
     tol=1e-10
@@ -654,12 +656,12 @@ def HorizonPlot(outlabel,ipar,qList,snr,delta,datafile,horizonlist,scaled=False,
         tags=[]
         labels=[]
         subdata=[]
-        print "finding data with SNR="+str(snr)+", delta="+str(delta)+", q="+str(q)
+        print( "finding data with SNR="+str(snr)+", delta="+str(delta)+", q="+str(q))
         for d in data:
             if abs(d[0]/snr-1)<tol and abs(d[1]/delta-1)<tol and abs(d[3]/q-1)<tol:
                 subdata.append(d)
         subdata=np.array(subdata)
-        print "subdata=",subdata
+        print( "subdata=",subdata)
         iMtot=2
         imeanz=4
         istdz=5
@@ -678,7 +680,7 @@ def HorizonPlot(outlabel,ipar,qList,snr,delta,datafile,horizonlist,scaled=False,
                 scales=np.full_like(subdata[:,iMtot], 2*math.log10(math.pi/180.0))
             if(ipar==11): #scale by m1*m2
                 scales=np.log10(subdata[:,iMtot]*subdata[:,iMtot]/(1+q)/(1+1/q))
-        print scales
+        print( scales)
         colorcount=0
         for horizoncut in horizonlist:
             colorcount+=1
@@ -738,7 +740,7 @@ def HorizonCompare(outlabel,ipar,qList,snr,delta,datafiles,horizonlist,scaled=Fa
                     subdata.append(d)
             subdatalist.append(subdata)
         subdata=np.array(subdata)
-        print "subdata=",subdata
+        print( "subdata=",subdata)
         iMtot=2
         imeanz=4
         istdz=5
@@ -758,7 +760,7 @@ def HorizonCompare(outlabel,ipar,qList,snr,delta,datafiles,horizonlist,scaled=Fa
                 scaleslist=np.full_like(subdatalist[:,:,iMtot], 2*math.log10(math.pi/180.0))
             if(ipar==11): #scale by m1*m2
                 scaleslist=np.log10(subdatalist[:,:,iMtot]*subdatalist[::,iMtot]/(1+q)/(1+1/q))
-        print scales        
+        print( scales)        
         colorcount=0
         for horizoncut in horizonlist:                   
             colorcount+=1
