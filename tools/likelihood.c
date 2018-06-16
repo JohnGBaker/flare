@@ -769,7 +769,7 @@ int ComputeIntegrandValues3Chan(
   double* aimag1chan2 = freqseries1chan2->amp_imag->data;
   double* areal1chan3 = freqseries1chan3->amp_real->data;
   double* aimag1chan3 = freqseries1chan3->amp_imag->data;
-  double* phi1 = freqseries1chan1->phase->data;
+  double* phi1 = freqseries1chan1->phase->data;  
   gsl_matrix* splinechan1real2chan1 = splines2chan1->spline_amp_real;
   gsl_matrix* splinechan1imag2chan1 = splines2chan1->spline_amp_imag;
   gsl_matrix* splinechan1real2chan2 = splines2chan2->spline_amp_real;
@@ -832,6 +832,7 @@ int ComputeIntegrandValues3Chan(
     invSnchan1 = 1./ObjectFunctionCall(Snoise1,f);
     invSnchan2 = 1./ObjectFunctionCall(Snoise2,f);
     invSnchan3 = 1./ObjectFunctionCall(Snoise3,f);
+    printf("i=%i,i2=%i %g<f<%g, p1=%g\n",i,i2, gsl_matrix_get(quadsplinephase2, i2, 0), gsl_matrix_get(quadsplinephase2, i2+1, 0),gsl_matrix_get(quadsplinephase2, i2, 2));
 
     camp = invSnchan1 * (ampreal1chan1 + I*ampimag1chan1) * (ampreal2chan1 - I*ampimag2chan1) + invSnchan2 * (ampreal1chan2 + I*ampimag1chan2) * (ampreal2chan2 - I*ampimag2chan2) + invSnchan3 * (ampreal1chan3 + I*ampimag1chan3) * (ampreal2chan3 - I*ampimag2chan3);
     //dump
@@ -968,8 +969,8 @@ double FDSinglemodeFresnelOverlap3Chan(
   /* Rescaling the integrand */
   double scaling = 10./gsl_vector_get(integrand->freq, integrand->freq->size-1);
 
-//TEST
-//scaling = 1.;
+  //TEST
+  //scaling = 1.;
 
   gsl_vector_scale(integrand->freq, scaling);
   gsl_vector_scale(integrand->amp_real, 1./scaling);

@@ -336,8 +336,14 @@ void ReImUniformFrequencySeries_Cleanup(ReImUniformFrequencySeries *freqseries) 
   free(freqseries);
 }
 
-ReImUniformFrequencySeries * ReImFrequencySeries_ConvertToUniform(ReImFrequencySeries *oldfreqseries){
+ReImUniformFrequencySeries * ReImFrequencySeries_ConvertToUniform(ReImFrequencySeries *oldfreqseries, int edging){
   //This frees oldfreqseries
+  //A difference between ReIm and ReImUniform is that the latter data are understood to be cell-centered
+  //We interpret the ReIm domain to be strictly between the first and last samples, while the bins for the
+  //for the ReImUniform domain extend 1/2 bin width on either side.  Conceptually can either fill the extra
+  //range with zero, or extrapolate.  For the latter (edging=1), we do not change the last half bin value,
+  //but the integral will effectively change.  If (edging=1) then we reduce the edge values by hald so that
+  //the integral of the series will be preserved.  If edging=2 we preserve the square integral.
   ReImUniformFrequencySeries *freqseries;
 
   //Now prepare the result
@@ -353,6 +359,14 @@ ReImUniformFrequencySeries * ReImFrequencySeries_ConvertToUniform(ReImFrequencyS
   freqseries->h_imag = oldfreqseries->h_imag;
   if(oldfreqseries->freq)gsl_vector_free(oldfreqseries->freq);
   free(oldfreqseries);
+  if(edging>0){
+    double fac=0.5;
+    if(edging==2)fac=sqrt(0.5);
+    freqseries->h_real->data[0]*=fac;
+    freqseries->h_real->data[freqseries->N-1]*=fac;
+    freqseries->h_imag->data[0]*=fac;
+    freqseries->h_imag->data[freqseries->N-1]*=fac;
+  }
   return freqseries;
 }
 

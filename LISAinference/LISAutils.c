@@ -10,6 +10,45 @@ LISAAddParams* addparams = NULL;
 double logZdata = 0.;
 SimpleLikelihoodPrecomputedValues* simplelikelihoodinjvals = NULL;
 
+//These are transitional, for testing; 
+
+//Should eventually get rid of this as well as LISAParams
+BBHWaveformFDparams convertLISAparam2BBH(LISAParams *params){
+  BBHWaveformFDparams outparams;
+  outparams.tRef=params->tRef;
+  outparams.phiRef=params->phiRef;
+  outparams.m1=params->m1;
+  outparams.m2=params->m2;
+  outparams.distance=params->distance;
+  outparams.lambda=params->lambda;
+  outparams.beta=params->beta;
+  outparams.inclination=params->inclination;
+  outparams.polarization=params->polarization;
+  outparams.chi1x=outparams.chi1y=outparams.chi1z=outparams.chi2x=outparams.chi2y=outparams.chi2z=0;
+  return outparams;
+}
+
+//should eventually get rid of this and redundant wavefrom relate args
+BBHWaveformFDargs setBBHargs(LISAGlobalParams *gparams,LISAParams *params){
+  BBHWaveformFDargs args;
+  args.nbmode=params->nbmode;
+  args.fRef=gparams->fRef;
+  args.TF2extend=gparams->tagextpn;
+  args.TF2ext_Mfmatch=gparams->Mfmatch;
+  return args;
+}
+
+//Set the signal frame from LISA gloabal params
+SignalFraming frameSignal(LISAGlobalParams *gparams){
+  SignalFraming frame;
+  double tReg=globalparams->deltatobs*YRSID_SI;
+  frame.fmin=globalparams->minf;
+  frame.fmax=globalparams->maxf;
+  frame.tmin=-tReg;
+  frame.tmax=-tReg+globalparams->deltatobs*YRSID_SI;
+  return frame;
+}
+
 /***************** Pasring string to choose what masses set to sample for *****************/
 
 /* Function to convert string input SampleMassParams to tag */
@@ -456,6 +495,23 @@ Syntax: --PARAM-min\n\
  --infile              Input file name when loading input parameters file from file for LISAlikelihood.\n\
  --outdir              Directory for input/output file.\n\
  --outfile             Input file with the parameters.\n\
+-----------------------------------------------------------------\n\
+----- Timing Discussion -----------------------------------------\n\
+-----------------------------------------------------------------\n\
+There are several parameters related to the timing.  These connect the timing between the signal wave-train, the arrival of the\n\
+wavetrain at the instrument or SSB, the time at which the observation begins, the zero-time assumed in the data FFT generation,\n\
+and lastly the epoch-time relating these to a physical time and date.  Only one of these is a search parameter tRef, which can\n\
+be defined as either the time at which the reference point in the wave train reaches the SSB or the time at which the reference\n\
+point in the wave train reaches the constellation centroid.  The reference point in the waveform is either a preset point related\n\
+to the waveform model, eg at t(f=0.14/M), or at t(fRef) if the flag settRefAtfRef [TBD] is set. Other times which are imporant\n\
+to the signal model are tstartobs [internal] which indicates the first time measured by LISA relative to the wave-train reference,\n\
+related to this is tendobs [TBD,internal] the last time observed by LISA.  The total duration of the observation, the difference \n\
+between these times, is specified by flag deltatobs.  To complete model specification we also need to relate the tRef to the data\n\
+observation window.  We define tReg[TBD] as the tRef registration time relative to the the start of the observation, the wave-train \n\
+reference point arrives at LISA (or SSB) at tReg+tRef after the start of observation.  By default, we have assumed a reference near\n\
+the end if observation tReg \approx deltatobs.  If separately generated data are used then the tReg assumed in the modeling may be\n\
+different that the tReg (time registration) assumed in the data FT generation.  There can be good reasons not to tie these strickly\n\
+together, thus we also need tRegData[TBD, default=0]\n\
 \n";
 
     ssize_t i;
@@ -1089,58 +1145,70 @@ int LISAGenerateSignalCAmpPhase(
   /* Starting frequency corresponding to duration of observation deltatobs */
   double fstartobs = 0.;
   if(!(globalparams->deltatobs==0.)) fstartobs = Newtonianfoft(params->m1, params->m2, globalparams->deltatobs);
+  printf("fstartobs=%g,deltatobs=%g\n",fstartobs,globalparams->deltatobs);
 
-  /* Generate the waveform with the ROM */
-  /* NOTE: SimEOBNRv2HMROM accepts masses and distances in SI units, whereas LISA params is in solar masses and Mpc */
-  /* NOTE: minf and deltatobs are taken into account if extension is allowed, but not maxf - restriction to the relevant frequency interval will occur in both the response prcessing and overlap computation */
-  /* If extending, taking into account both fstartobs and minf */
-  if(!(globalparams->tagextpn)) {
-    //printf("Not Extending signal waveform.  Mfmatch=%g\n",globalparams->Mfmatch);
-    ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
-  } else {
-    //printf("Extending signal waveform.  Mfmatch=%g\n",globalparams->Mfmatch);
-    ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, globalparams->Mfmatch, fmax(fstartobs, globalparams->minf), 0, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+  if(0){//Original version
+
+    /* Generate the waveform with the ROM */
+    /* NOTE: SimEOBNRv2HMROM accepts masses and distances in SI units, whereas LISA params is in solar masses and Mpc */
+    /* NOTE: minf and deltatobs are taken into account if extension is allowed, but not maxf - restriction to the relevant frequency interval will occur in both the response prcessing and overlap computation */
+    /* If extending, taking into account both fstartobs and minf */
+    if(!(globalparams->tagextpn)) {
+      //printf("Not Extending signal waveform.  Mfmatch=%g\n",globalparams->Mfmatch);
+      ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+    } else {
+      //printf("Extending signal waveform.  Mfmatch=%g\n",globalparams->Mfmatch);
+      ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, globalparams->Mfmatch, fmax(fstartobs, globalparams->minf), 0, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+    }
+    if(ret==FAILURE){
+      //printf("LISAGenerateSignalCAmpPhase: Generation of ROM for injection failed!\n");
+      return FAILURE;
   }
-  if(ret==FAILURE){
-    //printf("LISAGenerateSignalCAmpPhase: Generation of ROM for injection failed!\n");
-    return FAILURE;
-  }
-
-  //listmodesCAmpPhaseTrim(listROM);//Eliminate parts of the wf our of range
-
-  /*ListmodesCAmpPhaseFrequencySeries* listelem = listROM;
-  while(listelem){
-    printf("Result....\n");
-    printf("listelem: %i %i %i\n",listelem->freqseries->amp_real->size,listelem->l,listelem->m);
-    for(i=0;i<listelem->freqseries->freq->size;i++){
+    
+    //listmodesCAmpPhaseTrim(listROM);//Eliminate parts of the wf our of range
+    
+    /*ListmodesCAmpPhaseFrequencySeries* listelem = listROM;
+      while(listelem){
+      printf("Result....\n");
+      printf("listelem: %i %i %i\n",listelem->freqseries->amp_real->size,listelem->l,listelem->m);
+      for(i=0;i<listelem->freqseries->freq->size;i++){
       double f=listelem->freqseries->freq->data[i];
       if(((int)(log(f)*40))%10==0)printf("%g:\n",f);
       printf(" %g  %g  %g  %g\n",f,listelem->freqseries->amp_real->data[i],listelem->freqseries->amp_imag->data[i],listelem->freqseries->phase->data[i]);
       if(i>0&&i<listelem->freqseries->freq->size-1){
-	double yp=listelem->freqseries->phase->data[i+1];
-	double y0=listelem->freqseries->phase->data[i];
-	double ym=listelem->freqseries->phase->data[i-1];
-	double fp=listelem->freqseries->freq->data[i+1];
-	double f0=listelem->freqseries->freq->data[i];
-	double fm=listelem->freqseries->freq->data[i-1];
-	printf("   fdot: %g\n", ( (yp-y0)/(fp-f0)-(ym-y0)/(fm-f0) ) * 2 / (fp-f0) * f0 *f0);
+      double yp=listelem->freqseries->phase->data[i+1];
+      double y0=listelem->freqseries->phase->data[i];
+      double ym=listelem->freqseries->phase->data[i-1];
+      double fp=listelem->freqseries->freq->data[i+1];
+      double f0=listelem->freqseries->freq->data[i];
+      double fm=listelem->freqseries->freq->data[i-1];
+      printf("   fdot: %g\n", ( (yp-y0)/(fp-f0)-(ym-y0)/(fm-f0) ) * 2 / (fp-f0) * f0 *f0);
       }
-    }
+      }
+      
+      listelem=listelem->next;
+      }*/
+    //
+    //printf("%d|%g|%g|%g|%g|%g|%g\n", params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+    
+    /* If the ROM waveform generation failed (e.g. parameters were out of bounds) return FAILURE */
+    if(ret==FAILURE) return FAILURE;
+    
+    /* Process the waveform through the LISA response */
+    //WARNING: tRef is ignored for now, i.e. set to 0
+    //TESTING
+    //clock_t tbeg, tend;
+    //tbeg = clock();
 
-    listelem=listelem->next;
-  }*/
-  //
-  //printf("%d|%g|%g|%g|%g|%g|%g\n", params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
-
-  /* If the ROM waveform generation failed (e.g. parameters were out of bounds) return FAILURE */
-  if(ret==FAILURE) return FAILURE;
-
-  /* Process the waveform through the LISA response */
-  //WARNING: tRef is ignored for now, i.e. set to 0
-  //TESTING
-  //clock_t tbeg, tend;
-  //tbeg = clock();
-
+  } else {// new version
+    BBHWaveformFDparams bbhpars=convertLISAparam2BBH(params);
+    BBHWaveformFDargs bbhargs= setBBHargs(globalparams,params);
+    SignalFraming frame=frameSignal(globalparams);
+    bbhpars.tRef -= injectedparams->tRef;
+    int ret=generateBBHWaveformFD(0,&listROM, &bbhpars, &frame, &bbhargs);    
+    if(ret==FAILURE) return FAILURE;
+  }
+  
   //#pragma omp critical(LISAgensig)
   LISASimFDResponseTDI3Chan(globalparams->tagtRefatLISA, globalparams->variant, &listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, globalparams->maxf, globalparams->tagtdi, globalparams->frozenLISA, globalparams->responseapprox);
   //tend = clock();
@@ -1541,9 +1609,10 @@ int LISAGenerateDataFD(
 
   printf("prep\n");
   //Now transfer results and clean up
-  data->TDI1Data=ReImFrequencySeries_ConvertToUniform(TDI1);
-  data->TDI2Data=ReImFrequencySeries_ConvertToUniform(TDI2);
-  data->TDI3Data=ReImFrequencySeries_ConvertToUniform(TDI3);
+  int edging=0;
+  data->TDI1Data=ReImFrequencySeries_ConvertToUniform(TDI1,edging);
+  data->TDI2Data=ReImFrequencySeries_ConvertToUniform(TDI2,edging);
+  data->TDI3Data=ReImFrequencySeries_ConvertToUniform(TDI3,edging);
   ListmodesCAmpPhaseFrequencySeries_Destroy(listROM);
   ListmodesCAmpPhaseFrequencySeries_Destroy(listTDI1);
   ListmodesCAmpPhaseFrequencySeries_Destroy(listTDI2);
@@ -1564,7 +1633,7 @@ int LISAGenerateDataFD(
   double SNR2=0;
   for(int i=0;i<npts;i++){
     double delta=df;
-    if(i==0||i+1==npts)delta=df/2.0;
+    if(edging==0&&(i==0||i+1==npts))delta=df/2.0;
     double dsnr2=0;
     dsnr2 += gsl_vector_get(data->TDI1Data->h_real,i)*gsl_vector_get(data->TDI1WData->h_real,i);
     dsnr2 += gsl_vector_get(data->TDI1Data->h_imag,i)*gsl_vector_get(data->TDI1WData->h_imag,i);
@@ -1689,7 +1758,7 @@ double CalculateLogLCAmpPhase(LISAParams *params, LISAInjectionCAmpPhase* inject
     logL = overlapTDI123 - 1./2*(injection->TDI123ss) - 1./2*(generatedsignal->TDI123hh);
     if(logL>0){
       printf("logL=%g\n",logL);
-      printf("overlapTDI123=%g, injection->TDI123ss=%g, generatedsignal->TDI123hh=%g\n", overlapTDI123, injection->TDI123ss, generatedsignal->TDI123hh);
+      printf("overlapTDI123=%.9g, injection->TDI123ss=%.9g, generatedsignal->TDI123hh=%.9g\n", overlapTDI123, injection->TDI123ss, generatedsignal->TDI123hh);
       report_LISAParams(params);
     }
   }
@@ -1719,7 +1788,7 @@ double CalculateLogLDataCAmpPhase(LISAParams *modelparams, LISADataFD *data)
     clock_t tbeg, tend;
     tbeg = clock();
     double overlap=0;
-    if(0){
+    if(1){
       overlap = FDCAmpPhaseModelDataOverlap(generatedsignal->TDI1Signal, data->TDI1WData,0,NULL);
       overlap += FDCAmpPhaseModelDataOverlap(generatedsignal->TDI2Signal, data->TDI2WData,0,NULL);
       overlap += FDCAmpPhaseModelDataOverlap(generatedsignal->TDI3Signal, data->TDI3WData,0,NULL);
@@ -1738,7 +1807,7 @@ double CalculateLogLDataCAmpPhase(LISAParams *modelparams, LISADataFD *data)
     logL = overlap - 1./2*(data->TDI123dd) - 1./2*(generatedsignal->TDI123hh);
     if(1||logL>0){
       printf("logL=%g\n",logL);
-      printf("overlapTDI123=%g, data->TDI123dd=%g, generatedsignal->TDI123hh=%g\n", overlap, data->TDI123dd, generatedsignal->TDI123hh);
+      printf("overlapTDI123=%.9g, data->TDI123dd=%.9g, generatedsignal->TDI123hh=%.9g\n", overlap, data->TDI123dd, generatedsignal->TDI123hh);
       report_LISAParams(modelparams);
     }
     tend = clock();

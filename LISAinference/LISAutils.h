@@ -19,6 +19,7 @@
 #include "data_likelihood.h"
 #include "LISAFDresponse.h"
 #include "LISAnoise.h"
+#include "BBHWaveformFD.h"
 
 #if defined(__cplusplus)
 extern "C" {

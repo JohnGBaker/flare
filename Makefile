@@ -152,7 +152,7 @@ CFLAGS += -std=c99
 CPPFLAGS += -O3 -I$(GSLINC)
 CXXFLAGS += -g -std=c++11 -O3 -I$(GSLINC)
 
-SUBDIRS = tools EOBNRv2HMROM LISAsim LLVsim integration
+SUBDIRS = tools EOBNRv2HMROM Waveforms LISAsim LLVsim integration
 ifdef PTMCMC
   SUBDIRS += ptmcmc
   CXXFLAGS+= -I$(PTMCMC)/include
@@ -180,14 +180,16 @@ $(SUBDIRS):
 
 EOBNRv2HMROM: tools
 
+Waveforms: EOBNRv2HMROM tools
+
 LISAsim: tools integration EOBNRv2HMROM
 
 LLVsim: tools integration EOBNRv2HMROM
 
 ifdef PTMCMC
-LISAinference: tools integration EOBNRv2HMROM LISAsim ptmcmc
+LISAinference: tools integration EOBNRv2HMROM Waveforms LISAsim ptmcmc
 else
-LISAinference: tools integration EOBNRv2HMROM LISAsim
+LISAinference: tools integration EOBNRv2HMROM Waveforms LISAsim
 endif
 
 LLVinference: tools integration EOBNRv2HMROM LLVsim

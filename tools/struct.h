@@ -57,6 +57,14 @@ typedef struct tagObjectFunction
 } ObjectFunction ;
 double ObjectFunctionCall(const ObjectFunction*,double);
 
+/* Signal Framing structure */
+typedef struct {
+  double fmin; //(Hz) minimum relevant freq. (for efficiency)
+  double fmax; //(Hz) maximum relevant freq. (for efficiency)
+  double tmin; //(s) minimum time extent, relative to waveform reference time
+  double tmax; //(s) maximum time extent, relative to waveform reference time
+}SignalFraming;
+  
 /* Complex frequency series in amplitude and phase representation (for one mode) */
 typedef struct tagCAmpPhaseFrequencySeries
 {
@@ -221,7 +229,7 @@ void ReImUniformFrequencySeries_Init(
 	 ReImUniformFrequencySeries** freqseries,      /* double pointer for initialization */
 	 const int n );                                /* length of the frequency series */
 void ReImUniformFrequencySeries_Cleanup(ReImUniformFrequencySeries* freqseries);
-ReImUniformFrequencySeries * ReImFrequencySeries_ConvertToUniform(ReImFrequencySeries *oldfreqseries);
+ReImUniformFrequencySeries * ReImFrequencySeries_ConvertToUniform(ReImFrequencySeries *oldfreqseries, int extrap);
 double  Get_UniformFrequency(const ReImUniformFrequencySeries* freqseries, const int index);
 void ReImTimeSeries_Init(
 	 ReImTimeSeries** timeseries,           /* double pointer for initialization */
