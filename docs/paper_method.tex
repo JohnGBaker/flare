@@ -1639,7 +1639,7 @@ where the condition $c_{M} = c_{-M}$ is an arbitrary condition enforced to match
 \section{Wigner matrices and precessing frame}
 \label{app:wigner}
 
-In this Appendix, we summarize our conventions for the Wigner matrices and give a brief description of the construction of a precessing-frame directly from the waveform.
+In this appendix, we summarize our conventions for the Wigner matrices and give a brief description of the construction of a precessing-frame directly from the waveform.
 
 If the $h_{\ell m}^{\rm I}$ are the spin-weighted spherical harmonics~\eqref{eq:defmodes} of the waveform in a fixed inertial frame (I), and if the $h_{\ell m}^{\rm P}$ are the modes of the waveform in a time-dependent precessing frame (P) constructed from the inertial frame by an active rotation with Euler angles $(\alpha, \beta, \gamma)$ (in the convention $(z,y,z)$), then the modes are related by
 \begin{subequations}
@@ -1663,7 +1663,7 @@ where the boundaries of the sum, $k_{\rm min} = \mathrm{max}(0, m-m')$ and $k_{\
 \be
 	\calD^{\ell}_{m m'} (\alpha, \beta, \gamma) = D^{\ell \, \mathrm{ABFO}}_{m' m} (\alpha, \beta, \gamma) \,.
 \ee
-In Sec.~\ref{sec:precession}, we considered only $\ell = 2$ and we restricted ourselves to the contributions of the precessing-frame mode $h_{22}^{\rm P}$. In that case, the relevant explicit expression for the $d$-matrix are
+In Sec.~\ref{sec:precession}, we considered only $\ell = 2$ and we restricted ourselves to the contributions of the precessing-frame mode $h_{22}^{\rm P}$. In that case, the relevant explicit \jgb{expressions for the $d$-matrix elements} are
 \begin{subequations}
 \begin{align}
 	d^{2}_{22} (\beta) &= \cos^{4} \frac{\beta}{2}\,, \\
@@ -1690,7 +1690,7 @@ where the $\ket{\ell, m}$ are a notation for the spin-weighted spherical harmoni
 \end{subequations}
 Note that in the original proposal~\cite{OShaughnessy+11}, $\psi_{4}$ was used instead of the strain. The $z$-axis of the precessing frame is then chosen to be the dominant eigenvetor of the matrix $\langle \bm{L} \bm{L} \rangle_{ab}$. The construction of the precessing frame is then supplemented by the minimal rotation condition~\cite{Boyle+11}, see~\eqref{eq:gammadot}.
 
-\section{Explicit expression for the stencil coefficients}
+\section{Explicit expression for the \jgb{Fresnel} stencil coefficients}
 \label{app:stencil}
 
 \begin{table}[t]
@@ -1708,7 +1708,7 @@ Note that in the original proposal~\cite{OShaughnessy+11}, $\psi_{4}$ was used i
 \end{ruledtabular}
 \end{table}
 
-In this Appendix, we give explicit expressions for the stencil coefficients entering~\eqref{eq:stencilfresnel}. In this work we used only low order stencils with $N\leq 20$, and one can trivially invert of the system~\eqref{eq:stencilsystem}, as this operation has to be done only once. One can also obtain closed-form expressions for these coefficients, thanks to the particular choice of samples at $\pm kT$ that gives to the system~\eqref{eq:stencilsystem} the form of a Vandermonde system. Defining the Vandermonde matrix $V(x_{0},\dots,x_{N})$ as $V_{ij} = (x_{j})^{i}$, setting $x_{j} = j^{2}$, and $b_{p} \equiv (-i\epsilon)^{p}(2p-1)!!$, the linear system~\eqref{eq:stencilsystem} becomes
+In this appendix, we give explicit expressions for the stencil coefficients entering~\eqref{eq:stencilfresnel} \jgb{which approximates a Fresnel transform, as discussed in Sec.~\ref{subsec:fresneltransform}}. In this work we used only low order stencils with $N\leq 20$, and one can trivially invert of the system~\eqref{eq:stencilsystem}, as this operation has to be done only once. One can also obtain closed-form expressions for these coefficients, thanks to the particular choice of samples at $\pm kT$ that gives to the system~\eqref{eq:stencilsystem} the form of a Vandermonde system. Defining the Vandermonde matrix $V(x_{0},\dots,x_{N})$ as $V_{ij} = (x_{j})^{i}$, setting $x_{j} = j^{2}$, and $b_{p} \equiv (-i\epsilon)^{p}(2p-1)!!$, the linear system~\eqref{eq:stencilsystem} becomes
 \be
 	b_{p} = \sum\limits_{k=0}^{N} V_{pk} a_{N,k}^{\epsilon} \,.
 \ee
@@ -1729,7 +1729,7 @@ The two cases $\epsilon\pm 1$ correspond simply to a complex conjugation of the 
 \section{Precession in current Fourier-domain waveform models}
 \label{app:precpreviousapproaches}
 
-In this Appendix, we give a more detailed overview of the treatment of precession in existing waveform models that generate signals directly in the Fourier domain. Our objective is not to give an exhaustive account of the various existing models, but rather to highlight how their treatment relates to ours.
+In this appendix, we give a more detailed overview of the treatment of precession in existing waveform models that generate signals directly in the Fourier domain. Our objective is not to give an exhaustive account of the various existing models, but rather to highlight how their treatment relates to ours.
 
 To describe previous approaches to the problem of producing precessing waveforms directly in the Fourier domain, avoiding the use of a time-domain generation followed by an FFT, it is useful to introduce schematically four different approximations (dropping the mode indices):
 \begin{itemize}
@@ -1756,7 +1756,7 @@ In the SUA formalism proposed in~\cite{KCY13, KCY14}, one extends the SPA to inc
 \section{Precessing waveform and the LISA Fourier-domain response}
 \label{app:precLISA}
 
-In this Appendix, we present an argument for the applicability of the treatment of Section~\ref{sec:formalism} to a Fourier-domain waveform that already contains precession effects, thus combining our investigations of Secs.~\ref{sec:LISA} and~\ref{sec:precession}. Let us first note that one possible approach would be to incorporate both the precession modulation and the LISA modulation and delay in a single $G(f,t)$ kernel. This is what is done notably in~\cite{Klein+15}, with inspiral-only precessing waveforms (and a low-frequency approximation for the response). In that approach, comparing the results of Secs.~\ref{sec:LISA} and Sec.~\ref{sec:precession}, it appears that the precession is more challenging to model than the LISA response -- thus the accuracy of the final result should depend mainly on the precession treatment. In the following, we take a different route and investigate wether we can directly process Fourier-domain precessing mode contributions of the form $\calT^{\ell}_{m m'}(f) \tilde{h}_{\ell m'}(f)$ through the LISA response. We will make simplifying assumptions, assuming simple precession and keeping to order-of-magnitude estimates only. We leave for future work a more thorough investigation of precessing waveforms for LISA beyond simple precession and for IMR waveforms.
+In this appendix, we present an argument for the applicability of the treatment of Section~\ref{sec:formalism} to a Fourier-domain waveform that already contains precession effects, thus combining our investigations of Secs.~\ref{sec:LISA} and~\ref{sec:precession}. Let us first note that one possible approach would be to incorporate both the precession modulation and the LISA modulation and delay in a single $G(f,t)$ kernel. This is what is done notably in~\cite{Klein+15}, with inspiral-only precessing waveforms (and a low-frequency approximation for the response). In that approach, comparing the results of Secs.~\ref{sec:LISA} and Sec.~\ref{sec:precession}, it appears that the precession is more challenging to model than the LISA response -- thus the accuracy of the final result should depend mainly on the precession treatment. In the following, we take a different route and investigate wether we can directly process Fourier-domain precessing mode contributions of the form $\calT^{\ell}_{m m'}(f) \tilde{h}_{\ell m'}(f)$ through the LISA response. We will make simplifying assumptions, assuming simple precession and keeping to order-of-magnitude estimates only. We leave for future work a more thorough investigation of precessing waveforms for LISA beyond simple precession and for IMR waveforms.
 
 For simplicity, we assume that the precession transfer function has been computed using the leading-order approximation, as including corrections should not change the timescales involved. Thus, we consider the signal
 \be\label{eq:htildeasaprecmodecontrib}
