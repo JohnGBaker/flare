@@ -85,12 +85,12 @@ def read_samples(pars,sample_file,code="bambi",burnfrac=0,keeplen=-1,iskip=1,max
     if(code=="bambi"):
         print ("Reading BAMBI samples")
         Npar=len(pars)
-        data=np.loadtxt(chainfile,usecols=range(Npar))
+        data=np.loadtxt(sample_file,usecols=range(Npar))
     else:
         print ("Reading PTMCMC samples")
         Npar=len(pars)
         #data=np.loadtxt(chainfile,usecols=range(5,5+Npar))
-        data=np.loadtxt(chainfile,usecols=[0]+list(range(5,5+Npar)))
+        data=np.loadtxt(sample_file,usecols=[0]+list(range(5,5+Npar)))
         print("data[-1]=",data[-1],"data[-2]=",data[-2][0])
         every=data[-1][0]-data[-2][0]
         data=data[:,1:]
@@ -102,12 +102,20 @@ def read_samples(pars,sample_file,code="bambi",burnfrac=0,keeplen=-1,iskip=1,max
         print ("every=",every," iev=",iev," iskip=",iskip)            
         #print "shape=",data.shape
         keeplen=int(keeplen/every)
-    #return data
+
     print ("code=",code,"  keeplen=",keeplen,"  burnfrac=",burnfrac,"  len=",len(data) )
+
     if(keeplen>0):
-        return data[len(data)-keeplen:]
+        data=data[len(data)-keeplen:]
     else:
-        return data[int(len(data)*burnfrac):]
+        data=data[int(len(data)*burnfrac):]
+
+    if(code!="bambi"):
+        outfile=re.sub("_t0.dat","_post_samples.dat",sample_file)
+        print("Writing PTMCMC samples to '",outfile,"'")
+        np.savetxt(outfile,data)
+        
+    return data
 
 def fake_samples(pars,cov,n=1000):
     return np.random.multivariate_normal(pars,cov,n)
@@ -317,6 +325,7 @@ if(True):
         credfile=dirname+"/"+basename+"_TEST_credibility_levels.txt"
     else:
         outpath=dirname+"/"+outbasename+"_corner.png"
+        outsamples=dirname+"/"+outbasename+"_samples.dat"
         credfile=dirname+"/"+basename+"_credibility_levels.txt"
     print ("reading posterior samples from file:",chainfile)
     print ("reading injection from file:",injfile)
@@ -355,6 +364,7 @@ if(True):
             code="ptmcmc"
             burnfrac=0.75
             iskip=50
+            print("ACLS=",args.acls)
             if(len(args.acls)>0):iskip=int(50+acls[i]/100.0)
         elif("fishcov.dat" in fishfile):
             code="ptmcmc"
