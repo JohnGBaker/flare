@@ -9,7 +9,6 @@ prd,superscriptaddress,nofootinbib]{revtex4-1}
 \usepackage{bm}
 \usepackage{color}
 \usepackage{enumerate}
-\usepackage{ulem}
 \usepackage{tabularx}
 \usepackage{braket}
 
@@ -47,7 +46,6 @@ prd,superscriptaddress,nofootinbib]{revtex4-1}
 \newcommand{\ph}[1]{\phantom{#1}}
 \newcommand{\cte}{\mathrm{cte}}
 \newcommand{\nn}{\nonumber}
-%\newcommand{\hatk}{\hat{k}}
 \newcommand{\hatk}{k}
 \newcommand{\Hz}{\,\mathrm{Hz}}
 \newcommand{\yr}{\,\mathrm{yr}}
@@ -80,7 +78,7 @@ prd,superscriptaddress,nofootinbib]{revtex4-1}
 
 \begin{abstract}
 
-We present a Fourier-domain based approach modulations and delays of gravitational wave signals, a problem which arises in two different contexts. For space-based detectors like LISA, the orbital motion of the detector introduces a time-dependency in the response of the detector, consisting of both a modulation and a varying delay. In the context of signals from precessing spinning binary systems, a useful tool for building models of the waveform consists in representing the signal as a time-dependent rotation of a quasi-non-precessing waveform. In both cases, being able to compute transfer functions for these effects directly in the Fourier domain may enable performance improvements for data analysis applications by using fast frequency-domain waveforms. Our results generalize previous approaches based on the stationary phase approximation for inspiral signals, extending them by including delays and computing corrections beyond the leading order, while being applicable to the broader class of signals of inspiral-merger-ringdown waveforms. In the LISA case, we find that a leading-order treatment is accurate for high-mass and low-mass signals that are chirping enough, with reconstruction errors that can be reduced by consistently including the corrections we derived. By contrast, low-mass binary black holes, if far away from merger and slowly-chirping, cannot be handled by our perturbative formalism and we develop another approach for these systems. In the case of precessing binaries, we perform a limited exploration of the merger-ringdown range based on a toy model for the precession. We find that, depending on the post-merger frame velocity, deviations from leading order can become qualitatively large to the point of challenging our perturbative formalism, while affecting mainly subdominant mode contributions and giving rise to a limited unfaithfulness in the full waveform. Including higher-order corrections consistently reduces the unfaithfulness, and we further develop an alternative approach to accurately represent post-merger features.
+We present a Fourier-domain approach to modulations and delays of gravitational wave signals, a problem which arises in two different contexts. For space-based detectors like LISA, the orbital motion of the detector introduces a time-dependency in the response of the detector, consisting of both a modulation and a varying delay. In the context of signals from precessing spinning binary systems, a useful tool for building models of the waveform consists in representing the signal as a time-dependent rotation of a quasi-non-precessing waveform. In both cases, being able to compute transfer functions for these effects directly in the Fourier domain may enable performance gains for data analysis applications by using fast frequency-domain waveforms. Our results generalize previous approaches based on the stationary phase approximation for inspiral signals, extending them by including delays and computing corrections beyond the leading order, while being applicable to the broader class of inspiral-merger-ringdown signals. In the LISA case, we find that a leading-order treatment is accurate for high-mass and low-mass signals that are chirping fast enough, with errors consistently reduced by the corrections we derived. By contrast, low-mass binary black holes, if far away from merger and slowly-chirping, cannot be handled by this formalism and we develop another approach for these systems. In the case of precessing binaries, we explore the merger-ringdown range for a handful of cases, using a simple model for the post-merger precession. We find that deviations from leading order can give large fractional errors, while affecting mainly subdominant modes and giving rise to a limited unfaithfulness in the full waveform. Including higher-order corrections consistently reduces the unfaithfulness, and we further develop an alternative approach to accurately represent post-merger features.
 
 \end{abstract}
 
@@ -101,39 +99,34 @@ We present a Fourier-domain based approach modulations and delays of gravitation
 \section{Introduction}
 \label{sec:intro}
 
-With the unprecedented recent gravitational-wave detections of coalescencing binary black holes and binary neutron stars, announced by the LIGO-Virgo collaboration~\cite{LIGO-theevent-2016, LIGO-christmasevent-2016, LIGO-O1BBH-2016, LIGO-BNSevent-2017}, gravitational-wave astronomy has entered its observational era. As LIGO prepares for even more sensitive observation runs, and with the recent expansion of the ground-based detectors network with Virgo~\cite{Virgo} (and eventually also KAGRA~\cite{KAGRA} and LIGO-India~\cite{INDIGO}), observations of such compact object coalescences are expected at ever-increasing rate.
+With the unprecedented recent gravitational-wave detections of coalescencing binary black holes and binary neutron stars, announced by the LIGO-Virgo collaboration~\cite{LIGO-theevent-2016, LIGO-christmasevent-2016, LIGO-O1BBH-2016, LIGO-BNSevent-2017}, gravitational-wave astronomy has entered its observational era. As LIGO prepares for even more sensitive observation runs, and with the recent expansion of the ground-based detectors network with Virgo~\cite{Virgo} (and eventually also KAGRA~\cite{KAGRA} and LIGO-India~\cite{INDIGO}), observations of such compact object coalescences are expected at an ever-increasing rate.
 
-Moreover, the European Space Agency has recently selected the Laser Interferometer Space Antenna (LISA)\cite{LISA17} to realize the ``Gravitational Universe'' science theme\cite{elisa13} as the 3rd large space mission of its Cosmic Vision program, with a tentative launch around 2034. LISA will be able to detect and characterize, among several important gravitational wave source targets, comparable-mass binary black hole coalescences from cosmological distances over a wide range of masses. These will range from high-redshift observations of supermassive black hole binaries with $M\sim 10^{7} \Msol$ down to the observation of LIGO-type sources with $M\sim 10^{2} \Msol$~\cite{Sesana16}.
+Moreover, the European Space Agency has recently selected the Laser Interferometer Space Antenna (LISA)~\cite{LISA17} to realize the ``Gravitational Universe'' science theme~\cite{elisa13} as the 3rd large space mission of its Cosmic Vision program, with a tentative launch around 2034. A technology demonstrator, LISA Pathfinder, has tested with great success some of the key mission technologies~\cite{LISAPathfinder2016, LISAPathfinder2018}. LISA will be able to detect and characterize, among several important gravitational wave source targets, comparable-mass binary black hole coalescences from cosmological distances over a wide range of masses. These will range from high-redshift observations of supermassive black hole binaries with $M\sim 10^{7} \Msol$ down to the observation of LIGO-type sources with $M\sim 10-100 \Msol$~\cite{Sesana16}.
 
 Data analysis for gravitational-wave observations of compact binary coalescences require accurate models (or templates) for the signals, both for ensuring efficient detections of signals that may be buried in instrumental noise, and to extract the physical parameters of the source in a subsequent analysis. Bayesian analysis for parameter estimation of gravitational-wave signals, as was performed for the LIGO detections~\cite{LIGO-theeventPE-2016,LIGO-O1BBH-2016}, may require millions of evaluations of the likelihood function to sample the posterior probability distribution. The greater sensitivity of LISA and other future instruments will require further increases in the accuracy and computational efficiency of signal templates.
 
 The GW community is making progress assembling higher-fidelity tools for these coming challenges. State-of-the-art IMR templates combine information from the perturbative results of post-Newtonian (PN) theory covering the inspiral (see e.g.~\cite{BlanchetLiving}) and from numerical relativity (NR) simulations covering the end of the inspiral and the merger-ringdown phase (see e.g.~\cite{Pfeiffer12}).  Approaches to template construction include phenomenological templates postulating an analytic ansatz for the Fourier-domain amplitude and phase~\cite{Husa+15, Khan+15,Hannam+13}, and the Effective-One-Body (EOB) approach~\cite{BD99,Taracchini+13, Pan+13, Bohe+16} incorporating PN and NR information. Where needed, Reduced Order Models (ROM), also called surrogate models, have been developed to considerably speed up waveform generation, without losing accuracy~\cite{Field+13, Puerrer14, Blackman+17a}. Put together, these tools provide efficient non-precessing IMR Fourier-domain waveforms, while recent progress has been made for precessing systems as well~\cite{Hannam+13, Chatziioannou+17, Blackman+17b}. Importantly for this work, the resulting waveforms can be represented by an amplitude and phase for each mode, with only a few hundred samples~\cite{Puerrer14}.
 
-%Our challenge will be to accurately complete the representation of instrumental signals including precession effects and the LISA instrumental response and precession effects without sacrificing the computational efficiency enabled by these fast waveform templates. \SM{[rewrite that]}
-
-A complete representation of spin effects in fast IMR templates still remains a frontier of gravitational wave signal modelling. In presence of misaligned spins, the system will endure precession of the orbital plane as it evolves, leading to modulations of the signal as seen by the observer~\cite{Apostolatos+94, Kidder95}. The presence of six degrees of freedom for the spins increases the dimensionality of the problem.
+A complete representation of spin effects across parameter space in fast IMR templates still remains a frontier of gravitational wave signal modelling. In presence of misaligned spins, the system will endure precession of the orbital plane as it evolves, leading to modulations of the signal as seen by the observer~\cite{Apostolatos+94, Kidder95}. The presence of six degrees of freedom for the spins increases the dimensionality of the problem.
 
 A promising approach to modeling the effect of precession on the emitted waveform, as proposed in~\cite{BCV03b, BCPTV05, Schmidt+10, OShaughnessy+11, Boyle+11}, is to decompose precessing waveforms by performing a time-dependent rotation, following the precession of the orbital plane. The resulting waveform in the rotated frame can then be modelled by a non-precessing waveform, an approximation which is used both in the construction of the inspiral part of precessing EOB waveforms~\cite{Pan+13} and in the construction of precessing phenomenological waveforms~\cite{Hannam+13}. To follow this modelling approach and efficiently create Fourier-domain waveforms, one needs to understand how to translate the time-domain modulations created by the frame rotation into a Fourier-domain transfer function.
 
 Beyond a fast representation of the incident gravitational wave, observational analyses also require transforming the signals through some instrumental response. For short duration mergers such as LIGO  has detected, this can be treated by a simple multiplier and a fixed timeshift between detectors.  For future instruments though, the instrumental response will be more complicated.
 
-%Prospective parameter recovery studies for LISA observations of comparable-mass binary black hole coalescences aim at characterizing the scientific performance of the future experiment. Although LISA~\cite{LISA17} is still at least a decade from launch, the ESA L3 mission is rapidly progressing into its early stages where mission design choices must be informed by science impact analysis. However, the recent progresses in waveform modelling, most notably the availability of fast and accurate IMR waveforms, have not yet made their way to the field of LISA data analysis studies. In the past, many such studies used post-Newtonian, inspiral-only models, and were limited to the cheaper Fisher-matrix formalism instead of a full Bayesian analysis (among numerous works, see e.g. \cite{Cutler97,LISAPE09}). Refs.~\cite{McWilliams+09,McWilliams+10,McWilliams+11} explored the effects of including the merger and ringdown, keeping the mass parameters fixed. However, the Fisher matrix analysis, although considerably cheaper to perform, is valid only in the limit of a high signal to noise ratio (SNR). Several implementations of Bayesian analyses were developed~\cite{CP06,Wickham+06,Babak+08,GP09,Feroz+09,Petiteau+10,PC13} (see also~\cite{MLDC4} and references therein), with Ref.~\cite{PC15} proposing a direct comparison of Fisher and Bayes analyses, but they were limited to inspiral-only waveforms. One exception was Ref.~\cite{Babak+08} where IMR signals were used in a Bayesian study, but there the masses of the black holes were kept fixed. In the recent Ref.~\cite{Klein+15}, the limitation to inspiral-only precessing post-Newtonian waveforms was compensated by an SNR reweighting procedure. Thus, due mainly to their high computational cost, full-fledged Bayesian parameter estimation simulations for IMR signals are still missing. \jgb{[Maybe there is too much detail in this paragraph?]}
-
-%Prospective parameter recovery studies for LISA observations of comparable-mass binary black hole coalescences aim at characterizing the scientific performance of the future experiment. Although LISA~\cite{LISA17} is still at least a decade from launch, the ESA L3 mission is rapidly progressing into its early stages where mission design choice must be informed by science impact analysis. However, the recent progresses in waveform modelling, most notably the availability of cheap IMR waveforms, have not yet made their way to the field of LISA data analysis studies. In the past, such studies used mainly post-Newtonian, inspiral-only models, and were limited to the Fisher-matrix formalism instead of full Bayesian analysis (among numerous works, see e.g. \cite{Cutler97,LISAPE09}). Refs.~\cite{McWilliams+09,McWilliams+10,McWilliams+11} explored the effects of including the merger and ringdown, keeping the mass parameters fixed. However, the Fisher matrix analysis, although considerably cheaper to perform, is valid only in the limit of a high signal to noise ratio (SNR) and has known shortcomings~\cite{Vallisneri08}. Several implementations of Bayesian analyses were developed~\cite{CP06,Wickham+06,Babak+08,GP09,Feroz+09,Petiteau+10,PC13} (see also~\cite{MLDC4} and references therein), with Ref.~\cite{PC15} proposing a direct comparison of Fisher and Bayes analyses, but they were limited to inspiral-only waveforms. One exception was Ref.~\cite{Babak+08} where IMR signals were used in a Bayesian study, but there the masses of the black holes were kept fixed. In the recent Ref.~\cite{Klein+15}, the limitation to inspiral-only precessing post-Newtonian waveforms was compensated by an SNR reweighting procedure. Thus, due mainly to their high computational cost, full-fledged Bayesian parameter estimation simulations for IMR signals are still missing. \jgb{[Maybe there is too much detail in this paragraph?]}
-
-Whereas LIGO and Virgo are typically sensitive to chirping binaries for a minute or less, LISA signals may accumulating over months or years. The response of a LISA-type instrument is thus time-dependent~\cite{Cutler97}. The motion and change of orientation of the detector constellation along its orbit lead to significant time variability in the form of a modulation and a varying delay. These effects then convey information about the localization of the gravitational-wave source in the sky. Direct time-domain implementation of the detector response is straightforward~\cite{Vallisneri04, Petiteau+08, CR02, RCP04}, but at a prohibitive computational cost for parameter-estimation analyses. To leverage the performance of state-of-the-art Fourier-domain IMR templates~\cite{BTB16,Khan+15}, we must efficiently process the signals through the time-dependent response of the dectector while staying in the Fourier domain.
+Whereas LIGO and Virgo are typically sensitive to chirping binaries for a minute or less, LISA signals may accumulate over months or years. The response of a LISA-type instrument is thus time-dependent~\cite{Cutler97}. The motion and change of orientation of the detector constellation along its orbit lead to significant time variability in the form of a modulation and a varying delay. These effects then convey information about the localization of the gravitational-wave source in the sky. Direct time-domain implementation of the detector response is straightforward~\cite{Vallisneri04, Petiteau+08, CR02, RCP04}, but at a high computational cost for parameter-estimation analyses. To leverage the performance of state-of-the-art Fourier-domain IMR templates~\cite{BTB16,Khan+15}, we must efficiently process the signals through the time-dependent response of the dectector while staying in the Fourier domain.
 
 The purpose of this paper is to introduce a formalism for efficiently processing signals through a time-domain modulation and delay within the Fourier domain, while retaining the compactness of a Fourier-domain amplitude and phase representation of the signals. This will allow us to address both the issue of the Fourier-domain response of the LISA instrument, as well as the issue of Fourier-domain precession modulation for IMR signals from precessing binaries.
 
 In previous works focused on gravitational-wave inspirals, the Stationary Phase Approximation (SPA) (see e.g.~\cite{Thorne300, CF94}) has been often used for this purpose. While the SPA is a common approximation to compute the Fourier transform of non-precessing signals during the inspiraling phase, it is not applicable for IMR waveforms.
 
-In the case of precessing binaries, applying the SPA directly to the modulated signal is also prone to pathologies. In Refs.~\cite{KCY13,KCY14}, a formalism (called shifted uniform asymptotics or SUA) was introduced to go beyond the SPA and compute more accurately the modulation in the Fourier domain; however, this formalism still relies on the SPA for the underlying precessing-frame signal, and is as such limited to inspiraling signals. The simplified treatment of the precession response in the phenomenological waveforms of Ref.~\cite{Hannam+13} takes another approach, treating the precession modulation in the frequency domain by directly associating the Fourier frequency with the post-Newtonain orbital frequency. As we will explain, this corresponds to the zeroth-order approximation of the SUA.
+In the case of precessing binaries, applying the SPA directly to the modulated signal is prone to pathologies. In Refs.~\cite{KCY13,KCY14}, a formalism (called shifted uniform asymptotics or SUA) was introduced to go beyond the SPA and compute more accurately the modulation in the Fourier domain; however, this formalism still relies on the SPA for the underlying precessing-frame signal, and is as such limited to inspiraling signals. The simplified treatment of the precession response in the phenomenological waveforms of Ref.~\cite{Hannam+13} takes another approach, treating the precession modulation in the frequency domain by directly associating the Fourier frequency with the post-Newtonain orbital frequency. As we will explain, this corresponds to the zeroth-order approximation of the SUA.
 
-In the case of the LISA response, the SPA provides a natural map from time-domain (for the orbit) to Fourier-domain (for the signal)~\cite{Cutler97}, and was used by many previous studies with inspiral waveforms. Ref.~\cite{Klein+15} included the orbital motion of the detector in the SUA treatment of precessing inspiral signals, within a low-frequency approximation of the constellation response. Consistently extending these previous approaches to the merger-ringdown part of the signals, while including the delays in the full LISA response at all frequencies, is part of the objectives of this paper.
+In the case of the LISA response, the SPA provides a natural map from time-domain (for the orbit) to Fourier-domain (for the signal)~\cite{Cutler97}, and was used by many previous studies with inspiral waveforms. Ref.~\cite{Klein+15} included the orbital motion of the detector in the SUA treatment of precessing inspiral signals, within a low-frequency approximation of the constellation response. Consistently extending these previous approaches to the merger-ringdown part of the signals, while including the delays in the full LISA response at all frequencies, assessing and understanding the errors made along the way, is part of the objectives of this paper.
 
 We seek to overcome two limitations in such previous approaches.  The first is that  SPA-based methods are not applicable to IMR waveforms. Second, there is often no clear way to improve the accuracy of these methods beyond the intuitive leading order treatment in order to meet the high-accuracy needs of future detectors. Our approach exploits separation of time-scales approximations, based on a general treatment directly in the Fourier domain of slowly varying delays and amplitude modulations for chirping waveforms.
 
-The plan of the paper is as follows. In Sec.~\ref{sec:motivation}, we provide a general presentation of the problem of Fourier-domain modulation and introduce the relevant timescales for both the response of LISA-type detectors and the modulation of precessing signals. In Sec.~\ref{sec:formalism}, we present our general formalism, give its leading order approximation as well as higher-order corrections, introduce new timescales based on the Fourier-domain signal, refine the previous results for both the quadratic-in-phase corrections and the treatment of the delays, and make the connection to previous approaches of the problem. We then apply our formalism to the response of the LISA detector in Sec.~\ref{sec:LISA}, and to the case of signals from precessing binaries in Sec~\ref{sec:precession}. We discuss and summarize our results in Sec.~\ref{sec:discussion}.
+The plan of the paper is as follows. In Sec.~\ref{sec:motivation}, we provide a general presentation of the problem of Fourier-domain modulation and introduce the relevant timescales for both the response of LISA-type detectors and the modulation of precessing signals. In Sec.~\ref{sec:formalism}, we present our general formalism, give its leading order approximation as well as higher-order corrections, introduce new timescales based on the Fourier-domain signal, and refine the previous results for both the quadratic-in-phase corrections and the treatment of the delays. We then apply our formalism to the response of the LISA detector in Sec.~\ref{sec:LISA}, and to the case of signals from precessing binaries in Sec~\ref{sec:precession}. We discuss and summarize our results in Sec.~\ref{sec:discussion}.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -142,9 +135,6 @@ The plan of the paper is as follows. In Sec.~\ref{sec:motivation}, we provide a 
 \label{sec:motivation}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%\subsection{Basic considerations}
-%\label{subsec:basic}
 
 In our presentation, we will consider a formal signal processing problem encompassing the challenges posed by both the LISA response and the precession modulations. Given a signal $h(t)$, we apply a time-varying delay $d(t)$ to the waveform followed by a multiplicative modulation function $F(t)$,
 \be
@@ -156,7 +146,7 @@ We then seek an efficient way to compute the Fourier transform $\tilde{s}(f)$, e
 	\tilde{s}(f) \equiv \calT(f) \tilde{h}(f) \,. 
 \ee
 
-As is well known, GW signals decomposed in spin-weighted spherical harmonic components are smoothly varying functions of frequency in amplitude/phase form. An important consequence is that these signal components can be accurately represented in terms of a relatively coarsely sampled frequency grid. This property will also extend to the transfer functions, allowing us to keep a compact representation of the full signals. (See Appendix~\ref{app:notation} for details of our notation and conventions for Fourier transforms and spherical harmonics.)
+As is well known, GW signals decomposed in spin-weighted spherical harmonic components are smoothly varying functions of frequency in amplitude/phase form. An important consequence is that these signal components can be accurately represented in terms of a relatively coarsely sampled frequency grid. This property will also extend to the transfer functions, allowing one to keep a compact representation of the full signals. (See Appendix~\ref{app:notation} for details of our notation and conventions for Fourier transforms and spherical harmonics.)
 
 In the case of precessing binaries, the delays will be absent and the modulation functions will be the time-dependent Wigner coefficients applied to rotate the waveform from a precessing orbital frame, in which waveform modes exhibit smooth amplitude and phase variation, to an inertial frame where the observations take place. In the case of a LISA-type detector, the signal $h(t)$ will simply be the waveform in a fixed heliocentric frame, and the delays will come from the motion of each detector against the wave front, while the modulation will represent the time-variation in the detector orientation.
 
@@ -237,7 +227,7 @@ For a chirping signal of increasing phase, $\omega>0$ and $\dot{\omega}>0$, ther
 	\tilde{h}_{\rm SPA} (f) &\simeq a(\tfSPA) \exp\left[2i\pi f \tfSPA-2i\varphi(\tfSPA) \right] \nn\\
 	& \qquad \cdot \int \ud t \, e^{-i \dot{\omega} (\tfSPA) (t-\tfSPA)^{2}} \,.
 \end{align}
-Note that to be able to treat the amplitude as a constant in the integral above, we used the third condition in~\eqref{eq:conditionSPA}. The resulting complex Gaussian integral yields\footnote{The expressions given here are valid for the dominant mode $h_{22}$ of the waveform. They can be generalized to other modes $h_{\ell m}$, $m\neq 0$ with phase $e^{-im\varphi}$ as follows: $\Psi$ acquires a factor $m/2$, $A$ a factor $\sqrt{2/m}$, and $v$ (see~\eqref{eq:SPAN}) has to be replaced by $(2/m)^{1/3} v$.}
+Note that to be able to treat the amplitude as a constant in the integral above, we used the third condition in~\eqref{eq:conditionsSPA}. The resulting complex Gaussian integral yields\footnote{The expressions given here are valid for the dominant mode $h_{22}$ of the waveform. They can be generalized to other modes $h_{\ell m}$, $m\neq 0$ with phase $e^{-im\varphi}$ as follows: $t_{f}^{\rm SPA}$ is now such that $m\omega = 2\pi f$, $A$ acquires a factor $\sqrt{2/m}$, in $\Psi$ the term $2\varphi$ becomes $m\varphi$.}
 \begin{subequations}
 \begin{align}
 	\tilde{h}_{\rm SPA}(f) &= A_{\rm SPA}(f) e^{-i\Psi_{\rm SPA}(f)} \,, \\
@@ -265,11 +255,9 @@ where we set $v = (G M\omega/c^{3})^{1/3}$ and where $D$ is the luminosity dista
 	\Psi_{\rm SPA}^{\rm N}(f) &= \phi_{0} - 2\pi f t_{0} - \frac{3}{128\nu v^{5}} \,, \label{eq:PsiSPAN} 
 \end{align}
 \end{subequations}
-where $v=(G M \pi f/c^{3})^{1/3}$ according to the SPA correspondence~\eqref{eq:deftfSPA}, and where $t_{0}, \phi_{0}$ are constants. It is also customary to rewrite the above relations in terms of the chirp mass $\Mchirp \equiv M\nu^{3/5}$, which is the only mass combination characterizing the signal at the leading PN order.
+where $v=(G M \pi f/c^{3})^{1/3}$ according to the SPA correspondence~\eqref{eq:deftfSPA}, and where $t_{0}, \phi_{0}$ are constants\footnote{For modes $h_{\ell m}$ with $m\neq 0$, the phase $\Psi$ acquires a factor $m/2$ and has to be evaluated at $(2/m)^{1/3} v$.}. It is also customary to rewrite the above relations in terms of the chirp mass $\Mchirp \equiv M\nu^{3/5}$, which is the only mass combination characterizing the signal at the leading PN order.
 
-In this Newtonian, low-frequency limit one can check that each of the combinations \eqref{eq:conditionsSPA} indeed vanish at $\calO{(v^5)}$. but as the system approaches merger, these condition are no-longer satisfied. Near and after the merger, the SPA treatment is not applicable.
-%, as can be seen by the breakdown of the relation~\eqref{eq:deftfSPA} as $\omega$ asymptotes the quasi-normal mode frequency in the ringdown. Because of this limitation, we aim at developing a formalism that would not rely on this approximation.
-Nonetheless, the SPA has been a useful workhorse in many gravitational analyses involving frequency domain transfer functions of the form~\eqref{eq:deftransfer}. The usual approach is simply to replace any time dependencies appearing the transfer function using \eqref{eq:deftfSPA}. We will reference the SPA treatment, as a familiar touchstone, as we develop a more general formalism.
+In this Newtonian, low-frequency limit one can check that each of the combinations \eqref{eq:conditionsSPA} indeed vanish at $\calO{(v^5)}$. but as the system approaches merger, these condition are no-longer satisfied. Near and after the merger, the SPA treatment is not applicable. Nonetheless, the SPA has been a useful workhorse in many gravitational analyses involving frequency domain transfer functions of the form~\eqref{eq:deftransfer}. The usual approach is simply to replace any time dependencies appearing the transfer function using \eqref{eq:deftfSPA}. We will reference the SPA treatment, as a familiar touchstone, as we develop a more general formalism.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -334,7 +322,7 @@ For the signal, then, we have
 \be
 	\tilde{h}(f-f') \simeq A(f) \exp\left[ -i\left( \Psi(f) - f' \frac{\ud \Psi}{\ud f} \right) \right] \,,\label{eq:leadingorderwf}
 \ee
-where here and in the rest of the paper, such derivatives with respect to the frequency will always be evaluated at $f$. Plugging this relation into~\eqref{eq:FDkernel}, we obtain
+Plugging this relation into~\eqref{eq:FDkernel}, we obtain
 \begin{align}
 	\tilde{s}(f) &\simeq \tilde{h}(f) \int \ud f' \, \exp\left[ i f' \frac{\ud \Psi}{\ud f} \right] \tilde{G}(f,f') \nn\\
 	&= \tilde{h}(f) G\left( f, -\frac{1}{2\pi} \frac{\ud \Psi}{\ud f} \right) \,,\label{eq:leadingorderresponse}
@@ -349,9 +337,9 @@ The definition~\eqref{eq:deftf} is a straightforward generalization of the time-
 \be\label{eq:tfSPA}
 	\tfSPA = -\frac{1}{2\pi} \frac{\ud \Psi_{\rm SPA}}{\ud f} \,.
 \ee
-However, our defintion~\eqref{eq:deftf} refers only to the Fourier-domain waveform. We do not need to relate the frequency $f$ to a time-domain frequency like the orbital frequency $\omega$, and the defintion is independent of the SPA being valid or not for the underlying signal $\tilde{h}$.
+However, $\tf$ refers only to the Fourier-domain waveform. We do not need to relate the frequency $f$ to a time-domain frequency like the orbital frequency $\omega$, and the definition is independent of the SPA being valid or not for the underlying signal $\tilde{h}$.
 
-The main advantage of our time-of-frequency function~\eqref{eq:deftf} is that it extends naturally to the merger-ringdown part of the signals. Fig.~\ref{fig:tf} shows the behaviour of the time function $\tf$ around merger for six example waveforms, for mass ratios $q=1$ and $q=8$ and for aligned spin components $\chi=0.95,0.,-0.95$. In particular, one should note that $\tf$ is not monotonically increasing with frequency anymore after reaching in the high-frequency part of the waveform, corresponding to the ringdown. As long as the Fourier phase is differentiable $t_{f}$ is a well-defined function of $f$. While its non-monotonicity would forbid an unambiguous definition of a reciprocal frequency-of-time function $f(t)$, like that in the SPA, no such function will be needed in our treatment.
+The main advantage of the time-of-frequency function~\eqref{eq:deftf} is that it extends naturally to the merger-ringdown part of the signals. As such, it is used in the PhenomD and PhenomHM waveform models~\cite{Khan+15, London+17}. Fig.~\ref{fig:tf} shows the behaviour of the time function $\tf$ around merger for six example waveforms, for mass ratios $q=1$ and $q=8$ and for aligned spin components $\chi=0.95,0.,-0.95$. In particular, one should note that $\tf$ is not monotonically increasing with frequency anymore after reaching in the high-frequency part of the waveform, corresponding to the ringdown. As long as the Fourier phase is differentiable $t_{f}$ is a well-defined function of $f$. While its non-monotonicity would forbid an unambiguous definition of a reciprocal frequency-of-time function $f(t)$, like that in the SPA, no such function will be needed in our treatment.
 
 With \eqref{eq:leadingorderresponse} we have brought the modulated and delayed signal in to the form~\eqref{eq:deftransfer} with transfer function
 \be\label{eq:transferlocal}
@@ -414,9 +402,8 @@ As will be explained in Sec.~\ref{subsec:executivesummary}, we will also use the
 
 \begin{figure}
   \centering
-  %\includegraphics[width=.99\linewidth]{plots/TfTA.pdf}
   \includegraphics[width=.98\linewidth]{plots/TfTA_py.pdf}
-  \caption{Fourier-domain amplitude and phase timescales, as defined in~\eqref{eq:defTf} and~\eqref{eq:defTA}, in geometric units for an equal-mass, non-spinning system. The hierarchy of these timescales is roughly the same for higher mass ratio and higher spin systems. The time-domain frequency at merger is represented by the vertical line. The derivatives from which these timescales are built encounter zero-crossings and change sign in the high-frequency range.}
+  \caption{Fourier-domain amplitude and phase timescales, as defined in~\eqref{eq:defTf} and~\eqref{eq:defTA}, in geometric units for an equal-mass, non-spinning system. The hierarchy of these timescales is roughly the same for higher mass ratio and higher spin systems. The time-domain frequency at merger and the ringdown frequency are represented by the thick and thin vertical lines. The derivatives from which these timescales are built encounter zero-crossings and change sign in the high-frequency range.}
   \label{fig:TfTA}
 \end{figure}
 
@@ -441,7 +428,7 @@ Then, taking two derivatives of~\eqref{eq:PsiSPA}, we find
 \ee
 Thus, when the SPA applies, $\Tf$ corresponds to the radiation-reaction timescale: the shorter this timescale, the faster the binary chirps to higher frequencies on its quasi-circular inspiral. 
 
-However, in the same way that our definition~\eqref{eq:deftf} for the time-of-frequency function $t_{f}$ generalizes the SPA definition~\eqref{eq:deftfSPA}, the definition~\eqref{eq:defTf} only refers to the phase of the Fourier-domain signal and does not require introducing a time-domain frequency like $\omega$. This defintion thus extends naturally to the merger-ringdown part of the signal. In this part of the signal, its physical interpretation as the timescale of radiation reaction is obscured, and the second derivative $\ud^{2}\Psi/\ud f^{2}$ can go through zero and change sign, as shown in Fig.~\ref{fig:TfTA}. We include an absolute value in the definition~\eqref{eq:defTf} to allow for this possibility, and keep track of the sign via $\epsilon$.
+However, in the same way that the definition~\eqref{eq:deftf} for the time-of-frequency function $t_{f}$ generalizes the SPA definition~\eqref{eq:deftfSPA}, the definition~\eqref{eq:defTf} only refers to the phase of the Fourier-domain signal and does not require introducing a time-domain frequency like $\omega$. This defintion thus extends naturally to the merger-ringdown part of the signal. In this part of the signal, its physical interpretation as the timescale of radiation reaction is obscured, and the second derivative $\ud^{2}\Psi/\ud f^{2}$ can go through zero and change sign, as shown in Fig.~\ref{fig:TfTA}. We include an absolute value in the definition~\eqref{eq:defTf} to allow for this possibility, and keep track of the sign via $\epsilon$.
 
 Next, we consider the impact on the transfer function~\eqref{eq:resulttaylorA} from amplitude corrections beyond leading order. This series also leads to the natural introduction of a set of another set of timescales related to the successive derivatives of the amplitude. In an analogous manner to the definition~\eqref{eq:defTf} of the timescale $\Tf$, we can define
 \be\label{eq:defTA}
@@ -462,7 +449,7 @@ We can obtain useful estimates for these timescales from the leading order post-
 	T_{A1}^{\rm N} &= \frac{7}{6} \frac{1}{2\pi f}\,, \quad T_{A2}^{\rm N} = \frac{\sqrt{91}}{6} \frac{1}{2\pi f} \,. \label{eq:TA1N-TA2N}
 \end{align}
 \end{subequations}
-One can check explicitly that this expression for $\Tf$ agrees with~\eqref{eq:TfSPA}. With a simple power-law amplitude as in~\eqref{eq:ASPAN}, all higher-order amplitude timescales are also simply proportional to $1/f$ and differ only by their numerical factor. For higher harmonics $h_{\ell m}$ with $m\neq 0$, as discussed in Sec.~\ref{subsec:SPA}, $T_{f}$ acquires a factor $m/2$, and $v$ has to be replaced by $(2/m)^{1/3} v$. The amplitude of higher harmonics starts at a higher PN order~\cite{BlanchetLiving}, differing from~\eqref{eq:a22N} by a different constant and an additional scaling $v^{\kappa_{\ell m}}$ with $\kappa_{\ell m} = \ell - 2 + (\ell + m \; \mathrm{mod} \; 2)$, which changes the constant in the amplitude timescale as $7/6 \rightarrow (7-2\kappa_{\ell m})/6$ in $T_{A1}^{\rm N}$ and $\sqrt{91}/6 \rightarrow \sqrt{(7-2\kappa_{\ell m})(13-2\kappa_{\ell m})}/6$ in $T_{A2}^{\rm N}$ \SM{[check]}.
+One can check explicitly that this expression for $\Tf$ agrees with~\eqref{eq:TfSPA}. With a simple power-law amplitude as in~\eqref{eq:ASPAN}, all higher-order amplitude timescales are also simply proportional to $1/f$ and differ only by their numerical factor. For higher harmonics $h_{\ell m}$ with $m\neq 0$, as discussed in Sec.~\ref{subsec:SPA}, $T_{f}$ acquires a factor $(m/2)^{4/3}$. The amplitude of higher harmonics starts at a higher PN order~\cite{BlanchetLiving}, differing from~\eqref{eq:a22N} by a different constant and an additional scaling $v^{\kappa_{\ell m}}$ with $\kappa_{\ell m} = \ell - 2 + (\ell + m \; \mathrm{mod} \; 2)$, which changes the constant in the amplitude timescale as $7/6 \rightarrow (7-2\kappa_{\ell m})/6$ in $T_{A1}^{\rm N}$ and $\sqrt{91}/6 \rightarrow \sqrt{(7-2\kappa_{\ell m})(13-2\kappa_{\ell m})}/6$ in $T_{A2}^{\rm N}$.
 
 We show in Fig.~\ref{fig:TfTA} the timescales $\Tf$, $T_{A1}$, $T_{A2}$ for an equal-mass and non-spinning system. In the inspiral, they follow the scalings~\eqref{eq:timescalesN} and $\Tf$ is much larger than the other two. For frequencies above the merger frequency, $\Tf$ can go through zero while the amplitude-related timescales become comparable or larger.
 
@@ -489,7 +476,7 @@ where the complex coefficients $a_{N,k}^{\epsilon}$ are a solution of the $N+1$-
 \be\label{eq:stencilsystem}
 	(-i\epsilon)^{p} (2p-1)!! = \sum\limits_{k=0}^{N} a_{N,k}^{\epsilon} k^{2p} \quad \text{for } p=0,\dots,N \,.
 \ee
-In practice, $N$ will be most often less than $5$, although we will consider in one case $N=10$ and $20$. In~\cite{KCY14}, only the case $\epsilon=1$ was considered. The two solutions for the stencil coefficients in the two cases $\epsilon = \pm 1$ are simply related by a complex conjugation. Explicit expressions for the stencil coefficients $a_{N,k}^{\epsilon}$ are given in App.~\ref{app:stencil} for the first values of $N$.
+In practice, $N$ will be most often less than $5$, although we will consider in one case $N=10$ and $20$. In~\cite{KCY14}, only the case $\epsilon=1$ was needed, as inspiral signals were considered. The two solutions for the stencil coefficients in the two cases $\epsilon = \pm 1$ are simply related by a complex conjugation. Explicit expressions for the stencil coefficients $a_{N,k}^{\epsilon}$ are given in App.~\ref{app:stencil} for the first values of $N$.
 
 An immediate advantage of this reformulation is its improved numerical stability. In waveform modelling applications, it can be bery hard to control high-order numerical derivatives of the modulation. Here, one simply evaluates the original smooth modulation function at shifted times. In the following, we will adopt this implementation for our quadratic-in-phase treatment.
 
@@ -525,9 +512,7 @@ In our result~\eqref{eq:resultFresnel}, both the scale $\Tf$ and the central tim
 
 Thus, the previous result~\eqref{eq:stencilresult}-\eqref{eq:stencilfresnel} can be rephrased as a quadrature rule, and the stencil $\calF_{T, \epsilon}^{N}$ is an quadrature approximation of the Fresnel transfrom $\calF_{T, \epsilon}$. If one allows for polynomial integrands\footnote{Note that such integrals with a polynomial integrand are formally divergent. One can regularize them for instance by introducing a small imaginary part in $\tau$ that is sent it to $0$ at the end of the computation.} in~\eqref{eq:defFresnel}, using the stencil~\eqref{eq:stencilfresnel} amounts to building a quadrature rule for the particular choice of nodes $\tf \pm k \Tf$, which is exact (with a regularization) if $F$ is a symmetric polynomial of degree $\leq 2N$. As a verification, performing a formal Taylor expansion in time of $F(t)$ around $\tf$ in the integral~\eqref{eq:defFresnel} and integrating term by term yields back~\eqref{eq:resultdffPsiTf}.
 
-%Note however that this quadrature rule does not fall into the class of Gaussian quadratures, due to the complex character of the kernel in~\eqref{eq:defFresnel}. The induced inner product is not positive definite and some key properties are lost, such as the construction of the optimal Gaussian nodes from the zeros of the orthonormalized polynomials. For more details on quadrature rules when applied to integrals with oscillatory kernels, we refer to~\cite{} \SM{[C]}. 
-
-Note that the choice of a stencil with quadrature nodes $\tf \pm k\Tf$, even if natural, is by no means unique, and other choices would have led to different stencils. The formulation of the result~\eqref{eq:resultdffPsiTf} as a Fresnel transform~\eqref{eq:resultFresnel} opens the way for future investigations of different numerical approaches to the problem. For practical computations, in this work we will rely on the approximations $\calF_{T, \epsilon}^{N}[F] (t)$ in \eqref{eq:stencilfresnel}.
+Note that the choice of a stencil with quadrature nodes $\tf \pm k\Tf$, even if natural, is by no means unique, and other choices would have led to different stencils. The formulation of the result~\eqref{eq:resultdffPsiTf} as a Fresnel transform~\eqref{eq:resultFresnel} opens the way for future investigations of different numerical approaches to the problem. For practical computations, in this work we will rely on the approximations $\calF_{T, \epsilon}^{N}[F] (t)$ in \eqref{eq:stencilfresnel}, introduced by~\cite{KCY14}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -551,20 +536,20 @@ The above integral gives then for the transfer function
 \end{align}
 This differs from~\eqref{eq:transferlocal} both by the replacement $\tf \rightarrow t_{f}^{d}$ and by the extra denominator.
 
-For the proposed LISA configuration~\cite{LISA17}, we have for the orbital delays the scaling $d_{0}\sim R/c \simeq 500s$, and for the constellation delays the scaling $d_{L}\sim L/c \simeq 8s$ (ignoring the dependence on angular factors). Since the motion of the constellation is anually periodic, with a frequency $\Omega_{0} \simeq 2 \times 10^{-7}\mathrm{rad}.s^{-1}$, we have $\dot{d}_{0} \sim \Omega_{0} R/c \simeq 10^{-4}$ and $\dot{d}_{c} \sim \Omega_{0} L/c \simeq 1.7 \times 10^{-6}$. The smallness of the dimensionless quantity $\dot{d} \ll 1$ (and of its subsequent derivatives) will allow us to treat it perturbatively with a very good approximation, and shows also that the function $t_{d}$ is univalued and that there is no ambiguity in defining the reciprocal $t_{d}^{-1}$.
+For the proposed LISA configuration~\cite{LISA17}, we have for the orbital delays the scaling $d_{0}\sim R/c \simeq 500s$, and for the constellation delays the scaling $d_{L}\sim L/c \simeq 8s$ (ignoring the dependence on angular factors). Since the motion of the constellation is anually periodic, with a frequency $\Omega_{0} \simeq 2 \times 10^{-7}\mathrm{rad}.s^{-1}$, we have $\dot{d}_{0} \sim \Omega_{0} R/c \simeq 10^{-4}$ and $\dot{d}_{L} \sim \Omega_{0} L/c \simeq 1.7 \times 10^{-6}$. The smallness of the dimensionless quantity $\dot{d} \ll 1$ (and of its subsequent derivatives) will allow us to treat it perturbatively with a very good approximation, and shows also that the function $t_{d}$ is univalued and that there is no ambiguity in defining the reciprocal $t_{d}^{-1}$.
 
 By treating $\dot{d}$ as a perturbation and keeping only first-order terms, we obtain for the delayed time reciprocal function
 \begin{align}
 	t_{d}^{-1}(t) &\simeq t-d(t) (1-\dot{d}(t)) \,,\nn\\
 	d(t_{f}^{d}) &\simeq d(t_{f}) ( 1 - \dot{d}(t_{f})) \,.
 \end{align}
-Now, the most relevant correction in~\eqref{eq:delaycorrleading} comes from the phase factor at high frequencies, where the factors $2\pi f d_{0}$ and $2\pi f d_{L}$ give a magnification factors reaching respectively $3.10^{3}$ and $10^{2}$ at $1\Hz$. Ignoring the other corrections, we thus arrive at the following form for the dominant delay correction in the transfer function:
+Now, the most relevant correction in~\eqref{eq:delaycorrleading} comes from the phase factor at high frequencies, where the factors $2\pi f d_{0}$ and $2\pi f d_{L}$ give a magnification reaching respectively $3.10^{3}$ and $10^{2}$ at $1\Hz$. Ignoring the other corrections, we thus arrive at the following form for the dominant delay correction in the transfer function:
 \be
 	\calT(f) \simeq F(t_{f})\exp\left[ -2i\pi f d(t_{f}) (1-\dot{d}(t_{f})) \right] \,.
 \ee
 This first correction beyond the leading order is signal-independent and affects purely the phase of the output signal.
 
-Next, we consider the case where the quadratic phase correction is kept as well, as in Sec.~\ref{subsec:fresneltransform}. Keeping as before only the first-order terms in $\dot{d}$ (and neglecting its higher derivatives), we can write
+Next, we consider the case where the quadratic phase correction is kept as well, as in Sec.~\ref{subsec:fresneltransform}, and where we keep all the first-order terms in $\dot{d}$ (neglecting its higher derivatives). We can write
 \begin{widetext}
 \begin{align}
 	\tilde{s}(f) &\simeq \tilde{h}(f) \int \ud t \, F(t) e^{-2i\pi f d(t)} \int \ud f' \, \exp\left[ 2i\pi \epsilon \Tf^{2} f'^{2} + 2i\pi f' (t+d(t) - \tf) \right] \nn\\
@@ -572,7 +557,7 @@ Next, we consider the case where the quadratic phase correction is kept as well,
 \end{align}
 where we used a change of variable $\tau = t_{d}(t)$. We see that the result can again be expressed as a Fresnel transform.
 
-Finally, when considering amplitude corrections as well, as in~\eqref{eq:resulttaylorA}, additional powers of $f'$ can be translated as time derivatives with respect to the variable $\tau$ after performing the change of variables. This produces the final result:
+Finally, when considering amplitude corrections as well, as in~\eqref{eq:resulttaylorA}, additional powers of $f'$ can be translated as time derivatives with respect to the variable $\tau$ after performing the change of variables. This produces the result:
 \be\label{eq:transferfinal}
 	\calT(f) = \sum\limits_{k \geq 0} \frac{(-i)^{k}}{k!} (T_{Ak})^{k} \calF_{\Tf, \epsilon} \left[ \frac{\ud^{k}}{\ud \tau^{k}} \left( \frac{F(\tau - d(\tau))}{1+\dot{d}(\tau)} e^{-2i\pi f d(\tau)(1-\dot{d}(\tau))} \right) \right] (\tf) \,.
 \ee
@@ -626,16 +611,16 @@ On top of this perturbative formalism, in the LISA case we will also develop ano
 \section{Application to the response of LISA-type detectors}
 \label{sec:LISA}
 
-In this Section, we apply the formalism of Sec.~\ref{sec:formalism} to the Fourier-domain response of a LISA-like detector, and assess the accuracy of our approach at various levels of approximation. We also propose an alternative approach for slowly-chipring signals. 
+In this Section, we apply the formalism of Sec.~\ref{sec:formalism} to the Fourier-domain response of a LISA-like detector, and assess the accuracy of our approach at various levels of approximation. We also propose an alternative approach for slowly-chirping signals. 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsection{The response model}
 \label{subsec:modelLISA}
 
-We begin by detailing the model that we use for the response of a LISA-like detector, together with the assumptions used and their limitations. Since our aim is to assess the accuracy of our direct Fourier-domain treatment of the response, we can focus on the gravitational-wave contribution to the basic single-link observables. We therefore use a somewhat simplified model for the time-domain response~\cite{Krolak+04}, ignoring corrections that are crucial from the point of view of noise cancellations, keeping in mind that the response model can be enriched later without affecting the conclusions of the present analysis.
+We begin by detailing the model that we use for the response of a LISA-like detector, together with the assumptions used and their limitations. Since our aim is to assess the accuracy of our direct Fourier-domain treatment of the response, we can focus on the gravitational-wave contribution to the basic single-link observables. We therefore use a somewhat simplified model for the time-domain response~\cite{Krolak+04}, ignoring corrections that would be crucial from the point of view of noise cancellations, keeping in mind that the response model can be enriched later without affecting the conclusions of the present analysis.
 
-The frequency-shift response for a single link~\eqref{eq:yslr} was derived in Ref.~\cite{EW75} (see also~\cite{CR02, RCP04, Finn08, Cornish09}). Several assumptions enter the result as written in~\eqref{eq:yslr}: (i) effects of the order $v/c$ are neglected, including for instance the special relativistic Doppler effect created by the relative speeds of the spacecraft on their orbits (ii) the propagation is assumed to take place in a flat spacetime, perturbed only by the gravitational wave; thus the gravitational redshift as well as the deflection of light created by the gravitational potential of the Sun is ignored (iii) all geometric factors are evaluated at a single time, whereas one should consider the beam as propagating from the position of the first spacecraft at the time of emission to the position of the second scapecraft at the time of reception, leading to a pointing-ahead effect.
+The frequency-shift response for a single link~\eqref{eq:yslr} was derived in Ref.~\cite{EW75} (see also~\cite{CR02, RCP04, Finn08, Cornish09}). Several assumptions enter the result as written in~\eqref{eq:yslr}: (i) effects of the order $v/c$ are neglected, including for instance the special relativistic Doppler effect created by the relative speeds of the spacecraft on their orbits (ii) the propagation is assumed to take place in a flat spacetime, perturbed only by the gravitational wave; thus the gravitational redshift as well as the deflection of light created by the gravitational potential of the Sun is ignored (iii) all geometric factors are evaluated at a single time, whereas one should consider the beam as propagating from the position of the first spacecraft at the time of emission to the position of the second scapecraft at the time of reception, leading to a point-ahead effect.
 
 Additionally, we limit ourselves to a rigid model for the orbits of the constellation, namely we assume that the constellation remains in an equilateral configuration with fixed armlengths. These simplified orbits neglect (iv) effects of order $e^{2}$ from the eccentricity of the individual Keplerian orbits, (v) the effect of gravitational perturbations coming from other celestial bodies, such as the Earth, the quadrupole of the Sun, and the other planets. Note that although we can neglect all the effects (i)-(v) for our present study, keeping track of these corrections is crucial for the purpose of laser noise cancellations, and led to the development of new generations of TDI observables~\cite{Tintoliving}.
 
@@ -646,7 +631,7 @@ It is natural to split the response~\eqref{eq:yslr} into two steps: first the or
 	f_{L} &= 1.9\times 10^{-2}\Hz \,.
 \end{align}
 \end{subequations}
-The LISA response will behave qualitatively differently on the three frequency bands $f \lesssim f_{R}$, $f_{R} \lesssim f \lesssim f_{L}$ and $f_{L} \lesssim f$.
+The LISA response will behave qualitatively differently on the three frequency bands $f \leq f_{R}$, $f_{R} \leq f \leq f_{L}$ and $f_{L} \leq f$.
 
 The first stage of the response, the orbital delay, consists simply in applying the varying time delay to bring the wavefront sampling point from the SSB reference to the center of the LISA triangular constellation, common to all $y_{slr}$ observables. For $h^{\rm TT}$ the transverse-traceless gravitational waveform in matrix form, we write this orbital time delay as
 \be\label{eq:defresponse0}
@@ -688,15 +673,15 @@ If $(\lambda, \beta)$ are the ecliptic longitude and latitude of the source in t
 For the constellation part of response~\eqref{eq:defresponseL}, treated separately from the delay~\eqref{eq:delay0}, we write
 \begin{align}\label{eq:decomposeGslr}
 	F_{slr}^{L}(t) &= \frac{1}{2} \frac{1}{1 - \hatk\cdot n_{l}(t)} n_{l}(t) \cdot P_{\ell m} \cdot n_{l} (t) \,,\nn\\
-	d_{s,L}(t) &= -L - k\cdot p_{s}^{L}(t) \,, \quad d_{r}(t) = - k\cdot p_{r}^{L}(t) \,,\nn\\
-	G_{slr}^{L}(f,t) &=  F_{slr}^{L}(t) \left( e^{-2i\pi f d_{s,L}(t)} - e^{-2i\pi f d_{r}(t)} \right) \,.
+	d_{s}(t) &= - k\cdot p_{s}^{L}(t) \,, \quad d_{r}(t) = - k\cdot p_{r}^{L}(t) \,,\nn\\
+	G_{slr}^{L}(f,t) &=  F_{slr}^{L}(t) \left( e^{-2i\pi f (d_{s,L}(t) + L)} - e^{-2i\pi f d_{r}(t)} \right) \,.
 \end{align}
 The superscript $L$ indicates that the orbital delay~\eqref{eq:delay0} is not included. Since we also assume the rigid approximation for the constellation, where the armlengths are fixed, a particular simplification occurs when combining these individual delays, thanks to the relation $p^{L}_{r} - p^{L}_{s} =  L n_{l}$:
 \begin{align}\label{eq:GslrL}
 	G_{slr}^{L}(f,t) &= \frac{i \pi f L}{2} \sinc \left[ \pi f L\left(1-\hatk\cdot n_{l} \right) \right] \nn\\
 	& \quad \cdot \exp\left[ i \pi f \left( L + \hatk\cdot \left( p_{1}^{L} + p_{2}^{L} \right) \right) \right]  n_{l} \cdot P_{\ell m} \cdot n_{l} \,,
 \end{align}
-with all time-dependent vectors evaluated at $t$. In the local approximation~\eqref{eq:transferlocal}, the Fourier-domain transfer function then reads
+with all time-dependent vectors evaluated at $t$. This expression is well known as describing the frequency-dependency in the LISA response~\cite{Larson+99, Cornish01, CR02, RCP04}. In the local approximation~\eqref{eq:transferlocal}, the Fourier-domain transfer function then reads
 \begin{align}\label{eq:transferLlocal}
 	\calT_{slr}^{L, \mathrm{local}}(f) &= G_{slr}^{L}(f, \tf) \,.
 \end{align}
@@ -706,7 +691,7 @@ For plotting purposes, we will also define
 \ee
 which will serve as an estimate for the enveloppe function of the response, devoid of the zero-crossings at high frequencies of the $\sinc$ term in~\eqref{eq:GslrL}. 
 
-Note that, if the corrections of Sec.~\ref{subsec:delays}, for non-negligible $\dot d$, are included for the constellation delays, the transfer function will not have this simple form anymore, as $\dot{d}$ will have a different velocity-dependent expression for the sending and receiving spacecraft. One must then separately handle $d_{s,L}$ and $d_{r}$ in~\eqref{eq:decomposeGslr} to compute the corrections.
+Note that, if the corrections of Sec.~\ref{subsec:delays}, for non-negligible $\dot d$, are included for the constellation delays, the transfer function will not have this simple form anymore, as $\dot{d}$ will have a different velocity-dependent expression for the sending and receiving spacecraft. One must then separately handle $d_{s}$ and $d_{r}$ in~\eqref{eq:decomposeGslr} to compute the corrections.
 
 The orbital response~\eqref{eq:transfer0local}-\eqref{eq:delay0} takes a simple analytic form, but the phase contribution of this delay is significant across most of the frequency band and can be large for $f \gg f_{R}$.
 
@@ -721,20 +706,13 @@ For analysis of the response we need a concrete set of gravitational waveforms. 
 
 \begin{figure}
   \centering
-  \includegraphics[width=.9\linewidth]{plots/lisafom_Psi_McDeltat.pdf}
-  \caption{\SM{[To be checked and redone in matplotlib]} \SM{[remove grey shading]} \SM{[add labels to contours]} Contour levels for the analytical estimate of the error measure $\epsilon_{\Psi 2}$ at the starting frequency, as a function of chirp mass $\Mchirp$ and time to coalescence $\Delta t$. Blue corresponds to the orbital response and red to the constellation response. The colored shaded areas indicate regions where $\epsilon_{\Psi 2} \geq 1$, where the perturbative formalism is expected to break down. In the region to the right of the black line, $f_{\rm start}$ given in~\eqref{eq:fstartN} is lower than the lowest in-band frequency $f_{\rm min} = 10^{-5}\Hz$, so that the signal starts at $f_{\rm min}$ and $\epsilon_{\Psi 2}$ becomes independent of $\Delta t$.}
+  \includegraphics[width=.99\linewidth]{plots/lisafom_Psi_McDeltat_py.pdf}
+  \caption{Contour levels for the analytical estimate of the error measure $\epsilon_{\Psi 2}$ at the starting frequency, as a function of chirp mass $\Mchirp$ and time to coalescence $\Delta t$. Blue corresponds to the orbital response and red to the constellation response. The colored shaded areas indicate regions where $\epsilon_{\Psi 2} \geq 1$, where the perturbative formalism is expected to break down. In the region to the right of the black line, $f_{\rm start}$ given in~\eqref{eq:fstartN} is lower than the lowest in-band frequency $f_{\rm min} = 10^{-5}\Hz$, so that the signal starts at $f_{\rm min}$ and $\epsilon_{\Psi 2}$ becomes independent of $\Delta t$.}
   \label{fig:lisafomPsiMcDeltat}
 \end{figure}
 
 \begin{figure*}
   \centering
-%  \includegraphics[width=.32\linewidth]{plots/lisafom_Psiorb.pdf}
-%  \includegraphics[width=.32\linewidth]{plots/lisafom_A1orb.pdf}
-%  \includegraphics[width=.32\linewidth]{plots/lisafom_dorb.pdf}
-%  %
-%  \includegraphics[width=.32\linewidth]{plots/lisafom_Psiconst.pdf}
-%  \includegraphics[width=.32\linewidth]{plots/lisafom_A1const.pdf}
-%  \includegraphics[width=.32\linewidth]{plots/lisafom_dconst.pdf}
   \includegraphics[width=.98\linewidth]{plots/lisafom_py.pdf}
   \caption{Error estimates as defined in~\eqref{eq:deffom}, for an equal-mass, non-spinning system and for total masses $M=10^{7} \Msol$, $10^{4} \Msol$ and $10^{2} \Msol$. The top row corresponds to the orbital delay part of the response~\eqref{eq:defresponse0}, and the lower row shows the LISA-centered constellation response~\eqref{eq:defresponseL}. The error measures $\epsilon_{\Psi 2}$ for the phase corrections, $\epsilon_{A1}$ for the amplitude, $\epsilon_{d}$ for the delay are shown from left to right. The central line and interval are the mean and $1\sigma$ standard deviation of the logarithm of $\epsilon$ computed with numerical derivatives over 400 random values for the position in the sky, inclination and polarization. The starting frequency is set by an observation time of $\Delta t = 10 \text{yrs}$ before merger. We overlay in dashed the analytical estimates obtained from from~\eqref{eq:timescalesNfstart} and~\eqref{eq:estimatederivorb}-\eqref{eq:estimatederivconst}.}
   \label{fig:fomLISA}
@@ -742,7 +720,7 @@ For analysis of the response we need a concrete set of gravitational waveforms. 
 
 Using the approximate error measures $\epsilon$ introduced in~\eqref{eq:deffom}, we will now estimate, for each type of correction (phase, amplitude, delay), the size of errors in the transfer function.
 
-To obtain an order-of-magnitude estimate for the error measures $\epsilon$~\eqref{eq:deffom}, we will use the Newtonian-order expressions~\eqref{eq:timescalesN} for the signal-dependent timescales $\Tf$ and $T_{A1}$. Higher-order amplitude terms beyond the first one in~\eqref{eq:resulttaylorA}, as well as phase terms beyond the second derivative in~\eqref{eq:expandPsi}, will turn out to be  negligible in the LISA case and we will ignore them in the following. It is useful to separate the orbital response~\eqref{eq:transfer0local} and the constellation response~\eqref{eq:transferLlocal}, as the different baseline of the delays (orbital radius $R$ or armlength $L$) as well as the presence of a time-varying prefactor $F(t)$ both affect the result. When estimating the magnitude of the relevant derivatives of $G$, we must also take into account dimensionless delay factors of the type $2\pi f d$.
+To obtain an order-of-magnitude estimate for the error measures $\epsilon$~\eqref{eq:deffom}, we will use the Newtonian-order expressions~\eqref{eq:timescalesN} for the signal-dependent timescales $\Tf$ and $T_{A1}$. Higher-order amplitude terms beyond the first one in~\eqref{eq:resulttaylorA}, as well as phase terms beyond the second derivative in~\eqref{eq:expandPsi}, will be negligible and we will ignore them in the following. It is useful to separate the orbital response~\eqref{eq:transfer0local} and the constellation response~\eqref{eq:transferLlocal}, as the different baseline of the delays (orbital radius $R$ or armlength $L$) as well as the presence of a time-varying prefactor $F(t)$ both affect the result. When estimating the magnitude of the relevant derivatives of $G$, we must also take into account dimensionless delay factors of the type $2\pi f d$.
 
 We start with the orbital response, which takes the form of a pure delay $G_{0}(f, t) = e^{-2 i \pi f d_{0}(t)}$, and obtain
 \begin{subequations}
@@ -762,12 +740,12 @@ Since the one-arm constellation response~\eqref{eq:decomposeGslr}-\eqref{eq:tran
 \end{align}
 \end{subequations}
 
-In order to obtain simple scalings for the error estimates, we will make the replacements $\partial_{t}^{n} d \sim \Omega_{0}^{n} d$ as well as $\partial_{t}^{n} F \sim \Omega_{0}^{n} F$. These scalings are only approximate as different orientation angles can lead to significant variations. To represent the average of the geometric projection factor of the gravitational wave propagation vector on the plane of the orbit, we will assume $d_{0} \sim R_{\rm eff} \equiv 2R/\pi $. For the constellation delays, we simply take $d_{L} \sim L$ as there projection effects can lead to variations in both ways. The resulting estimates for the magnitude of these derivatives are
+In order to obtain simple scalings for the error estimates, we will make the replacements $\partial_{t}^{n} d \sim \Omega_{0}^{n} d$ as well as $\partial_{t}^{n} F \sim \Omega_{0}^{n} F$. These scalings are only approximate as different orientation angles can lead to significant variations. To represent the average of the geometric projection factor of the gravitational wave propagation vector on the plane of the orbit, we will take $d_{0} \sim R/2 $. For the constellation delays, we simply take $d_{L} \sim L$ as there projection effects can lead to variations in both ways. The resulting estimates for the magnitude of these derivatives are
 \begin{subequations}\label{eq:estimatederivorb}
 \begin{align}
-	\left| \frac{1}{G_{0}} \partial_{t} G_{0} \right| &\sim 2 \pi f \Omega_{0} R_{\rm eff}\,,\\
-	\left| \frac{1}{G_{0}} \partial_{tt} G_{0} \right| &\sim \text{max} \left[ 2 \pi f \Omega_{0}^{2} R_{\rm eff} , 4\pi^{2} f^{2} \Omega_{0}^{2} R_{\rm eff}^{2}\right] \,,\\
-	\left| \frac{1}{G_{0}} \partial_{tf} G_{0} \right| &\sim \text{max} \left[ 2 \pi  \Omega_{0} R_{\rm eff}, 4 \pi^{2} f \Omega_{0} R_{\rm eff}^{2} \right] \,,
+	\left| \frac{1}{G_{0}} \partial_{t} G_{0} \right| &\sim \pi f \Omega_{0} R\,,\\
+	\left| \frac{1}{G_{0}} \partial_{tt} G_{0} \right| &\sim \text{max} \left[ \pi f \Omega_{0}^{2} R, \pi^{2} f^{2} \Omega_{0}^{2} R^{2}\right] \,,\\
+	\left| \frac{1}{G_{0}} \partial_{tf} G_{0} \right| &\sim \text{max} \left[ \pi  \Omega_{0} R, \pi^{2} f \Omega_{0} R^{2} \right] \,,
 \end{align}
 \end{subequations}
 for the orbital response and
@@ -795,7 +773,7 @@ This gives in turn for the Newtonian timescales~\eqref{eq:timescalesN}
 \end{subequations}
 Note that if we think of LISA as effectively insensitive below some minimal frequency $f_{\rm min}$, then for sufficiently high $\Mchirp$ this point of entry in the sensitive band will mark the beginning of the signal, obviating the relevance of $f_{\rm start}$. For $f_{\rm min} = 10^{-5}\Hz$ and $\Delta t \leq 10\yr$, this is the case for $\Mchirp \geq 2.45\times 10^{6}\Msol $. Thus, our final analytical estimates for the $\epsilon$ error measures are built by inserting~\eqref{eq:timescalesNfstart} and~\eqref{eq:estimatederivorb}-\eqref{eq:estimatederivconst} in~\eqref{eq:deffom}, while ensuring the frequency cut $10^{-5}\Hz \leq f \leq 1\Hz$.
 
-It is useful to distinguish between what we will call merging binaries, systems close to coalescence that will merge during the LISA mission lifetime or a few years later, and slowly-chirping binaries still in the deep inspiral phase, of which we observe only a small snapshot in Fourier domain as they do not sweep to the end of the frequency band. The massive black hole binaries (MBH) that will be observed by LISA~\cite{LISA17} fall within the first category, with their merger in band, while the proposed population of stellar-origin black hole binaries (SOBH)~\cite{Sesana16}, with masses comparable to the LIGO/Virgo detections, will comprise both merging binaries, i.e. exiting the LISA band towards larger frequencies during observations, and slowly-chirping binaries hundereds or thousands of years away from merger.
+It is useful to distinguish between what we will call merging binaries, systems close to coalescence that will merge during the LISA mission lifetime or a few years later, and slowly-chirping binaries still in the deep inspiral phase, of which we observe only a small snapshot in Fourier domain as they do not sweep to the end of the frequency band. The massive black hole binaries (MBH) that will be observed by LISA~\cite{LISA17} fall within the first category, with their merger in band, while the proposed population of stellar-origin black hole binaries (SOBH)~\cite{Sesana16}, with masses comparable to the LIGO/Virgo detections, will comprise both merging binaries, i.e. exiting the LISA band towards larger frequencies during observations, and slowly-chirping binaries hundreds or thousands of years away from merger.
 
 We turn first to the slowly-chirping binaries. For these systems, we will focus on $\epsilon_{\Psi 2}$, which will be the most important error measure. Fig.~\ref{fig:lisafomPsiMcDeltat} shows contour levels for the value of our simple analytical estimate for $\epsilon_{\Psi 2}$ at the beginning of the observations, as a function of the chirp mass and time to merger, for both the orbital and the constellation response. The limit $\epsilon_{\Psi 2} = 1$ is used to single out areas where the perturbative treatment of Sec.~\ref{sec:formalism} is expected to break down, although the precise location of this boundary will vary, depending on the accuracy level required and on the orientation angles. We also single out the high-mass region where the start of the signal is set by its entry into the sensitive band at $f_{\rm min}$, making the error measure independent of the time to merger. We find that, for binaries in the LIGO/Virgo mass range $10^{1}-10^{2} \Msol$, we reach the limit $\epsilon_{\Psi 2}=1$ first for the orbital response, for time-to-merger values within the expected observed range~\cite{Sesana16}. We will introduce in Sec~\ref{subsec:comblisa} an alternative approach to deal with those signals. For completeness, we also show in Fig.~\ref{fig:lisafomPsiMcDeltat} the result for intermediate and massive black hole systems, although we expect to observe merging systems for this mass range. 
 
@@ -805,7 +783,7 @@ For $\epsilon_{\Psi 2}$, as expected from~\eqref{eq:TfN} we find a steep rise to
 
 For $\epsilon_{A1}$, we find that the structure in the waveform close to merger does have a noticable but limited impact on the error measure. For the orbital response, the error measure remains small for all masses. For the constellation response, we find that $\epsilon_{A1}$ can grow up to $\sim 0.01$ at the lower end of the frequency band for high masses.
 
-The $\epsilon_{d}$ is signal-independent, and follows a quite different behaviour for the orbital and constellation responses. For the orbital response, $\epsilon_{d_{0}}$ grows for higher frequencies, reaching the $\sim 0.1$ at around $1\Hz$. For the constellation response, $\epsilon_{d_{L}}$ is mainly important at lower frequencies, reaching $\sim 0.01$ at around $10^{-5}\Hz$.
+The $\epsilon_{d}$ is signal-independent, and follows a quite different behaviour for the orbital and constellation responses. For the orbital response, $\epsilon_{d}^{0}$ grows for higher frequencies, reaching $\sim 0.1$ at around $1\Hz$. For the constellation response, $\epsilon_{d}^{L}$ is mainly important at lower frequencies, reaching $\sim 0.01$ at around $10^{-5}\Hz$.
 
 Overall, we find that for merging binaries the perturbative approach presented in Sec.~\ref{sec:formalism} will be applicable on the whole LISA frequency band. The most relevant higher-order corrections are expected to be the phase corrections close to the starting frequency of the signal, and the delay correction at high frequencies for the orbital response. For slowly chirping binaries, we have identified regions in the parameter space where the perturbative formalism of Sec.~\ref{sec:formalism} will break down, requiring an alternative approach presented below in Sec.~\ref{subsec:comblisa}.
 
@@ -814,7 +792,7 @@ Overall, we find that for merging binaries the perturbative approach presented i
 \subsection{Errors in the Fourier-domain response for merging binaries}
 \label{subsec:errorsLISA}
 
-Having at hand estimates for the relevance of higher-order corrections in the LISA response, we assess the performance of the leading-order treatment and we demonstrate that including higher-order corrections consistently reduces the reconstruction error of the Fourier-domain transfer function. We will consider two equal-mass and non-spinning systems for this illustration. The first will be a high-mass system with $M=10^{7} \Msol$, entering the LISA band at $f=10^{-5}\Hz$ and inspiralling for $\Delta t = 3.8 \yr$ before merging. The second will be a light system with $M=10^{2} \Msol$, close to the mass range of SOBHs~\cite{Sesana16}, starting at $\Delta t = 10\yr$ before merger and exiting the LISA band at $f=1\Hz$. We will discuss SOBH systems farther away from merger in the next section. We will also focus on the orbital response and on the single-arm constellation response $y_{132}$, as TDI combinations will appear (within the approximations listed in Sec.~\ref{subsec:modelLISA}) as linear combinations of these basic observables. The orientation angles chosen for these examples are $[\lambda,\beta,\iota,\psi] = [\pi/4,\pi/3,\pi/3,0]$.
+Having at hand estimates for the relevance of higher-order corrections in the LISA response, we assess the performance of the leading-order treatment and we demonstrate that including higher-order corrections consistently reduces the reconstruction error of the Fourier-domain transfer function. We will consider two equal-mass and non-spinning systems for this illustration. The first will be a high-mass system with $M=10^{7} \Msol$, entering the LISA band at $f=10^{-5}\Hz$ and inspiralling for $\Delta t = 3.8 \yr$ before merging. The second will be a light system with $M=10^{2} \Msol$, close to the mass range of SOBHs~\cite{Sesana16}, starting at $\Delta t = 10\yr$ before merger and exiting the LISA band at $f=1\Hz$. We will discuss SOBH systems farther away from merger in the next section. We will also focus on the orbital response and on the single-arm constellation response $y_{132}$, as TDI combinations will appear (within the approximations listed in Sec.~\ref{subsec:modelLISA}) as linear combinations of these basic observables. The orientation angles chosen for these examples are $[\lambda,\beta,\iota,\psi] = [\pi/4,\pi/3,\pi/3,0]$ for the ecliptic longitude, latitude, inclination and polarization respectively.
 
 On one hand, we perform a numerical inverse Fourier transform (IFFT) of the Fourier-domain PhenomD waveform, process the signal through the time-domain response~\eqref{eq:defresponse0} or~\eqref{eq:defresponseL}, and perform a numerical Fourier transform (FFT). This gives us the target Fourier-domain waveform, considered to be exact but for possible numerical artifacts\footnote{Numerical Fourier transforms include most notably oscillations induced by the necessary tapering of the signal. In the low-mass case, in practice we stitch together two frequency bands with different sampling rates, which leaves some visible residual in Figs.~\ref{fig:LISAerrorM1e2orb} and~\ref{fig:LISAerrorM1e2const}.}. On the other hand, we process the Fourier-domain signal through the response summarized in Sec.~\ref{subsec:executivesummary}, including various higher-order corrections. We then compare the output of the two procedures.
 
@@ -824,11 +802,6 @@ For the constellation response~\eqref{eq:defresponseL}, we show the results in F
 
 \begin{figure}
   \centering
-%  \includegraphics[width=.8\linewidth]{plots/LISAtransferM1e7dOamp.pdf}
-%  \hspace{0.1cm}
-%  \includegraphics[width=.8\linewidth]{plots/LISAtransferM1e7dOphase.pdf}
-%  \hspace{0.1cm}
-%  \includegraphics[width=.8\linewidth]{plots/LISAerrorM1e7dO.pdf}
   \includegraphics[width=.98\linewidth]{plots/LISAtransfererrorM1e7dO_py.pdf}
   \caption{Transfer function and residual for the orbital response~\eqref{eq:defresponse0}, for an equal-mass system with $M=10^{7} \Msol$. The first and second panels show the amplitude and phase of the transfer function. The bottom panel shows the relative modulus of the residual of the perturbative treatment~\eqref{eq:summaryNAd}, with the color indicating the order of the approximation, compared to a numerical FFT. The starting frequency is set by the LISA sensitivity band at $10^{-5}\mathrm{Hz}$, corresponding to $3.8\mathrm{yr}$. The thick and thin vertical lines indicate the merger and ringdown frequencies.}
   \label{fig:LISAerrorM1e7orb}
@@ -836,11 +809,6 @@ For the constellation response~\eqref{eq:defresponseL}, we show the results in F
 
 \begin{figure}
   \centering
-%  \includegraphics[width=.8\linewidth]{plots/LISAtransferM1e2dOamp.pdf}
-%  \hspace{0.1cm}
-%  \includegraphics[width=.8\linewidth]{plots/LISAtransferM1e2dOphase.pdf}
-%  \hspace{0.1cm}
-%  \includegraphics[width=.8\linewidth]{plots/LISAerrorM1e2dO.pdf}
   \includegraphics[width=.98\linewidth]{plots/LISAtransfererrorM1e2dO_py.pdf}
   \caption{Transfer function and residual for the orbital response~\eqref{eq:defresponse0}, for an equal-mass system with $M=10^{2} \Msol$. The panels are as in Fig.~\ref{fig:LISAerrorM1e7orb}. The starting frequency corresponds to 10 years before merger. The ending frequency is set by the LISA sensitivity band at $1\mathrm{Hz}$, and the merger is out of band. The jump in the residuals for $\{N:3|A:1|d:1\}$ is due to the fact that we split the band in two, with two different sampling rates, for the FFT; it shows that, at this level, the details of the conditioning for the FFT start to cause numerical errors in the reference transfer function.}
   \label{fig:LISAerrorM1e2orb}
@@ -848,8 +816,6 @@ For the constellation response~\eqref{eq:defresponseL}, we show the results in F
 
 \begin{figure}
   \centering
-  %\includegraphics[width=.98\linewidth]{plots/LISAtransferM1e7y12LReIm.pdf}
-  %\includegraphics[width=.98\linewidth]{plots/LISAerrorM1e7y12L.pdf}
   \includegraphics[width=.98\linewidth]{plots/LISAtransfererrorM1e7y12L_py.pdf}
   \caption{Transfer function and residual for the constellation response $y_{132}$~\eqref{eq:defresponseL}, for an equal-mass system with $M=10^{7} \Msol$. The top panel shows the real and imaginary parts of the transfer function, rescaled by the overall scaling $\pi f L$ of the response at low frequencies, while the bottom panel shows the relative residuals compared to an FFT. The frequencies are the same as in Fig.~\ref{fig:LISAerrorM1e7orb}.}
   \label{fig:LISAerrorM1e7const}
@@ -857,9 +823,6 @@ For the constellation response~\eqref{eq:defresponseL}, we show the results in F
 
 \begin{figure}
   \centering
-  %\includegraphics[width=.98\linewidth]{plots/LISAtransferM1e2y12LReIm.pdf}
-  %
-  %\includegraphics[width=.98\linewidth]{plots/LISAerrorM1e2y12L.pdf}
   \includegraphics[width=.98\linewidth]{plots/LISAtransfererrorM1e2y12L_py.pdf}
   \caption{Transfer function and residual for the constellation response $y_{132}$~\eqref{eq:defresponseL}, for an equal-mass system with $M=10^{2} \Msol$. The top panel shows the real and imaginary parts of the transfer function, without the rescaling of Fig.~\ref{fig:LISAerrorM1e7const}. The bottom panels shows the residuals normalized by~\eqref{eq:transferLenvelope} to avoid zero-crossings. The frequencies are the same as in Fig.~\ref{fig:LISAerrorM1e2orb}, and the discontinuity in the residuals for $\{N:3|A:1|d:1\}$ is again due to the conditioning of the FFT.}
   \label{fig:LISAerrorM1e2const}
@@ -878,33 +841,20 @@ For the constellation response~\eqref{eq:defresponseL}, we show the results in F
 
 \begin{figure}
   \centering
-%  \includegraphics[width=.8\linewidth]{plots/LISAtransferSOBHepsPsi1d0ampcorr.pdf}
-%  \hspace{0.1cm}
-%  \includegraphics[width=.8\linewidth]{plots/LISAtransferSOBHepsPsi1d0phasecorr.pdf}
-%  \hspace{0.1cm}
-%  \includegraphics[width=.8\linewidth]{plots/LISAerrorSOBHepsPsi1d0.pdf}
   \includegraphics[width=.98\linewidth]{plots/LISAtransfererrorSOBHepsPsi1d0corr_py.pdf}
-  \caption{Transfer function and residual for the orbital delay $d_{0}$~\eqref{eq:delay0}, for an SOBH with $\epsilon_{\Psi 2}\sim 1$ for the orbital response. The frequency band corresponds to 4 years of observation for this system with $M=50\Msol$, $\Delta t = 200\yr$ away from merger. The top panels show the transfer function amplitude and phase at various orders of approximation in~\eqref{eq:summaryNAd}, with the numerical result of the FFT in black and the comb result~\eqref{eq:transferdiscreteconvolution} in green. The bottom panel shows the relative residuals with respect ot the FFT.}
+  \caption{Transfer function and residual for the orbital delay $d_{0}$~\eqref{eq:delay0}, for an SOBH with $\epsilon_{\Psi 2}\sim 0.6$ for the orbital response. The frequency band corresponds to 4 years of observation for this system with $M=50\Msol$, $\Delta t = 200\yr$ away from merger. The top panels show the transfer function amplitude and phase at various orders of approximation in~\eqref{eq:summaryNAd}, with the numerical result of the FFT in black and the comb result~\eqref{eq:transferdiscreteconvolution} in green. The bottom panel shows the relative residuals with respect ot the FFT.}
   \label{fig:LISAerrorSOBHepsPsi1d0}
 \end{figure}
 
 \begin{figure}
   \centering
-%  \includegraphics[width=.8\linewidth]{plots/LISAtransferSOBHepsPsi10d0ampcorr.pdf}
-%  \hspace{0.1cm}
-%  \includegraphics[width=.8\linewidth]{plots/LISAtransferSOBHepsPsi10d0phasecorr.pdf}
-%  \hspace{0.1cm}
-%  \includegraphics[width=.8\linewidth]{plots/LISAerrorSOBHepsPsi10d0.pdf}
   \includegraphics[width=.98\linewidth]{plots/LISAtransfererrorSOBHepsPsi10d0corr_py.pdf}
-  \caption{Same as Fig.~\ref{fig:LISAerrorSOBHepsPsi1d0}, but for an SOBH with $\epsilon_{\Psi 2}\sim 7$ for the orbital response. The frequency band corresponds to 4 years of observation for this system with $M=15\Msol$, $\Delta t = 1500\yr$ away from merger. The perturbative treatment breaks down in this case, with errors of order 1.}
+  \caption{Same as Fig.~\ref{fig:LISAerrorSOBHepsPsi1d0}, but for an SOBH with $\epsilon_{\Psi 2}\sim 4.5$ for the orbital response. The frequency band corresponds to 4 years of observation for this system with $M=15\Msol$, $\Delta t = 1500\yr$ away from merger. The perturbative treatment breaks down in this case, with errors of order 1.}
   \label{fig:LISAerrorSOBHepsPsi10d0}
 \end{figure}
 
 \begin{figure}
   \centering
-%  \includegraphics[width=.8\linewidth]{plots/LISAtransferSOBHepsPsi1y12LReIm.pdf}
-%  \hspace{0.1cm}
-%  \includegraphics[width=.8\linewidth]{plots/LISAerrorSOBHepsPsi1y12L.pdf}
   \includegraphics[width=.98\linewidth]{plots/LISAtransfererrorSOBHepsPsi1y12L_py.pdf}
   \caption{Transfer function and residual for the constellation response $y_{132}$~\eqref{eq:GslrL}, for the same SOBH as in Fig.~\ref{fig:LISAerrorSOBHepsPsi1d0}. Here $\epsilon_{\Psi 2}\sim 0.01$ for the constellation part of the response. The top panel shows the real and imaginary part of the transfer function.}
   \label{fig:LISAerrorSOBHepsPsi1const}
@@ -912,9 +862,6 @@ For the constellation response~\eqref{eq:defresponseL}, we show the results in F
 
 \begin{figure}
   \centering
-%  \includegraphics[width=.8\linewidth]{plots/LISAtransferSOBHepsPsi10y12LReIm.pdf}
-%  \hspace{0.1cm}
-%  \includegraphics[width=.8\linewidth]{plots/LISAerrorSOBHepsPsi10y12L.pdf}
   \includegraphics[width=.98\linewidth]{plots/LISAtransfererrorSOBHepsPsi10y12L_py.pdf}
   \caption{Transfer function and residual for the constellation response $y_{132}$~\eqref{eq:GslrL}, for the same SOBH as in Fig.~\ref{fig:LISAerrorSOBHepsPsi10d0}. Here $\epsilon_{\Psi 2}\sim 0.1$ for the constellation part of the response. The top panel shows the real and imaginary part of the transfer function.}
   \label{fig:LISAerrorSOBHepsPsi10const}
@@ -922,7 +869,7 @@ For the constellation response~\eqref{eq:defresponseL}, we show the results in F
 
 As explained in Sec.~\ref{subsec:lisafom}, slowly-chirping binaries can be problematic for the perturbative formalism of Sec.~\ref{sec:formalism}. Indeed, when far enough from merger, SOBH systems~\cite{Sesana16} can have error estimates $\epsilon_{\Psi 2}$ reaching and exceeding $1$, as shown in Fig.~\ref{fig:lisafomPsiMcDeltat}. Here we investigate these sources in more details, and propose an alternative treatment for their instrument response.
 
-First, we should mention that these signals share similarities with the galactic binaries that will provide numerous quasi-monochromatic signals in the LISA band~\cite{Nelemans+01, LISA17}. They are far from merger, slowly chirping, and span only a narrow frequency band over the course of the LISA mission lifetime, although being less monochromatic that galactic binaries. For the galactic binaries, an accurate and efficient numerical treatment of the response has been proposed~\cite{CL07} and widely used in applications. This treatment is referred to as the fast-slow decomposition, or heterodyning approach. If the gravitational wave signal extends only on the narrow frequency band $f \in [f_{*}, (1+\eta) f_{*}]$ with $\eta \ll 1$, then scaling out a carrier frequency of the signal by multiplying by $e^{-2 i \pi f_{*} t}$ will eliminate most of the time variability, allowing to process the signal through the time-domain response and to take a FFT with a Nyquist frequency shifted from $(1+\eta) f_{*}$ to $\eta f_{*}$, i.e. with a much smaller number of samples. This multiplication is simply equivalent to a shift in frequency domain, which can be restored after the numerical FFT has been computed. The efficiency of this approach is contingent to the smallness of $\eta$. Galactic binaries are extremely close to monochromatic~\cite{Nelemans+01}, and this quantity can be as low as $10^{-6}-10^{-7}$. For SOBH systems, however, $\eta$ will take a continuous set of values from roughly $10^{-4}$ to $5$. Although the systems for which $\eta$ is the largest are also the easiest to treat with the perturbative formalism of Sec~\ref{sec:formalism}, we propose here yet a third method, based on a discrete Fourier comb, making sure we can cover the intermediate ground of slowly-chirping systems with a large $\eta$. We leave for the future a more detailed study of SOBH systems as a population, and the investigation of the precise boundaries and overlap areas of the three methods (heterodyning, Fourier comb, perturbative) as well as their respective computational costs.
+First, we should mention that these signals share similarities with the galactic binaries that will provide numerous quasi-monochromatic signals in the LISA band~\cite{Nelemans+01, LISA17}. They are far from merger, slowly chirping, and span only a narrow frequency band over the course of the LISA mission lifetime, although being less monochromatic that galactic binaries. For the galactic binaries, an accurate and efficient numerical treatment of the response has been proposed and widely used in applications~\cite{CL07}. This treatment is referred to as the fast-slow decomposition, or heterodyning approach. If the gravitational wave signal extends only on the narrow frequency band $f \in [f_{*}, (1+\eta) f_{*}]$ with $\eta \ll 1$, then scaling out a carrier frequency of the signal by multiplying by $e^{-2 i \pi f_{*} t}$ will eliminate most of the time variability, allowing to process the signal through the time-domain response and to take a FFT with a Nyquist frequency shifted from $(1+\eta) f_{*}$ to $\eta f_{*}$, i.e. with a much smaller number of samples. This multiplication is simply equivalent to a shift in frequency domain, which can be restored after the numerical FFT has been computed. The efficiency of this approach is contingent to the smallness of $\eta$. Galactic binaries are extremely close to monochromatic~\cite{Nelemans+01}, and this quantity can be as low as $10^{-6}-10^{-7}$. For SOBH systems, however, $\eta$ will take a continuous set of values from roughly $10^{-4}$ to $5$. Although the systems for which $\eta$ is the largest are also the easiest to treat with the perturbative formalism of Sec~\ref{sec:formalism}, we propose here yet a third method, based on a discrete Fourier comb, making sure we can cover the intermediate ground of slowly-chirping systems with a large $\eta$. We leave for the future a more detailed study of SOBH systems as a population, and the investigation of the precise boundaries and overlap areas of the three methods (heterodyning, Fourier comb, perturbative) as well as their respective computational costs.
 
 The Fourier comb approach we propose here exploits the fact that, in the LISA case, the modulations and delays entering~\eqref{eq:yslr} are periodic, with a period of one year and a frequency $f_{0} = \Omega_{0}/2\pi = 1/\mathrm{yr} \simeq 3.2\times 10^{-8}\mathrm{Hz}$. For any given frequency $f$, $G(f,t)$ is periodic in time, so that~\eqref{eq:defG} becomes a discrete Fourier series
 \be\label{eq:Gdiscretefourier}
@@ -952,9 +899,9 @@ The truncation order $N_{\rm comb}(f,\eta)$ is frequency-dependent, and also dep
 
 An important point is that, since the signals from slowly-chirping binaries extend on a narrow frequency band, for both responses the frequency-dependence of $c_{n}^{0}(f)$, $c_{n}^{L}(f)$ will be very mild, so that the coefficients can be computed at two or three frequencies and interpolated in-between. The computational cost of this approach is then set by the convolution~\eqref{eq:transferdiscreteconvolution} that must be evaluated at as many frequencies as necessary to interpolate the transfer functions as functions of frequency (for examples, see Figs.~\ref{fig:LISAerrorSOBHepsPsi1d0}, \ref{fig:LISAerrorSOBHepsPsi10d0}, \ref{fig:LISAerrorSOBHepsPsi1const} and~\ref{fig:LISAerrorSOBHepsPsi10const}). In general, this Fourier comb approach will be more expensive than the perturbative response of Sec.~\ref{subsec:executivesummary}. We leave for future work a proper assessment of the computational performance of this method compared to the others. 
 
-We now illustrate this approach by considering two examples of equal-mass SOBH systems. The first has $M = 50\Msol$ and is $\Delta t = 200\yr$ away from merger, and for the orbital response $\epsilon_{\Psi 2} \simeq 1$. The second has $M = 15\Msol$ and is $\Delta t = 1500\yr$ away from merger, and for the orbital response $\epsilon_{\Psi 2} \simeq 7$. The phase error measures for the constellation part are smaller, $\epsilon_{\Psi_{2}} \simeq 0.1$ and $0.01$ respectively. In keeping with the previous section, in our presentation we separate the orbital and the constellation response, keeping in mind that in practice the full response is to be handled in one step.
+We now illustrate this approach by considering two examples of equal-mass SOBH systems. The first has $M = 50\Msol$ and is $\Delta t = 200\yr$ away from merger, and for the orbital response $\epsilon_{\Psi 2} \simeq 0.6$. The second has $M = 15\Msol$ and is $\Delta t = 1500\yr$ away from merger, and for the orbital response $\epsilon_{\Psi 2} \simeq 4.5$. The phase error measures for the constellation response are smaller, $\epsilon_{\Psi_{2}} \simeq 0.1$ and $0.01$ respectively. In keeping with the previous section, in our presentation we separate the orbital and the constellation response, keeping in mind that in practice the full response is to be handled in one step.
 
-The transfer functions for the orbital response and residual errors are shown for the two systems in Figs.~\ref{fig:LISAerrorSOBHepsPsi1d0} and~\ref{fig:LISAerrorSOBHepsPsi10d0}. We see that, contrarily to Sec.~\ref{subsec:errorsLISA}, the transfer function starts to develop more structure that just a phase contribution. The case $M=50\Msol$ with $\epsilon_{\Psi 2} \simeq 1$ shows that the leading-order treatment leads to relative errors of order $10\%$, while increasing $N$ to 5 or 20 brings the errors back to $\sim 10^{-4}$, with a marginal improvement from further amplitude and delay corrections. The case $M=50\Msol$ with $\epsilon_{\Psi 2} \simeq 7$, by contrast, is clearly outside the range of applicability of the perturbative formalism, as orders of approximation give errors of order $100\%$. In both cases, the comb treatment performs well, at better than $10^{-4}$.
+The transfer functions for the orbital response and residual errors are shown for the two systems in Figs.~\ref{fig:LISAerrorSOBHepsPsi1d0} and~\ref{fig:LISAerrorSOBHepsPsi10d0}. We see that, contrarily to Sec.~\ref{subsec:errorsLISA}, the transfer function starts to develop more structure that just a phase contribution. The case $M=50\Msol$ with $\epsilon_{\Psi 2} \simeq 0.6$ shows that the leading-order treatment leads to relative errors of order $10\%$, while increasing $N$ to 5 or 20 brings the errors back to $\sim 10^{-4}$, with a marginal improvement from further amplitude and delay corrections. The case $M=50\Msol$ with $\epsilon_{\Psi 2} \simeq 4.5$, by contrast, is clearly outside the range of applicability of the perturbative formalism, as all orders of approximation give errors of order $100\%$. In both cases, the comb treatment performs well, at better than $10^{-4}$.
 
 For the constellation response, the transfer functions and residual errors are shown for the two systems in Figs.~\ref{fig:LISAerrorSOBHepsPsi1const} and~\ref{fig:LISAerrorSOBHepsPsi10const}. Here, with $\epsilon_{\Psi 2} \sim 0.01$ and $0.1$, both systems are within reach of the perturbative formalism, although the case  $\epsilon_{\Psi 2} \sim 0.1$ shows errors of $10\%$ at leading order and requires a rather large $N=20$ to reach errors below $10^{-3}$. The comb treatment yields again errors below $10^{-4}$ in both cases.
 
@@ -1023,7 +970,7 @@ The relations~\eqref{eq:wignerrot} do not mix different values of $\ell$. Furthe
 \ee
 One can therefore use these amplitudes (in our case, limited to $\ell = 2$) to define a frame-independent peak amplitude of the precessing waveform.
 
-The dominant features of the the precessing-frame waveform, are approximtely reflection symmetric about the orbital plane (exactly valid for non-precessing systems, see~\eqref{eq:symmetryhlminusm}), implying
+The dominant features of the the precessing-frame waveform are approximately reflection symmetric about the orbital plane (exactly valid for non-precessing systems, see~\eqref{eq:symmetryhlminusm}), implying
 \be\label{eq:approxsymmetryhlminusm}
 	h^{\rm P}_{\ell,-m} \simeq (-1)^{\ell} h^{\rm P*}_{\ell,m} \,.
 \ee
@@ -1074,21 +1021,21 @@ where we defined
 	L^{\times}_{\ell m} &\equiv \frac{i}{2} \left( {}_{-2}Y_{\ell m} - (-1)^{m} {}_{-2}Y_{\ell, -m}^{*} \right) \,.
 \end{align}
 
-Finally, we note that with the restriction to $\ell = 2$ and $m' = 2$, in the approximate phase given in Eq.~\eqref{eq:wignerphasesimpleprec}, the coefficient of $\alpha$ is close to $0$ for small $\beta$ for $m=2$, and increasingly positive when going down from $m=1$ to $m=-2$. In our Fourier convention~\eqref{eq:defFT}, the Fourier transforms $\tilde{F}$ thus have most of their support on negative frequencies. This means that the support of the convolution integral~\eqref{eq:precconvolution} extends to the right side for $\tilde{h}$, i.e. $f-f' > f$. This point will become important when considering the high-frequency part of the signal in Sec.~\ref{subsec:trigopoly}. Note, however, that this statement might not be true anymore when including more modes in our model.
+Finally, we note that with the restriction to $\ell = 2$ and $m' = 2$, in the approximate phase given in Eq.~\eqref{eq:wignerphasesimpleprec}, the coefficient of $\alpha$ is close to $0$ for small $\beta$ for $m=2$, and increasingly positive when going down from $m=1$ to $m=-2$. In our Fourier convention~\eqref{eq:defFT}, the Fourier transforms $\tilde{F}$ thus have most of their support on negative frequencies. This means that the support of the convolution integral~\eqref{eq:precconvolution} extends to the right side for $\tilde{h}$, i.e. $f-f' > f$. This point will become important when considering the high-frequency part of the signal in Sec.~\ref{subsec:trigopoly}. Note, however, that this statement might not be true anymore when including more modes in our model, in particular modes $\ell \neq m$.
 
 \subsection{Simplified model for precessing IMR waveforms}
 \label{subsec:precmodel}
 
 We wish to apply the formalism presented in Sec.~\ref{sec:formalism} to IMR waveforms of precessing binaries, exploring the separation of the timescales involved through the inspiral and merger, and assessing the relevance of the higher-order corrections summarized in~\ref{subsec:executivesummary}. To this end, we will use a simplified model for the precession, allowing a number of simplifications and idealizations.
 
-We want to be able to investigate signals with a long inspiral phase, beyond the range covered by numerical relativity simulations, and we want to include the merger and ringdown phase. We will use the following three ingredients for this simplified model:
+We want to be able to investigate generic-spin signals with a long inspiral phase, beyond the range covered by numerical relativity simulations, and we want to include the merger and ringdown phase. We will use the following three ingredients for this simplified model:
 \begin{itemize}
 	\item PhenomD~\cite{Husa+15, Khan+15} for the IMR Fourier-domain waveform in the precessing frame;
 	\item SEOBNRv3~\cite{Pan+13, BTB16} for the Euler angles during the inspiral;
 	\item an effective extension of the Euler angles post-merger based on~\cite{OShaughnessy+12} (see~\eqref{eq:OmegaframeQNM} below).
 \end{itemize}
 
-For the precessing-frame waveform, we make all the simplifying assumptions described above in Sec.~\ref{subsec:precdef}: we approximate it as a non-precessing waveform, further enforcing the approximations~\eqref{eq:approxsymmetryhlminusm} and~\eqref{eq:approxzeronegativef} and limiting our analysis to the dominant harmonics\footnote{See~\cite{London+17} for a recent extension of the model to include higher harmonics.} $h^{\rm P}_{22}$ and $h^{\rm P}_{2,-2}$. We will use the PhenomD waveform model~\cite{Husa+15, Khan+15}, an aligned-spin Fourier-domain model publicly available in the LIGO Algorithm Library (LAL) that covers the inpiral, merger and ringdown for binaries with generic spin magnitude. The amplitude and phase of the waveform are produced as piecewise analytical functions of the frequency. Using a Fourier-domain approximant that is smooth by construction avoids the Gibbs oscillations induced by the tapering of of finite-length time-domain waveforms, and will allow us to easily take Fourier-domain derivatives of the waveform\footnote{Note that the PhenomD amplitude and phase are smooth on three separate frequency bands (inspiral, intermediate, and ringdown) with junction conditions that are only of class $C^{1}$. To avoid spurious discontinuities, we introduce decaying corrective terms of the form $(f-f_{\rm join})^{2} e^{-\lambda(f-f_{\rm join})^{2}}$ on each side of $f_{\rm join}$, the junction frequency between any two given bands, resulting in functions of class $C^{2}$.}.
+For the precessing-frame waveform, we make all the simplifying assumptions described above in Sec.~\ref{subsec:precdef}: we approximate it as a non-precessing waveform, further enforcing the approximations~\eqref{eq:approxsymmetryhlminusm} and~\eqref{eq:approxzeronegativef}. Limiting our analysis to the dominant harmonics $h^{\rm P}_{22}$ and $h^{\rm P}_{2,-2}$, we will use the PhenomD waveform model~\cite{Husa+15, Khan+15}, an aligned-spin Fourier-domain model publicly available in the LIGO Algorithm Library (LAL) that covers the inpiral, merger and ringdown for binaries with generic spin magnitude\footnote{See~\cite{London+17} for a recent extension of the model to include higher harmonics.}. The amplitude and phase of the waveform are produced as piecewise analytical functions of the frequency. Using a Fourier-domain approximant that is smooth by construction avoids the Gibbs oscillations induced by the tapering of of finite-length time-domain waveforms, and will allow us to easily take Fourier-domain derivatives of the waveform\footnote{Note that the PhenomD amplitude and phase are smooth on three separate frequency bands (inspiral, intermediate, and ringdown) with junction conditions that are only of class $C^{1}$. To avoid spurious discontinuities, we introduce decaying corrective terms of the form $(f-f_{\rm join})^{2} e^{-\lambda(f-f_{\rm join})^{2}}$ on each side of $f_{\rm join}$, the junction frequency between any two given bands, resulting in functions of class $C^{2}$.}.
 
 For the frame trajectory in the inspiral phase, we use an SEOBNRv3 waveform~\cite{Pan+13, BTB16}, that incorporates all degrees of freedom of both spins. As the inspiral of the SEOBNRv3 waveform is constructed by using the instantaneous orbital plane of the dynamics as the precessing frame, the frame extraction procedure of~\cite{OShaughnessy+11} simply returns the normal to the orbital plane as the radiation axis. The frame thus presents oscillatory features of small amplitude at the orbital timescale, due to the nutation of the orbital plane, which we smooth out using a Gaussian filtering with width based on the orbital phase as in~\cite{Blackman+17a}.
 
@@ -1106,38 +1053,23 @@ In our model, after reaching the time of peak amplitude as defined in~\eqref{eq:
 	\gamma_{\rm post-merger}(t) &= \gamma(t_{\rm peak}) - (\alpha(t) - \alpha(t_{\rm peak}) )\cos \beta \,,
 \end{align}
 \end{subequations}
-where we use the minimal-rotation condition~\eqref{eq:gammadot} for a constant $\beta$. To compute the QNM frequencies as a function of the final spin $\chi_{f}$, we use fits constructed in Ref.~\cite{Berti+05}, illustrated in Fig.~\ref{fig:QNM}. The final spin is taken to be the same as the one computed internally to the SEOBNRv3 code~\cite{Pan+13, BTB16}, where the final-spin fit formula of Ref.~\cite{BR09} \SM{[see if we can update the final-spin formula]}, built for spin-aligned systems, is applied to the spin components projected on the orbital angular momentum $\bm{L}$ at merger.
+where we use the minimal-rotation condition~\eqref{eq:gammadot} for a constant $\beta$. To compute the QNM frequencies as a function of the final spin $\chi_{f}$, we use fits constructed in Ref.~\cite{Berti+05}, illustrated in Fig.~\ref{fig:QNM}. The final spin is taken to be the same as the one computed internally to the SEOBNRv3 code~\cite{Pan+13, BTB16}, where the final-spin fit formula of Ref.~\cite{BR09}, built for spin-aligned systems, is applied to the spin components projected on the orbital angular momentum $\bm{L}$ at merger.
 
 Fig.~\ref{fig:precmodel} presents a comparison of the frame trajectory at merger for the SEOBNRv3, NR waveforms and for our model~\eqref{eq:eulerQNM}. The example catalog waveform is SXS:BBH:0058, generated with SpEC~\cite{SXScatalog, SpEC, Mroue+12, Mroue+13}, with a mass ratio of $q=5$, and a single in-plane spin of $\chi_{1} = 0.5$. The NR and SEOB post-merger frames disagree mainly due to a different value of the final spin $\chi_{f}$\footnote{To compute $\chi_{f}$, SEOBNRv3 uses fitting formulas from~\cite{BR09}. Using updated formulas incorporating additional NR data (see e.g.~\cite{HBR16}) would reduce or remove this disagreement.}, which leads to a different $\Omega_{\rm frame}$. Given their different value of $\chi_{f}$, however, both agree with the qualitative description~\eqref{eq:OmegaframeQNM}. The oscillations developing after $t\sim 50 M$ occur in a regime where the overall waveform amplitude has decayed to small values. Our simple model~\eqref{eq:eulerQNM} follows well the SEOBNRv3 behaviour for $\alpha$ and $\gamma$, but departs more for $\beta$ as we do not model its variation at merger.
 
 In this paper, we will need this model only as an example for demonstrating our frequency-domain precession response, and we only ask that it represents the qualitative features of a precessing waveform. In that context, we would like to underline a number of caveats and limitations of our simplified model. First, it is clear from Fig.~\ref{fig:precmodel} that the acceleration of the precession post-merger is going to be the most challenging feature for the separation of timescales at the basis of Sec.~\ref{sec:formalism}. While we checked the qualitative soundness of the decomposition outlined in Sec.~\ref{subsec:precdef} and of the post-merger precession~\eqref{eq:OmegaframeQNM} in some of the available numerical relativity waveforms~\cite{SXScatalog}, it is important to stress that there is no guarantee that another prescription for the precessing frame would not yield a better separation of timescales. Secondly, approximating the precessing-frame waveform by a spin-aligned one comes with known limitations, ignoring for instance mode asymmetries departing from~\eqref{eq:approxsymmetryhlminusm} as shown in~\cite{Boyle+14}. Thirdly, more exploration of the parameter space would be needed, as the QNM frequencies entering~\eqref{eq:OmegaframeQNM} vary rapidly for large $\chi_{f}$. Finally, we ensure the smoothness both of the Fourier-domain precessing-frame waveform and of the time-domain modulation, allowing us to take the derivatives required by the formalism of Sec.~\ref{sec:formalism}, which is an idealization.
 
-Leaving aside the question of a more in-depth investigation of the best representation of precessing waveforms in their post-merger phase, we will proceed to investigating the separation of timescales in three chosen examples. The parameters of these example cases are summarized in Table~\ref{tab:precparams}. We consider a mass ratio of $q=4$, close-to-maximal spins of $\chi_{1} = \chi_{2} = 0.95$, and vary both spins misalignmnent angles to be $\pi/6$ (case labeled $++$, close to aligned spins), $\pi/2$ ($\perp\perp$, spins in the plane) and $5\pi/6$ ($--$, close to anti-aligned spins). Table~\ref{tab:precparams} also shows the remnant spins that are internally computed in both the SEOBNRv3 and the PhenomD/PhenomP codes, as well as the QNM frequencies and the resulting frame precession frequency $\Omega_{\rm frame}$. Note that the case $--$ shows a larger variation in the direction of $\bm{J}$, and the spin of the remnant is almost 0, due to the fact that the spin is large and antialigned with a large mass ratio. This example therefore serves the purpose of lying at the edge of validity of the picture of standard precession along a cone around an almost-fixed direction, and the standard hierarchy between mode contributions is not valid in this case. \SM{[soundness of trajectories, particularly in this case, are to be checked again -- discrepancy for $--$ between Jf from dynamics and chif used in SEOB internals]}
+Leaving aside the question of a more in-depth investigation of the best representation of precessing waveforms in their post-merger phase, we will proceed to investigating the separation of timescales in three chosen examples. The parameters of these example cases are summarized in Table~\ref{tab:precparams}. We consider a mass ratio of $q=4$, close-to-maximal spins of $\chi_{1} = \chi_{2} = 0.95$, and vary both spins misalignmnent angles to be $\pi/6$ (case labeled $++$, close to aligned spins), $\pi/2$ ($\perp\perp$, spins in the plane) and $5\pi/6$ ($--$, close to anti-aligned spins). Table~\ref{tab:precparams} also shows the remnant spins that are internally computed in both the SEOBNRv3 and the PhenomD/PhenomP codes, as well as the QNM frequencies and the resulting frame precession frequency $\Omega_{\rm frame}$. Note that the case $--$ shows a larger variation in the direction of $\bm{J}$, and the spin of the remnant is almost 0, due to the fact that the spin is large and antialigned with a large mass ratio. This example therefore serves the purpose of lying at the edge of validity of the picture of standard precession along a cone around an almost-fixed direction, and the standard hierarchy between mode contributions is not valid in this case.
 
 \begin{figure}
   \centering
-%  \includegraphics[width=.45\linewidth]{plots/eulerSXS0058alphagamma.pdf}
-%  \hspace{0.2cm}
-%  \includegraphics[width=.45\linewidth]{plots/eulerSXS0058beta.pdf}
   \includegraphics[width=.98\linewidth]{plots/eulerSXS0058_py.pdf}
   \caption{Evolution of Euler angles $(\alpha, \gamma)$ (top panel) and $\beta$ (bottom panel) near merger for the example SpEC waveform SXS:BBH:0058~\cite{SpEC, SXScatalog, Mroue+12, Mroue+13}. Full, dashed and dotted lines represent the NR, SEOB and extended SEOB waveforms respectively. The vertical line at $t=0$ indicates the time of merger. In the left panel the full and dashed black lines indicate the asymptotic behaviour~\eqref{eq:OmegaframeQNM} for the rotation of the frame around the direction of the final $\bm{J}$. The difference between NR and SEOB there is due to the value of the final spin, with $\chi_{f}^{\rm NR} = 0.54$ and $\chi_{f}^{\rm SEOB} = 0.42$, which leads to a different $\Omega_{\rm frame}$. In the right panel, $\beta$ is asymptotically constant in our toy model.}
   \label{fig:precmodel}
 \end{figure}
 
-%\begin{figure*}
-%  \centering
-%  \includegraphics[width=.48\linewidth]{plots/prectoymodelalphagamma.pdf}
-%  \hspace{0.2cm}
-%  \includegraphics[width=.48\linewidth]{plots/prectoymodelbeta.pdf}
-%  \caption{Evolution of Euler angles $(\alpha, \beta, \gamma)$ for our two toy models. Dashed lines represent Case I and solid lines Case II. The vertical line indicates the time of merger. In the left panel the dashed black lines indicate the enforced asymptotic behaviour in Case II, where the frame rotates with constant angular velocity $\omega_{220} -\omega_{210}$. In the right panel, $\beta$ is asymptotically constant.}
-%  \label{fig:prectoymodel}
-%\end{figure*}
-
-%In Eq.~\eqref{eq:defmodulationprec} above, the modulation function $F$ evolves on the precessional timescale, which evolves throughout the inspiral. The separation between the precessional timescale and the orbital timescale will be crucial for our analysis. In the limit of low frequencies, we will see in Sec.~\ref{} below that, although these timescales become more and more separated, the decrease in the chirping rate gives raise to a corrective contribution that does not vanish in this limit. In the other limit, as the system gets close to merger, the separation of timescales becomes weaker, and we will explore in Sec.~\ref{} the application of our formalism to the merger and ringdown phase.
-
 \begin{table}[t]
-\begin{ruledtabular}\caption{Parameters of of the three example cases that we use to illustrate our formalism. The three cases differ by their spin alignment angles $\theta_{A} = \bm{\chi}_{A} \cdot \hat{\bm{L}}_{i}$, the spins being in the orbital plane, almost aligned and almost anti-aligned. The table gives also the final spins magnitudes (for SEOB as well as PhenomD for comparison), angles between the initial and final angular momenta $\theta(\bm{J}_{i}, \bm{J}_{f})$, as well as QNM frequencies and frame rotation velocity used for the post-merger extension. \SM{[To be updated with longer waveforms, 10Hz 10Msol. ?]} \SM{[add misalignment angles $(\ell, \bm{J}_{i})$?]}}\label{tab:precparams}
-%\begin{tabular}{C{.2\columnwidth}C{.24\columnwidth}C{.15\columnwidth}}
+\begin{ruledtabular}\caption{Parameters of of the three example cases that we use to illustrate our formalism. The three cases differ by their spin alignment angles $\theta_{A} = \bm{\chi}_{A} \cdot \hat{\bm{L}}_{i}$, the spins being almost aligned, in the orbital plane and almost anti-aligned. The table gives also the final spins magnitudes (for SEOB as well as PhenomD for comparison), angles between the initial and final angular momenta $\theta(\bm{J}_{i}, \bm{J}_{f})$, as well as QNM frequencies and frame rotation velocity used for the post-merger extension.}\label{tab:precparams}
 \begin{tabular}{ccccccc}\label{tab:precexamples}
 	$f_{\rm min}$ & $ M_{\rm min} $ & $q$ & $\chi_{1}$ & $\chi_{2}$ & $ \phi_{1} $ & $ \phi_{2} $ \\
 	\hline
@@ -1158,36 +1090,6 @@ Leaving aside the question of a more in-depth investigation of the best represen
 \end{ruledtabular}
 \end{table}
 
-%\begin{table}[t]
-%\begin{ruledtabular}\caption{Parameters of the three example cases that we use to illustrate our formalism.}\label{tab:precparams}
-%%\begin{tabular}{C{.2\columnwidth}C{.24\columnwidth}C{.15\columnwidth}}
-%\begin{tabular}{cccc}
-%	Case & pp & $++$ & $--$ \\
-%	\hline
-%	$q$ & $4.0$ & $4.0$ & $4.0$ \\
-%	$\chi_{1}$ & $0.95$ & $0.95$ & $0.95$ \\
-%	$\chi_{2}$ & $0.95$ & $0.95$ & $0.95$ \\
-%	$\theta_{1}$ & $\pi/2$ & $\pi/6$ & $5\pi/6$ \\
-%	$\theta_{2}$ & $\pi/2$ & $\pi/6$ & $5\pi/6$ \\
-%	$\phi_{2}$ & $0.0$ & $0.0$ & $0.0$ \\
-%	$\phi_{2}$ & $\pi/2$ & $\pi/2$ & $\pi/2$
-%\end{tabular}
-%\end{ruledtabular}
-%\end{table}
-
-%\begin{figure*}
-%  \centering
-%  \includegraphics[width=.48\linewidth]{plots/prectransferAcaseI.pdf}
-%  \hspace{0.2cm}
-%  \includegraphics[width=.48\linewidth]{plots/prectransferPsicaseI.pdf}
-%  %
-%  \includegraphics[width=.48\linewidth]{plots/prectransferAcaseII.pdf}
-%  \hspace{0.2cm}
-%  \includegraphics[width=.48\linewidth]{plots/prectransferPsicaseII.pdf}  
-%  \caption{Amplitude and phase of the Fourier-domain transfer fonctions $\calT_{22,2m'}$ as defined in~\eqref{eq:defTlmlmp} for individual mode contributions. The left panels show the amplitude and the right panels the phase.}
-%  \label{fig:prectransfer}
-%\end{figure*}
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsection{Estimates for the separation of timescales}
@@ -1202,13 +1104,13 @@ Leaving aside the question of a more in-depth investigation of the best represen
 
 We now turn to the separation of timescales and to the magnitude of the higher-order corrections derived in Sec.~\ref{sec:formalism} in the case of precessing binaries, as can be estimated by the quantities $\epsilon_{\Psi 2}$, $\epsilon_{A1}$ and $\epsilon_{A 2}$ introduced in~\eqref{eq:deffom}.
 
-In the inspiral phase, we can obtain a qualitative picture of the timescales involved by using well-known leading-order post-Newtonian results. To simplify things further, we will consider a single-spin system, and use orbit-averaged precession equations. In this configuration, both the orbital angular momentum $\bm{L}$ and the spin vector $\bm{S}$ undergo simple precession on a cone around the total angular momentum $\bm{J}$ (see e.g.~\cite{Apostolatos+94, Kidder95}), with an opening angle of the cone and a precession velocity $\Omega_{\rm prec}$ that vary only on the radiation reaction timescale. In the general case, the presence of two spins complicates the evolution of the system, but the picture of a precession cone for $\bm{L}$ remains approximately valid (see~\cite{Kesden+14} for a classification of generic precession trajectories).
+In the inspiral phase, we can obtain a qualitative picture of the timescales involved by using well-known leading-order post-Newtonian results. To simplify things further, we will consider a single-spin system, and use orbit-averaging to ignore nutation features in the normal to the orbital plane. In this configuration, both the orbital angular momentum $\bm{L}$ and the spin vector $\bm{S}$ undergo simple precession on a cone around the total angular momentum $\bm{J}$ (see e.g.~\cite{Apostolatos+94, Kidder95}), with an opening angle of the cone and a precession velocity $\Omega_{\rm prec}$ that vary only on the radiation reaction timescale. In the general case, the presence of two spins complicates the evolution of the system, but the picture of a precession cone for $\bm{L}$ remains approximately valid (see~\cite{Kesden+14} for a classification of generic precession trajectories).
 
 We will use the following notation: for $m_{1}$, $m_{2}$ the masses of the two bodies, we set $M=m_{1}+m_{2}$, $\nu=m_{1}m_{2}/M^{2}$, $\delta = (m_{1}-m_{2})/M$, and $|\bm{S}_{A}|=Gm_{A}^{2} \chi_{A}$ for $A=1,2$, with $\chi$ the dimensionless spin between $0$ and $1$ for Kerr black holes. We define $\bm{\ell}$ as the unit vector normal to the orbital plane. We take the convention $m_{1} \geq m_{2}$ and assume that only the more massive object has a spin, $\bm{S}_{2} = 0$. As in Sec.~\ref{subsec:SPA}, we will use the notation $v = (G M \omega/c^{3})^{1/3}$ with $\omega = \dot{\varphi}$ the orbital frequency, which translates to $v=(G \pi M f/c^{3})^{1/3}$ for the 22 mode when the SPA applies. At the Newtonian order, the orbital angular momentum is $\bm{L} = L_{N} \bm{\ell}$, with
 \be\label{eq:defLN}
 	L_{N} = \frac{G M^{2} \nu}{c v} \,.
 \ee
-Since we neglect radiation reaction, $\bm{J} = \bm{L} + \bm{S}_{1}/c$ is treated a constant that we use to set the z-axis so that $\bm{J} = J \bm{e}_{z}$, and we decompose the spin in its aligned and perpendicular components as $\bm{S}_{1} = S_{1}^{z} \bm{e}_{z} + \bm{S}_{1}^{\perp}$. At leading order, the precession equations read
+Since we neglect radiation reaction, $\bm{J} = \bm{L} + \bm{S}_{1}/c$ is treated as a constant that we use to set the z-axis so that $\bm{J} = J \bm{e}_{z}$, and we decompose the spin in its aligned and perpendicular components as $\bm{S}_{1} = S_{1}^{z} \bm{e}_{z} + \bm{S}_{1}^{\perp}$. At leading order, the precession equations read
 \begin{align}
 	\dot{\bm{S}}_{1} &= \bm{\Omega}_{1} \times \bm{S}_{1} \,, \nn\\
 	\dot{\bm{\ell}} &= - \frac{1}{c L_{N}}  \dot{\bm{S}}_{1}\,,
@@ -1237,66 +1139,35 @@ We now turn to the Euler angles and modulation functions $\calD^{\ell *}_{mm'}(\
 \ee
 For a given mode contribution $\calD^{\ell *}_{mm'}$, \eqref{eq:wignerphasesimpleprec} shows that we will have factors of $(m' \cos\beta - m)$ when taking derivatives.
 
-We have now everything we need to compute the error estimates~\eqref{eq:deffom} for the transfer function $\calT^{\ell}_{mm'}$~\eqref{eq:defprectransfer} with $m' \neq 0$. Given our restrictive  assumptions of orbit-averaged leading-order PN and single-spin simple precession, the result will only be a crude order-of-magnitude estimate. Using the Fourier-domain leading-order timescales generalized for modes $h^{\rm P}_{\ell m'}$ in the text below~\eqref{eq:timescalesN} yields: \SM{[check]}
+We have now everything we need to compute the error estimates~\eqref{eq:deffom} for the transfer function $\calT^{\ell}_{mm'}$~\eqref{eq:defprectransfer} with $m' \neq 0$. Given our restrictive  assumptions of orbit-averaged leading-order PN and single-spin simple precession, the result will only be a crude order-of-magnitude estimate. Using the Fourier-domain leading-order timescales generalized for modes $h^{\rm P}_{\ell m'}$ in the text below~\eqref{eq:timescalesN} yields:
 \begin{subequations}\label{eq:precfomPN}
 \begin{align}
-	\epsilon_{\Psi 2} &= \frac{m'}{2} \frac{5\nu}{96} \Lambda^{2} \xi^{2} (m' \cos\beta - m)^{2} v^{-1} \,, \\
-	\epsilon_{A 1} &=  \frac{(7 - 2\kappa_{\ell m'})\nu}{6} \Lambda \xi |m' \cos\beta - m| v^{2} \,, \\
-	\epsilon_{A 2} &= \frac{(7 - 2\kappa_{\ell m'}) (13 - 2\kappa_{\ell m'}) \nu^{2}}{72} \Lambda^{2} \xi^{2} (m' \cos\beta - m)^{2} v^{4} \,,
+	\epsilon_{\Psi 2} &= \left(\frac{2}{m'}\right)^{\frac{2}{3}} \frac{5\nu}{96} \Lambda^{2} \xi^{2} (m' \cos\beta - m)^{2} v^{-1} \,, \\
+	\epsilon_{A 1} &= \left(\frac{2}{m'}\right)^{\frac{5}{3}} \frac{(7 - 2\kappa_{\ell m'})\nu}{6} \Lambda \xi |m' \cos\beta - m| v^{2} \,, \\
+	\epsilon_{A 2} &= \left(\frac{2}{m'}\right)^{\frac{10}{3}} \frac{(7 - 2\kappa_{\ell m'}) (13 - 2\kappa_{\ell m'}) \nu^{2}}{72} \nn\\
+	& \quad\quad\quad \cdot \Lambda^{2} \xi^{2} (m' \cos\beta - m)^{2} v^{4} \,,
 \end{align}
 \end{subequations}
-where $v = (G M \omega/c^{3})^{1/3}$ is related to the Fourier frequency $f$ by $v = (2/m')^{1/3} (GM \pi f/c^{3})^{1/3}$ for a mode $h^{\rm P}_{\ell m'}$. It is worth noting that $\epsilon_{\Psi 2}$ has an overall frequency scaling of $v^{-1}$, formally at $-0.5$PN order, which means that the relative size of this correction grows towards smaller frequencies, away from merger. Remember however that the quantities $\epsilon$ are meant to measure errors relatively to the leading order, and the opening angle of the precession cone, giving the overall normalization for precession effects in the waveform, also goes to 0 as $v$ in that limit. The amplitude error estimates $\epsilon_{A1}$, $\epsilon_{A2}$, by contrast, have the more usual behaviour of PN corrections growing towards merger. The geometric factors $(m' \cos\beta - m)$ show that mode contributions with a larger $|m-m'|$ are harder to model, again in a relative sense, but those contributions are however suppressed in amplitude (see discussion below~\eqref{eq:defprechIsum}).
+where $v = (GM \pi f/c^{3})^{1/3}$. It is worth noting that $\epsilon_{\Psi 2}$ has an overall frequency scaling of $v^{-1}$, formally at $-0.5$PN order, which means that the relative size of this correction grows towards smaller frequencies, away from merger. Remember however that the quantities $\epsilon$ are meant to fractional errors, and the opening angle of the precession cone, giving the overall normalization for precession effects in the waveform, also goes to 0 as $v$ in that limit. The amplitude error estimates $\epsilon_{A1}$, $\epsilon_{A2}$, by contrast, have the more usual behaviour of PN corrections growing towards merger. The geometric factors $(m' \cos\beta - m)$ show that mode contributions with a larger $|m-m'|$ are harder to model, again in a relative sense, but those contributions are however suppressed in amplitude (see discussion below~\eqref{eq:defprechIsum}).
 
-The overall $\nu$ scaling indicates a better separation of timescales for larger mass ratio systems. These expressions also show that, since the total angular momentum appears as a factor in $\Omega_{\rm prec}$, higher-order corrections will be larger for roughly spin-aligned systems than for anti-aligned spins, an effect that becomes significant for large mass ratios. Note that the regime where $\xi$ gets close to 0 corresponds to the transitional precession range~\cite{Apostolatos+94}, with the spin of the primary compensating the orbital angular momentum, and our analysis based on simple precession is not valid anymore.
+The overall $\nu$ scaling indicates a better separation of timescales when increasing the mass ratio away from equal mass. These expressions also show that, since the total angular momentum appears as a factor in $\Omega_{\rm prec}$, higher-order corrections will be larger for roughly spin-aligned systems than for anti-aligned spins, an effect that becomes significant for large mass ratios. Note that the regime where $\xi$ gets close to 0 corresponds to the transitional precession range~\cite{Apostolatos+94}, with the spin of the primary compensating the orbital angular momentum, and our analysis based on simple precession is not valid anymore.
 
 We can somewhat complement this picture for the post-merger precession by considering the accelerated frame rotation rate described by the model~\eqref{eq:OmegaframeQNM} and illustrated in Fig.~\ref{fig:precmodel}. We show in Fig.~\ref{fig:QNM} the dependency of the QNM frequencies $\omega_{220}^{\rm QNM}$, $\omega_{210}^{\rm QNM}$ with the final spin of the remnant black hole $\chi_{f}$, together with the ratio $\Omega_{\rm frame} / \omega^{\rm QNM}_{220}$. This ratio is characteristic of the separation of timescales, in the ringdown regime, between the phase of the modulation~\eqref{eq:wignerphasesimpleprec} and the P-frame waveform phase, and increases monotonically with $\chi_{f}$, reaching $\sim 0.4$ for $\chi_{f} \rightarrow 1$. We cannot translate readily the time-domain separation of timescales in the ringdown regime to the Fourier-domain error measures defined in~\eqref{eq:deffom}, as the time-to-frequency correspondence~\eqref{eq:deftf} does not reach times beyond the merger, as shown by Fig.~\ref{fig:tf}. However, a faster frame rotation will yield a more extended Fourier transform of the modulation~\eqref{eq:defG}, and will be more challenging to accomodate with the formalism of Sec.~\ref{sec:formalism}.
 
 To go beyond the above order-of-magnitude picture, we now present a numerical computation of the error estimates~\eqref{eq:deffom} for our post-merger extended precession model presented in Sec.~\ref{subsec:precmodel}, for the three examples summarized in Table.~\ref{tab:precexamples}. Here and in the following we consider only the $h^{\rm I}_{2 m}$ mode contributions induced by $h^{\rm P}_{22}$ for positive frequencies, knowing that the ones induced by $h^{\rm P}_{2,-2}$ for negative frequencies can be deduced using~\eqref{eq:hIlmposnegfreq}. We use analytic derivatives of the PhenomD phase and amplitude for the Fourier-domain based timescales $\Tf$, $T_{A1}$ and $T_{A2}$, and numerical derivatives for the time-domain modulation.
 
-%The first two cases, $++$ and $\perp\perp$, have \SM{[come back to this after having checked trajectories]} the usual behaviour of precession on a cone, with a larger opening angle for $\perp\perp$ due to the larger in-plane spin components. After merger, the case $++$, with a lerger remnant spin, displays a much faster frame rotation $\Omega_{\rm frame}$ than the other cases, as shown by Table~\ref{tab:precexamples}. The case $--$ is qualitatively different, close to the transitional precession regime, with a large and varying $\beta$ and a significant change in the direction of $\bm{J}$.
-
 The results are shown in Fig.~\ref{fig:fomprec}, using the merger frequency and the ringdown frequency, shown by the vertical lines, to give an idea of the separation between the inspiral and post-merger phases. The leading-order PN prediction for single-spin simple precession~\eqref{eq:precfomPN} is overlayed for the cases $++$ and $\perp\perp$, but not for the case $--$ as it departs significantly from simple precession. We can take $\epsilon \sim 1$ as an order-of-magnitude indication of the breakdown of a perturbative treatment. An important point about Fig.~\ref{fig:fomprec} is that the error estimates are relative for each mode, thus higher $|m-m'|$ modes, which are found to be the hardest to model precisely, can be very subdominant in the final waveform. 
 
-The magnitude of the error estimates for $++$ and $\perp\perp$ is roughly in agreement with the PN-inspired computation~\eqref{eq:precfomPN} above for the inspiral part of the signal, with $\epsilon_{\Psi 2}$ showing a negative slope $v^{-1}=(Mf)^{-1/3}$, and with a hierarchy between modes due to the factors of $|m' \cos \beta - m|$. The PN estimates are missing oscillations on the precession timescale due to the double-spin precession. The case $--$ departs from the simple precession picture, and~\eqref{eq:precfomPN} does not apply. Before merger, we see that amplitude corrections are within the preturbative regime, contrarily to $\epsilon_{\Psi 2}$ that can exceed $1$ for subdominant modes in the $++$ and $\perp\perp$ cases. The amplitude corrections are found to be in the perturbative regime for all cases during the inspiral, however both the $++$ and $\perp\perp$ cases show a sharp increase of $\epsilon_{A1}$, $\epsilon_{A2}$ post-merger. The case $--$, with its small remnant spin and mild post-merger frame rotation, shows no such increase.
+The magnitude of the error estimates for $++$ and $\perp\perp$ is roughly in agreement with the PN-inspired computation~\eqref{eq:precfomPN} above for the inspiral part of the signal, with $\epsilon_{\Psi 2}$ showing a negative slope $v^{-1}=(Mf)^{-1/3}$, and with a hierarchy between modes due to the factors of $|m' \cos \beta - m|$. The PN estimates are missing oscillations on the precession timescale due to the double-spin precession. The case $--$ departs from the simple precession picture, and~\eqref{eq:precfomPN} does not apply. Before merger, we see that amplitude corrections are within the perturbative regime, contrarily to $\epsilon_{\Psi 2}$ that can exceed $1$ for subdominant modes in the $++$ and $\perp\perp$ cases. The amplitude corrections are found to be in the perturbative regime for all cases during the inspiral, however both the $++$ and $\perp\perp$ cases show a sharp increase of $\epsilon_{A1}$, $\epsilon_{A2}$ post-merger. The case $--$, with its small remnant spin and mild post-merger frame rotation, shows no such increase.
 
 Overall, the conclusion to be drawn of Fig.~\ref{fig:fomprec} is that for the $++$ and $\perp\perp$ cases we expect the perturbative approach to be applicable only during the inspiral, with a possible breakdown for the post-merger phase, especially for the case $++$ with its fast post-merger frame rotation. The higher $|m-m'|$ modes are expected to be more challenging for the perturbative formalism, including during the inspiral. To make this picture quantitative, we need a full comparison of the signals processed at different orders of approximation against a numerical Fourier transform, which will be presented in Sec.~\ref{subsec:precerror} below.
 
 \begin{figure*}
   \centering
-%  \includegraphics[width=.32\linewidth]{plots/fom_pp_Psi2.pdf}
-%  \hspace{0cm}
-%  \includegraphics[width=.32\linewidth]{plots/fom_pp_A1.pdf}
-%  \hspace{0cm}
-%  \includegraphics[width=.32\linewidth]{plots/fom_pp_A2.pdf}
-%  %
-%  \includegraphics[width=.32\linewidth]{plots/fom_++_Psi2.pdf}
-%  \hspace{0cm}
-%  \includegraphics[width=.32\linewidth]{plots/fom_++_A1.pdf}
-%  \hspace{0cm}
-%  \includegraphics[width=.32\linewidth]{plots/fom_++_A2.pdf}
-%  %
-%  \includegraphics[width=.32\linewidth]{plots/fom_--_Psi2.pdf}
-%  \hspace{0cm}
-%  \includegraphics[width=.32\linewidth]{plots/fom_--_A1.pdf}
-%  \hspace{0cm}
-%  \includegraphics[width=.32\linewidth]{plots/fom_--_A2.pdf}
   \includegraphics[width=.98\linewidth]{plots/precfom_py.pdf}
   \caption{Error estimates of the approximation as defined in~\eqref{eq:deffom} for the precession modulations, for the three cases $++$, $\perp\perp$ and $--$ listed in Table~\ref{tab:precexamples}. The thick and thin vertical lines show, respectively, the merger frequency and the asymptotic ringdown frequency. The colors correspond to different values of $m$ in $\calT^{2}_{m 2}$ as defined in~\eqref{eq:defprectransfer}. The full lines are computed with numerical derivatives for the full waveform and modulation, while in the cases $++$ and $\perp\perp$ the dashed lines show the leading-order PN estimates~\eqref{eq:precfomPN} for single-spin simple precession. We show the three error estimates $\epsilon_{\Psi 2}$, $\epsilon_{A1}$, $\epsilon_{A2}$ defined in~\eqref{eq:deffom}, and the range $\epsilon \gtrsim 1$ indicates a breakdown of the formalism of Sec.~\ref{sec:formalism}.}
   \label{fig:fomprec}
 \end{figure*}
-
-%\begin{figure*}
-%  \centering
-%  \includegraphics[width=.48\linewidth]{plots/precfom22caseI.pdf}
-%  \hspace{0.2cm}
-%  \includegraphics[width=.48\linewidth]{plots/precfom21caseI.pdf}
-%  %
-%  \includegraphics[width=.48\linewidth]{plots/precfom22caseII.pdf}
-%  \hspace{0.2cm}
-%  \includegraphics[width=.48\linewidth]{plots/precfom21caseII.pdf}
-%  \caption{Figures of merit of the approximation as defined in~\eqref{eq:deffom} for the precession modulations. The precessing-frame waveform is taken to be the $22$ mode of an equal-mass, non-spinning system. The two upper panels show the case where the frame rotation is freezed at merger (Case I), while the two lower panels show the case where it rotates after merger (Case II) (see Sec.~\ref{subsec:precmodel} for their definitions). The left panels show the figures of merit for $F_{22, 22}$, and the right panels for $F_{22, 21}$. The vertical line represents the frequency at merger. The amplitude corrections become non-negligible after merger, and become large enough to challenge a perturbative treatment in Case II for $F_{22,21}$ (notice the change of scale for the lower right panel).}
-%  \label{fig:TfTA}
-%\end{figure*}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -1305,17 +1176,14 @@ Overall, the conclusion to be drawn of Fig.~\ref{fig:fomprec} is that for the $+
 
 \begin{figure*}
   \centering
-%  \includegraphics[width=.48\linewidth]{plots/trig_amp.pdf}
-%  \hspace{0.2cm}
-%  \includegraphics[width=.48\linewidth]{plots/trig_phase.pdf}
   \includegraphics[width=.98\linewidth]{plots/trigopoly_py.pdf}
-  \caption{Amplitude (left panel) and phase (right panel), compared to its trigonometric polynomial representation for the three cases listed in Table~\ref{tab:precexamples}. The thick and thin vertical lines indicate the frequency of the merger and ringdown (the QNM frequency) respectively. The continuous line show the target signal $\tilde{h}(f)$, while the dashed line shows the artificially symmetrized trigonometric polynomial~\eqref{eq:hsymtrigo}. The dots show the discrete samples entering~\eqref{eq:ykDFTprec}. The lower panels show the amplitude and phase residuals of~\eqref{eq:hsymtrigo} compared to the original $\tilde{h}(f)$.}
+  \caption{Amplitude (left panel) and phase (right panel), compared to its trigonometric polynomial representation for the three cases listed in Table~\ref{tab:precexamples}. The thick and thin vertical lines indicate the frequency of the merger and ringdown (the QNM frequency) respectively. The continuous line shows the target signal $\tilde{h}(f)$, while the dashed line shows the artificially symmetrized trigonometric polynomial~\eqref{eq:hsymtrigo}. The dots show the discrete samples entering~\eqref{eq:ykDFTprec}. The lower panels show the amplitude and phase residuals of~\eqref{eq:hsymtrigo} compared to the original $\tilde{h}(f)$.}
   \label{fig:trigopoly}
 \end{figure*}
 
 As shown by Fig.~\ref{fig:fomprec}, the faster evolution of the modulation functions in the post-merger phase and the resulting weaker separation of timescales can be expected to be challenging for the perturbative formalism layed out in Sec.~\ref{sec:formalism}. Motivated by this forecasted shortcoming of the Taylor-like expansion approach, here we investigate an alternative way of handling the merger-ringdown part of the signal.
 
-In the correspondence between the time and Fourier domain, sharp features in the time domain map to extended features in the Fourier domain, and vice versa. The merger and ringdown part of the Fourier-domain signal extends over a wide range of frequencies, while it corresponds to a short interval of times, much shorter than the inspiral part. One approach would be to separate the time-domain waveform between the inspiral and merger phase, build a Fourier-domain model for the inspiral part only, to which the formalism of Sec.~\ref{sec:formalism} could be applied, while the merger and ringdown part could be handled by a direct FFT, which would be a cheap operation on a limited range in time. Although this approach should be straightforward, here we will use an alternative method, simpler to implement as it allows us to keep the setting of a Fourier-domain precessing-frame waveform combined with a time-domain precession modulation.
+In the correspondence between the time and Fourier domain, sharp features in the time domain map to extended features in the Fourier domain, and vice versa. The merger and ringdown part of the Fourier-domain signal extends over a wide range of frequencies, while it corresponds to a short interval of times, much shorter than the inspiral part. A possible approach would be to separate the time-domain waveform between the inspiral and merger phase, build a Fourier-domain model for the inspiral part only, to which the formalism of Sec.~\ref{sec:formalism} could be applied, while the merger and ringdown part could be handled by a direct FFT, which would be a cheap operation on a limited range in time. Although this approach should always be applicable, here we will use an alternative method, simpler to implement as it allows us to keep the setting of a Fourier-domain precessing-frame waveform combined with a time-domain precession modulation.
 
 As argued in Sec.~\ref{subsec:precdef}, the support of the convolution~\eqref{eq:precconvolution} will be mainly one-sided towards the high-frequency part of $\tilde{h}(f)$, which is featureless and slowly varying as a function of $f$. Taking advantage of this, we will adopt a one-sided trigonometric polynomial representation for $\tilde{h}(f)$. For frequencies high enough that the support of the convolution~\eqref{eq:precconvolution} does not extend beyond the range covered by this trigonometric representation, the result will be obtained directly as an FFT/IFFT with a limited number of samples. The limitation to the high-frequency range is crucial here: the Fourier-domain amplitude and phase diverge as $f^{-7/6}$ and $f^{-5/3}$ respectively for $f \rightarrow 0$, and our procedure would require a much finer sampling to cover part of the inspiral, going back to being equivalent to an IFFT of the full signal if we were to cover all frequencies.
 
@@ -1340,7 +1208,7 @@ where the factor $(-1)^{k}$ comes from the fact that $f_{0}$ is here at the cent
 \be\label{eq:ykDFTprec}
 	y_{k} = \frac{1}{N} \sum\limits_{j=0}^{N-1} \tilde{h}_{\rm sym}\left( f_{0} + \frac{2j - N}{N} \Delta f \right) \omega^{jk} \,.
 \ee
-Taking the point of view of an interpolation problem, Fig~\ref{fig:trigopoly} shows the accuracy of this representation of the high-frequency part of the signal, by comparing the orginal $\tilde{h}(f)$ to its  trigonometric-polynomial representation~\eqref{eq:hsymtrigo}, for the three cases listed in Table~\ref{tab:precexamples}. We see that we can achieve a good agreement already for 32 samples (128 counting the symmetrization and 0-padding) \SM{[check this number]}. Errors in the phase $\Psi$ grow towards high frequencies because they are essentially errors in a relative sense, and amplitudes are decaying in this region.
+Taking the point of view of an interpolation problem, Fig~\ref{fig:trigopoly} shows the accuracy of this representation of the high-frequency part of the signal, by comparing the orginal $\tilde{h}(f)$ to its  trigonometric-polynomial representation~\eqref{eq:hsymtrigo}, for the three cases listed in Table~\ref{tab:precexamples}. We see that we can achieve a good agreement already for 32 samples (128 counting the symmetrization and 0-padding). Errors in the phase $\Psi$ grow towards high frequencies because they are essentially errors in a relative sense, and amplitudes are decaying in this region.
 
 The crucial point in this approach is that the convolution integral in~\eqref{eq:precconvolution} has support mainly on $f'<0$, as discussed in Sec.~\ref{subsec:precdef}, which means that when we try to compute the transfer function $\calT(f)$ at a given frequency $f$, we only need the trigonometric-polynomial representation~\eqref{eq:hsymtrigo} to be accurate for frequencies $>f$ in Fig.~\ref{fig:trigopoly}. Thus, the trigonometric representation of $\tilde{h}(f)$ can be used to compute the convolution almost all the way down to $f_{0}$, effects of the tapering aside. However, this statement is tied to our restriction to the $22$-mode, and extending the method to a precessing-frame waveform that includes more modes $h^{\rm P}_{\ell m}$ will require care.
 
@@ -1358,17 +1226,13 @@ In terms of computational performance, the implementation of this approach is ex
 \subsection{Error control for the Fourier-domain precession modulation}
 \label{subsec:precerror}
 
-\SM{[update to $10 M_{\odot}$ and $10\mathrm{Hz}$ ?]}
-
-\SM{[the mismatch computation should be averaged over injected phase]}
-
 We now assess the accuracy of the transfer function computation, applying the formalism of Secs.~\ref{subsec:executivesummary} and~\ref{subsec:trigopoly} to the three examples listed in Table~\ref{tab:precexamples}, and comparing the result to a reference numerical computation.
 
-To numerically compute the reference transfer functions, we first have to perform an IFFT of our Fourier-domain P-frame waveform, to obtain $h^{\rm P}_{22}$ as a function of time. To mitigate the effect of the necessary tapering of the waveform when computing this numerical inverse Fourier transform, we apply a Planck-window tapering on the range $f\in 16-20 \Hz$ for a total mass of $M=20 \Msol$. In parallel, we generate an SEOB waveform with the appropriate length in time. Both are aligned to peak at $t=0$, we build the post-merger extended modulation functions as explained in Sec.~\ref{subsec:precmodel}, compute the inertial-frame modes $h^{\rm I}_{2m}$ following~\eqref{eq:wignerrot} before computing their Fourier-domain counterparts $\tilde{h}^{\rm I}_{2m}$ with an FFT. The Fourier-domain transfer functions are then computed using~\eqref{eq:defprectransfer}.
+To obtain the latter, we first have to perform an IFFT of our Fourier-domain P-frame waveform, to obtain $h^{\rm P}_{22}$ as a function of time. To mitigate the effect of the necessary tapering of the waveform when computing this numerical inverse Fourier transform, we apply a Planck-window tapering on the range $f\in 16-20 \Hz$ for a total mass of $M=20 \Msol$. In parallel, we generate an SEOB waveform with the appropriate length in time. Both are aligned to peak at $t=0$, we build the post-merger extended modulation functions as explained in Sec.~\ref{subsec:precmodel}, compute the inertial-frame modes $h^{\rm I}_{2m}$ following~\eqref{eq:wignerrot} before computing their Fourier-domain counterparts $\tilde{h}^{\rm I}_{2m}$ with an FFT. The Fourier-domain transfer functions are then computed using~\eqref{eq:defprectransfer}.
 
-The figures Fig.~\ref{fig:precerrors++}, Fig.~\ref{fig:precerrorspp} and Fig.~\ref{fig:precerrors--} show the result for the cases $++$, $\perp\perp$ and $--$ of Table~\ref{tab:precexamples} at three successive approximations, following the notation of~\eqref{eq:summaryNA}: $\{N:0 | A:0 | \mathrm{No \; Conv.}\}$, which is simply the leading-order transfer function~\eqref{eq:transferlocal}, ignoring all the corrections; $\{N:3 | A:2 | \mathrm{No \; Conv.}\}$, which incorporates both the phase corrections~\eqref{eq:stencilfresnel}, using a stencil size $N=3$, and the amplitude corrections up to second order in~\eqref{eq:summaryNA}; and $\{N:3 | A:2 | \text{conv}\}$, which is the same as the previous setting for the inspiral but uses the convolution formalism of Sec.~\ref{subsec:trigopoly} to cover the high frequency range, with a smooth transition in the shaded range. The panels show the Fourier-domain amplitude for each of the modes, both exact and from the reconstruction, the relative errors in amplitude, and the errors in phase. The errors here are relative to each mode, not to the dominant mode. Thus, the amplitude plots importantly allow to visualize the mode hierarchy, giving an idea of the impact of relative errors in the subdominant modes on the full waveform.
+The figures Fig.~\ref{fig:precerrors++}, Fig.~\ref{fig:precerrorspp} and Fig.~\ref{fig:precerrors--} show the result for the cases $++$, $\perp\perp$ and $--$ of Table~\ref{tab:precexamples} at three successive approximations, following the notation of~\eqref{eq:summaryNA}: $\{N:0 | A:0 | \mathrm{No \; Conv.}\}$, which is simply the leading-order transfer function~\eqref{eq:transferlocal}, ignoring all the corrections; $\{N:3 | A:2 | \mathrm{No \; Conv.}\}$, which incorporates both the phase corrections~\eqref{eq:stencilfresnel}, using a stencil size $N=3$, and the amplitude corrections up to second order in~\eqref{eq:summaryNA}; and $\{N:3 | A:2 | \text{Conv.}\}$, which is the same as the previous setting for the inspiral but uses the convolution formalism of Sec.~\ref{subsec:trigopoly} to cover the high frequency range, with a smooth transition in the shaded range. The panels show the Fourier-domain amplitude for each of the modes, both exact and from the reconstruction, the fractional errors in amplitude, and the errors in phase. The errors here are relative to each mode, not to the dominant mode. Thus, the amplitude plots importantly allow to visualize the mode hierarchy, giving an idea of the impact of relative errors in the subdominant modes on the full waveform.
 
-The $++$ case, shown in Fig.~\ref{fig:precerrors++}, is the most challenging. As expected from the analysis of Sec.~\ref{subsec:sizecorrPrec}, the presence of strong aligned spins and a large spin of the remnant degrades the separation of timescales, and the reconstruction shows large relative errors, at least in subdominant mode contributions. Applying the higher-order corrections of Sec.~\ref{subsec:executivesummary} does improve the accuracy in the inspiral, but the most difficult modes $m=-1$ and $m=-2$ still show large errors. We also find that for this case higher-order corrections do not reduce the errors in the merger-ringdown region, consistently with the breakdown of the perturbative formalism indicated by Fig.~\ref{fig:fomprec}. Using the convolution treatment improves the main modes $m=2$, $m=1$, but not the most challenging modes $m=-1$ and $m=-2$, which can be seen to depart from the perturbative treatment before the range covered by the convolution and for which the convolution~\eqref{eq:precconvolution} extends to very high frequencies where our trigonometric polynomial representation of the signal is not accurate (see Fig.~\ref{fig:trigopoly}). Note however that, as will be shown below by unfaithfulness computations, these large relative errors for the subdominant modes do not affect much the full waveform.
+The $++$ case, shown in Fig.~\ref{fig:precerrors++}, is the most challenging. As expected from the analysis of Sec.~\ref{subsec:sizecorrPrec}, the presence of strong aligned spins and a large spin of the remnant degrades the separation of timescales, and the reconstruction shows large relative errors, at least in subdominant mode contributions. Applying the higher-order corrections of Sec.~\ref{subsec:executivesummary} does improve the accuracy in the inspiral, but the most difficult modes $m=-1$ and $m=-2$ still show large errors. We also find that for this case higher-order corrections do not reduce the errors in the merger-ringdown region, consistently with the breakdown of the perturbative formalism indicated by Fig.~\ref{fig:fomprec}. Using the convolution treatment improves the main modes $m=2$, $m=1$, but not the most challenging modes $m=-1$ and $m=-2$, which can be seen to depart from the perturbative treatment before the range covered by the convolution and for which the convolution~\eqref{eq:precconvolution} extends to very high frequencies where our trigonometric polynomial representation of the signal is not accurate (see Fig.~\ref{fig:trigopoly}). Note however that, as will be shown below by unfaithfulness computations, these large fractional errors for the subdominant modes do not affect much the full waveform.
 
 The $\perp\perp$ case is shown in Fig.~\ref{fig:precerrorspp}. Errors are increasing to larger $|m-m'|$, higher-order corrections improve the reconstruction but are unsufficient for the merger-ringdown, and the convolution works for all modes on the frequency range where it is applied. The errors at the very high end of the frequency band occur when the overall amplitudes are low, and are therefore unimportant. 
 
@@ -1380,27 +1244,22 @@ Here, we will use directly the wave polarizations $h_{+}$, $h_{\times}$, optimiz
 \be\label{eq:defoverlap}
 	\left( a | b \right) = 2 \int \ud f \frac{\tilde{a}_{1}(f) \tilde{b}_{2}(f)^{*}}{S_{n}(f)} \,,
 \ee
-where the integral extends over all frequencies (in practice, two intervals $[-f_{\rm max}, -f_{\rm min}]$ and $[f_{\rm min}, f_{\rm max}]$). In the above, $S_{n}(f)$ the noise power spectral density, for which we use the aLIGO ZDHP noise curve~\cite{LIGOProspects13}. We use the notation $h \equiv h_{+} - i h_{\times}$ for the complex strain, and write $h[\delta t, \delta \Phi, \delta \psi]$ to represent a signal where we shifted the time of coalescence, the phase of the line of sight to the observer and the polarization angle. The dependencies in time and polarization are given by~\eqref{eq:shifttime} and $h[\delta \psi] = e^{2 i \delta \psi} h$, while the phase $\delta \Phi$ affects differently each waveform mode in~\eqref{eq:defmodes}. In the norm $(h|h)$, only the dependence on $\delta\Phi$ remains. For two signals $h_{1}$ and $h_{2}$, the mismatch between them is then defined as \SM{[check]}
+where the integral extends over all frequencies (in practice, two intervals $[-f_{\rm max}, -f_{\rm min}]$ and $[f_{\rm min}, f_{\rm max}]$). In the above, $S_{n}(f)$ the noise power spectral density, for which we use the aLIGO ZDHP noise curve~\cite{LIGOProspects13}. We use the notation $h \equiv h_{+} - i h_{\times}$ for the complex strain, and write $h[\delta t, \delta \Phi, \delta \psi]$ to represent a signal where we shifted the time of coalescence, the phase of the line of sight to the observer and the polarization angle. The dependencies in time and polarization are given by~\eqref{eq:shifttime} and $h[\delta \psi] = e^{2 i \delta \psi} h$, while the phase $\delta \Phi$ affects differently each waveform mode in~\eqref{eq:defmodes}. In the norm $(h|h)$, only the dependence on $\delta\Phi$ remains. For two signals $h_{1}$ and $h_{2}$, the mismatch between them is then defined as
 \be\label{eq:defMM}
 	\mathrm{MM} \equiv \mathrm{Min}_{\delta t, \delta \varphi, \delta \psi} \left( 1 - \frac{ \mathrm{Re} \left[ (h_{1}[\delta t, \delta \Phi, \delta \psi] | h_{2}) \right]}{\sqrt{(h_{1}|h_{1})[\delta\Phi]}\sqrt{(h_{2}|h_{2})}} \right)
 \ee
 where an optimization over a shift in time, phase and polarization is performed. This definition is the same as in~\cite{Blackman+17a} (see App.~D there), except that we added the optimization over the phase. The target unfaithfulness for waveform models depends on the application. For ground-based detectors like advanced LIGO and Virgo, it is often set to 1\% or 3\%, while detectors of the next generations, including LISA, will require a lower unfaithfulness due to their higher signal-to-noise ratios.
 
-In this unfaithfulness computation, we take our illustrative model of Sec.~\ref{subsec:precmodel} as the reference waveform, thus ignoring all limitations of our model for precession and focusing only on the passage from time-domain to Fourier-domain for a given waveform. We show in Fig.~\ref{fig:precunfaithfulness} the unfaithfulness obtained for three inclination angles between the line-of-sight and the direction of the final angular momentum $\bm{J}$, $0$ (face-on), $\pi/3$ and $\pi/2$ (edge-on). Again, we use different approximation levels in~\eqref{eq:summaryNA}, indicated by the color, including or not the treatment of Sec.~\ref{subsec:trigopoly} for the high frequencies as indicated by a continuous or dashed line. The total mass ranges from $20\Msol$ (where the inspiral dominates) \SM{[to be updated to $10 \Msol$]} to $400\Msol$ (where the merger-ringdown phase dominates).
+In this unfaithfulness computation, we take our illustrative model of Sec.~\ref{subsec:precmodel} as the reference waveform, thus ignoring all limitations of our model for precession and focusing only on the passage from time-domain to Fourier-domain for a given waveform. We show in Fig.~\ref{fig:precunfaithfulness} the unfaithfulness obtained for three inclination angles between the line-of-sight and the direction of the final angular momentum $\bm{J}$, $0$ (face-on), $\pi/3$ and $\pi/2$ (edge-on). Again, we use different approximation levels in~\eqref{eq:summaryNA}, indicated by the color, including or not the treatment of Sec.~\ref{subsec:trigopoly} for the high frequencies as indicated by a continuous or dashed line. The total mass ranges from $20\Msol$ (where the inspiral dominates) to $400\Msol$ (where the merger-ringdown phase dominates).
 
-As discussed in App.~\ref{app:precpreviousapproaches}, the approximation $\{N:0 | A:0\}$ corresponds to the leading-order formula~\eqref{eq:transferlocal}, which is close to the treatment of PhenomP~\cite{Hannam+13}, with the difference that this model uses effective Fourier-domain Euler angles instead of a time-domain modulation through merger and ringdown. The order of approximation $\{N:3 | A:0\}$ is equivalent to formalism of Ref.~\cite{KCY14} with a stencil order of $N=3$, except that the latter formalism is based on an SPA representation of the P-frame waveform and limited to the inspiral, while our Fourier-domain approach is an attempt at covering the whole frequency band.
+As discussed in App.~\ref{app:precpreviousapproaches}, the approximation $\{N:0 | A:0 | \text{No Conv.}\}$ corresponds to the leading-order formula~\eqref{eq:transferlocal}, which is close to the treatment of PhenomP~\cite{Hannam+13}, with the difference that this model uses effective Fourier-domain Euler angles instead of a time-domain modulation through merger and ringdown. The order of approximation $\{N:3 | A:0\}$ is equivalent to formalism of Ref.~\cite{KCY14} with a stencil order of $N=3$, except that the latter formalism is based on an SPA representation of the P-frame waveform and limited to the inspiral, while our Fourier-domain approach is an attempt at covering the whole frequency band.
 
 Fig.~\ref{fig:precunfaithfulness} shows that, tor the $++$ case, the face-on case shows good agreement even at leading order, as the effects of precession on the full waveform are suppressed for a zero inclination. By contrast, with $\pi/3$ or $\pi/2$ inclination the mismatch can reach $10^{-2}$ for high masses above $M \simeq 100 \Msol$, even with the perturbative corrections. Using the convolution treatment of the merger and ringdown limits the mismatch, and including both phase (going from blue to red) and amplitude corrections (going from red to yellow and green) makes a clear improvement. Similarly, for the case $\perp\perp$, both the perturbative corrections and the convolution at high frequencies reduce the unfaithfulness. In both cases, one can see that, as expected, the high-frequency convolution becomes unimportant at low masses, where the inspiral dominates. The $--$ case does not show the same dependency on inclination as the other ones, as we measure the inclination angle with respect to the final direction of $\bm{J}$, and this case is close to transitional precession and departs from the picture of simple precession on a cone. As expected from the error estimates and the transfer function errors shown in Figs.~\ref{fig:fomprec} and~\ref{fig:precerrors--}, the milder precession velocity means that the mismatches are small in this case already for the leading-order treatment. We note, however, that in all cases increasing the order of the amplitude corrections from $A:1$ to $A:2$ in~\eqref{eq:summaryNA} does not yield an improvement, and gives even slightly worse errors in some cases. This points to a limitation of our analysis. Higher-order time derivatives are harder to extract numerically, and this might be an indication that, even in our smooth model of Sec.~\ref{subsec:precmodel}, we should limit the formalism to first derivatives.
 
-Overall, we found that, although the configurations listed in Table~\ref{tab:precexamples} are strongly spinning ($\chi = 0.95$) with a quite high mass ratio ($q=4$), which both enhance precession effects, the unfaithfulness due to the leading-order Fourier-domain treatment of the precession remains mainly below 1\%, except at larger masses. This indicates that this treatment (used in particular in PhenomP~\cite{Hannam+13}, see the discussion of App.~\ref{app:precpreviousapproaches}) should be good enough for current LIGO applications. All types of corrections we investigated, either perturbative in phase and amplitude from Sec.~\ref{subsec:executivesummary}, or generated with the convolution treatment of Sec.~\ref{subsec:trigopoly}, consistently lower the unfaithfulness below the 1\% level. One exception are second-order amplitude corrections, which we found to make little or no difference. Using all the tools at our hands, we are able to keep the unfaithfulness of our three example waveforms below $2.10^{-3}$ for all masses and inclinations.
+Overall, we found that, although the configurations listed in Table~\ref{tab:precexamples} are strongly spinning ($\chi = 0.95$) with a quite high mass ratio ($q=4$), which both enhance precession effects, the unfaithfulness due to the leading-order Fourier-domain treatment of the precession remains mainly below 1\%, except at larger masses. This indicates that this treatment (used in particular in PhenomP~\cite{Hannam+13}, see the discussion of App.~\ref{app:precpreviousapproaches}) should be good enough for current LIGO applications. All types of corrections we investigated, either perturbative in phase and amplitude from Sec.~\ref{subsec:executivesummary}, or generated with the convolution treatment of Sec.~\ref{subsec:trigopoly}, consistently lower the unfaithfulness below the 1\% level. One exception are second-order amplitude corrections, which we found to make little or no difference. Using all the tools at our hands, we are able to keep the unfaithfulness of our three example waveforms below $2.10^{-3}$ for all masses and inclinations. We leave for future work the investigation of the full parameter space of spinning binaries, and of higher harmonics $\ell \neq 2$.
 
 \begin{figure*}
   \centering
-%  \includegraphics[width=.32\linewidth]{plots/precerrors_++_00_noconv_col.pdf}
-%  \hspace{0.cm}
-%  \includegraphics[width=.32\linewidth]{plots/precerrors_++_32_noconv_col.pdf}
-%  \hspace{0.cm}
-%  \includegraphics[width=.32\linewidth]{plots/precerrors_++_32_conv_col.pdf}
   \includegraphics[width=.98\linewidth]{plots/precerror_++_py.pdf}
   \caption{Fourier-domain amplitudes of the modes $\tilde{h}^{\rm I}_{\ell m}$ (top panels), reconstruction errors in the transfer fonctions $\calT^{2}_{m2}$ for the amplitudes (middle panels) and for the phases (bottom panels),  for the configuration $++$ of Table~\ref{tab:precexamples}, with spins almost aligned. The thick and thin vertical lines show the merger and asymptotic ringdown frequencies respectively. For the solid curves in the top panel, transfer functions were computed from an FFT of the full time-domain precessing signal, while the dashed curves show the results of the Fourier-domain reconstruction techniques presented here. The columns show the orders of approximation $\{N:0 | A:0 | \text{No Conv.}\}$, $\{N:3 | A:2 | \text{No Conv.}\}$, $\{N:3 | A:2 | \text{Conv.}\}$. In the right column, the region of transition between the perturbative treatment of Sec.~\ref{subsec:executivesummary} and the high-frequency treatment of Sec.~\ref{subsec:trigopoly} is shaded in grey. Note that the errors shown here are relative to a given mode, not to the leading mode, and the errors are largest in this sense for the most subdominant modes; the top panels illustrate the mode hierarchy.}
   \label{fig:precerrors++}
@@ -1408,11 +1267,6 @@ Overall, we found that, although the configurations listed in Table~\ref{tab:pre
 
 \begin{figure*}
   \centering
-%  \includegraphics[width=.32\linewidth]{plots/precerrors_pp_00_noconv_col.pdf}
-%  \hspace{0.cm}
-%  \includegraphics[width=.32\linewidth]{plots/precerrors_pp_32_noconv_col.pdf}
-%  \hspace{0.cm}
-%  \includegraphics[width=.32\linewidth]{plots/precerrors_pp_32_conv_col.pdf}
   \includegraphics[width=.98\linewidth]{plots/precerror_pp_py.pdf}
   \caption{Same as Fig.~\ref{fig:precerrors++}, but for the configuration $\perp\perp$ of Table~\ref{tab:precexamples}, with both spins in the orbital plane.}
   \label{fig:precerrorspp}
@@ -1420,73 +1274,15 @@ Overall, we found that, although the configurations listed in Table~\ref{tab:pre
 
 \begin{figure*}
   \centering
-%  \includegraphics[width=.32\linewidth]{plots/precerrors_--_00_noconv_col.pdf}
-%  \hspace{0.cm}
-%  \includegraphics[width=.32\linewidth]{plots/precerrors_--_32_noconv_col.pdf}
-%  \hspace{0.cm}
-%  \includegraphics[width=.32\linewidth]{plots/precerrors_--_32_conv_col.pdf}
   \includegraphics[width=.98\linewidth]{plots/precerror_--_py.pdf}
   \caption{Same as Fig.~\ref{fig:precerrors++}, but for the configuration $--$ of Table~\ref{tab:precexamples}, with almost anti-aligned spins.}
   \label{fig:precerrors--}
 \end{figure*}
 
-%\begin{figure*}
-%  \centering
-%  \includegraphics[width=.48\linewidth]{plots/precerrorA22caseI.pdf}
-%  \hspace{0.2cm}
-%  \includegraphics[width=.48\linewidth]{plots/precerrorPsi22caseI.pdf}
-%  %
-%  \includegraphics[width=.48\linewidth]{plots/precerrorA21caseI.pdf}
-%  \hspace{0.2cm}
-%  \includegraphics[width=.48\linewidth]{plots/precerrorPsi21caseI.pdf}  
-%  \caption{Errors in the Fourier-domain transfer fonctions $\calT_{22,22}$ and $\calT_{22,21}$ as defined in~\eqref{eq:defTlmlmp}, for Case I and for various approximations. The black curve is the exact result provided by the FFT. The blue curve gives the leading-order, local approximation. The red curve includes quadratic corrections in phase and in amplitude. The yellow curve shows the result of the direct conolution approach of Sec.~\ref{subsec:directconvolution}. The left panels show the amplitude and the right panels the phase difference with the FFT. Note that the vertical scales are not uniform. [is it ok to show only 21 and 22 ? include the other modes which show problems ?]}
-%  \label{fig:precerrorcaseI}
-%\end{figure*}
-
-%\begin{figure*}
-%  \centering
-%  \includegraphics[width=.48\linewidth]{plots/precerrorA22caseII.pdf}
-%  \hspace{0.2cm}
-%  \includegraphics[width=.48\linewidth]{plots/precerrorPsi22caseII.pdf}
-%  %
-%  \includegraphics[width=.48\linewidth]{plots/precerrorA21caseII.pdf}
-%  \hspace{0.2cm}
-%  \includegraphics[width=.48\linewidth]{plots/precerrorPsi21caseII.pdf}  
-%  \caption{Errors in the Fourier-domain transfer fonctions $\calT_{22,22}$ and $\calT_{22,21}$. Conventions are the same as in Fig.~\ref{fig:precerrorcaseI} but for Case II, with a more rapid post-merger frame precession. Note that the vertical scales are not uniform. [is it ok to show only 21 and 22 ? include the other modes which show problems ?]}
-%  \label{fig:precerrorcaseII}
-%\end{figure*}
-
-%\begin{figure*}
-%  \centering
-%  \includegraphics[width=.48\linewidth]{plots/precmmsimple.pdf}
-%  \hspace{0.2cm}
-%  \includegraphics[width=.48\linewidth]{plots/precmmasympt.pdf}
-%  \caption{Mismatches computed between the exact FFT and the various approximations respresented in Figs.~\ref{fig:precerrorcaseI} and~\ref{fig:precerrorcaseII}. [log scale for masses ? discuss the fact that in case II, leading order is accidentally better than Psi 2]}
-%  \label{fig:precmm}
-%\end{figure*}
-
 \begin{figure*}
   \centering
-%  %
-%  \includegraphics[width=.32\linewidth]{plots/mismatches_++_inc0.pdf}
-%  \hspace{0.1cm}
-%  \includegraphics[width=.32\linewidth]{plots/mismatches_++_incpi3.pdf}
-%  \hspace{0.1cm}
-%  \includegraphics[width=.32\linewidth]{plots/mismatches_++_incpi2.pdf}
-%  %
-%  \includegraphics[width=.32\linewidth]{plots/mismatches_pp_inc0.pdf}
-%  \hspace{0.1cm}
-%  \includegraphics[width=.32\linewidth]{plots/mismatches_pp_incpi3.pdf}
-%  \hspace{0.1cm}
-%  \includegraphics[width=.32\linewidth]{plots/mismatches_pp_incpi2.pdf}
-%  %
-%  \includegraphics[width=.32\linewidth]{plots/mismatches_--_inc0.pdf}
-%  \hspace{0.1cm}
-%  \includegraphics[width=.32\linewidth]{plots/mismatches_--_incpi3.pdf}
-%  \hspace{0.1cm}
-%  \includegraphics[width=.32\linewidth]{plots/mismatches_--_incpi2.pdf}
   \includegraphics[width=.98\linewidth]{plots/precMM_py.pdf}
-  \caption{Unfaithfulness at various orders of approximation as compared with an FFT of the full time-domain precessing signal, for the three precessing systems of Table~\ref{tab:precexamples}. The color indicates the order of approximation of the perturbative treatment of Sec.~\ref{subsec:executivesummary}. Dashed lines are obtained applying the treatment of Sec.~\ref{subsec:executivesummary} to the whole frequency band, while full lines are obtained using Sec.~\ref{subsec:trigopoly} for the high frequency range. The computation is done using~\eqref{eq:defMM} with $f_{\rm min} = 20\mathrm{Hz}$, for masses between 20 and 400 $\Msol$, and with the aLIGO ZDHP noise curve~\cite{LIGOProspects13}. The inclination is defined here as the angle between the line of sight and the final $\bm{J}$. \SM{[Extend computation to fmin=10 and Mmin=10 ?]} \SM{[re-check definition of inclination: from $J$ or initial $L$ ?]} }
+  \caption{Unfaithfulness at various orders of approximation as compared with an FFT of the full time-domain precessing signal, for the three precessing systems of Table~\ref{tab:precexamples}. The color indicates the order of approximation of the perturbative treatment of Sec.~\ref{subsec:executivesummary}. Dashed lines are obtained applying the treatment of Sec.~\ref{subsec:executivesummary} to the whole frequency band, while full lines are obtained using Sec.~\ref{subsec:trigopoly} for the high frequency range. The computation is done using~\eqref{eq:defMM} with $f_{\rm min} = 20\mathrm{Hz}$, for masses between 20 and 400 $\Msol$, and with the aLIGO ZDHP noise curve~\cite{LIGOProspects13}. The inclination is defined here as the angle between the line of sight and the final $\bm{J}$.}
   \label{fig:precunfaithfulness}
 \end{figure*}
 
@@ -1498,19 +1294,19 @@ Overall, we found that, although the configurations listed in Table~\ref{tab:pre
 
 We presented a formalism to process gravitational-wave signals described in the Fourier domain through a time-domain modulation and delay of the type created by the motion and response of a LISA-type detector and by the precessing motion of spinning compact binaries. The natural leading-order of this perturbative formalism simply amounts to building a time-to-frequency correspondence~\eqref{eq:deftf}, generalizing the SPA correspondence~\eqref{eq:deftfSPA} through merger and ringdown.
 
-This formalism is based on a the separation of timescales between the modulation and the signal. By a Fourier-domain expansion of the integrand of convolution integrals, corrections beyond the leading order are straightforwardly generated. The most important are quadratic phase corrections, for which the formalism yields a natural extension of the results of~\cite{KCY14} to IMR signals, thanks to the generalization of the radiation reaction timescale with a Fourier-domain expression~\eqref{eq:defTf}. Other corrections include amplitude and delay terms. We provided order-of-magnitude error estimates~\eqref{eq:deffom} allowing a simple diagnosis of the relevance of these various corrections, forecasting where the perturbative formalism will fail due to an insufficient separation of timescales.
+This formalism is based on the separation of timescales between the modulation and the signal. By a Fourier-domain expansion of the integrand of convolution integrals, corrections beyond the leading order are straightforwardly generated. The most important are quadratic phase corrections, for which the formalism yields a natural extension of the results of~\cite{KCY14} to IMR signals, thanks to the generalization of the radiation reaction timescale with a Fourier-domain expression~\eqref{eq:defTf}. Other corrections include amplitude and delay terms. We provided order-of-magnitude error estimates~\eqref{eq:deffom} allowing a simple diagnosis of the relevance of these various corrections, forecasting where the perturbative formalism will fail due to an insufficient separation of timescales.
 
 We applied our approach to the case of non-precessing comparable-mass binary systems seen by LISA, investigating examples of supermassive black hole mergers as well as inspirals of stellar-mass black holes. The population of stellar-mass binary black hole signals seen in LISA will include chirping systems, merging within years of the LISA observations, as well as slowly-chirping systems hundreds or thousands of years away from merger. We found that our treatment is well applicable for both high-mass and chirping low-mass systems. The leading-order treatment performs quite well, with at most a localized $\sim10\%$ in amplitude or phase error, while the corrections we derived can reduce the errors in the transfer functions to much lower levels if needed. Quadratic phase corrections at the start of the waveform and delay corrections at the high end of the frequency band are the most relevant. On the other hand, the morphology of the slowest-chirping stellar-mass signals is close to quasi-monochromatic galactic binaries, and they cannot be handled by this perturbative formalism. We developed a separate method, using discrete Fourier coefficients, to compute the instrument response in this case.
 
-To explore the application of the formalism to precessing binaries, we built a toy model for the precession of a two-spins system including a post-merger precessing-frame trajectory. For the high spin, moderate mass ratio examples we explored, we found that subdominant precessing mode contributions can be challenging for the formalism and have large relative errors, although they are suppressed in amplitude in the complete waveform. For the inspiral, the most relevant corrections are the quadratic in phase ones that were already derived in~\cite{KCY14}. Our formalism extends to the merger and ringdown, where our model for the post-merger precession gives a weaker separation of timescales. We developed an alternative method to handle the high-frequency, late-time part of the signal, with a direct convolution of the Fourier-domain signal. We showed that although the leading-order treatment is acceptable for our examples with an unfaithfulness at or below 1\% for typical LIGO masses, including in the inspiral all the corrections we derived, as well as using the convolution treatment for the merger, both help lowering the unfaithfulness down to the $10^{-4}$-$10^{-3}$ range.
+To explore the application of the formalism to precessing binaries, we built a toy model for the precession of a two-spins system including a post-merger precessing-frame trajectory. For the high spin, moderate mass ratio examples we explored, we found that subdominant precessing mode contributions can be challenging for the formalism and have large fractional errors, although they are suppressed in amplitude in the complete waveform. For the inspiral, the most relevant corrections are the quadratic in phase ones that were already derived in~\cite{KCY14}. Our formalism extends to the merger and ringdown, where our model for the post-merger precession gives a weaker separation of timescales. We developed an alternative method to handle the high-frequency, late-time part of the signal, with a direct convolution of the Fourier-domain signal. We showed that although the leading-order treatment is acceptable for our examples with an unfaithfulness at or below 1\% for typical LIGO masses, including in the inspiral all the corrections we derived, as well as using the convolution treatment for the merger, both help lowering the unfaithfulness down to the $10^{-4}$-$10^{-3}$ range.
 
 Our investigation of the precession provides tools that will be potentially useful for the next generations of Fourier-domain waveform models for IMR precessing systems. Our treatment of the Fourier-domain LISA instrumental response will allow us to leverage modern, fast Fourier-domain codes producing IMR waveforms to accelerate computationally intensive data analysis applications, most notably Bayesian source parameter estimation on synthetic data, that have become urgent with the selection of LISA as a mission by ESA. The LISA response described in Sec.~\ref{sec:LISA} has been implemented in the LISA Data Challenge~\cite{LDC} software suite.
 
-Our results suggest a few straightforward extensions. First, we only considered the leading harmonic of non-spinning waveforms in the LISA response. The same approach is also well-suited to treating higher harmonics and aligned spin signal, but precession will leave a definite imprint on the Fourier-domain signal. One option in this case would be to handle the precession and response modulation together, as in~\cite{Klein+15}. However, we present in App.~\ref{app:precLISA} an argument showing that our formalism should apply straightforwardly to waveforms with simple precession. We leave the general case for future study.
+Our results suggest a few straightforward extensions. First, we only considered the leading harmonic of non-spinning waveforms in the LISA response. The same approach is also well-suited to treating higher harmonics and aligned spin signals, but precession will leave a definite imprint on the Fourier-domain signal. One option in this case would be to handle the precession and response modulation together, as in~\cite{Klein+15}. However, we present in App.~\ref{app:precLISA} an argument showing that our formalism should apply straightforwardly to waveforms with simple precession. We leave the general case for future study.
 
-Another natural application of our formalism developed for the LISA response is to third-generation ground-based detectors. For detectors like the Einstein Telescope, signals are sufficiently long for the rotation of the Earth to matter, and their arms are long enough that the long wavelength approximation is not valid at high frequencies and that the response becomes frequency-dependent~\cite{Essick+17}. A preliminary order-of-magnitude analysis shows that the leading-order treatment should be applicable \SM{[check]}, but more investigation is needed.
+Another natural application of our formalism developed for the LISA response is to third-generation ground-based detectors. For detectors like the Einstein Telescope, signals are sufficiently long for the rotation of the Earth to matter, and their arms are long enough that the long wavelength approximation is not valid at high frequencies and that the response becomes frequency-dependent~\cite{Essick+17}. A preliminary order-of-magnitude analysis shows that the leading-order treatment should be applicable, but more investigation is needed.
 
-Finally, while we restricted ourselves to comparable-mass binary systems, Extreme Mass Ratio Inspirals (EMRI) will also be very important signals for LISA. Those signals generally include not only strong precession but also large eccentricity. An effective frequency-domain LISA response may be possible by apply our treatment separately to each of the numerous individual harmonics produced (see e.g.~\cite{Chua+17}).
+Finally, while we restricted ourselves to comparable-mass binary systems, Extreme Mass Ratio Inspirals (EMRI) will also be very important signals for LISA. Those signals generally include not only strong precession but also large eccentricity. An effective frequency-domain LISA response may be possible by applying our treatment separately to each of the numerous individual harmonics produced (see e.g.~\cite{Chua+17}).
  
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1523,7 +1319,7 @@ Finally, while we restricted ourselves to comparable-mass binary systems, Extrem
 
 \vspace{3.5mm}
 
-We are indebted to Alejandro Boh\'{e}, Alessandra Buonanno, Scott Field, Philip Graff, Sebastian Khan, Antoine Klein, Serguei Ossokine, Michael P\"{u}rrer for useful discussions and comments. We used the software GWFrames~\cite{Boyle13, Boyle+14} in our study. This work was supported by a NASA Astrophysics Theory Program grant 11-ATP-046.
+We are indebted to Stanislav Babak, Alejandro Boh\'{e}, Alessandra Buonanno, Tito Dal Canton, Scott Field, Philip Graff, Sebastian Khan, Antoine Klein, Serguei Ossokine, Michael P\"{u}rrer for useful discussions and comments. We used the software GWFrames~\cite{Boyle13, Boyle+14} in our study. This work was supported by a NASA Astrophysics Theory Program grant 11-ATP-046.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1532,8 +1328,6 @@ We are indebted to Alejandro Boh\'{e}, Alessandra Buonanno, Scott Field, Philip 
 
 \section{Notation and conventions}
 \label{app:notation}
-
-\SM{[check part on discrete Fourier coeffs]}
 
 The convention we will be using for the Fourier transform of a signal $h(t)$ and its inverse is
 \begin{subequations}
@@ -1587,31 +1381,12 @@ where we set
 	K^{+}_{\ell m} &\equiv \frac{1}{2} \left( {}_{-2}Y_{\ell m} + (-1)^{\ell} {}_{-2}Y_{\ell, -m}^{*} \right) \,, \nn\\
 	K^{\times}_{\ell m} &\equiv \frac{i}{2} \left( {}_{-2}Y_{\ell m} - (-1)^{\ell} {}_{-2}Y_{\ell, -m}^{*} \right) \,.
 \end{align}
-the range $f<0$ being obtained readily, since $h_{+},h_{\times}$ are real quantities, from $\tilde{h}_{+,\times} (-f) = \tilde{h}_{+,\times}(f)^{*}$.
+The range $f<0$ can be obtained readily, since $h_{+},h_{\times}$ are real quantities, from $\tilde{h}_{+,\times} (-f) = \tilde{h}_{+,\times}(f)^{*}$.
 
-%In the following, we will drop the mode indices and the sum over modes, and we will denote generically by $h$ an individual mode of the waveform\footnote{This notation for a generic individual mode is not to be confused with the often encountered notation $h\equiv h_{+} - i h_{\times}$.}. Note that, if we are considering real signals $s(t)$ (such as $h_{+}$, $h_{\times}$, or any detector output), we can focus  on the positive-frequencies range and reconstruct the negative frequencies as $\tilde{s}(-f) = \tilde{s}(f)^{*}$. For positive frequencies $f>0$, we will use the generic notation $h$ \SM{[not using the 'generic notation' anymore]} as
-%\begin{align}\label{eq:notationhsignm}
-%	h(t) &\equiv h_{\ell m}(t) \,, \quad \tilde{h}(f) \equiv \tilde{h}_{\ell m}(f) \text{ for } m>0 \,, \nn\\
-%	h(t) &\equiv h_{\ell m}^{*}(t) \,, \quad \tilde{h}(f) \equiv \tilde{h}_{\ell m}(-f)^{*} \text{ for } m<0 \,.
-%\end{align}
 Dropping the mode indices $\ell$, $m$, we will decompose a given mode\footnote{Not to be confused with the commonly used notation $h = h_{+} - i h_{\times}$ for the complex strain.} $\tilde{h}_{\ell m} = \tilde{h}$ into a Fourier-domain amplitude $A$ and a phase $\Psi$ according to
 \be\label{eq:defAPsi}
 	\tilde{h}(f) \equiv A(f) e^{-i\Psi(f)} \,.
 \ee
-%Since we intend to work in the Fourier domain, we will use PhenomD waveforms~\cite{Khan+15}. These phenomenological waveforms provide analytic fits for both the Fourier-domain amplitude and phase of the 22 mode, with fit coefficients that were calibrated on EOB/NR hybrids \SM{[describe smoothing across intervals ?]}. Fig.~\ref{fig:ampphase} shows an example of amplitude and phase in geometric units for an equal-mass binary. \SM{[remove that and point to appendix on interpolation errors]}
-%\begin{figure*}
-%  \centering
-%  \includegraphics[width=.48\linewidth]{plots/Af.pdf}
-%  \hspace{0.2cm}
-%  \includegraphics[width=.48\linewidth]{plots/Psif.pdf}
-%  \caption{Fourier-domain amplitude and phase in geometric units for an equal-mass, non-spinning system. The vertical line represents $\omega_{22}^{\rm peak}/2\pi$, the frequency corresponding to the time-domain frequency of the waveform at the peak amplitude. The starting frequency $Mf_{min} = 2.6\times 10^{-4}$ is appropriate for a 2-years observation of a $M=10^{6} M_{\odot}$ system by LISA, or for an observation by LIGO/Virgo of a $M=5.4 M_{\odot}$ system entering the instrument band at $10\Hz$. [add residuals of interpolation on $~300$ points, to illustrate the compression of Amp/Phase FD waveforms ? or show different spins/mass ratios ?] \SM{[Plot perhaps not necessary ?]}}
-%  \label{fig:ampphase}
-%\end{figure*}
-%We recall that, with our sign convention, the effect of a positive shift in time $h' (t) = h(t- \Delta t)$ is
-%\be
-%	\tilde{h}'(f) = e^{2i\pi f \Delta t} \tilde{h}(f) \,.
-%\ee
-%If we also allow for a global shift in phase of the signal, which corresponds to a rotation of the unit vector pointing towards the observer in the frame of the gravitational waves source, a constant term can also be added (note that the effect of such a rotation gives different phase changes $e^{\pm i m \delta \phi}$ for the different modes of the radiation). We see that both a constant and a linear term in the Fourier-domain phase can be adjusted by changing extrinsic parameters. Thus, as is well known, apart from the relative phases of the modes for waveforms that include higher harmonics, the intrinsic information on the phasing is contained in the second derivative of the Fourier-domain phase $\Psi(f)$. \SM{[rewrite this paragraph]}
 
 Throughout this paper we will refer to Discrete Fourier Transform (DFT) with the acronyms FFT/IFFT for the Fast Fourier Transform and its inverse. In our convention~\eqref{eq:defFT}, the link between the DFT and the trigonometric polynomial representation of a function goes as follows. For a periodic function $F(x)$ defined on $x\in [x_{0}, x_{0} + \Delta x]$, and represented by $N$ samples $x_{j} = \ov{x} + j \Delta x/N$, $j=0,\dots,N-1$, with $N$ large enough to satisfy, at least approximately, the Nyquist criterion, we can build a trigonometric interpolant $P(x)$ as
 \be
@@ -1621,8 +1396,7 @@ that will satisfy the system $P(x_{j}) = F(x_{j})$ for $j=0,\dots, N-1$. Here we
 \be\label{eq:defcnApp}
 	c_{n}(F) = \frac{1}{\Delta x} \int_{0}^{\Delta x} \ud x \, e^{\frac{2 i \pi n x }{ \Delta x}} F(x) \,.
 \ee
-%integrals over the interval of $F$ weighted by the appropriate exponential (as in~\eqref{eq:defcn}).
-In both interpretations, either the truncated approximation of the Fourier series or  the trigonometric interpolation formulation, these coefficients are related to the coefficients of the IFFT. If we set $\omega \equiv e^{2i\pi/N}$ and define \SM{[check convention]}
+In both interpretations, either the truncated approximation of the Fourier series or  the trigonometric interpolation formulation, these coefficients are related to the coefficients of the IFFT. If we set $\omega \equiv e^{2i\pi/N}$ and define
 \be\label{eq:ykDFT}
 	y_{k} = \frac{1}{N} \sum\limits_{j=0}^{N-1} F(x_{j}) \omega^{jk} \,,
 \ee
@@ -1676,7 +1450,7 @@ In Sec.~\ref{sec:precession}, we considered only $\ell = 2$ and we restricted ou
 
 Different prescriptions have been proposed to construct a precessing frame. Intuitively, the frame follows the plane of the orbit as the spins force the latter to precess, so one could define the precessing frame from the trajectory during the inspiral. This is in fact what is done for SEOBNRv3~\cite{Pan+13}, where a non-precessing waveform is generated in the orbital plane before being rotated back to an inertial frame. Alternatively, the precessing frame can be directly read off the waveform, an approach that is less coordinate-dependent and that can readily be extended through merger where there is no notion of an orbital plane. Proposals in this sense include a maximization of the modes $22$ and $2,-2$~\cite{Schmidt+10}, and the construction of an angular velocity for the waveform~\cite{Boyle13}.
 
-Here, we use the dominant eigenvector prescription of~\cite{OShaughnessy+11}, to which we refer (as well as~\cite{Boyle13}) for more details. One defines the matrix
+Here, we use the dominant eigenvector prescription of~\cite{OShaughnessy+11}, to which we refer (as well as~\cite{OOS12, Boyle13}) for more details. One defines the matrix
 \be
 	\langle \bm{L} \bm{L} \rangle_{ab} \equiv \frac{\sum_{\ell, m, m'} h^{*}_{\ell m'} \bra{\ell, m'} L_{a} L_{b} \ket{\ell, m} h_{\ell m} }{ \sum_{\ell, m, m'} h^{*}_{\ell m'} h_{\ell m} } \,,
 \ee
@@ -1712,14 +1486,6 @@ In this Appendix, we give explicit expressions for the stencil coefficients ente
 \be
 	b_{p} = \sum\limits_{k=0}^{N} V_{pk} a_{N,k}^{\epsilon} \,.
 \ee
-%Now, since the Vandermonde system can be seen as a reformulation of the polynomial interpolation problem, we know that $({}^{t}V^{-1})_{ij}$ is the coefficient of $X^{i}$ in the Lagrange interpolation polynomial $\prod_{k\neq j} (X-x_{k})/(x_{j} - x_{k})$. If we introduce the symmetric polynomials $\sigma$ such that
-%\be	
-%	\sigma(m, \{x_{1}, \dots, x_{n}\}) = \sum\limits_{1\leq i_{1}<\dots<i_{m}\leq n} x_{i_{1}}\dots x_{i_{m}} \,,
-%\ee
-%we obtain for the inverse of the matrix $V$
-%\be
-%	V^{-1}_{ij} = \frac{1}{\prod_{k\neq i} (i^{2} - k^{2})} (-1)^{N-j} \sigma(N-j, \{0,\dots,N^{2}\}\backslash \{i^{2}\}) \,.
-%\ee
 The expression of the inverse of a Vandermonde matrix in terms of symmetric polynomials then allows us to write the $a_{N,k}^{\epsilon}$, for every finite order $N$, as:
 \begin{align}
 	a_{N,k}^{\epsilon} &= \frac{1}{\prod\limits_{\substack{q=0 \\ q\neq k}}^{N} (q^{2}-k^{2})} \sum\limits_{p=0}^{N} (i\epsilon)^{p}(2p-1)!! \nn\\ & \quad \cdot \sum\limits_{\substack{ 0 \leq j_{1} < \dots < j_{N-p} \leq N \\ j_{1}, \dots, j_{N-p} \neq k}} j_{1}^{2}\dots j_{N-p}^{2}
@@ -1739,7 +1505,7 @@ To describe previous approaches to the problem of producing precessing waveforms
 	\item SUA: $\calT(f) = \frac{1}{2} \sum\limits_{k} a_{k} \calD^{*}(\tfSPA \pm k \Tf^{\rm SPA})$.
 \end{itemize}
 
-In the first option, one applies directly the SPA, as described in Sec.~\ref{subsec:SPA}, to the product of the modulation and the signal. This is known (see e.g.~\cite{KCY13}) to lead to possible pathologies, since the prefactor $1/\sqrt{\ddot{\phi}_{\rm prec}}$ can blow up due the precessing contributions to the phase of the inertial-frame waveform.
+In the first option, one applies directly the SPA, as described in Sec.~\ref{subsec:SPA}, to the product of the modulation and the signal. This is known (see e.g.~\cite{KCY13}) to lead to possible pathologies, since the prefactor $1/\sqrt{\ddot{\phi} + \ddot{\Phi}_{\rm prec}}$ can blow up due the precessing contributions to the phase of the inertial-frame waveform.
 
 The second option corresponds to simply multiplying the Fourier-domain signal by the modulation function evaluated at the time $\tfSPA$ as defined in~\eqref{eq:deftfSPA}. In the SUA formalism of Ref.~\cite{KCY14}, this treatment could be called the 0th order as it amounts to using a stencil reduced to a single point, i.e. using only one term with $a_{0,0} = 1$ in~\eqref{eq:stencilfresnel}. It is equivalent to the leading order of our formalism ($\{N:0 | A:0 | d:0 \}$ in the terminology of Sec.~\ref{subsec:executivesummary}), with the difference that we use a more general definition of $t_{f}$ (see~\eqref{eq:deftf}) that extends through the merger and ringdown.
 
@@ -1747,11 +1513,11 @@ While keeping implictly the same level of approximation, one can also use freque
 \be\label{eq:precPhenomP}
 	\calT^{\ell}_{mm'}(f) = \calD^{\ell *}_{mm'}(\alpha^{\rm PN}, \beta^{\rm PN}, \gamma^{\rm PN}) \left( \omega=\pi f\right) \,.
 \ee
-When the SPA is valid for the underlying signal $h^{\rm P}_{\ell m}$, the condition $\omega(t) = \pi f$ is equivalent by definition to $t=t^{\rm SPA}_{f}$. In~\cite{LOS13}, only the inspiral phase is modelled, and only single-spin configurations, for which the system undergoes simple precession~\cite{Apostolatos+94, Kidder95}. The PhenomP model~\cite{Hannam+13} uses Euler angles computed in the limit of a small opening angle of the precession cone and at the spin-orbit level (see also~\cite{BBF11, MBBB13}).
+When the SPA is valid for the underlying signal $h^{\rm P}_{\ell m}$, the condition $\omega(t) = \pi f$ is equivalent by definition to $t=t^{\rm SPA}_{f}$. In~\cite{LOS13}, only the inspiral phase is modelled, and only single-spin configurations, for which the system undergoes simple precession~\cite{Apostolatos+94, Kidder95}. The PhenomP model~\cite{Hannam+13} maps the two spins to a single effective spin, and uses Euler angles computed in the limit of a small opening angle of the precession cone and at the spin-orbit level (see also~\cite{BBF11, MBBB13}).
 
-In the PhenomP model~\cite{Hannam+13}, the frequency-based transfer function~\eqref{eq:precPhenomP} is used as an effective prescription covering the whole Fourier-domain frequency band, including the merger and ringdown. Note that this procedure amounts to using PN results outside of their range of validity, since in the merger-ringdown phase both the PN perturbative treatment and the SPA approximation break down. In particular, when computed as a function of time from the balance equation between emitted flux and orbital energy $\calF = -dE/dt$, the orbital $\omega^{\rm PN}(t)$ blows up and cannot be extended through merger. In practice, one finds however that the extended frequency-based expressions~\eqref{eq:precPhenomP} are mildly varying when extrapolating to higher frequencies, and this approach has been validated by comparisons to numerical relativity waveforms~\cite{Hannam+13}.
+In the PhenomP model~\cite{Hannam+13}, the frequency-based transfer function~\eqref{eq:precPhenomP} is used as an effective prescription covering the whole Fourier-domain frequency band, including the merger and ringdown. Note that this procedure amounts to using PN results outside of their range of validity, since in the merger-ringdown phase both the PN perturbative treatment and the SPA approximation break down. In particular, when computed as a function of time from the balance equation between emitted flux and orbital energy $\calF = -dE/dt$, the orbital $\omega^{\rm PN}(t)$ blows up and cannot be extended through merger. In practice, one finds however that the extended frequency-based expressions~\eqref{eq:precPhenomP} are mildly varying when extrapolating to higher frequencies, and this approach has been validated by comparisons to numerical relativity waveforms~\cite{Hannam+13}. Future versions of PhenomP~\cite{PhenomPv3InPrep} will move beyond the single-spin approximation by incorporating analytic solutions for the precession trajectory of double-spin systems~\cite{Chatziioannou+17}.
 
-In the SUA formalism proposed in~\cite{KCY13, KCY14}, one extends the SPA to incorporate the leading-order correction during the inspiral phase. The transfer function is then computed by evaluating the modulation on a stencil of times centered around the time-of-frequency given by the SPA, arriving at the formula~\eqref{eq:stencilfresnel} with the times $t = \tfSPA$ and $T = \TfSPA$ as defined in~\eqref{eq:deftfSPA} and~\eqref{eq:TfSPA}. As described in Sec.~\ref{sec:formalism}, our formalism reduces to the SUA when keeping only the quadratic phase correction, but the SUA is a priori limited to the inspiral phase of the signal through the definitions of the times $t^{\rm SPA}_{f}$ and $T^{\rm SPA}_{f}$. For inspiral waveforms, Ref.~\cite{KCY14} showed that this treatment improves the accuracy with respect to the 0th-order approximation.
+In the SUA formalism proposed in~\cite{KCY13, KCY14}, one extends the SPA to incorporate the leading-order correction during the inspiral. The transfer function is then computed by evaluating the modulation on a stencil of times centered around the time-of-frequency given by the SPA, arriving at the formula~\eqref{eq:stencilfresnel} with the times $t = \tfSPA$ and $T = \TfSPA$ as defined in~\eqref{eq:deftfSPA} and~\eqref{eq:TfSPA}. As described in Sec.~\ref{sec:formalism}, our formalism reduces to the SUA when keeping only the quadratic phase correction, but the SUA is a priori limited to the inspiral phase of the signal through the definitions of the times $t^{\rm SPA}_{f}$ and $T^{\rm SPA}_{f}$. For inspiral waveforms, Ref.~\cite{KCY14} showed that this treatment improves the accuracy with respect to the 0th-order approximation.
 
 \section{Precessing waveform and the LISA Fourier-domain response}
 \label{app:precLISA}
@@ -1776,11 +1542,11 @@ and
 \be
 	\frac{\ud \Tf}{\ud f} = -2\pi \Tf^{5} \ddot{\omega}(\tf) = - 2\pi \frac{11}{12} \frac{\Tf}{\pi f} \,,
 \ee
-where we have used $\ddot{\omega} = 11/3 (\dot{\omega})^{2}/\omega$ following~\eqref{eq:omegaphiN}, the extra Fourier-domain phase contribution~\eqref{eq:additionalPhiprec} cause new contributions in~\eqref{eq:deftf} and~\eqref{eq:defTf} as \SM{[check]}
+where we have used $\ddot{\omega} = 11/3 (\dot{\omega})^{2}/\omega$ following~\eqref{eq:omegaphiN}, the extra Fourier-domain phase contribution~\eqref{eq:additionalPhiprec} cause new contributions in~\eqref{eq:deftf} and~\eqref{eq:defTf} as
 \begin{subequations}
 \begin{align}
 	-\frac{1}{2\pi} \frac{\ud \Phi_{\rm prec}}{\ud f} &\sim (m' \cos \beta - m) \Tf^{2} \Omega_{\rm prec} \,, \label{eq:additionaltf}\\
-	-\frac{1}{4\pi^{2}} \frac{\ud^{2} \Phi_{\rm prec}}{\ud f^{2}} &\sim (m' \cos \beta - m) \Tf^{2} \left[ \frac{11}{12} \frac{\Omega_{\rm prec}}{\pi f} - \Tf^{2} \dot{\Omega}_{\rm prec} \right] \,, \label{eq:additionalTf}
+	-\frac{1}{4\pi^{2}} \frac{\ud^{2} \Phi_{\rm prec}}{\ud f^{2}} &\sim (m' \cos \beta - m) \Tf^{2} \left[ \frac{11}{6} \frac{\Omega_{\rm prec}}{\pi f} - \Tf^{2} \dot{\Omega}_{\rm prec} \right] \,, \label{eq:additionalTf}
 \end{align}
 \end{subequations}
 where we ignored $\dot{\beta}$. The new term~\eqref{eq:additionaltf} means that, when processing the signal through the LISA response, we would attribute a different $\tf$ to each mode contribution.
@@ -1794,7 +1560,7 @@ Note that, if we were instead to incorporate the full precession transfer functi
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%\bibliography{ListeRef.bib}
+
 \bibliography{references.bib}
 
 
