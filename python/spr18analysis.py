@@ -243,6 +243,7 @@ parser.add_argument('--lens',help="Set individual lengths of the effective porti
 parser.add_argument('--acls',help="Individual autocorrelation lengths. May be used in defining plots. ).",default="")
 parser.add_argument('--tag',help="Set a tag for the output.",default="")
 parser.add_argument('--allfish',help="Use all Fisher runs together.",action="store_true")
+parser.add_argument('--angles',help="Plot only angle parameters.",action="store_true")
     
 args=parser.parse_args()
 
@@ -383,7 +384,10 @@ if(True):
             for i in range(len(cred_levs)):
                 fd.write(str(cred_levs[i])+"\t"+str(fisher_areas[i])+"\t"+str(sample_areas[i])+"\t"+str(fisher_areas[i]/sample_areas[i])+"\n")
 
-    cornerFisher(pars,samples,cov,cred_levs)
+    if(args.angles):
+        cornerFisher(pars,samples,cov,cred_levs,iparmin=4)
+    else:
+        cornerFisher(pars,samples,cov,cred_levs)
     rs=[ math.sqrt(s[1]**2+s[2]**2) for s in samples[0]]
     rs.sort()
     nn=len(rs)
