@@ -3,6 +3,8 @@
 /************ Parsing arguments function ************/
 extern int half_edges;
 
+double tShift=0;
+
 /* Masses are input in solar masses and distances in Mpc - converted in SI for the internals */
 static void parse_args_ComputeLISASNR(ssize_t argc, char **argv, ComputeLISASNRparams* params)
 {
@@ -48,6 +50,10 @@ Arguments are as follows:\n\
  --paramsdir           Directory for input/output file\n\
  --paramsfile          Input file with the parameters\n\
  --outputfile          Output file\n\
+------------------------------------\n\
+Test Params\n\
+------------------------------------\n\
+ --tShift              time to offset the data time regisration from the nominal signal registration\n\
 \n";
 
   ssize_t i;
@@ -143,6 +149,8 @@ Arguments are as follows:\n\
       params->loadparamsfile = 1;
     } else if (strcmp(argv[i], "--outputfile") == 0) {
       strcpy(params->outputfile, argv[++i]);
+    } else if (strcmp(argv[i], "--tShift") == 0) {
+      tShift=atof(argv[++i]);
     }  else {
       printf("Error: invalid option: %s\n", argv[i]);
       printf("argc-i=%i\n",argc-i);
@@ -188,13 +196,14 @@ int main(int argc, char *argv[])
 
   /* Initialize structure for parameters */
   ComputeLISASNRparams* params;
+  LISAParams* testparams=malloc(sizeof(LISAParams));
   params = (ComputeLISASNRparams*) malloc(sizeof(ComputeLISASNRparams));
   memset(params, 0, sizeof(ComputeLISASNRparams));
 
   /* Parse commandline to read parameters */
   parse_args_ComputeLISASNR(argc, argv, params);
 
-    /* Initialize the structure for LISAparams and GlobalParams and copy values */
+    /* Initialize the structure for LISAParams and GlobalParams and copy values */
   /* NOTE: injectedparams and globalparams are declared as extern in LISAutils.h, and used by generation functions */
   injectedparams = (LISAParams*) malloc(sizeof(LISAParams));
   memset(injectedparams, 0, sizeof(LISAParams));
@@ -225,6 +234,8 @@ int main(int argc, char *argv[])
     injectedparams->polarization = gsl_matrix_get(inmatrix, 0, 8);
     gsl_matrix_free(inmatrix);
   }
+  memcpy(testparams,injectedparams,sizeof(LISAParams));
+  
   globalparams = (LISAGlobalParams*) malloc(sizeof(LISAGlobalParams));
   memset(globalparams, 0, sizeof(LISAGlobalParams));
   globalparams->fRef = params->fRef;
@@ -274,7 +285,29 @@ int main(int argc, char *argv[])
 
       printf("Generating data from params\n");
       LISADataFD_Init(&data);
-      LISAGenerateDataFD(injectedparams,0,data);
+      double M_sec=( injectedparams->m1 + injectedparams->m2 ) * MTSUN_SI;
+      double duration=globalparams->deltatobs * YRSID_SI + 1000*M_sec;
+      //As a test, to mimic the effect of shifting the FT reference (by tShift) we shift the GW signal reference time and reference phase together.
+      //If every thing is correct, then the only difference left between the signal and model should be the timing of the time-dependence of the response
+      //Typically that isn't measurable below changes of several arc seconds, so there should be minimal effect below a few thousand seconds.
+      //dataphase=phasesig(f)-phasesig(fref)+2pi*(tinj-tinj)*(f-fref)+2*phi0inj-2pi*tshift*f
+      //modelphase=phasesig(f)-phasesig(fref)+2pi*(tmodel-tinj)*(f-fref)+2*phi0model
+      //dphase=modelphase-datapahse=+2pi*(tmodel-tinj)*(f-fref)+2*phi0model-2*phi0inj+2pi*tshift*f
+      //dphase=0 --> (tmodel-tinj)*2*pi*fref +2*(phi0model-phi0imj) = 0
+      //         and (tmodel-tinj)+tshift = 0;
+      //       ...-->-tshift*pi*fref + phi0model-phi0inj = 0
+      double mimicShift=tShift;
+      double fRef=params->fRef;
+      double fRefm=0.14/M_sec;//This is currently the hard coded phi0-defining freq.
+      if(fRef==0 || fRef>fRefm)fRef=fRefm;
+      double phiShift=mimicShift*PI*fRef;//phiRef (in EOB...core) seems scaled as orbital freq, not GW freq, thus Pi instead of 2PI
+      injectedparams->tRef+=+mimicShift;
+      injectedparams->phiRef+=phiShift;
+      printf("tshift,phiShift,Msec= on params = %g %g %g\n",tShift,phiShift,M_sec);
+      //Now generate the reference signal.  Note that the time-shift implemented is based on the difference between testparams and injectedparams
+      //LISAGenerateDataFD(testparams,0,duration+tShift,data);
+      LISAGenerateDataFD(injectedparams,0,duration+tShift,data);
+      //LISAGenerateDataFD(testparams,0,duration+0*tShift,data);
       SNR = sqrt(data->TDI123dd);
       
       /* Print SNR to stdout */
@@ -308,10 +341,10 @@ int main(int argc, char *argv[])
   }
 
   double logL;
-  logL = CalculateLogLDataCAmpPhase(injectedparams, data);
+  logL = CalculateLogLDataCAmpPhase(testparams, data);
   printf("Amp/Phase: logL=%g\n",logL);
   half_edges=1;
-  logL = CalculateLogLDataCAmpPhase(injectedparams, data);
+  logL = CalculateLogLDataCAmpPhase(testparams, data);
   half_edges=0;
   printf("Amp/Phase: logL half=%g\n",logL);
   IntProdStyle=1;
@@ -326,7 +359,7 @@ int main(int argc, char *argv[])
     for(int n=0;n<ncuts;n++){
       NratioCut=(int)pow(n,cutpower);
       tbeg = clock();
-      logL = CalculateLogLDataCAmpPhase(injectedparams, data);
+      logL = CalculateLogLDataCAmpPhase(testparams, data);
       tend = clock();
       double t=(double) (tend-tbeg)/CLOCKS_PER_SEC;
       printf(" t=%g\n",t);
@@ -338,54 +371,54 @@ int main(int argc, char *argv[])
     printf("n=%i nCut = %2i: mean = %10.6g  std = %10.6g\n", n,(int)pow(n,cutpower),times[n]/ntry,sqrt((times2[n]-times[n]*times[n]/ntry)/(ntry-1)));
   }
   
-  logL = CalculateLogLDataCAmpPhase(injectedparams, data);
+  logL = CalculateLogLDataCAmpPhase(testparams, data);
   printf("Amp/Phase B: logL=%g\n",logL);
   half_edges=1;
-  logL = CalculateLogLDataCAmpPhase(injectedparams, data);
+  logL = CalculateLogLDataCAmpPhase(testparams, data);
   half_edges=0;
   printf("Amp/Phase B half: logL=%g\n",logL);
 
   LISADataFD * dataD2 = LISADataFD_Decimate2(data); 
-  logL = CalculateLogLDataCAmpPhase(injectedparams, dataD2);
+  logL = CalculateLogLDataCAmpPhase(testparams, dataD2);
   printf("Amp/Phase B (decimated by 2): logL=%g\n",logL);
   half_edges=1;
-  logL = CalculateLogLDataCAmpPhase(injectedparams, dataD2);
+  logL = CalculateLogLDataCAmpPhase(testparams, dataD2);
   half_edges=0;
   printf("Amp/Phase B half (decimated by 2): logL=%g\n",logL);
 
   LISADataFD * dataD4 = LISADataFD_Decimate2(dataD2); 
-  logL = CalculateLogLDataCAmpPhase(injectedparams, dataD4);
+  logL = CalculateLogLDataCAmpPhase(testparams, dataD4);
   printf("Amp/Phase B (decimated by 4): logL=%g\n",logL);
   half_edges=1;
-  logL = CalculateLogLDataCAmpPhase(injectedparams, dataD4);
+  logL = CalculateLogLDataCAmpPhase(testparams, dataD4);
   half_edges=0;
   printf("Amp/Phase B half (decimated by 4): logL=%g\n",logL);
 
   LISADataFD * dataD8 = LISADataFD_Decimate2(dataD4); 
-  logL = CalculateLogLDataCAmpPhase(injectedparams, dataD8);
+  logL = CalculateLogLDataCAmpPhase(testparams, dataD8);
   printf("Amp/Phase B (decimated by 8): logL=%g\n",logL);
   half_edges=1;
-  logL = CalculateLogLDataCAmpPhase(injectedparams, dataD8);
+  logL = CalculateLogLDataCAmpPhase(testparams, dataD8);
   half_edges=0;
   printf("Amp/Phase B half (decimated by 8): logL=%g\n",logL);
 
   LISADataFD * dataD16 = LISADataFD_Decimate2(dataD8); 
-  logL = CalculateLogLDataCAmpPhase(injectedparams, dataD16);
+  logL = CalculateLogLDataCAmpPhase(testparams, dataD16);
   printf("Amp/Phase B (decimated by 16): logL=%g\n",logL);
   half_edges=1;
-  logL = CalculateLogLDataCAmpPhase(injectedparams, dataD16);
+  logL = CalculateLogLDataCAmpPhase(testparams, dataD16);
   half_edges=0;
   printf("Amp/Phase B half (decimated by 16): logL=%g\n",logL);
 
   LISADataFD * dataD32 = LISADataFD_Decimate2(dataD16); 
-  logL = CalculateLogLDataCAmpPhase(injectedparams, dataD32);
+  logL = CalculateLogLDataCAmpPhase(testparams, dataD32);
   printf("Amp/Phase B (decimated by 32): logL=%g\n",logL);
 
   LISADataFD * dataD64 = LISADataFD_Decimate2(dataD32); 
-  logL = CalculateLogLDataCAmpPhase(injectedparams, dataD64);
+  logL = CalculateLogLDataCAmpPhase(testparams, dataD64);
   printf("Amp/Phase B (decimated by 64): logL=%g\n",logL);
 
-  logL = CalculateLogLDataReIm(injectedparams, data);
+  logL = CalculateLogLDataReIm(testparams, data);
   printf("ReIm: logL=%g\n",logL);
 
   free(params);

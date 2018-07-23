@@ -379,6 +379,30 @@ double  Get_UniformFrequency(const ReImUniformFrequencySeries* freqseries, const
   return freqseries->fmin + index*freqseries->df;
 }
 
+/* Function to shift the registration time of the data.  This, in effect is the zero-time reference for the Fourier transform
+as measured from the early edge of the data in time domain.  Our waveform models, however are referenced to the signal reference
+time. */
+void  UniformFrequency_ShiftTReg(const ReImUniformFrequencySeries* freqseries, const double tShift){
+  if(freqseries->df==0){
+    printf("Get_UniformFrequency: Error frequency not set up.\n");
+    exit(1);
+  }
+  double shiftfacR=cos(-freqseries->fmin*tShift*2.0*PI);
+  double shiftfacI=sin(-freqseries->fmin*tShift*2.0*PI);
+  double expIdPhiR=cos(-freqseries->df*tShift*2.0*PI);
+  double expIdPhiI=sin(-freqseries->df*tShift*2.0*PI);
+  for(int i=0;i<freqseries->N;i++){
+    double hR=freqseries->h_real->data[i];
+    double hI=freqseries->h_imag->data[i];
+    double newhR=hR*shiftfacR-hI*shiftfacI;
+    double newhI=hI*shiftfacR+hR*shiftfacI;
+    freqseries->h_real->data[i]=newhR;
+    freqseries->h_imag->data[i]=newhI;
+    double newshiftfacR=shiftfacR*expIdPhiR-shiftfacI*expIdPhiI;
+    shiftfacI=shiftfacI*expIdPhiR+shiftfacR*expIdPhiI;
+    shiftfacR=newshiftfacR;
+  }
+};
 
 /******** Functions to initialize and clean up ReImTimeSeries structure ********/
 void ReImTimeSeries_Init(ReImTimeSeries **timeseries, const int n) {

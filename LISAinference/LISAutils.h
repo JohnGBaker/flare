@@ -117,6 +117,7 @@ typedef struct tagLISAInjectionReIm /* Storing the vectors of frequencies and no
 
 typedef struct tagLISADataFD
 {
+  double tReg;
   ReImUniformFrequencySeries* TDI1Data;   /* Data in the TDI channel 1, in the form of a list of the contribution of each mode */
   ReImUniformFrequencySeries* TDI2Data;   /* Data in the TDI channel 2, in the form of a list of the contribution of each mode */
   ReImUniformFrequencySeries* TDI3Data;   /* Data in the TDI channel 3, in the form of a list of the contribution of each mode */
@@ -294,6 +295,7 @@ int LISAGenerateInjectionReIm(
 int LISAGenerateDataFD(
   struct tagLISAParams* params,   /* Input: set of LISA parameters of the template */
   double fLow,                    /* Input: additional lower frequency limit (argument minf) */
+  double tReg,                    /* Input: Registration time for the data set (zero time of implicit FT) */
   struct tagLISADataFD* data);     /* Output: structure for the data containing the injected signal */
 
 

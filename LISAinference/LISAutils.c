@@ -1535,6 +1535,7 @@ int LISAGenerateInjectionReIm(
 int LISAGenerateDataFD(
   struct tagLISAParams* params,   /* Input: set of LISA parameters of the template */
   double fLow,                    /* Input: additional lower frequency limit (argument minf) */
+  double tReg,                    /* Input: Registration time for the data set (zero time of implicit FT) */
   struct tagLISADataFD* data)     /* Output: structure for the data containing the injected signal */
 {
   int ret;
@@ -1618,6 +1619,16 @@ int LISAGenerateDataFD(
   ListmodesCAmpPhaseFrequencySeries_Destroy(listTDI2);
   ListmodesCAmpPhaseFrequencySeries_Destroy(listTDI3);
 
+  /* Apply time shift? */
+  /* tReg, is the zero-time reference for the Fourier transform as measured from the early edge of the data in time domain.  
+     Our waveform models, however are referenced to the signal reference time. */
+  data->tReg=tReg;
+  double tShift=tReg-duration;
+  printf("time shift = %g\n",tShift);
+  UniformFrequency_ShiftTReg(data->TDI1Data,tShift);
+  UniformFrequency_ShiftTReg(data->TDI2Data,tShift);
+  UniformFrequency_ShiftTReg(data->TDI3Data,tShift);
+  
   printf("white\n");
   /* whiten data */
   ReImUniformFrequencySeries* wdatachan = NULL;

@@ -231,6 +231,8 @@ void ReImUniformFrequencySeries_Init(
 void ReImUniformFrequencySeries_Cleanup(ReImUniformFrequencySeries* freqseries);
 ReImUniformFrequencySeries * ReImFrequencySeries_ConvertToUniform(ReImFrequencySeries *oldfreqseries, int extrap);
 double  Get_UniformFrequency(const ReImUniformFrequencySeries* freqseries, const int index);
+void  UniformFrequency_ShiftTReg(const ReImUniformFrequencySeries* freqseries, const double tShift);
+
 void ReImTimeSeries_Init(
 	 ReImTimeSeries** timeseries,           /* double pointer for initialization */
 	 const int n );                         /* length of the time series */
