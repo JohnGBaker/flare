@@ -110,9 +110,9 @@ def set_mcmc_flags(outroot,ptN):
     flags += " --save_every=40 --info_every=10000" #frequency of sampling/reporting
     flags += " --prop=7 --de_ni=50 --gauss_1d_frac=0.5 --de_reduce_gamma=4" #differential evolution proposal distribution with Gaussian draws 1/2 of the time
     #Parallel Tempering setup
-    flags += " --pt --pt_stop_evid_err=0.05 --pt_Tmax=1e9"    #parallel tempering basics
+    flags += " --pt_stop_evid_err=0.05 --chain_ess_stop=2000 --pt_Tmax=1e9"    #parallel tempering basics
     if(ptN>0):
-        flags += " --pt_n="+str(ptN) #else default is 20
+        flags += " --pt="+str(ptN) #else default is 20
     flags += " --pt_swap_rate=0.10"   #rate of temp swaps (or default 0.01)
     flags += " --pt_evolve_rate=0.01" #rate at which temps are allowed to evolve
 
@@ -276,6 +276,7 @@ def SNRstudy(outlabel,MtotList,qList,SNRList,Navg,Nthreads=1):
             print( "x=",x)
             print( "y1=",y1)
             print( "y2=",y2)
+            #color=(0.2,0.8/math.sqrt(q),1.0/math.sqrt(count))
             color=(0.2,0.8/math.sqrt(q),1.0-count*1.0/len(SNRList))
             plot=plt.fill_between(x, y1, y2, facecolor=color,alpha=0.3, interpolate=True)
             tags.append( Rectangle((0, 0), 1, 1, fc=color,alpha=0.3) )
