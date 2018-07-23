@@ -1,7 +1,7 @@
 MESSAGE="Specify which machine to compile for in the Makefile."
 #MACHINE="sylvainsmac"
-MACHINE="discover"
-#MACHINE="johnsmac"
+#MACHINE="discover"
+MACHINE="johnsmac"
 #MACHINE="minerva"
 
 ifeq ($(MACHINE),"sylvainsmac")
@@ -27,20 +27,20 @@ ifeq ($(MACHINE),"sylvainsmac")
 else ifeq ($(MACHINE),"johnsmac")
   MESSAGE="Compiling for John's Mac"
   GSLROOT = /opt/local
-  BAMBIROOT = ../BAMBI
-  CC = gcc-mp-4.7 -g
-  CXX = g++-mp-4.7
-  CPP = g++-mp-4.7
+  BAMBIROOT = ../../BAMBI
+  CC = gcc-mp-5 -g
+  CXX = g++-mp-5
+  CPP = g++-mp-5
   LD = $(CPP)
   #LD = gfortran-mp-4.7
-  LDFLAGS= -fopenmp -L/opt/local/lib -L/opt/local/lib/mpich-gcc47 -lgfortran -llapack -latlas -lblas
-  #LDFLAGS= -fopenmp -L/opt/local/lib -L/opt/local/lib/mpich-mp -lgfortran -llapack -latlas -lblas
+  #LDFLAGS= -fopenmp -L/opt/local/lib -L/opt/local/lib/mpich-mp -lgfortran -llapack  -lblas
+  LDFLAGS= -fopenmp -L/opt/local/lib -L/opt/local/lib/mpich-gcc5 -lgfortran -llapack -latlas -lblas
   #Uncomment this for MPI and specify your needed MPI libraries
   MPILIBS = -lmpi -lmpicxx -lmpifort
   #CFLAGS += -g -fopenmp -I/opt/local/include/mpich-mp
   #CPPFLAGS += -g -I/opt/local/include/mpich-mp
-  CFLAGS += -g -O3 -fopenmp -I/opt/local/include/mpich-gcc47
-  CPPFLAGS += -g -O3 -I/opt/local/include/mpich-gcc47
+  CFLAGS += -g -O3 -fopenmp -I/opt/local/include/mpich-gcc5
+  CPPFLAGS += -g -O3 -I/opt/local/include/mpich-gcc5
   CXXFLAGS = -g -O3 -fopenmp
   #Uncomment this for MPI and specify your needed MPI libraries
   CFLAGS += -DPARALLEL
