@@ -1,12 +1,12 @@
 MESSAGE="Specify which machine to compile for in the Makefile."
-#MACHINE="sylvainsmac"
+MACHINE="sylvainsmac"
 #MACHINE="discover"
-MACHINE="johnsmac"
+#MACHINE="johnsmac"
 #MACHINE="minerva"
 
 ifeq ($(MACHINE),"sylvainsmac")
   MESSAGE="Compiling for Sylvain's Mac"
-  GSLROOT = /opt/local
+  GSLROOT = /usr/local
   BAMBIROOT = $(HOME)/build/bambi
   CC = gcc-mp-5
   CPP = g++-mp-5
@@ -152,7 +152,7 @@ CFLAGS += -std=c99
 CPPFLAGS += -O3 -I$(GSLINC)
 CXXFLAGS += -g -std=c++11 -O3 -I$(GSLINC)
 
-SUBDIRS = tools EOBNRv2HMROM Waveforms LISAsim LLVsim integration
+SUBDIRS = tools EOBNRv2HMROM IMRPhenomD Waveforms LISAsim LLVsim integration
 ifdef PTMCMC
   SUBDIRS += ptmcmc
   CXXFLAGS+= -I$(PTMCMC)/include
@@ -180,21 +180,23 @@ $(SUBDIRS):
 
 EOBNRv2HMROM: tools
 
-Waveforms: EOBNRv2HMROM tools
+IMRPhenomD: tools
 
-LISAsim: tools integration EOBNRv2HMROM
+Waveforms: EOBNRv2HMROM IMRPhenomD tools
 
-LLVsim: tools integration EOBNRv2HMROM
+LISAsim: tools integration EOBNRv2HMROM IMRPhenomD
+
+LLVsim: tools integration EOBNRv2HMROM IMRPhenomD
 
 ifdef PTMCMC
-LISAinference: tools integration EOBNRv2HMROM Waveforms LISAsim ptmcmc
+LISAinference: tools integration EOBNRv2HMROM IMRPhenomD Waveforms LISAsim ptmcmc
 else
-LISAinference: tools integration EOBNRv2HMROM Waveforms LISAsim
+LISAinference: tools integration EOBNRv2HMROM IMRPhenomD Waveforms LISAsim
 endif
 
-LLVinference: tools integration EOBNRv2HMROM LLVsim
+LLVinference: tools integration EOBNRv2HMROM IMRPhenomD LLVsim
 
-phaseSNR: tools integration EOBNRv2HMROM LLVsim
+phaseSNR: tools integration EOBNRv2HMROM IMRPhenomD LLVsim
 	$(MAKE) -C LLVinference phaseSNR
 
 ifdef PTMCMC
