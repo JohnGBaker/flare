@@ -237,6 +237,7 @@ double FDListmodesFresnelOverlap3Chan(
   ObjectFunction * Snoise3,                         /* Noise function */
   double fLow,                                          /* Lower bound of the frequency window for the detector */
   double fHigh,                                         /* Upper bound of the frequency window for the detector */
+  double maxf22,                                        /* Upper bound on signal orbital frequency scaled to the 22mode */
   double fstartobs1,                                    /* Starting frequency for the 22 mode of wf 1 - as determined from a limited duration of the observation - set to 0 to ignore */
   double fstartobs2);                                    /* Starting frequency for the 22 mode of wf 2 - as determined from a limited duration of the observation - set to 0 to ignore */
 

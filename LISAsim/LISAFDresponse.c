@@ -262,6 +262,7 @@ int LISASimFDResponseTDI3Chan(
   const double m1,                                         /* m1 in solar masses - used for resampling */
   const double m2,                                         /* m2 in solar masses - used for resampling */
   const double maxf,                                       /* Maximal frequency to consider - used to ignore hard-to-resolve response at f>1Hz - NOTE: for now, no recomputation of the boundary, so when not resampling can lose a bit of support between the last frequency point covered and maxf */
+  const double maxf22,                                     /* Modal maximal frequency to consider (scaled to 22mode*/
   const TDItag tditag,                                     /* Selector for the set of TDI observables */
   const int tagfrozenLISA,                                 /* Tag to treat LISA as frozen at its torb configuration  */
   const ResponseApproxtag responseapprox)                  /* Tag to select possible low-f approximation level in FD response */
@@ -332,7 +333,8 @@ int LISASimFDResponseTDI3Chan(
     /* Resample linearly at this deltaf when this threshold is reached */
     /* NOTE: Assumes input frequencies are logarithmic (except maybe first interval) to evaluate when to resample */
     gsl_vector* freqrhigh = NULL;
-    SetMaxdeltafResampledFrequencies(&freqrhigh, freq, maxf, 0.002); /* Use 0.002Hz as a default maximal deltaf */
+    double modalmaxf=fmin(maxf,maxf22*m/2.0);
+    SetMaxdeltafResampledFrequencies(&freqrhigh, freq, modalmaxf, 0.002); /* Use 0.002Hz as a default maximal deltaf */
 
     /* Resampling at low f to achieve a deltat of at most 2 weeks */
     /* Resample linearly in time until this threshold is reached */

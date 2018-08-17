@@ -45,6 +45,7 @@
 /* Number of points to be used in linear integration - hardcoded for now */
 #define nbptsintdefault 32768 /* Default number of points to use for linear overlaps */
 
+int verbose_tmax=0;
 
 /********************************* Utilities ****************************************/
 
@@ -596,6 +597,27 @@ static double EstimateBoundaryLegendreQuad(
   return y0*(x-x1)*(x-x2)/(x0-x1)/(x0-x2) + y1*(x-x0)*(x-x2)/(x1-x0)/(x1-x2) + y2*(x-x0)*(x-x1)/(x2-x0)/(x2-x1);
 }
 
+/* Quadratic Legendre approximation to compute first derivative of values at minf and maxf used for t(f) interval diagnostic */
+static double EstimateBoundaryDerivLegendreQuad(
+  gsl_vector* vectx,   /**/
+  gsl_vector* vecty,   /**/
+  int j,               /**/
+  double xvalue)       /**/
+{
+  double x0 = 0;
+  double x1 = gsl_vector_get(vectx, j+1) - gsl_vector_get(vectx, j);
+  double x2 = gsl_vector_get(vectx, j+2) - gsl_vector_get(vectx, j);
+  double x = xvalue - gsl_vector_get(vectx, j);
+  double y0 = gsl_vector_get(vecty, j);
+  double y1 = gsl_vector_get(vecty, j+1);
+  double y2 = gsl_vector_get(vecty, j+2);
+  if(!(x>=x0 && x<=x2)) {
+    printf("Error: value out of bounds in EstimateBoundaryLegendreQuad.\n");
+    exit(1);
+  }
+  return y0*((x-x1)+(x-x2))/(x0-x1)/(x0-x2) + y1*((x-x0)+(x-x2))/(x1-x0)/(x1-x2) + y2*((x-x0)+(x-x1))/(x2-x0)/(x2-x1);
+}
+
 /* Function computing the integrand values */
 void ComputeIntegrandValues(
   CAmpPhaseFrequencySeries** integrand,     /* Output: values of the integrand on common frequencies (initialized in the function) */
@@ -734,6 +756,7 @@ int ComputeIntegrandValues3Chan(
   int nbpts = imax1 + 1 - imin1;
   //printf("nbpts=%i\n",nbpts);
   if(nbpts<4)return -1;
+
   /* Estimate locally values for freqseries1 at the boundaries - phase vectors assumed to be the same for channels 1,2,3 - this is still true now that the response-processed phase includes the signal phase + R-delay phase, which is the same for all channels */
   double areal1chan1minf = EstimateBoundaryLegendreQuad(freq1, freqseries1chan1->amp_real, imin1, minf);
   double aimag1chan1minf = EstimateBoundaryLegendreQuad(freq1, freqseries1chan1->amp_imag, imin1, minf);
@@ -750,7 +773,7 @@ int ComputeIntegrandValues3Chan(
   double aimag1chan3maxf = EstimateBoundaryLegendreQuad(freq1, freqseries1chan3->amp_imag, imax1-2, maxf); /* Note the imax1-2 */
   double phi1maxf = EstimateBoundaryLegendreQuad(freq1, freqseries1chan1->phase, imax1-2, maxf); /* Note the imax1-2 */
 
-  /* Initializing output structure */
+    /* Initializing output structure */
   CAmpPhaseFrequencySeries_Init(integrand, nbpts);
 
   /* Loop computing integrand values - phases are the same for chan1, chan2 and chan3 */
@@ -972,17 +995,35 @@ double FDListmodesFresnelOverlap3Chan(
   ObjectFunction * Snoise3,                          /* Noise function for channel 1 */
   double fLow,                                          /* Lower bound of the frequency window for the detector */
   double fHigh,                                         /* Upper bound of the frequency window for the detector */
+  double maxf22,                                        /* Upper bound on signal orbital frequency scaled to the 22mode */
   double fstartobs1,                                    /* Starting frequency for the 22 mode of wf 1 - as determined from a limited duration of the observation - set to 0 to ignore */
   double fstartobs2)                                    /* Starting frequency for the 22 mode of wf 2 - as determined from a limited duration of the observation - set to 0 to ignore */
 {
   double overlap = 0;
-
+  
   /* Main loop over the modes - goes through all the modes present, the same for all three channels 1,2,3 */
   ListmodesCAmpPhaseFrequencySeries* listelementh1chan1 = listh1chan1;
   while(listelementh1chan1) { /* We use the structure for channel 1 to loop through modes */
     ListmodesCAmpPhaseFrequencySeries* listelementh1chan2 = ListmodesCAmpPhaseFrequencySeries_GetMode(listh1chan2, listelementh1chan1->l, listelementh1chan1->m);
     ListmodesCAmpPhaseFrequencySeries* listelementh1chan3 = ListmodesCAmpPhaseFrequencySeries_GetMode(listh1chan3, listelementh1chan1->l, listelementh1chan1->m);
     ListmodesCAmpPhaseSpline* listelementsplines2chan1 = listsplines2chan1;
+
+    int modem1=listelementh1chan1->m;
+    double modemax1f22=modem1*maxf22/2.0;
+    //This section is for the diagnostic purpose of checking the final t(f) of the first signal from its phase derivative
+    if(verbose_tmax==1){
+      /* The maxf logic here is adapted from in ComputeIntegrandValues3Chan */
+      gsl_vector *f1=listelementh1chan1->freqseries->freq;
+      int imax1 = f1->size - 1;
+      double maxf = fmin(f1->data[imax1], modemax1f22);
+      if(fHigh>0) {maxf = fmin(fHigh, maxf);}
+      while(f1->data[imax1-1]>=maxf) imax1--;
+      double maxt1 = -0.5/PI * EstimateBoundaryDerivLegendreQuad(f1, listelementh1chan1->freqseries->phase, imax1-2, maxf);
+      double maxt2 = -0.5/PI * EstimateBoundaryDerivLegendreQuad(f1, listelementh1chan2->freqseries->phase, imax1-2, maxf);
+      double maxt3 = -0.5/PI * EstimateBoundaryDerivLegendreQuad(f1, listelementh1chan3->freqseries->phase, imax1-2, maxf);
+      printf("m fmax tmax(1,2,3): %i %g %g %g %g %g\n",modem1,modemax1f22,maxf,maxt1,maxt2,maxt3);
+    }
+    
     while(listelementsplines2chan1) { /* We use the structure for channel 1 to loop through modes */
       ListmodesCAmpPhaseSpline* listelementsplines2chan2 = ListmodesCAmpPhaseSpline_GetMode(listsplines2chan2, listelementsplines2chan1->l, listelementsplines2chan1->m);
       ListmodesCAmpPhaseSpline* listelementsplines2chan3 = ListmodesCAmpPhaseSpline_GetMode(listsplines2chan3, listelementsplines2chan1->l, listelementsplines2chan1->m);
@@ -990,7 +1031,10 @@ double FDListmodesFresnelOverlap3Chan(
       int mmax1 = max(2, listelementh1chan1->m);
       int mmax2 = max(2, listelementsplines2chan1->m);
       double fcutLow = fmax(fLow, fmax(((double) mmax1)/2. * fstartobs1, ((double) mmax2)/2. * fstartobs2));
-      double overlapmode = FDSinglemodeFresnelOverlap3Chan(listelementh1chan1->freqseries, listelementh1chan2->freqseries, listelementh1chan3->freqseries, listelementsplines2chan1->splines, listelementsplines2chan2->splines, listelementsplines2chan3->splines, Snoise1, Snoise2, Snoise3, fcutLow, fHigh);
+      int modem2=listelementh1chan2->m;
+      double modemax2f22=modem2*maxf22/2.0;
+      double modefHigh=fmin(fHigh,fmin(modemax1f22,modemax2f22));
+      double overlapmode = FDSinglemodeFresnelOverlap3Chan(listelementh1chan1->freqseries, listelementh1chan2->freqseries, listelementh1chan3->freqseries, listelementsplines2chan1->splines, listelementsplines2chan2->splines, listelementsplines2chan3->splines, Snoise1, Snoise2, Snoise3, fcutLow, modefHigh);
       overlap += overlapmode;
       listelementsplines2chan1 = listelementsplines2chan1->next;
     }

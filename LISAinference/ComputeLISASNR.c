@@ -1,5 +1,7 @@
 #include "ComputeLISASNR.h"
 
+extern int verbose_tmax;
+
 /************ Parsing arguments function ************/
 
 /* Parse command line to initialize GenTDITDparams object */
@@ -39,6 +41,8 @@ Arguments are as follows:\n\
  --deltatobs           Observation duration (years, default=2)\n\
  --minf                Minimal frequency (Hz, default=0) - when set to 0, use the lowest frequency where the detector noise model is trusted __LISASimFD_Noise_fLow (set somewhat arbitrarily)\n\
  --maxf                Maximal frequency (Hz, default=0) - when set to 0, use the highest frequency where the detector noise model is trusted __LISASimFD_Noise_fHigh (set somewhat arbitrarily)\n\
+ --maxf22              Modal maximal frequency (Hz, default=1)\n\
+ --verbosetmax         Include for output of modal tmax\n\
  --tagextpn            Tag to allow PN extension of the waveform at low frequencies (default=1)\n\
  --tagtdi              Tag choosing the set of TDI variables to use (default TDIAETXYZ)\n\
  --tagint              Tag choosing the integrator: 0 for Fresnel (default), 1 for linear integration\n\
@@ -73,6 +77,7 @@ Arguments are as follows:\n\
   params->deltatobs = 2.;
   params->minf = 0.;
   params->maxf = 0.;
+  params->maxf22 = 1.;
   params->tagextpn = 1;
   params->Mfmatch = 0.;
   params->tagtdi = TDIAETXYZ;
@@ -122,6 +127,10 @@ Arguments are as follows:\n\
       params->minf = atof(argv[++i]);
     } else if (strcmp(argv[i], "--maxf") == 0) {
       params->maxf = atof(argv[++i]);
+    } else if (strcmp(argv[i], "--maxf22") == 0) {
+      params->maxf22 = atof(argv[++i]);
+    } else if (strcmp(argv[i], "--verbosetmax") == 0) {
+      verbose_tmax = 1;
     } else if (strcmp(argv[i], "--tagextpn") == 0) {
         params->tagextpn = atoi(argv[++i]);
     } else if (strcmp(argv[i], "--Mfmatch") == 0) {
@@ -315,6 +324,7 @@ int main(int argc, char *argv[])
       globalparams->deltatobs = params->deltatobs; /* Default value */
       globalparams->minf = params->minf;
       globalparams->maxf = params->maxf;
+      globalparams->maxf22 = params->maxf22;
       globalparams->tagextpn = params->tagextpn;
       globalparams->Mfmatch = params->Mfmatch;
       globalparams->nbmodeinj = params->nbmode;
@@ -381,6 +391,23 @@ int main(int argc, char *argv[])
           injectedparams->beta = gsl_matrix_get(inmatrix, i, 7);
           injectedparams->polarization = gsl_matrix_get(inmatrix, i, 8);
 
+	  if(0){
+	    /* Print injection parameters (before possible rescaling of the distances to match the target snr) */
+	    printf("-----------------------------------------------\n");
+	    printf("Injection parameters:\n");
+	    printf("-----------------------------------------------\n");
+	    printf("m1:           %.16e\n", injectedparams->m1);
+	    printf("m2:           %.16e\n", injectedparams->m2);
+	    printf("tRef:         %.16e\n", injectedparams->tRef);
+	    printf("phiRef:       %.16e\n", injectedparams->phiRef);
+	    printf("distance:     %.16e\n", injectedparams->distance);
+	    printf("lambda:       %.16e\n", injectedparams->lambda);
+	    printf("beta:         %.16e\n", injectedparams->beta);
+	    printf("inclination:  %.16e\n", injectedparams->inclination);
+	    printf("polarization: %.16e\n", injectedparams->polarization);
+	    printf("-----------------------------------------------\n");
+	    printf("\n");
+	  }
           /* Branch between the Fresnel or linear computation */
           double SNR = 0;
           if(params->tagint==0) {
@@ -403,7 +430,8 @@ int main(int argc, char *argv[])
             printf("Error in ComputeLISASNR: integration tag not recognized.\n");
             exit(1);
           }
-
+	  printf("SNR  %.8f\n", SNR);
+	  
           /* Set values in output matrix */
           gsl_matrix_set(outmatrix, i, 0, injectedparams->m1);
           gsl_matrix_set(outmatrix, i, 1, injectedparams->m2);

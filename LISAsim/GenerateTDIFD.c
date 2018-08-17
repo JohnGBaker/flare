@@ -51,6 +51,7 @@ Arguments are as follows:\n\
  --nbmode              Number of modes of radiation to generate (1-5, default=5)\n\
  --minf                Minimal frequency (Hz, default=0) - when set to 0, use the lowest frequency where the detector noise model is trusted __LISASimFD_Noise_fLow (set somewhat arbitrarily)\n\
  --maxf                Maximal frequency (Hz, default=0) - when set to 0, use the highest frequency where the detector noise model is trusted __LISASimFD_Noise_fHigh (set somewhat arbitrarily)\n\
+ --maxf22              Modal maximal frequency (Hz, default=1Hz)\n\
  --deltatobs           Observation duration (years), ignore if 0 (default=0)\n\
  --tagextpn            Tag to allow PN extension of the waveform at low frequencies (default=1)\n\
  --Mfmatch             When PN extension allowed, geometric matching frequency: will use ROM above this value. If <=0, use ROM down to the lowest covered frequency (default=0.)\n\
@@ -92,6 +93,7 @@ Arguments are as follows:\n\
     params->nbmode = 5;
     params->minf = 0.;
     params->maxf = 0.;
+    params->maxf22 = 1.;
     params->deltatobs = 0.;
     params->tagextpn = 1;
     params->Mfmatch = 0.;
@@ -144,6 +146,8 @@ Arguments are as follows:\n\
             params->minf = atof(argv[++i]);
         } else if (strcmp(argv[i], "--maxf") == 0) {
             params->maxf = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--maxf22") == 0) {
+            params->maxf22 = atof(argv[++i]);
         } else if (strcmp(argv[i], "--deltatobs") == 0) {
             params->deltatobs = atof(argv[++i]);
         }  else if (strcmp(argv[i], "--tagextpn") == 0) {
@@ -527,7 +531,7 @@ int main(int argc, char *argv[])
     ListmodesCAmpPhaseFrequencySeries* listTDI2= NULL;
     ListmodesCAmpPhaseFrequencySeries* listTDI3= NULL;
     /* torb is the orbital reference time (role played by injection tRef in the inference) */
-    LISASimFDResponseTDI3Chan(tagtRefatLISA, variant, &listhlm, &listTDI1, &listTDI2, &listTDI3, params->torb, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, params->maxf, params->tagtdi, params->frozenLISA, params->responseapprox);
+    LISASimFDResponseTDI3Chan(tagtRefatLISA, variant, &listhlm, &listTDI1, &listTDI2, &listTDI3, params->torb, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, params->maxf, params->maxf22, params->tagtdi, params->frozenLISA, params->responseapprox);
 
     /* If asked for it, rescale the complex amplitudes to include the factors that were scaled out of TDI observables */
     if(params->restorescaledfactor) {

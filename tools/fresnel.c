@@ -441,6 +441,7 @@ double complex ComputeInt(
       resint = factor * ComputeIntCase4(coeffsA, p1, p2);
     }
     res += resint;
+    //printf("f,eps,resint,res=%g, %g, %g+I%g, %g+I%g\n",gsl_matrix_get(quadsplinecoeffsphase, j, 0),eps,resint,res);
   }
 
   return res;

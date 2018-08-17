@@ -165,6 +165,7 @@ Arguments are as follows:\n\
  --deltatobs           Observation duration (years, default=2)\n\
  --minf                Minimal frequency (Hz, default=0) - when set to 0, use the lowest frequency where the detector noise model is trusted __LISASimFD_Noise_fLow (set somewhat arbitrarily)\n\
  --maxf                Maximal frequency (Hz, default=1Hz) - when set to 0, use the highest frequency where the detector noise model is trusted __LISASimFD_Noise_fHigh (set somewhat arbitrarily)\n\
+ --maxf22              Mode-dependent maximal frequency (Hz, default=1Hz)\n\
  --tagextpn            Tag to allow PN extension of the waveform at low frequencies (default=1)\n\
  --tagtRefatLISA       Tag to allow t0 to specify signal offset time at LISA guiding center rather than at SSB (default=0)\n\
  --Mfmatch             When PN extension allowed, geometric matching frequency: will use ROM above this value. If <=0, use ROM down to the lowest covered frequency (default=0.)\n\
@@ -270,6 +271,7 @@ Syntax: --PARAM-min\n\
     globalparams->deltatobs = 2.;
     globalparams->minf = 0.;
     globalparams->maxf = 1.;
+    globalparams->maxf22 = 1.;
     globalparams->tagextpn = 1;
     globalparams->tagtRefatLISA = 0;
     globalparams->Mfmatch = 0.;
@@ -402,6 +404,8 @@ Syntax: --PARAM-min\n\
             globalparams->minf = atof(argv[++i]);
         } else if (strcmp(argv[i], "--maxf") == 0) {
             globalparams->maxf = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--maxf22") == 0) {
+            globalparams->maxf22 = atof(argv[++i]);
         } else if (strcmp(argv[i], "--tagextpn") == 0) {
             globalparams->tagextpn = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--tagtRefatLISA") == 0) {
@@ -935,7 +939,7 @@ int LISAGenerateSignalCAmpPhase(
   //tbeg = clock();
 
   //#pragma omp critical(LISAgensig)
-  LISASimFDResponseTDI3Chan(globalparams->tagtRefatLISA, globalparams->variant, &listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, globalparams->maxf, globalparams->tagtdi, globalparams->frozenLISA, globalparams->responseapprox);
+  LISASimFDResponseTDI3Chan(globalparams->tagtRefatLISA, globalparams->variant, &listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, globalparams->maxf, globalparams->maxf22, globalparams->tagtdi, globalparams->frozenLISA, globalparams->responseapprox);
   //tend = clock();
   //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //exit(0);
@@ -957,7 +961,7 @@ int LISAGenerateSignalCAmpPhase(
   ObjectFunction NoiseSn3 = NoiseFunction(globalparams->variant,globalparams->tagtdi, 3);
   //TESTING
   //tbeg = clock();
-  double TDI123hh = FDListmodesFresnelOverlap3Chan(listTDI1, listTDI2, listTDI3, listsplinesgen1, listsplinesgen2, listsplinesgen3, &NoiseSn1, &NoiseSn2, &NoiseSn3, fLow, fHigh, fstartobs, fstartobs);
+  double TDI123hh = FDListmodesFresnelOverlap3Chan(listTDI1, listTDI2, listTDI3, listsplinesgen1, listsplinesgen2, listsplinesgen3, &NoiseSn1, &NoiseSn2, &NoiseSn3, fLow, fHigh, globalparams->maxf22, fstartobs, fstartobs);
   //tend = clock();
   //printf("time SNRs: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //exit(0);
@@ -1032,7 +1036,7 @@ int LISAGenerateInjectionCAmpPhase(
   //TESTING
   //clock_t tbeg, tend;
   //tbeg = clock();
-  LISASimFDResponseTDI3Chan(globalparams->tagtRefatLISA, globalparams->variant, &listROM, &listTDI1, &listTDI2, &listTDI3, injectedparams->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, globalparams->maxf, globalparams->tagtdi, globalparams->frozenLISA, globalparams->responseapprox);
+  LISASimFDResponseTDI3Chan(globalparams->tagtRefatLISA, globalparams->variant, &listROM, &listTDI1, &listTDI2, &listTDI3, injectedparams->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, globalparams->maxf, globalparams->maxf22, globalparams->tagtdi, globalparams->frozenLISA, globalparams->responseapprox);
   //tend = clock();
   //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
@@ -1053,7 +1057,7 @@ int LISAGenerateInjectionCAmpPhase(
   ObjectFunction NoiseSn3 = NoiseFunction(globalparams->variant,globalparams->tagtdi, 3);
   //TESTING
   //tbeg = clock();
-  double TDI123ss = FDListmodesFresnelOverlap3Chan(listTDI1, listTDI2, listTDI3, listsplinesinj1, listsplinesinj2, listsplinesinj3, &NoiseSn1, &NoiseSn2, &NoiseSn3, fLow, fHigh, fstartobs, fstartobs);
+  double TDI123ss = FDListmodesFresnelOverlap3Chan(listTDI1, listTDI2, listTDI3, listsplinesinj1, listsplinesinj2, listsplinesinj3, &NoiseSn1, &NoiseSn2, &NoiseSn3, fLow, fHigh, globalparams->maxf22, fstartobs, fstartobs);
   //tend = clock();
   //printf("time SNRs: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
 
@@ -1116,7 +1120,7 @@ int LISAGenerateSignalReIm(
   //TESTING
   //clock_t tbeg, tend;
   //tbeg = clock();
-  LISASimFDResponseTDI3Chan(globalparams->tagtRefatLISA, globalparams->variant, &listROM, &listTDI1, &listTDI2, &listTDI3, injectedparams->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, globalparams->maxf, globalparams->tagtdi, globalparams->frozenLISA, globalparams->responseapprox);
+  LISASimFDResponseTDI3Chan(globalparams->tagtRefatLISA, globalparams->variant, &listROM, &listTDI1, &listTDI2, &listTDI3, injectedparams->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, globalparams->maxf, globalparams->maxf22, globalparams->tagtdi, globalparams->frozenLISA, globalparams->responseapprox);
   //tend = clock();
   //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
@@ -1197,7 +1201,7 @@ int LISAGenerateInjectionReIm(
   //TESTING
   //clock_t tbeg, tend;
   //tbeg = clock();
-  LISASimFDResponseTDI3Chan(globalparams->tagtRefatLISA, globalparams->variant, &listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, globalparams->maxf, globalparams->tagtdi, globalparams->frozenLISA, globalparams->responseapprox);
+  LISASimFDResponseTDI3Chan(globalparams->tagtRefatLISA, globalparams->variant, &listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, globalparams->maxf, globalparams->maxf22, globalparams->tagtdi, globalparams->frozenLISA, globalparams->responseapprox);
   //tend = clock();
   //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
@@ -1351,7 +1355,7 @@ double CalculateLogLCAmpPhase(LISAParams *params, LISAInjectionCAmpPhase* inject
     //
     //printf("fLow, fHigh, fstartobsinjected, fstartobsgenerated = %g, %g, %g, %g\n", fLow, fHigh, fstartobsinjected, fstartobsgenerated);
 
-    double overlapTDI123 = FDListmodesFresnelOverlap3Chan(generatedsignal->TDI1Signal, generatedsignal->TDI2Signal, generatedsignal->TDI3Signal, injection->TDI1Splines, injection->TDI2Splines, injection->TDI3Splines, &NoiseSn1, &NoiseSn2, &NoiseSn3, fLow, fHigh, fstartobsinjected, fstartobsgenerated);
+    double overlapTDI123 = FDListmodesFresnelOverlap3Chan(generatedsignal->TDI1Signal, generatedsignal->TDI2Signal, generatedsignal->TDI3Signal, injection->TDI1Splines, injection->TDI2Splines, injection->TDI3Splines, &NoiseSn1, &NoiseSn2, &NoiseSn3, fLow, fHigh, globalparams->maxf22, fstartobsinjected, fstartobsgenerated);
     //tend = clock();
     //printf("time Overlaps: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
     //
