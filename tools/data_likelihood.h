@@ -77,13 +77,15 @@ double ReIntProdCAmpPhaseSplineB(
 
 double FDSinglemodeDataOverlap(
   CAmpPhaseFrequencySeries* model,     
-  ReImUniformFrequencySeries* datachan,
+  ReImUniformFrequencySeries **datastack,           /* Data channel stack of nstack data series progressively decimated x2*/
+  int nstack,
   double bandcut,                                   /*target SNR value that we'd like to assure the excluded region does not attain*/
   ObjectFunction * bandSnoise);                      /* Noise function to use for the band cut calculation*/
 
 double FDCAmpPhaseModelDataOverlap(
   ListmodesCAmpPhaseFrequencySeries *listmodelchan, /* Waveform channel, list of modes in amplitude/phase form */
-  ReImUniformFrequencySeries *datachan,                  /* Data channel */
+  ReImUniformFrequencySeries **datastack,           /* Data channel stack of nstack data series progressively decimated x2*/
+  int nstack,
   double bandcut,                                   /*target SNR value that we'd like to assure the excluded region does not attain*/
   ObjectFunction * bandSnoise);                      /* Noise function to use for the band cut calculation*/
 

@@ -575,7 +575,7 @@ int IMRPhenomDGenerateh22FDAmpPhase_internal(
     }
   }
   //TEST
-  printf(MfRef, );
+  //printf(MfRef, );
   //TEST
 
   /* Append the computed mode to the ListmodesCAmpPhaseFrequencySeries structure */

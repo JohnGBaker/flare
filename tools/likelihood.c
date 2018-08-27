@@ -733,7 +733,7 @@ int ComputeIntegrandValues3Chan(
   while(f1[imin1+1]<=minf) imin1++; //should end up with     f1[ imin1 ] <= minf <  f1[ imin1 + 1 ]
   while(f1[imax1-1]>=maxf) imax1--; //should end up with  f1[ imax1 -1 ] <  maxf <= f1[ imax ]
   //printf("imin=%i, imax=%i\n",imin1,imax1);
-  printf("computing integrand minf = %g < %g = maxf\n", minf, maxf);  
+  //printf("computing integrand minf = %g < %g = maxf\n", minf, maxf);  
   int nbpts = imax1 + 1 - imin1;
   //printf("nbpts=%i\n",nbpts);
   if(nbpts<4)return -1;
@@ -832,7 +832,7 @@ int ComputeIntegrandValues3Chan(
     invSnchan1 = 1./ObjectFunctionCall(Snoise1,f);
     invSnchan2 = 1./ObjectFunctionCall(Snoise2,f);
     invSnchan3 = 1./ObjectFunctionCall(Snoise3,f);
-    printf("i=%i,i2=%i %g<f<%g, p1=%g\n",i,i2, gsl_matrix_get(quadsplinephase2, i2, 0), gsl_matrix_get(quadsplinephase2, i2+1, 0),gsl_matrix_get(quadsplinephase2, i2, 2));
+    //printf("i=%i,i2=%i %g<f<%g, p1=%g\n",i,i2, gsl_matrix_get(quadsplinephase2, i2, 0), gsl_matrix_get(quadsplinephase2, i2+1, 0),gsl_matrix_get(quadsplinephase2, i2, 2));
 
     camp = invSnchan1 * (ampreal1chan1 + I*ampimag1chan1) * (ampreal2chan1 - I*ampimag2chan1) + invSnchan2 * (ampreal1chan2 + I*ampimag1chan2) * (ampreal2chan2 - I*ampimag2chan2) + invSnchan3 * (ampreal1chan3 + I*ampimag1chan3) * (ampreal2chan3 - I*ampimag2chan3);
     //dump

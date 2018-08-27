@@ -418,7 +418,7 @@ double complex ComputeInt(
     double complex A0inv = 1./A0;
     double A0abs = cabs(A0); /* Used for accuracy requirement of adaptive Taylor expansions Ia and Ib */
     double complex coeffsA[4] = {0.,0.,0.,0.};
-    printf("j=%i, %g<f<%g, p1=%g, sum=%g\n",j, gsl_matrix_get(quadsplinecoeffsphase, j, 0), gsl_matrix_get(quadsplinecoeffsphase, j+1, 0),gsl_matrix_get(quadsplinecoeffsphase, j, 2),res);
+    //printf("j=%i, %g<f<%g, p1=%g, sum=%g\n",j, gsl_matrix_get(quadsplinecoeffsphase, j, 0), gsl_matrix_get(quadsplinecoeffsphase, j+1, 0),gsl_matrix_get(quadsplinecoeffsphase, j, 2),res);
     coeffsA[0] = 1.;
     for(int i=1; i<=3; i++) coeffsA[i] = epspow[i] * A0inv * (gsl_matrix_get(splinecoeffsAreal, j, i+1) + I*gsl_matrix_get(splinecoeffsAimag, j, i+1));
 

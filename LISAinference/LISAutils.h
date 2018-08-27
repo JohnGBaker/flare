@@ -264,6 +264,7 @@ void LISAInjectionReIm_Cleanup(LISAInjectionReIm* signal);
 void LISAInjectionReIm_Init(LISAInjectionReIm** signal);
 void LISADataFD_Cleanup(LISADataFD* data);
 void LISADataFD_Init(LISADataFD** data);
+void LISADataFD_Move(LISADataFD** from,LISADataFD** to);
 
 //Function to decimate the data in a LISADataFD struct by a factor of 2 and return a pointer to the new struct
 LISADataFD* LISADataFD_Decimate2(LISADataFD* data);
@@ -353,7 +354,7 @@ double CosPriorToCube(double y, double x1, double x2);
 /* log-Likelihood functions */
 double CalculateLogLCAmpPhase(LISAParams *params, LISAInjectionCAmpPhase* injection);
 double CalculateLogLReIm(LISAParams *params, LISAInjectionReIm* injection);
-double CalculateLogLDataCAmpPhase(LISAParams *modelparams, LISADataFD *data);
+double CalculateLogLDataCAmpPhase(LISAParams *modelparams, LISADataFD **datastack, int nstack);
 double CalculateLogLDataReIm(LISAParams *modelparams, LISADataFD *data);
   
 /* Functions for simplified likelihood using precomputing relevant values */

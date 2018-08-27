@@ -326,7 +326,12 @@ int main(int argc, char *argv[])
       printf("&sigCAmpPhase=%p\n", &sigCAmpPhase);
       printf("*&sigCAmpPhase=%p\n", *&sigCAmpPhase);
       LISASignalCAmpPhase_Init(&sigCAmpPhase);
+      clock_t tbeg, tend;
+      tbeg = clock();
       LISAGenerateSignalCAmpPhase(injectedparams, sigCAmpPhase);
+      tend = clock();
+      double t=(double) (tend-tbeg)/CLOCKS_PER_SEC;
+      printf("Model generation time=%g\n",t);
       SNR = sqrt(sigCAmpPhase->TDI123hh);
     } else {
       printf("Error in ComputeLISASNR: integration tag not recognized.\n");
@@ -341,10 +346,10 @@ int main(int argc, char *argv[])
   }
 
   double logL;
-  logL = CalculateLogLDataCAmpPhase(testparams, data);
+  logL = CalculateLogLDataCAmpPhase(testparams, &data,1);
   printf("Amp/Phase: logL=%g\n",logL);
   half_edges=1;
-  logL = CalculateLogLDataCAmpPhase(testparams, data);
+  logL = CalculateLogLDataCAmpPhase(testparams, &data,1);
   half_edges=0;
   printf("Amp/Phase: logL half=%g\n",logL);
   IntProdStyle=1;
@@ -359,7 +364,7 @@ int main(int argc, char *argv[])
     for(int n=0;n<ncuts;n++){
       NratioCut=(int)pow(n,cutpower);
       tbeg = clock();
-      logL = CalculateLogLDataCAmpPhase(testparams, data);
+      logL = CalculateLogLDataCAmpPhase(testparams, &data,1);
       tend = clock();
       double t=(double) (tend-tbeg)/CLOCKS_PER_SEC;
       printf(" t=%g\n",t);
@@ -371,55 +376,57 @@ int main(int argc, char *argv[])
     printf("n=%i nCut = %2i: mean = %10.6g  std = %10.6g\n", n,(int)pow(n,cutpower),times[n]/ntry,sqrt((times2[n]-times[n]*times[n]/ntry)/(ntry-1)));
   }
   
-  logL = CalculateLogLDataCAmpPhase(testparams, data);
-  printf("Amp/Phase B: logL=%g\n",logL);
+  logL = CalculateLogLDataCAmpPhase(testparams, &data,1);
+  printf("Amp/Phase E: logL=%g\n",logL);
   half_edges=1;
-  logL = CalculateLogLDataCAmpPhase(testparams, data);
-  half_edges=0;
+  logL = CalculateLogLDataCAmpPhase(testparams, &data,1);
   printf("Amp/Phase B half: logL=%g\n",logL);
+  half_edges=0;
 
   LISADataFD * dataD2 = LISADataFD_Decimate2(data); 
-  logL = CalculateLogLDataCAmpPhase(testparams, dataD2);
-  printf("Amp/Phase B (decimated by 2): logL=%g\n",logL);
+  logL = CalculateLogLDataCAmpPhase(testparams, &dataD2,1);
+  printf("Amp/Phase E (decimated by 2): logL=%g\n",logL);
   half_edges=1;
-  logL = CalculateLogLDataCAmpPhase(testparams, dataD2);
+  logL = CalculateLogLDataCAmpPhase(testparams, &dataD2,1);
   half_edges=0;
   printf("Amp/Phase B half (decimated by 2): logL=%g\n",logL);
 
   LISADataFD * dataD4 = LISADataFD_Decimate2(dataD2); 
-  logL = CalculateLogLDataCAmpPhase(testparams, dataD4);
-  printf("Amp/Phase B (decimated by 4): logL=%g\n",logL);
-  half_edges=1;
-  logL = CalculateLogLDataCAmpPhase(testparams, dataD4);
-  half_edges=0;
-  printf("Amp/Phase B half (decimated by 4): logL=%g\n",logL);
+  //logL = CalculateLogLDataCAmpPhase(testparams, &dataD4,1);
+  //printf("Amp/Phase E (decimated by 4): logL=%g\n",logL);
+  //half_edges=1;
+  //logL = CalculateLogLDataCAmpPhase(testparams, &dataD4,1);
+  //half_edges=0;
+  //printf("Amp/Phase B half (decimated by 4): logL=%g\n",logL);
 
   LISADataFD * dataD8 = LISADataFD_Decimate2(dataD4); 
-  logL = CalculateLogLDataCAmpPhase(testparams, dataD8);
-  printf("Amp/Phase B (decimated by 8): logL=%g\n",logL);
-  half_edges=1;
-  logL = CalculateLogLDataCAmpPhase(testparams, dataD8);
-  half_edges=0;
-  printf("Amp/Phase B half (decimated by 8): logL=%g\n",logL);
+  //logL = CalculateLogLDataCAmpPhase(testparams, &dataD8,1);
+  //printf("Amp/Phase E (decimated by 8): logL=%g\n",logL);
+  //half_edges=1;
+  //logL = CalculateLogLDataCAmpPhase(testparams, &dataD8,1);
+  //half_edges=0;
+  //printf("Amp/Phase B half (decimated by 8): logL=%g\n",logL);
 
   LISADataFD * dataD16 = LISADataFD_Decimate2(dataD8); 
-  logL = CalculateLogLDataCAmpPhase(testparams, dataD16);
-  printf("Amp/Phase B (decimated by 16): logL=%g\n",logL);
-  half_edges=1;
-  logL = CalculateLogLDataCAmpPhase(testparams, dataD16);
-  half_edges=0;
-  printf("Amp/Phase B half (decimated by 16): logL=%g\n",logL);
+  //logL = CalculateLogLDataCAmpPhase(testparams, &dataD16,1);
+  //printf("Amp/Phase E (decimated by 16): logL=%g\n",logL);
+  //half_edges=1;
+  //logL = CalculateLogLDataCAmpPhase(testparams, &dataD16,1);
+  //half_edges=0;
+  //printf("Amp/Phase B half (decimated by 16): logL=%g\n",logL);
 
   LISADataFD * dataD32 = LISADataFD_Decimate2(dataD16); 
-  logL = CalculateLogLDataCAmpPhase(testparams, dataD32);
-  printf("Amp/Phase B (decimated by 32): logL=%g\n",logL);
+  //logL = CalculateLogLDataCAmpPhase(testparams, &dataD32,1);
+  //printf("Amp/Phase E (decimated by 32): logL=%g\n",logL);
 
   LISADataFD * dataD64 = LISADataFD_Decimate2(dataD32); 
-  logL = CalculateLogLDataCAmpPhase(testparams, dataD64);
-  printf("Amp/Phase B (decimated by 64): logL=%g\n",logL);
+  //logL = CalculateLogLDataCAmpPhase(testparams, &dataD64,1);
+  //printf("Amp/Phase E (decimated by 64): logL=%g\n",logL);
 
-  logL = CalculateLogLDataReIm(testparams, data);
-  printf("ReIm: logL=%g\n",logL);
+  LISADataFD *datastack[7]={data,dataD2,dataD4,dataD8,dataD16,dataD32,dataD64};
+  logL = CalculateLogLDataCAmpPhase(testparams, datastack,7);
+  printf("Amp/Phase E(stacked data): logL=%g\n",logL);
+  
 
   free(params);
   LISADataFD_Cleanup(data);
