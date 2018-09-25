@@ -1,0 +1,391 @@
+----------------------------------------------------------------------
+Report of the Referee -- DT12301/Marsat
+----------------------------------------------------------------------
+
+The authors have presented a specific approach to include modulations
+in gravitational waveforms either due to intrinsic physics (e.g.
+precession) or due to the motion of a spacecraft via the use of
+Fourier transfer functions. The paper details the methodology of their
+approach and presents comparisons to other methods. Applications to
+the response of LISA-like detectors as well as precessing binaries for
+Advanced LIGO are presented, and the caveats/breakdown of the approach
+in various regimes is demonstrated.
+
+The approach builds on several previously developed methods and in
+particular extends the work of Klein et al. to higher order for
+inspiral waveforms.
+
+Additionally, the authors present a simple model for post-merger
+precession.
+
+-Overall, I think the paper is far too long and repetitive. I strongly
+encourage the authors to shorten it.
+  consider
+  
+-In particular, detailed reviews of well-known mathematical methods (e.g. SPA) appear unnecessary.
+  consider
+
+-The discussion of precession and frame decomposition simply rewrites
+methodology sections of the original papers where this concept was
+introduced, without actually citing the literature accurately.
+  consider
+
+-The same applies to the review of precession in compact binaries,
+references to the seminal works by Apostolatos et al. (1994) and
+Kidder (1995) are largely ignored.
+  consider
+
+-Appendix B is largely a rewrite of Campanelli et al, Schmidt et al and O'Shaughnessy et al. I do not understand the necessity for it.
+  consider
+  
+-Appendix E on the other hand should be promoted to a regular section in the main body of the text as it contains one of the most interestin results.
+  consider
+  
+-Appendix D does not seem very relevant either.
+  consider
+
+-Important summary points about how precession is incorporated in current waveform models should be added to the relevant section in the main text and contrasted with the developments of the authors.
+  consider
+
+-Generally, I think it would greatly improve the structure of the
+manuscript if the methodology section included basic things like the
+definition of parameters and precession rather than having it
+scattered across several sections.
+  consider
+  
+I strongly encourage the authors to restructure and shorten the
+manuscript, and to take care of missing citations and
+misrepresentation through lack of citations in several sections.
+  covered by the rest?
+
+Concrete comments:
+
+Page 1:
+
+Refs. [1-4] there are several reported detections by LIGO/Virgo
+missing, e.g GW170608 and GW170814
+ easy
+ 
+LIGO -> Advanced LIGO
+ done (only in first status instance)
+
+Virog -> Advanced Virgo
+  easy (only in first status instance)
+
+Add reference to Advanced LIGO
+  easy
+
+"... at an ever increasning rate." Add reference to rates paper.
+  easy
+
+3rd -> third
+  done
+
+Add reference to LISA Pathfinder
+  easy
+
+"... require accurate models .." -> requires
+  done
+
+"... performed for the LIGO detection [3,13]": Bayesian PE was
+performed on ALL reported events. The references are incomplete.
+Add reference to lalinference paper Veitch et al.
+  unsure
+  
+Acronym IMR is not defined "phenomenlogical templates ...":
+  done
+  
+references are incomplete. Add Ajith et al. PRL (PhenomB), Santamaria et. al PRD (PhenomC)
+  easy
+  
+References to ROMs should include Canizares et al.
+  easy
+  
+Regarding precessing IMR, only [18] and [21] describe such. [26] is
+inspiral only, and [27] does not contain a long inspiral.
+  consider
+
+Page 2:
+
+"Importantly for this work ...": I don't understand this statement in
+the context of the paper, and on its own it is incorrect and
+misleading.Only the NR ROMs have been successfully constructed via
+sparse representation. No time-domain IMR model (SEOBNRv3) has had a
+surrogate built successfully (yet). Further, no such sparse
+representation is needed for phenom. models due to their closed-form
+and Fourier domain nature.
+  consider:
+  
+"In the presence of misaligned spins": (mis)-alignment has not been
+defined.
+  easy
+  
+"the system will endure": endure does not seem an appropriate choice.
+Maybe say undergoes/exhibits.
+  easy
+  
+State why the increased dimensionality is a problem.
+  consider:
+  
+The paragraph (and subsequent sections) on modelling precession seem
+rather biased. The very first proposal to decompose precessing
+waveforms into a carrier phase plus a modulation was put forward by
+Apostolatos et al in 1994 (not cited in this context) The first time
+that this decomposition was actually demonstrated successfully (the
+BCV approch fails) was in Schmidt et al. Phys.Rev. D86 (2012) 104063,
+which the authors fail to cite completely.
+  consider:
+  
+".. the resulting waveform ...": rotated -> rotating
+  done
+
+"To follow this modelling ..." : this sentence reads very strange to
+me. PhenomP is in the Fourier domain and does indeed use a specific
+type of transfer function to construct the rotation in the FD. In that
+sense, it uses a specific prescription to translate the time-domain
+modulations into FD ones. The sentence reads as if the authors are the
+first to propose this modelling strategy, which is not true.
+  consider:
+
+"For short duration ...": LIGO -> LIGO and Virgo
+  done
+
+"To leverage the performance ...": Ref. [40] refers to a time-domain
+model. I suggest to cite [17] (PhenomD) and [18] (PhenomP)
+  consider:
+  
+"however, this formalism ...": precessing-frame is not defined. Cite
+[26] which shows the limitation to inspiral signals.
+   consider:
+   
+Page 3:
+"In the case of precessing waveforms ...": the modulation function ARE
+the Wigner D-matrices. The text reads as if this was something that
+will be shown by the authors but in fact is the basis for the
+state-of-the-art precessing IMR models PhenomP and SEOBNRv3. Add
+references to Schmidt et al. 2012, [18], and [21].
+  consider:
+
+Page 4:
+Subscript slr is not defined
+TDI is not defined
+"A number of authors ...": Add reference to Schmidt et al 2012. This
+was in fact the first time that this approach was demonstrated
+successfully, largely due to the correct identification of the carrier
+phase which has never been done previously. More comparisons to a
+large set up NR waveform were subsequently performed in Pekowsky et
+al.
+  consider:
+
+Eq. (5): citing Goldberg et al seems rather inappropriate here. While
+Goldberg's paper of course contains the general transformation
+behaviour (as does Wigner's original book), the general identification
+between inertial and precessing waveforms via a a Wigner matrix based
+rotation can be found in Arun et al (2009) (not in the context of
+using quasi-nonprecessing waveforms though) and Schmidt et al. 2012
+(see Eq. 5.3/5.4 therein).
+  consider:
+  
+Page 6:
+"In the absence of delays as in the case of precessing binaries ..":
+This statement is made multiple times. I find it confusing as such a
+statement is only true for precessing binaries seen by Advanced
+ground-based detectors. This is NOT true for precessing binaries
+observed by LISA as the authors show in Appendix E. The distinction
+should be made clear throughout the manuscript.
+
+"As shown in Sec. II C": it would be more useful to cite the
+appropriate Eq. rather than the whole section.
+  consider:
+  
+Page 7:
+Eq. (20) corresponds to the phase derivative model exploited in the recent
+Phenom models. It might be worth mentioning.
+  consider:
+  
+Fig 1: the legend seems to be missing one binary?
+  consider:
+  
+full -> solid
+  done
+  
+The q8 binary seems to be the only one that shows a significant
+difference between t_f and the peak frequency. If I understand
+correctly, then the alignment is based on the mode amplitude but t_f
+uses the phase. Why do you expect agreement in the first place?
+  consider:
+  
+Page 12:
+"The delays d are only present ...": as previously noted, this is
+another place where it sound like delays are never a problem for
+precessing binaries. see also below ("In the context of ...")
+  consider: Isn't that explicit?
+  
+Eqn. (52): the symbol \epsilon is used with different meanings
+  consider:
+  
+Page 13:
+SSB is undefined
+   yes it is
+   
+Page 14:
+enveloppe -> envelope
+"We refer to App. E ...": consider moving this to the main body
+    done
+    
+Page 15:
+Fig 4.: labels are too small
+  consider:
+    
+Page 16:
+Can Fig 3. be moved to appear close to the text passage describing it?
+  consider:
+    
+Page 18:
+Figs. 5. & 6.: Maybe add plot titles "high-mass" and "low-mass"
+  consider:
+
+"For SOBH systems, however, \eta will take a continuous set of values
+...": Where do the values 10^-4 to 5 come from?
+  consider:
+      
+Page 19/20:
+Figs. 7., 8., 10., 12, 13: in BW printout it's difficult to identify
+the curves with the legends
+  consider:
+
+Page 21:
+"As proposed by several authors ...": Add reference to Schmidt+ 2012.
+This was not noted at all in Ref. 30. (BCV)
+  consider:
+  
+"In particular, one recovers ..": This was shown in Ref. [22] and
+should be cited accordingly.
+  consider:
+  
+Page 22:
+"The first two angles ...": cite Refs. 32 and Schmidt et al 2012,
+where this is actually demonstrated
+  considier:huh?
+  
+"Quite generically ...": cite 28 and 80 regarding the slow variation
+of the precession cone.
+
+"The modes in the inertial frame ...": cite Schmidt et al 2012 here.
+Also, this is a repetition of Eq. (5)
+
+P-frame not defined
+
+"An important qualitative ...": the smallness of the opening angle is
+generally not applicable to LIGO sources. Quantify the statement.
+
+Eq.(82) is also the basis for the calculation in Ref. [80]. Cite
+accordingly.
+
+The observation that Eq. (84) holds approximately for modes in the
+co-precessing frame has been made in several papers in the literature.
+Cite 32, 33, 34
+
+General comment on Sec. V A: I do not understand the need for this
+extensive repetition of existing literature.
+
+Page 24:
+"After the merger occurs...": All three prescriptions [32-34] proposed
+in the literature are based on the waveform itself
+
+QNM is not defined
+
+"Table 1 shows ...": For which Phenom model are the final spins
+computed? PhenomD and PhenomP use different final spin formulae
+
+Footnote 9: Has it been shown that the incorporation of more NR data
+really improves the agreement? Overfitting when the wrong NR data are
+used may pose a serious issue. Or is this referring to the old final
+spin formula used in SEOBNRv3?
+
+Page 25:
+Fig 14: Why are the SEOBNR and model \beta-angles so different before
+t0?
+
+left panel -> top panel
+
+"In the inspiral phase ...": cite various PN timescale analyses papers
+(e.g. Apostolatos+, Kesden+, Gerosa+)
+
+"We will use the following notation": should go much earlier in the
+manuscript
+
+Page 26:
+Eq. (102): could there be a J missing?
+
+"this is a consequence of our simple precession ..": cite Apostolatos
+1994 as well
+
+"..the opening angle ..": this only applies to the early inspiral and
+should be pointed out. Ref. [80] would be appropriate.
+
+Page 27:
+"we can somewhat complement": the assumptions on the previous page
+really only apply to the early inspiral regime. It is not evident to
+me how the authors connect their poser-merger model to late inspiral
+and merger.
+
+".. the setting of a Fourier-domain precessing-frame waveform combined
+with a time-domain precession modulation": This really is the key idea
+of the approach and should be highlighted earlier in the manuscript.
+In the context of precession, however, this reduces to a transfer
+function that corresponds to the convolution of precessing-frame
+waveforms with Wigner D-matrices as developed in 32, Schmidt+ 2012,
+18, and 21
+
+
+Page 28:
+Fig. 16: full -> solid
+as before, in BW graphs are difficult to map to legend
+
+Fig 17: show the full plot range in the lower panel
+
+Page 29:
+orignal -> original
+
+"However, this statement ...": Is that because f_0 changes with m? Can
+you elaborate?
+
+Page 30:
+"To obtain the latter ...": Why isn't the inertial PhenomD h_22 used
+directly instead of an expensive iFFT?
+
+Which SEOB is used here?
+
+"..commonly used to quantify disagreements ...": it's not only used
+for templates and NR waveforms.
+
+Regarding precessing matches: time, phase and polarisation
+optimisation for matches are also performed in Pekowsky,
+O'Shaughnessy, Healy and Shoemaker (2013) and Schmidt, Ohme, Hannam
+(2015) several years before Blackman et al.
+
+Page 33:
+Add reference to the Einstein Telescope
+
+Appendix B:
+No references at all. Eqn. B1 are the same as Eq. 5 and Eq. 77.
+
+In Eq. B4, what does ABFO stand for?
+
+"Here we use the dominant eigenvector ...": it would be fair to note
+that the method in [33] corresponds one-to-one the method in [32] only
+using an algebraic version. Their correspondence was shown in [34]
+
+"note that in the original proposal ...": This comment seems strange.
+The formula is generic, only a spin-2 field is required.
+
+Page 38:
+"... to a single effective spin." It should be single effective
+precession spin to avoid confusion with the aligned-spin \chi_eff
+(Racine, Ajith et al) and the corresponding reference is Schmidt,
+Ohme, Hannam (2015)
+
+Appendix E:
+as mentioned before, this should be elevated to a section in the main
+body of the manuscript.
