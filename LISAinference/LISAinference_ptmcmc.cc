@@ -68,8 +68,8 @@ public:
     
     //First (if --allow_m2gtm1 is not specified) we enforce mass ordering
     if(not allow_m2gtm1)if(templateparams.m1<templateparams.m2){
-	return -INFINITY;
-      }
+      return -INFINITY;
+    }
     /* Note: context points to a LISAContext structure containing a LISASignal* */
     if(globalparams->tagint==0) {
       LISAInjectionCAmpPhase injection = *((LISAInjectionCAmpPhase*) context);
@@ -85,27 +85,28 @@ public:
     //cout <<"like="<<result<<endl;
     double post=result;
     double lpriorval=0;
-    if(prior)lpriorval=prior->evaluate_log(s);
+    if(prior)
+      lpriorval=prior->evaluate_log(s);
     post+=lpriorval;
     double tend=omp_get_wtime();
     double eval_time = tend-tstart;
-#pragma omp critical
+    #pragma omp critical
     {
       total_eval_time+=eval_time;
       count++;
       if(nevery>0&&0==count%nevery){
-	cout<<"eval_time = "<<eval_time<<"  result="<<result<<" prior="<<lpriorval<<" logZdata="<<logZdata<<" post="<<post;
-	print_info();
+        cout<<"eval_time = "<<eval_time<<"  result="<<result<<" prior="<<lpriorval<<" logZdata="<<logZdata<<" post="<<post;
+        print_info();
       }
       if(post>best_post){
-	best_post=post;
-	best=state(s);
+        best_post=post;
+        best=state(s);
       }
       //cout<<"loglike="<<result<<"<="<<maxLike<<endl;
       if(!isfinite(result)){
-	cout<<"Whoa dude, loglike is NAN! What's up with that?"<<endl;
-	cout<<"params="<<s.get_string()<<endl;
-	result=-INFINITY;
+        cout<<"Whoa dude, loglike is NAN! What's up with that?"<<endl;
+        cout<<"params="<<s.get_string()<<endl;
+        result=-INFINITY;
       }
     }
     return result;
@@ -175,95 +176,104 @@ public:
       cout<<"\ncount="<<count<<"\nscales = ";for(int i=0;i<dim;i++)cout<<scales[i]<<"\t";cout<<endl;
       cout<<"minscales = ";for(int i=0;i<dim;i++)cout<<minscales[i]<<"\t";cout<<endl;
       for(int i=0;i<dim;i++){
-	//cout<<"finish="<<finish<<", j lim="<<(finish?dim:i+1)<<endl;
-	double hi=scales[i]*deltafactor;
-	state sPlusi=s0;
-	sPlusi.set_param(i,s0.get_param(i)+hi);
-	state sMinusi=s0;
-	sMinusi.set_param(i,s0.get_param(i)-hi);
+        //cout<<"finish="<<finish<<", j lim="<<(finish?dim:i+1)<<endl;
+        double hi=scales[i]*deltafactor;
+        state sPlusi=s0;
+        sPlusi.set_param(i,s0.get_param(i)+hi);
+        state sMinusi=s0;
+        sMinusi.set_param(i,s0.get_param(i)-hi);
 
-	for(int j=i;j<(finish?dim:i+1);j++){//don't bother with offdiagonals at first for rough-in, then include while finishing
-	  //compute j derivative of model
-	  double hj=scales[j]*deltafactor;
-	  state sPlusj=s0;
-	  sPlusj.set_param(j,s0.get_param(j)+hj);
-	  state sMinusj=s0;
-	  sMinusj.set_param(j,s0.get_param(j)-hj);
-	  //for(int k=0;k<N;k++)dmudj[k]=(modelPlus[k]-modelMinus[k])/h/2.0;
-	  //Compute fisher matrix element
-	  cout<<"Fisher i,j="<<i<<","<<j<<endl;
-	  //cout<<"            hi,hj="<<hi<<","<<hj<<endl;
-	  if(globalparams->tagint==1) {
-	    fisher_matrix[i][j]
-	      = CalculateOverlapReIm(state2LISAParams( sPlusi), state2LISAParams( sPlusj), injectedsignalReIm)
-	      - CalculateOverlapReIm(state2LISAParams( sPlusi), state2LISAParams(sMinusj), injectedsignalReIm)
-	      - CalculateOverlapReIm(state2LISAParams(sMinusi), state2LISAParams( sPlusj), injectedsignalReIm)
-	      + CalculateOverlapReIm(state2LISAParams(sMinusi), state2LISAParams(sMinusj), injectedsignalReIm);
-	  } else {
-	    fisher_matrix[i][j]
-	      = CalculateOverlapCAmpPhase(state2LISAParams( sPlusi), state2LISAParams( sPlusj), injectedsignalCAmpPhase)
-	      - CalculateOverlapCAmpPhase(state2LISAParams( sPlusi), state2LISAParams(sMinusj), injectedsignalCAmpPhase)
-	      - CalculateOverlapCAmpPhase(state2LISAParams(sMinusi), state2LISAParams( sPlusj), injectedsignalCAmpPhase)
-	      + CalculateOverlapCAmpPhase(state2LISAParams(sMinusi), state2LISAParams(sMinusj), injectedsignalCAmpPhase);
-	  }
-	  fisher_matrix[i][j]/=4*hi*hj;
-	  fisher_matrix[j][i] = fisher_matrix[i][j];
-	}
+        for(int j=i;j<(finish?dim:i+1);j++){//don't bother with offdiagonals at first for rough-in, then include while finishing
+          //compute j derivative of model
+          double hj=scales[j]*deltafactor;
+          state sPlusj=s0;
+          sPlusj.set_param(j,s0.get_param(j)+hj);
+          state sMinusj=s0;
+          sMinusj.set_param(j,s0.get_param(j)-hj);
+          //for(int k=0;k<N;k++)dmudj[k]=(modelPlus[k]-modelMinus[k])/h/2.0;
+          //Compute fisher matrix element
+          cout<<"Fisher i,j="<<i<<","<<j<<endl;
+          //cout<<"            hi,hj="<<hi<<","<<hj<<endl;
+          if(globalparams->tagint==1) {
+            fisher_matrix[i][j]
+              = CalculateOverlapReIm(state2LISAParams( sPlusi), state2LISAParams( sPlusj), injectedsignalReIm)
+              - CalculateOverlapReIm(state2LISAParams( sPlusi), state2LISAParams(sMinusj), injectedsignalReIm)
+              - CalculateOverlapReIm(state2LISAParams(sMinusi), state2LISAParams( sPlusj), injectedsignalReIm)
+              + CalculateOverlapReIm(state2LISAParams(sMinusi), state2LISAParams(sMinusj), injectedsignalReIm);
+          } else {
+            fisher_matrix[i][j]
+              = CalculateOverlapCAmpPhase(state2LISAParams( sPlusi), state2LISAParams( sPlusj), injectedsignalCAmpPhase)
+              - CalculateOverlapCAmpPhase(state2LISAParams( sPlusi), state2LISAParams(sMinusj), injectedsignalCAmpPhase)
+              - CalculateOverlapCAmpPhase(state2LISAParams(sMinusi), state2LISAParams( sPlusj), injectedsignalCAmpPhase)
+              + CalculateOverlapCAmpPhase(state2LISAParams(sMinusi), state2LISAParams(sMinusj), injectedsignalCAmpPhase);
+          }
+          fisher_matrix[i][j]/=4*hi*hj;
+          fisher_matrix[j][i] = fisher_matrix[i][j];
+        }
       }
 
       //estimate error
       olderr=err;
       err=0;
       double square=0;
-      for(int i=0;i<dim;i++)for(int j=0;j<(finish?dim:i+1);j++){//neglecting offdiagonals until finish
-	  double delta=(fisher_matrix[i][j]-last_fisher_matrix[i][j])*scales[i]*scales[j];
-	  square+=fisher_matrix[i][j]*fisher_matrix[i][j];
-	  err+=delta*delta;
-	  if(std::isnan(delta)||delta*delta>tol/10)cout<<"delta["<<i<<","<<j<<"]="<<delta*delta<<endl;
-	}
-      cout<<"oldscales = ";for(int i=0;i<dim;i++)cout<<scales[i]<<"\t";cout<<endl;
+      for(int i=0;i<dim;i++)
+        for(int j=0;j<(finish?dim:i+1);j++){//neglecting offdiagonals until finish
+          double delta=(fisher_matrix[i][j]-last_fisher_matrix[i][j])*scales[i]*scales[j];
+          square+=fisher_matrix[i][j]*fisher_matrix[i][j];
+          err+=delta*delta;
+          if(std::isnan(delta)||delta*delta>tol/10)
+            cout<<"delta["<<i<<","<<j<<"]="<<delta*delta<<endl;
+        }
+      cout<<"oldscales = ";
+      for(int i=0;i<dim;i++)
+        cout<<scales[i]<<"\t";cout<<endl;
 
       if(std::isnan(err)){
-	for(int i=0;i<dim;i++)scales[i]/=3;
-	err=1e100;
+        for(int i=0;i<dim;i++)
+          scales[i]/=3;
+        err=1e100;
       }else if(err<olderr or err>1000){
-	//set scale estimate based on result
-	for(int i=0;i<dim;i++){
-	  if(err>olderr){
-	    //force toward convergence if deltas are small and not converging.
-	    minscales[i]*=1.1;
-	    cout<<"minscales["<<i<<"]->"<<minscales[i]<<endl;
-	  } //else {
-	    scales[i]=sqrt(scales[i]/sqrt(fisher_matrix[i][i]));
-	    //scales[i]=exp(log(scales[i])*0.7-log(fisher_matrix[i][i])*0.3);
-	    //}
-	  if(scales[i]<minscales[i])scales[i]=minscales[i];
-	}
-	//prep for next version of fisher calc;
-	for(int i=0;i<dim;i++)for(int j=0;j<(finish?dim:i+1);j++)last_fisher_matrix[i][j]=fisher_matrix[i][j];
+        //set scale estimate based on result
+        for(int i=0;i<dim;i++){
+          if(err>olderr){
+            //force toward convergence if deltas are small and not converging.
+            minscales[i]*=1.1;
+            cout<<"minscales["<<i<<"]->"<<minscales[i]<<endl;
+          } //else {
+            scales[i]=sqrt(scales[i]/sqrt(fisher_matrix[i][i]));
+            //scales[i]=exp(log(scales[i])*0.7-log(fisher_matrix[i][i])*0.3);
+            //}
+          if(scales[i]<minscales[i])
+            scales[i]=minscales[i];
+        }
+        //prep for next version of fisher calc;
+        for(int i=0;i<dim;i++)
+          for(int j=0;j<(finish?dim:i+1);j++)
+            last_fisher_matrix[i][j]=fisher_matrix[i][j];
       } else {
-	//leave scales alone and will quit.
+        //leave scales alone and will quit.
       }
       count++;
       cout<<"err->"<<err<<"( goal="<<tol<<"), better than olderr="<<olderr<<"?"<<endl;
       bool test = not ( err>tol and count<maxFisherIter and ( err>1000 or err<olderr));
       if(test){
-	cout<<"test is true"<<endl;
-	if(finish){
-	  cout<<"finish is already true: done"<<endl;
-	  done=true;
-	} else {
-	  cout<<"Start finishing..."<<endl;
-	  finish=true;
-	  err=1e100;
-	}
+        cout<<"test is true"<<endl;
+        if(finish){
+          cout<<"finish is already true: done"<<endl;
+          done=true;
+        } else {
+          cout<<"Start finishing..."<<endl;
+          finish=true;
+          err=1e100;
+        }
       }
     }
     err=sqrt(err);
 
     //cout<<"err="<<err<<endl;
     //cout<<"tol="<<tol<<endl;
-    if(err<tol)return tol;
+    if(err<tol)
+      return tol;
     return err;
   };
 
@@ -342,88 +352,88 @@ public:
       ListmodesCAmpPhaseFrequencySeries* mode = signal1->TDI1Signal;
       int nsize=-1;//Seem this must be the same number for all modes//set first time through loop.
       while(mode) {
-	//cout<<"l= "<<mode->l<<"  m="<<mode->m<<"  nsize="<<nsize<<endl;
-	ListmodesCAmpPhaseSpline* centermode=ListmodesCAmpPhaseSpline_GetMode(injection->TDI1Splines,mode->l,mode->m);
-	gsl_vector_view ofreq_vv=gsl_matrix_column(centermode->splines->quadspline_phase,0);
-	gsl_vector* ofreq = &ofreq_vv.vector;
-	double s1f0=gsl_vector_get(mode->freqseries->freq,0);
-	double s1fend=gsl_vector_get(mode->freqseries->freq,mode->freqseries->freq->size-1);
-	double f0=gsl_vector_get(ofreq,0);
-	int osize=ofreq->size,i0=0;
-	double fend=gsl_vector_get(ofreq,osize-1);
-	if(f0<s1f0){//s1 does not extend down as far as nominal freq range; trim range
-	  f0=s1f0;
-	  while(gsl_vector_get(ofreq,i0)<f0 && i0<osize-1)i0++;//select old-grid index to immediate left of f0
-	}
-	//cout<<"start: i0="<<i0<<" n,o sizes = "<<nsize<<", "<<osize<<endl;
-	if(fend>s1fend){//s1 does not extend up as far as nominal freq range; trim range
-	  fend=s1fend;
-	  while(gsl_vector_get(ofreq,osize-1)>fend && i0<osize-1)osize--;//select old-grid index to immediate right of fend
-	  //{cout<<"i0="<<i0<<" < "<<osize<<" f = "<<gsl_vector_get(ofreq,osize-1)<<" > "<<fend<<endl;osize--;}
-	}
-	if(nsize<0){
-	  if(grid_rescale_top)
-	    nsize=(overlap_grid_rescale*(1.0-grid_frac)+grid_frac)*(osize-i0);//Only set the first time (expected to be 22)
-	  else
-	    nsize=(1+(overlap_grid_rescale-1)*grid_frac)*(osize-i0);//Only set the first time (expected to be 22)
-	}
-	//cout<<"end: i0="<<i0<<" n,o sizes = "<<nsize<<", "<<osize<<endl;
-	gsl_vector* nfreq = gsl_vector_alloc(nsize);
-	double f=f0;
-	gsl_vector_set(nfreq,0,f);//first point
-	for(int i=1;i<nsize-1;i++){
-	  while(gsl_vector_get(ofreq,i0)<f && i0<osize-2)i0++;//select old-grid index to left of f
-	  //cout<<"i="<<i<<" i0="<<i0<<" n,o sizes = "<<nsize<<", "<<osize<<endl;
-	  double odelta=gsl_vector_get(ofreq,i0+1)-gsl_vector_get(ofreq,i0);
-	  double ofremain=gsl_vector_get(ofreq,osize-1)-gsl_vector_get(ofreq,i0);
-	  double nfremain=fend-f;
-	  double ndelta=odelta*nfremain/ofremain*(double)(osize-i0)/(double)(nsize-i);//rescale df by ratio of old/new mean df of remaining domain.
-	  if(i0+1<(int)(osize*grid_frac)){
-	    int effosize=osize*grid_frac,effnsize;
-	    if(grid_rescale_top)effnsize=nsize/(overlap_grid_rescale*(1.0/grid_frac-1.0)+1.0);
-	    else effnsize=nsize*grid_frac*overlap_grid_rescale/((overlap_grid_rescale-1.0)*grid_frac+1.0);
-	    //cout<<"effosize="<<effosize<<"  effnsize="<<effnsize<<endl;
-	    if(effnsize<1)effnsize=1; //just in case
-	    ofremain=gsl_vector_get(ofreq,effosize-1)-gsl_vector_get(ofreq,i0);
-	    nfremain=gsl_vector_get(ofreq,effosize-1)-f;
-	    ndelta=odelta*nfremain/ofremain*(double)(effosize-i0)/(double)(effnsize-i);//rescale df by ratio of old/new mean df of remaining domain.
-	  }
-	  //cout<<"  ofreq(i0)="<<gsl_vector_get(ofreq,i0)<<" odelta="<<odelta<<" ofremain="<<ofremain<<endl;;
-	  //cout<<"   f,ndelta "<<f<<","<<ndelta<<" fend="<<fend<<endl;
-	  f+=ndelta;
-	  gsl_vector_set(nfreq,i,f);
-	}
-	gsl_vector_set(nfreq,nsize-1,fend);//last point
-	
-	//Also need to work with TDI2 and TDI3
-	ListmodesCAmpPhaseFrequencySeries* mode2 = ListmodesCAmpPhaseFrequencySeries_GetMode(signal1->TDI2Signal,mode->l,mode->m);
-	ListmodesCAmpPhaseFrequencySeries* mode3 = ListmodesCAmpPhaseFrequencySeries_GetMode(signal1->TDI3Signal,mode->l,mode->m);
-	CAmpPhaseSpline * splines1 = ListmodesCAmpPhaseSpline_GetMode(listsplinesgen1,mode->l,mode->m)->splines;
-	CAmpPhaseSpline * splines2 = ListmodesCAmpPhaseSpline_GetMode(listsplinesgen2,mode->l,mode->m)->splines;
-	CAmpPhaseSpline * splines3 = ListmodesCAmpPhaseSpline_GetMode(listsplinesgen3,mode->l,mode->m)->splines;
-	  
-	//resize allocated memory
-	//CAmpPhaseFrequencySeries_Cleanup(mode->freqseries);
-	//mode->freqseries=new CAmpPhaseFrequencySeries;
-	CAmpPhaseFrequencySeries_Init(&mode->freqseries,nsize);
-	//CAmpPhaseFrequencySeries_Cleanup(mode2->freqseries);
-	CAmpPhaseFrequencySeries_Init(&mode2->freqseries,nsize);
-	//CAmpPhaseFrequencySeries_Cleanup(mode3->freqseries);
-	CAmpPhaseFrequencySeries_Init(&mode3->freqseries,nsize);
+  //cout<<"l= "<<mode->l<<"  m="<<mode->m<<"  nsize="<<nsize<<endl;
+  ListmodesCAmpPhaseSpline* centermode=ListmodesCAmpPhaseSpline_GetMode(injection->TDI1Splines,mode->l,mode->m);
+  gsl_vector_view ofreq_vv=gsl_matrix_column(centermode->splines->quadspline_phase,0);
+  gsl_vector* ofreq = &ofreq_vv.vector;
+  double s1f0=gsl_vector_get(mode->freqseries->freq,0);
+  double s1fend=gsl_vector_get(mode->freqseries->freq,mode->freqseries->freq->size-1);
+  double f0=gsl_vector_get(ofreq,0);
+  int osize=ofreq->size,i0=0;
+  double fend=gsl_vector_get(ofreq,osize-1);
+  if(f0<s1f0){//s1 does not extend down as far as nominal freq range; trim range
+    f0=s1f0;
+    while(gsl_vector_get(ofreq,i0)<f0 && i0<osize-1)i0++;//select old-grid index to immediate left of f0
+  }
+  //cout<<"start: i0="<<i0<<" n,o sizes = "<<nsize<<", "<<osize<<endl;
+  if(fend>s1fend){//s1 does not extend up as far as nominal freq range; trim range
+    fend=s1fend;
+    while(gsl_vector_get(ofreq,osize-1)>fend && i0<osize-1)osize--;//select old-grid index to immediate right of fend
+    //{cout<<"i0="<<i0<<" < "<<osize<<" f = "<<gsl_vector_get(ofreq,osize-1)<<" > "<<fend<<endl;osize--;}
+  }
+  if(nsize<0){
+    if(grid_rescale_top)
+      nsize=(overlap_grid_rescale*(1.0-grid_frac)+grid_frac)*(osize-i0);//Only set the first time (expected to be 22)
+    else
+      nsize=(1+(overlap_grid_rescale-1)*grid_frac)*(osize-i0);//Only set the first time (expected to be 22)
+  }
+  //cout<<"end: i0="<<i0<<" n,o sizes = "<<nsize<<", "<<osize<<endl;
+  gsl_vector* nfreq = gsl_vector_alloc(nsize);
+  double f=f0;
+  gsl_vector_set(nfreq,0,f);//first point
+  for(int i=1;i<nsize-1;i++){
+    while(gsl_vector_get(ofreq,i0)<f && i0<osize-2)i0++;//select old-grid index to left of f
+    //cout<<"i="<<i<<" i0="<<i0<<" n,o sizes = "<<nsize<<", "<<osize<<endl;
+    double odelta=gsl_vector_get(ofreq,i0+1)-gsl_vector_get(ofreq,i0);
+    double ofremain=gsl_vector_get(ofreq,osize-1)-gsl_vector_get(ofreq,i0);
+    double nfremain=fend-f;
+    double ndelta=odelta*nfremain/ofremain*(double)(osize-i0)/(double)(nsize-i);//rescale df by ratio of old/new mean df of remaining domain.
+    if(i0+1<(int)(osize*grid_frac)){
+      int effosize=osize*grid_frac,effnsize;
+      if(grid_rescale_top)effnsize=nsize/(overlap_grid_rescale*(1.0/grid_frac-1.0)+1.0);
+      else effnsize=nsize*grid_frac*overlap_grid_rescale/((overlap_grid_rescale-1.0)*grid_frac+1.0);
+      //cout<<"effosize="<<effosize<<"  effnsize="<<effnsize<<endl;
+      if(effnsize<1)effnsize=1; //just in case
+      ofremain=gsl_vector_get(ofreq,effosize-1)-gsl_vector_get(ofreq,i0);
+      nfremain=gsl_vector_get(ofreq,effosize-1)-f;
+      ndelta=odelta*nfremain/ofremain*(double)(effosize-i0)/(double)(effnsize-i);//rescale df by ratio of old/new mean df of remaining domain.
+    }
+    //cout<<"  ofreq(i0)="<<gsl_vector_get(ofreq,i0)<<" odelta="<<odelta<<" ofremain="<<ofremain<<endl;;
+    //cout<<"   f,ndelta "<<f<<","<<ndelta<<" fend="<<fend<<endl;
+    f+=ndelta;
+    gsl_vector_set(nfreq,i,f);
+  }
+  gsl_vector_set(nfreq,nsize-1,fend);//last point
+  
+  //Also need to work with TDI2 and TDI3
+  ListmodesCAmpPhaseFrequencySeries* mode2 = ListmodesCAmpPhaseFrequencySeries_GetMode(signal1->TDI2Signal,mode->l,mode->m);
+  ListmodesCAmpPhaseFrequencySeries* mode3 = ListmodesCAmpPhaseFrequencySeries_GetMode(signal1->TDI3Signal,mode->l,mode->m);
+  CAmpPhaseSpline * splines1 = ListmodesCAmpPhaseSpline_GetMode(listsplinesgen1,mode->l,mode->m)->splines;
+  CAmpPhaseSpline * splines2 = ListmodesCAmpPhaseSpline_GetMode(listsplinesgen2,mode->l,mode->m)->splines;
+  CAmpPhaseSpline * splines3 = ListmodesCAmpPhaseSpline_GetMode(listsplinesgen3,mode->l,mode->m)->splines;
+    
+  //resize allocated memory
+  //CAmpPhaseFrequencySeries_Cleanup(mode->freqseries);
+  //mode->freqseries=new CAmpPhaseFrequencySeries;
+  CAmpPhaseFrequencySeries_Init(&mode->freqseries,nsize);
+  //CAmpPhaseFrequencySeries_Cleanup(mode2->freqseries);
+  CAmpPhaseFrequencySeries_Init(&mode2->freqseries,nsize);
+  //CAmpPhaseFrequencySeries_Cleanup(mode3->freqseries);
+  CAmpPhaseFrequencySeries_Init(&mode3->freqseries,nsize);
 
-	//fill new values
-	gsl_vector_memcpy(mode->freqseries->freq,nfreq);
-	gsl_vector_memcpy(mode2->freqseries->freq,nfreq);
-	gsl_vector_memcpy(mode3->freqseries->freq,nfreq);
+  //fill new values
+  gsl_vector_memcpy(mode->freqseries->freq,nfreq);
+  gsl_vector_memcpy(mode2->freqseries->freq,nfreq);
+  gsl_vector_memcpy(mode3->freqseries->freq,nfreq);
 
-	EvalCAmpPhaseSpline(splines1,mode->freqseries);
-	EvalCAmpPhaseSpline(splines2,mode2->freqseries);
-	EvalCAmpPhaseSpline(splines3,mode3->freqseries);
+  EvalCAmpPhaseSpline(splines1,mode->freqseries);
+  EvalCAmpPhaseSpline(splines2,mode2->freqseries);
+  EvalCAmpPhaseSpline(splines3,mode3->freqseries);
 
-	//clean up
-	gsl_vector_free(nfreq);
+  //clean up
+  gsl_vector_free(nfreq);
 
-	mode=mode->next;
+  mode=mode->next;
       }//end loop over modes
       
       //clean up
@@ -432,7 +442,7 @@ public:
       ListmodesCAmpPhaseSpline_Destroy(listsplinesgen3);
 
     }//end resampling
-	
+  
     /* If LISAGenerateSignal failed (e.g. parameters out of bound), silently return -Infinity logL */
     if(ret==FAILURE) {
       overlap = -DBL_MAX;
@@ -688,13 +698,13 @@ int main(int argc, char*argv[]){
       else if(gsl_linalg_cholesky_invert(fishcov))cout<<"Fisher matrix Cholesky inverse failed."<<endl;
       else bad=false;
       if(bad){ //try LU decomposition
-	int s;
-	gsl_permutation * p = gsl_permutation_alloc (Npar);
-	gsl_matrix * fishLU=gsl_matrix_alloc(Npar,Npar);
-	for(int i=0;i<Npar;i++)for(int j=0;j<Npar;j++)gsl_matrix_set(fishLU,i,j,fim[i][j]);
-	if(gsl_linalg_LU_decomp(fishLU,p,&s))cout<<"Fisher matrix LU decomposition failed."<<endl;
-	else if (gsl_linalg_LU_invert(fishLU,p,fishcov))cout<<"Fisher matrix LU inverse failed."<<endl;
-	else bad=false;
+  int s;
+  gsl_permutation * p = gsl_permutation_alloc (Npar);
+  gsl_matrix * fishLU=gsl_matrix_alloc(Npar,Npar);
+  for(int i=0;i<Npar;i++)for(int j=0;j<Npar;j++)gsl_matrix_set(fishLU,i,j,fim[i][j]);
+  if(gsl_linalg_LU_decomp(fishLU,p,&s))cout<<"Fisher matrix LU decomposition failed."<<endl;
+  else if (gsl_linalg_LU_invert(fishLU,p,fishcov))cout<<"Fisher matrix LU inverse failed."<<endl;
+  else bad=false;
       gsl_permutation_free (p);
       gsl_matrix_free (fishLU);
       }
@@ -706,145 +716,145 @@ int main(int argc, char*argv[]){
       //try LU decomposition, eliminating vars as needed until success
       bad=true;//HACK
       if(bad){
-	vector<int>idxmap(Npar);for(int i=0;i<Npar;i++)idxmap[i]=i;//define an initially trivial map of param indices to (maybe) nondegenerate vector space indices
-	vector<int>idxinvmap(Npar);for(int i=0;i<Npar;i++)idxinvmap[i]=i;//and its inverse
-	int dim=Npar;
-	while(bad and dim>0){
-	  cout<<"   map: ";for(int i=0;i<Npar;i++)cout<<idxmap[i]<<" ";cout<<endl;
-	  cout<<"invmap: ";for(int i=0;i<dim;i++)cout<<idxinvmap[i]<<" ";cout<<endl;
-	  int s;
-	  gsl_permutation * p = gsl_permutation_alloc(dim);
-	  gsl_matrix * fishLU=gsl_matrix_alloc(dim,dim);
-	  gsl_matrix * covLU=gsl_matrix_alloc(dim,dim);
-	  for(int i=0;i<dim;i++){//store reduced dimension matrix in fishcov
-	    for(int j=0;j<dim;j++){
-	      gsl_matrix_set(fishcov,i,j,sfim[idxinvmap[i]][idxinvmap[j]]);
-	    }
-	  }
-	  cout<<"\n#Reduced Fisher:"<<endl;
-	  for(int i=0;i<dim;i++){
-	    cout<<names[idxinvmap[i]]<<"\t";
-	    for(int j=0;j<=i;j++)cout<<"\t"<<gsl_matrix_get(fishcov,i,j);
-	    cout<<endl;
-	  }
-	  for(int i=0;i<dim;i++)for(int j=0;j<dim;j++)gsl_matrix_set(fishLU,i,j,gsl_matrix_get(fishcov,i,j));
-	  bool retry=true;
-	  while(retry){
-	    retry=false;
-	    if(gsl_linalg_LU_decomp(fishLU,p,&s))cout<<"Fisher matrix LU decomposition failed."<<endl;
-	    else if (gsl_linalg_LU_invert(fishLU,p,covLU))cout<<"Fisher matrix LU inverse failed."<<endl;
-	    else {
-	      cout<<"\n#Reduced Cov:"<<endl;
-	      for(int i=0;i<dim;i++){
-		cout<<names[idxinvmap[i]]<<"\t";
-		for(int j=0;j<=i;j++)cout<<"\t"<<gsl_matrix_get(covLU,i,j);
-		cout<<endl;
-	      }
-	      //Next we need to check that we got positive diagonals:
-	      for(int i=0;i<dim;i++){
-		double diag=gsl_matrix_get(covLU,i,i);
-		if(diag<=0){
-		  cout<<" detected non pos diag in row "<<i<<" val = "<<diag<<endl;
-		  gsl_matrix_set(fishcov,i,i,gsl_matrix_get(fishcov,i,i)*1.0001);
-		  retry=true;
-		}
-	      }
-	      for(int i=0;i<dim;i++){//store reduced dimension matrix in fishcov
-		for(int j=0;j<dim;j++){
-		  gsl_matrix_set(fishLU,i,j,gsl_matrix_get(fishcov,i,j));
-		}
-	      }
+  vector<int>idxmap(Npar);for(int i=0;i<Npar;i++)idxmap[i]=i;//define an initially trivial map of param indices to (maybe) nondegenerate vector space indices
+  vector<int>idxinvmap(Npar);for(int i=0;i<Npar;i++)idxinvmap[i]=i;//and its inverse
+  int dim=Npar;
+  while(bad and dim>0){
+    cout<<"   map: ";for(int i=0;i<Npar;i++)cout<<idxmap[i]<<" ";cout<<endl;
+    cout<<"invmap: ";for(int i=0;i<dim;i++)cout<<idxinvmap[i]<<" ";cout<<endl;
+    int s;
+    gsl_permutation * p = gsl_permutation_alloc(dim);
+    gsl_matrix * fishLU=gsl_matrix_alloc(dim,dim);
+    gsl_matrix * covLU=gsl_matrix_alloc(dim,dim);
+    for(int i=0;i<dim;i++){//store reduced dimension matrix in fishcov
+      for(int j=0;j<dim;j++){
+        gsl_matrix_set(fishcov,i,j,sfim[idxinvmap[i]][idxinvmap[j]]);
+      }
+    }
+    cout<<"\n#Reduced Fisher:"<<endl;
+    for(int i=0;i<dim;i++){
+      cout<<names[idxinvmap[i]]<<"\t";
+      for(int j=0;j<=i;j++)cout<<"\t"<<gsl_matrix_get(fishcov,i,j);
+      cout<<endl;
+    }
+    for(int i=0;i<dim;i++)for(int j=0;j<dim;j++)gsl_matrix_set(fishLU,i,j,gsl_matrix_get(fishcov,i,j));
+    bool retry=true;
+    while(retry){
+      retry=false;
+      if(gsl_linalg_LU_decomp(fishLU,p,&s))cout<<"Fisher matrix LU decomposition failed."<<endl;
+      else if (gsl_linalg_LU_invert(fishLU,p,covLU))cout<<"Fisher matrix LU inverse failed."<<endl;
+      else {
+        cout<<"\n#Reduced Cov:"<<endl;
+        for(int i=0;i<dim;i++){
+    cout<<names[idxinvmap[i]]<<"\t";
+    for(int j=0;j<=i;j++)cout<<"\t"<<gsl_matrix_get(covLU,i,j);
+    cout<<endl;
+        }
+        //Next we need to check that we got positive diagonals:
+        for(int i=0;i<dim;i++){
+    double diag=gsl_matrix_get(covLU,i,i);
+    if(diag<=0){
+      cout<<" detected non pos diag in row "<<i<<" val = "<<diag<<endl;
+      gsl_matrix_set(fishcov,i,i,gsl_matrix_get(fishcov,i,i)*1.0001);
+      retry=true;
+    }
+        }
+        for(int i=0;i<dim;i++){//store reduced dimension matrix in fishcov
+    for(int j=0;j<dim;j++){
+      gsl_matrix_set(fishLU,i,j,gsl_matrix_get(fishcov,i,j));
+    }
+        }
 
-	      bad=false;
-	      cout<<"LU inverse succeeded"<<endl;
-	    }
-	  }
-	  if(bad){ //report eigenvalues for diagnostic and try again.
-	    int s;
-	    gsl_eigen_symmv_workspace * workspace = gsl_eigen_symmv_alloc(dim);
-	    gsl_vector * evals = gsl_vector_alloc(dim);
-	    gsl_matrix * evecs=gsl_matrix_alloc(dim,dim);
-	    for(int i=0;i<dim;i++)for(int j=0;j<dim;j++)gsl_matrix_set(fishLU,i,j,gsl_matrix_get(fishcov,i,j));
-	    gsl_eigen_symmv(fishLU,evals,evecs,workspace);
-	    if(1){
-	      cout<<"Eigenvals:vecs:"<<endl;
-	      for(int i=0;i<dim;i++){
-		cout<<"("<<i<<") "<<gsl_vector_get(evals,i)<<":{";
-		for(int j=0;j<dim;j++){
-		  cout<<gsl_matrix_get(evecs,j,i);
-		  if(j<dim-1)cout<<", ";
-		}
-		cout<<"}"<<endl;
-		if(gsl_vector_get(evals,i)<0)cout<<"    ***Whaaaaa?"<<endl;
-	      }
-	    }
-	    //Next search for and flag the most degenerate parameter
-	    //(defined as the largest row in the eigenvector column of the smallest eigenvalue
-	    double evalmin=1e100;
-	    int ievalmin=-1;
-	    for(int i=0;i<dim;i++)if(gsl_vector_get(evals,i)<evalmin){//find smallest eigenvalue
-		evalmin=gsl_vector_get(evals,i);
-		ievalmin=i;
-	      }
-	    double coeffmax=0;
-	    double icoeffmax=-1;
-	    for(int i=0;i<dim;i++){//find largest eigenvector component
-	      double val=gsl_matrix_get(evecs,i,ievalmin);
-	      if(val<0)val=-val;
-	      if(val>coeffmax){
-		coeffmax=val;
-		icoeffmax=i;
-	      }
-	    }
-	    //Now eliminate that param:
-	    int idegen=idxinvmap[icoeffmax];
-	    cout<<"degenerate eval, par:"<<ievalmin<<", "<<idegen<<endl;
-	    idxmap[idegen]=-1;
-	    for(int i=icoeffmax+1;i<dim;i++){
-	      int ipar=idxinvmap[i];
-	      idxinvmap[i-1]=ipar;
-	      idxmap[ipar]=i-1;
-	    }
-	    dim-=1;
-	    //cleanup
-	    gsl_eigen_symmv_free(workspace);
-	    gsl_vector_free (evals);
-	    gsl_matrix_free (evecs);
-	  }
-	  if(not bad){	  //If done construct the full inverted matrix in fishcov with inf for the degenerate bits.
-	    for(int i=0;i<Npar;i++)for(int j=0;j<=i;j++){
-		int iLU=idxmap[i];
-		int jLU=idxmap[j];
-		if(iLU>=0 and jLU>=0){
-		  gsl_matrix_set(fishcov,i,j,gsl_matrix_get(covLU,iLU,jLU));
-		gsl_matrix_set(fishcov,j,i,gsl_matrix_get(covLU,iLU,jLU));
-		} else {
-		  gsl_matrix_set(fishcov,i,j,1.0/0);
-		  gsl_matrix_set(fishcov,j,i,1.0/0);
-		}
-	      }
-	  }
-	  gsl_permutation_free (p);
-	  gsl_matrix_free (fishLU);
-	  gsl_matrix_free (covLU);
-	  cout<<"bad,dim:"<<bad<<","<<dim<<endl;
-	}
+        bad=false;
+        cout<<"LU inverse succeeded"<<endl;
+      }
+    }
+    if(bad){ //report eigenvalues for diagnostic and try again.
+      int s;
+      gsl_eigen_symmv_workspace * workspace = gsl_eigen_symmv_alloc(dim);
+      gsl_vector * evals = gsl_vector_alloc(dim);
+      gsl_matrix * evecs=gsl_matrix_alloc(dim,dim);
+      for(int i=0;i<dim;i++)for(int j=0;j<dim;j++)gsl_matrix_set(fishLU,i,j,gsl_matrix_get(fishcov,i,j));
+      gsl_eigen_symmv(fishLU,evals,evecs,workspace);
+      if(1){
+        cout<<"Eigenvals:vecs:"<<endl;
+        for(int i=0;i<dim;i++){
+    cout<<"("<<i<<") "<<gsl_vector_get(evals,i)<<":{";
+    for(int j=0;j<dim;j++){
+      cout<<gsl_matrix_get(evecs,j,i);
+      if(j<dim-1)cout<<", ";
+    }
+    cout<<"}"<<endl;
+    if(gsl_vector_get(evals,i)<0)cout<<"    ***Whaaaaa?"<<endl;
+        }
+      }
+      //Next search for and flag the most degenerate parameter
+      //(defined as the largest row in the eigenvector column of the smallest eigenvalue
+      double evalmin=1e100;
+      int ievalmin=-1;
+      for(int i=0;i<dim;i++)if(gsl_vector_get(evals,i)<evalmin){//find smallest eigenvalue
+    evalmin=gsl_vector_get(evals,i);
+    ievalmin=i;
+        }
+      double coeffmax=0;
+      double icoeffmax=-1;
+      for(int i=0;i<dim;i++){//find largest eigenvector component
+        double val=gsl_matrix_get(evecs,i,ievalmin);
+        if(val<0)val=-val;
+        if(val>coeffmax){
+    coeffmax=val;
+    icoeffmax=i;
+        }
+      }
+      //Now eliminate that param:
+      int idegen=idxinvmap[icoeffmax];
+      cout<<"degenerate eval, par:"<<ievalmin<<", "<<idegen<<endl;
+      idxmap[idegen]=-1;
+      for(int i=icoeffmax+1;i<dim;i++){
+        int ipar=idxinvmap[i];
+        idxinvmap[i-1]=ipar;
+        idxmap[ipar]=i-1;
+      }
+      dim-=1;
+      //cleanup
+      gsl_eigen_symmv_free(workspace);
+      gsl_vector_free (evals);
+      gsl_matrix_free (evecs);
+    }
+    if(not bad){    //If done construct the full inverted matrix in fishcov with inf for the degenerate bits.
+      for(int i=0;i<Npar;i++)for(int j=0;j<=i;j++){
+    int iLU=idxmap[i];
+    int jLU=idxmap[j];
+    if(iLU>=0 and jLU>=0){
+      gsl_matrix_set(fishcov,i,j,gsl_matrix_get(covLU,iLU,jLU));
+    gsl_matrix_set(fishcov,j,i,gsl_matrix_get(covLU,iLU,jLU));
+    } else {
+      gsl_matrix_set(fishcov,i,j,1.0/0);
+      gsl_matrix_set(fishcov,j,i,1.0/0);
+    }
+        }
+    }
+    gsl_permutation_free (p);
+    gsl_matrix_free (fishLU);
+    gsl_matrix_free (covLU);
+    cout<<"bad,dim:"<<bad<<","<<dim<<endl;
+  }
       }
       for(int i=0;i<Npar;i++)for(int j=0;j<=i;j++){
-	  gsl_matrix_set(fishcov,i,j,gsl_matrix_get(fishcov,i,j)/sqrt(fim[i][i]*fim[j][j]));//Revert the scaling
-	  gsl_matrix_set(fishcov,j,i,gsl_matrix_get(fishcov,i,j));
-	}
+    gsl_matrix_set(fishcov,i,j,gsl_matrix_get(fishcov,i,j)/sqrt(fim[i][i]*fim[j][j]));//Revert the scaling
+    gsl_matrix_set(fishcov,j,i,gsl_matrix_get(fishcov,i,j));
+  }
     }
     if(not bad) {
       cout<<"\nCovariance:"<<endl;
       outfish<<"\n#Covariance:"<<endl;
       for(int i=0;i<Npar;i++){
-	cout<<names[i]<<"\t";
-	for(int j=0;j<=i;j++)cout<<"\t"<<gsl_matrix_get(fishcov,i,j);
-	cout<<endl;
-	for(int j=0;j<=i;j++)outfish<<"\t"<<gsl_matrix_get(fishcov,i,j);
-	for(int j=i+1;j<Npar;j++)outfish<<"\t"<<gsl_matrix_get(fishcov,i,j);
-	outfish<<endl;
+  cout<<names[i]<<"\t";
+  for(int j=0;j<=i;j++)cout<<"\t"<<gsl_matrix_get(fishcov,i,j);
+  cout<<endl;
+  for(int j=0;j<=i;j++)outfish<<"\t"<<gsl_matrix_get(fishcov,i,j);
+  for(int j=i+1;j<Npar;j++)outfish<<"\t"<<gsl_matrix_get(fishcov,i,j);
+  outfish<<endl;
       }
       //Now the correlation matrix:
       cout<<"\nCovar scales:"<<endl;
@@ -854,12 +864,12 @@ int main(int argc, char*argv[]){
       cout<<"\n\nCorrelation:"<<endl;
       outfish<<"\n\n#Coorrelation:"<<endl;
       for(int i=0;i<Npar;i++){
-	cout<<names[i]<<"\t";
-	for(int j=0;j<=i;j++)cout<<"\t"<<gsl_matrix_get(fishcov,i,j)/sqrt(gsl_matrix_get(fishcov,i,i)*gsl_matrix_get(fishcov,j,j));
-	cout<<endl;
-	for(int j=0;j<=i;j++)outfish<<"\t"<<gsl_matrix_get(fishcov,i,j)/sqrt(gsl_matrix_get(fishcov,i,i)*gsl_matrix_get(fishcov,j,j));
-	for(int j=i+1;j<Npar;j++)outfish<<"\t"<<gsl_matrix_get(fishcov,i,j)/sqrt(gsl_matrix_get(fishcov,i,i)*gsl_matrix_get(fishcov,j,j));
-	outfish<<endl;
+  cout<<names[i]<<"\t";
+  for(int j=0;j<=i;j++)cout<<"\t"<<gsl_matrix_get(fishcov,i,j)/sqrt(gsl_matrix_get(fishcov,i,i)*gsl_matrix_get(fishcov,j,j));
+  cout<<endl;
+  for(int j=0;j<=i;j++)outfish<<"\t"<<gsl_matrix_get(fishcov,i,j)/sqrt(gsl_matrix_get(fishcov,i,i)*gsl_matrix_get(fishcov,j,j));
+  for(int j=i+1;j<Npar;j++)outfish<<"\t"<<gsl_matrix_get(fishcov,i,j)/sqrt(gsl_matrix_get(fishcov,i,i)*gsl_matrix_get(fishcov,j,j));
+  outfish<<endl;
       }
     }
     //Close-out Fisher/Covar
