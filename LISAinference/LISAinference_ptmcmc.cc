@@ -117,8 +117,15 @@ public:
 
     //Here the param indices are hard coded, but we can use sp to find them by name
     LISAParams templateparams;
-    templateparams.m1 = params[0];
-    templateparams.m2 = params[1];
+    if (priorParams->samplemassparams == m1m2) {
+      templateparams.m1 = params[0];
+      templateparams.m2 = params[1];
+    } else if (priorParams->samplemassparams == Mchirpeta) {
+      templateparams.m1 = m1ofMchirpeta(params[0], params[1]);
+      templateparams.m2 = m2ofMchirpeta(params[0], params[1]);
+    } else {
+      // FIXME throw an error here
+    }
     templateparams.tRef = params[2];
     templateparams.distance = params[3];
     if(!priorParams->flat_distprior)//If not using flat prior on distance then we need to transform from s(D) to D.
@@ -554,8 +561,14 @@ int main(int argc, char*argv[]){
   //Set up the parameter space
   stateSpace space(Npar);
   /* Note: here we output physical values in the cube (overwriting), and we keep the original order for physical parameters */
-  string names[]={"m1","m2","tRef","dist","phase","inc","lambda","beta","pol"};
-  if(!priorParams->flat_distprior)names[3]="s(D)";
+  string names[] = {"m1", "m2", "tRef", "dist", "phase", "inc", "lambda",
+                    "beta", "pol"};
+  if (priorParams->samplemassparams == Mchirpeta) {
+    names[0] = "mchirp";
+    names[1] = "eta";
+  }
+  if (!priorParams->flat_distprior)
+    names[3] = "s(D)";
   space.set_names(names);
   space.set_bound(4,boundary(boundary::wrap,boundary::wrap,0,2*M_PI));//set 2-pi-wrapped space for phi.
   space.set_bound(6,boundary(boundary::wrap,boundary::wrap,0,2*M_PI));//set 2-pi-wrapped space for lambda.
@@ -564,15 +577,38 @@ int main(int argc, char*argv[]){
 
   //Set the prior:
   //Eventually this should move to the relevant constitutent code elements where the params are given meaning.
-  const int uni=mixed_dist_product::uniform, gauss=mixed_dist_product::gaussian, polar=mixed_dist_product::polar, copol=mixed_dist_product::copolar;
-  double lambda0=(priorParams->lambda_min+priorParams->lambda_max)/2,dlambda=(priorParams->lambda_max-priorParams->lambda_min)/2;
-  double beta0=(priorParams->beta_min+priorParams->beta_max)/2,dbeta=(priorParams->beta_max-priorParams->beta_min)/2;//Note: these are ignored by co-polar prior
-  double tref0=injectedparams->tRef,dtref=priorParams->deltaT;
-  double phase0=(priorParams->phase_min+priorParams->phase_max)/2,dphase=(priorParams->phase_max-priorParams->phase_min)/2;
-  double inc0=(priorParams->inc_min+priorParams->inc_max)/2,dinc=(priorParams->inc_max-priorParams->inc_min)/2;//Note: these are ignored by polar prior
-  double dist0=(priorParams->dist_min+priorParams->dist_max)/2,ddist=(priorParams->dist_max-priorParams->dist_min)/2;
-  double m10=(priorParams->comp_max+priorParams->comp_min)/2,m20=m10,dm1=(priorParams->comp_max-priorParams->comp_min)/2,dm2=dm1;
-  double pol0=(priorParams->pol_min+priorParams->pol_max)/2,dpol=(priorParams->pol_max-priorParams->pol_min)/2;
+  const int uni=mixed_dist_product::uniform, gauss=mixed_dist_product::gaussian,
+            polar=mixed_dist_product::polar, copol=mixed_dist_product::copolar;
+  double lambda0=(priorParams->lambda_min+priorParams->lambda_max)/2,
+         dlambda=(priorParams->lambda_max-priorParams->lambda_min)/2;
+  double beta0=(priorParams->beta_min+priorParams->beta_max)/2,
+         dbeta=(priorParams->beta_max-priorParams->beta_min)/2;//Note: these are ignored by co-polar prior
+  double tref0=injectedparams->tRef, dtref=priorParams->deltaT;
+  double phase0=(priorParams->phase_min+priorParams->phase_max)/2,
+         dphase=(priorParams->phase_max-priorParams->phase_min)/2;
+  double inc0=(priorParams->inc_min+priorParams->inc_max)/2,
+         dinc=(priorParams->inc_max-priorParams->inc_min)/2;//Note: these are ignored by polar prior
+  double dist0=(priorParams->dist_min+priorParams->dist_max)/2,
+         ddist=(priorParams->dist_max-priorParams->dist_min)/2;
+  double pol0=(priorParams->pol_min+priorParams->pol_max)/2,
+         dpol=(priorParams->pol_max-priorParams->pol_min)/2;
+
+  double mp1, mp2, dmp1, dmp2;
+  if (priorParams->samplemassparams == m1m2) {
+    // sampling in component masses
+    mp1 = (priorParams->comp_max + priorParams->comp_min) / 2;
+    mp2 = mp1;
+    dmp1 = (priorParams->comp_max - priorParams->comp_min) / 2;
+    dmp2 = dmp1;
+  } else if (priorParams->samplemassparams == Mchirpeta) {
+    // sampling in chirp mass and symm mass ratio
+    mp1 = (priorParams->Mchirp_max + priorParams->Mchirp_min) / 2;
+    mp2 = (priorParams->eta_max + priorParams->eta_min) / 2;
+    dmp1 = (priorParams->Mchirp_max - priorParams->Mchirp_min) / 2;
+    dmp2 = (priorParams->eta_max - priorParams->eta_min) / 2;
+  } else {
+    // FIXME throw an error here
+  }
 
   //If the parameters are "fixed" then we approximately realize that by restricting the range by 1e-5.
   if (!std::isnan(priorParams->fix_lambda))cout<<" ** Parameter fixing not supported.  Ignoring request! **"<<endl;
@@ -584,11 +620,16 @@ int main(int argc, char*argv[]){
   if (!std::isnan(priorParams->fix_dist))cout<<" ** Parameter fixing not supported.  Ignoring request! **"<<endl;
   if (!std::isnan(priorParams->fix_m1))cout<<" ** Parameter fixing not supported.  Ignoring request! **"<<endl;
   if (!std::isnan(priorParams->fix_m2))cout<<" ** Parameter fixing not supported.  Ignoring request! **"<<endl;
-  if(priorParams->logflat_massprior){
-    dm1=sqrt((m10+dm1)/(m10-dm1));
-    dm2=sqrt((m20+dm2)/(m20-dm2));
-    m10=priorParams->comp_min*dm1;
-    m20=priorParams->comp_min*dm2;
+  if (priorParams->logflat_massprior) {
+    if (priorParams->samplemassparams == m1m2) {
+      dmp1 = sqrt((mp1 + dmp1) / (mp1 - dmp1));
+      dmp2 = sqrt((mp2 + dmp2) / (mp2 - dmp2));
+      mp1 = priorParams->comp_min * dmp1;
+      mp2 = priorParams->comp_min * dmp2;
+    } else if (priorParams->samplemassparams == Mchirpeta) {
+      dmp1 = sqrt((mp1 + dmp1) / (mp1 - dmp1));
+      mp1 = priorParams->Mchirp_min * dmp1;
+    }
   }
   if(!priorParams->flat_distprior) {
     //In this case we transform the distance parameter to s(D)=(D^3-Dmin^3)/(Dmax^3-Dmin^3)
@@ -600,16 +641,23 @@ int main(int argc, char*argv[]){
     dist0=(smax+smin)/2;
     ddist=(smax-smin)/2;
   }
-  //                                     m1      m2     tRef     dist   phase    inc    lambda    beta     pol
-  valarray<double>    centers((dlist){  m10,    m20,   tref0,  dist0,  phase0,  inc0, lambda0,  beta0,   pol0  });
-  valarray<double> halfwidths((dlist){  dm1,    dm2,   dtref,  ddist,  dphase,  dinc, dlambda,  dbeta,   dpol  });
+  //                              m1/mchirp  m2/eta     tRef    dist    phase    inc   lambda    beta    pol
+  valarray<double>    centers((dlist){  mp1,    mp2,   tref0,  dist0,  phase0,  inc0, lambda0,  beta0,   pol0  });
+  valarray<double> halfwidths((dlist){ dmp1,   dmp2,   dtref,  ddist,  dphase,  dinc, dlambda,  dbeta,   dpol  });
   //valarray<int>         types((ilist){  uni,    uni,     uni,     uni,    uni, polar,     uni,  copol,    uni  });
-  valarray<int>         types{  uni,    uni,     uni,     uni,    uni, polar,     uni,  copol,    uni  };
-  if (!std::isnan(priorParams->fix_beta))types[7]=uni;//"fixed" parameter set to narrow uniform range
-  if (!std::isnan(priorParams->fix_inc)) types[5]=uni;//"fixed" parameter set to narrow uniform range
-  if(priorParams->logflat_massprior)types[0]=types[1]=mixed_dist_product::log;
+  valarray<int>                 types{  uni,    uni,     uni,    uni,     uni, polar,     uni,  copol,    uni  };
+  if (!std::isnan(priorParams->fix_beta))
+    types[7] = uni; //"fixed" parameter set to narrow uniform range
+  if (!std::isnan(priorParams->fix_inc))
+    types[5] = uni;//"fixed" parameter set to narrow uniform range
+  if (priorParams->logflat_massprior) {
+    types[0] = mixed_dist_product::log;
+    if (priorParams->samplemassparams == m1m2) {
+      types[1] = mixed_dist_product::log;
+    }
+  }
   sampleable_probability_function *prior;
-  prior=new mixed_dist_product(&space,types,centers,halfwidths);
+  prior = new mixed_dist_product(&space, types, centers, halfwidths);
   cout<<"Prior is:\n"<<prior->show()<<endl;
 
   //test the prior:
@@ -625,7 +673,15 @@ int main(int argc, char*argv[]){
 
   //Test the injection value:
   fl.info_every(1);
-  valarray<double> inj_pars((dlist){injectedparams->m1,injectedparams->m2,injectedparams->tRef,injectedparams->distance,injectedparams->phiRef,injectedparams->inclination,injectedparams->lambda,injectedparams->beta,injectedparams->polarization});
+  valarray<double> inj_pars((dlist){injectedparams->m1, injectedparams->m2,
+                                    injectedparams->tRef, injectedparams->distance,
+                                    injectedparams->phiRef, injectedparams->inclination,
+                                    injectedparams->lambda, injectedparams->beta,
+                                    injectedparams->polarization});
+  if (priorParams->samplemassparams == Mchirpeta) {
+    inj_pars[0] = Mchirpofm1m2(injectedparams->m1, injectedparams->m2);
+    inj_pars[1] = etaofm1m2(injectedparams->m1, injectedparams->m2);
+  }
   if(!priorParams->flat_distprior) {
     //In this case we transform the distance parameter to s(D)=(D^3-Dmin^3)/(Dmax^3-Dmin^3)
     double D0,dD;
