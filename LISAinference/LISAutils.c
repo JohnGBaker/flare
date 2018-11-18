@@ -128,6 +128,29 @@ void LISAInjectionReIm_Init(LISAInjectionReIm** signal) {
 
 /************ Parsing arguments function ************/
 
+void InitGlobalParams(void)
+{
+  globalparams = (LISAGlobalParams *)malloc(sizeof(LISAGlobalParams));
+  memset(globalparams, 0, sizeof(LISAGlobalParams));
+  globalparams->fRef = 0.;
+  globalparams->deltatobs = 2.;
+  globalparams->minf = 0.;
+  globalparams->maxf = 1.;
+  globalparams->tagextpn = 1;
+  globalparams->tagtRefatLISA = 0;
+  globalparams->Mfmatch = 0.;
+  globalparams->nbmodeinj = 5;
+  globalparams->nbmodetemp = 5;
+  globalparams->tagint = 0;
+  globalparams->tagtdi = TDIAETXYZ;
+  globalparams->nbptsoverlap = 32768;
+  globalparams->variant = &LISAProposal;
+  globalparams->zerolikelihood = 0;
+  globalparams->frozenLISA = 0;
+  globalparams->responseapprox = full;
+  globalparams->tagsimplelikelihood = 0;
+}
+
 /* Parse command line to initialize LISAParams, LISAPrior, and LISARunParams objects */
 void parse_args_LISA(ssize_t argc, char **argv,
   LISAParams* params,
@@ -1170,6 +1193,7 @@ int LISAGenerateInjectionReIm(
 
   /* Starting frequency corresponding to duration of observation deltatobs */
   double fstartobs = 0.;
+  printf("%p\n", injectedparams);
   if(!(globalparams->deltatobs==0.)) fstartobs = Newtonianfoft(params->m1, params->m2, globalparams->deltatobs);
 
   /* Generate the waveform with the ROM */
