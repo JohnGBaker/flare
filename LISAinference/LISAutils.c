@@ -149,6 +149,19 @@ void InitGlobalParams(void)
   globalparams->frozenLISA = 0;
   globalparams->responseapprox = full;
   globalparams->tagsimplelikelihood = 0;
+
+  injectedparams = (LISAParams *)malloc(sizeof(LISAParams));
+  memset(injectedparams, 0, sizeof(LISAParams));
+  injectedparams->tRef = 0.;
+  injectedparams->phiRef = 0.;
+  injectedparams->m1 = 2*1e6;
+  injectedparams->m2 = 1*1e6;
+  injectedparams->distance = 40*1e3;
+  injectedparams->lambda = 0.;
+  injectedparams->beta = 0.;
+  injectedparams->inclination = PI/3.;
+  injectedparams->polarization = 0.;
+  injectedparams->nbmode = globalparams->nbmodeinj;
 }
 
 /* Parse command line to initialize LISAParams, LISAPrior, and LISARunParams objects */
