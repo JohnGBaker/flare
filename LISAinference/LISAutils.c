@@ -128,6 +128,8 @@ void LISAInjectionReIm_Init(LISAInjectionReIm** signal) {
 
 /************ Parsing arguments function ************/
 
+/* This function must be called by Python scripts as soon as possible
+   to make sure global variables are set up with meaningful values */
 void InitGlobalParams(void)
 {
   globalparams = (LISAGlobalParams *)malloc(sizeof(LISAGlobalParams));
