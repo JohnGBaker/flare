@@ -128,6 +128,44 @@ void LISAInjectionReIm_Init(LISAInjectionReIm** signal) {
 
 /************ Parsing arguments function ************/
 
+/* This function must be called by Python scripts as soon as possible
+   to make sure global variables are set up with meaningful values */
+void InitGlobalParams(void)
+{
+  globalparams = (LISAGlobalParams *)malloc(sizeof(LISAGlobalParams));
+  memset(globalparams, 0, sizeof(LISAGlobalParams));
+  globalparams->fRef = 0.;
+  globalparams->deltatobs = 2.;
+  globalparams->minf = 0.;
+  globalparams->maxf = 1.;
+  globalparams->tagextpn = 1;
+  globalparams->tagtRefatLISA = 0;
+  globalparams->Mfmatch = 0.;
+  globalparams->nbmodeinj = 5;
+  globalparams->nbmodetemp = 5;
+  globalparams->tagint = 0;
+  globalparams->tagtdi = TDIAETXYZ;
+  globalparams->nbptsoverlap = 32768;
+  globalparams->variant = &LISAProposal;
+  globalparams->zerolikelihood = 0;
+  globalparams->frozenLISA = 0;
+  globalparams->responseapprox = full;
+  globalparams->tagsimplelikelihood = 0;
+
+  injectedparams = (LISAParams *)malloc(sizeof(LISAParams));
+  memset(injectedparams, 0, sizeof(LISAParams));
+  injectedparams->tRef = 0.;
+  injectedparams->phiRef = 0.;
+  injectedparams->m1 = 2*1e6;
+  injectedparams->m2 = 1*1e6;
+  injectedparams->distance = 40*1e3;
+  injectedparams->lambda = 0.;
+  injectedparams->beta = 0.;
+  injectedparams->inclination = PI/3.;
+  injectedparams->polarization = 0.;
+  injectedparams->nbmode = globalparams->nbmodeinj;
+}
+
 /* Parse command line to initialize LISAParams, LISAPrior, and LISARunParams objects */
 void parse_args_LISA(ssize_t argc, char **argv,
   LISAParams* params,
@@ -1421,6 +1459,198 @@ double CalculateLogLReIm(LISAParams *params, LISAInjectionReIm* injection)
   LISASignalReIm_Cleanup(generatedsignal);
 
   return logL;
+}
+
+double CalculateOverlapReIm(LISAParams params1, LISAParams params2, LISAInjectionReIm * injection)
+{
+  double overlap = -DBL_MAX;
+  int ret;
+
+  /* Frequency vector - assumes common to A,E,T, i.e. identical fLow, fHigh in all channels */
+  gsl_vector* freq = injection->freq;
+
+  /* Generating the signal in the three detectors for the input parameters */
+  LISASignalReIm* signal1 = NULL;
+  LISASignalReIm* signal2 = NULL;
+  LISASignalReIm_Init(&signal1);
+  LISASignalReIm_Init(&signal2);
+  ret = LISAGenerateSignalReIm(&params1, freq, signal1);
+  if(ret==SUCCESS){
+    ret = LISAGenerateSignalReIm(&params2, freq, signal2);
+  }
+  /* If LISAGenerateSignal failed (e.g. parameters out of bound), silently return -Infinity logL */
+  if(ret==FAILURE) {
+    overlap = -DBL_MAX;
+  }
+  else if(ret==SUCCESS) {
+    /* Computing the likelihood for each TDI channel - fstartobs has already been taken into account */
+    double loglikelihoodTDI1 = FDLogLikelihoodReIm(signal1->TDI1Signal, signal2->TDI1Signal, injection->noisevalues1);
+    double loglikelihoodTDI2 = FDLogLikelihoodReIm(signal1->TDI2Signal, signal2->TDI2Signal, injection->noisevalues2);
+    double loglikelihoodTDI3 = FDLogLikelihoodReIm(signal1->TDI3Signal, signal2->TDI3Signal, injection->noisevalues3);
+    overlap = loglikelihoodTDI1 + loglikelihoodTDI2 + loglikelihoodTDI3;
+  }
+
+  /* Clean up */
+  LISASignalReIm_Cleanup(signal1);
+  LISASignalReIm_Cleanup(signal2);
+
+  //cout<<" overlap="<<overlap<<endl;
+  return overlap;
+}
+
+double CalculateOverlapCAmpPhase(LISAParams params1, LISAParams params2, LISAInjectionCAmpPhase * injection)
+{
+  double overlap = -DBL_MAX;
+  int ret;
+  bool resampling=true;
+  double overlap_grid_rescale=128.0,grid_frac=0.98;
+  bool grid_rescale_top=true;
+  
+  /* Generating the signal in the three detectors for the input parameters */
+  LISASignalCAmpPhase* signal1 = NULL;
+  LISASignalCAmpPhase_Init(&signal1);
+  //Note that the code for CAmpPhase overlaps is asymmetric, with one signal called the injection in the form of precomputed splines...
+  LISAInjectionCAmpPhase* signal2 = NULL;
+  LISAInjectionCAmpPhase_Init(&signal2);
+
+  ret = LISAGenerateSignalCAmpPhase(&params1, signal1);
+  if(ret==SUCCESS){
+    ret = LISAGenerateInjectionCAmpPhase(&params2, signal2);
+  }
+
+  if(resampling){
+    //For each mode we resample the signal1 grid to align with the nominal "injection" freq domain
+    //optionally rescaling the frequency grid (approximately) by factor overlap_grid_rescale.
+    //Note that the overlap uses signal1 to define the grid, so this realizes a change in the overlap sampling
+
+    //First we prepare splines to use later for interpolation
+    
+    ListmodesCAmpPhaseSpline* listsplinesgen1 = NULL;
+    ListmodesCAmpPhaseSpline* listsplinesgen2 = NULL;
+    ListmodesCAmpPhaseSpline* listsplinesgen3 = NULL;
+    BuildListmodesCAmpPhaseSpline(&listsplinesgen1, signal1->TDI1Signal);
+    BuildListmodesCAmpPhaseSpline(&listsplinesgen2, signal1->TDI2Signal);
+    BuildListmodesCAmpPhaseSpline(&listsplinesgen3, signal1->TDI3Signal);
+
+    //loop over modes
+    ListmodesCAmpPhaseFrequencySeries* mode = signal1->TDI1Signal;
+    int nsize=-1;//Seem this must be the same number for all modes//set first time through loop.
+    while(mode) {
+//cout<<"l= "<<mode->l<<"  m="<<mode->m<<"  nsize="<<nsize<<endl;
+ListmodesCAmpPhaseSpline* centermode=ListmodesCAmpPhaseSpline_GetMode(injection->TDI1Splines,mode->l,mode->m);
+gsl_vector_view ofreq_vv=gsl_matrix_column(centermode->splines->quadspline_phase,0);
+gsl_vector* ofreq = &ofreq_vv.vector;
+double s1f0=gsl_vector_get(mode->freqseries->freq,0);
+double s1fend=gsl_vector_get(mode->freqseries->freq,mode->freqseries->freq->size-1);
+double f0=gsl_vector_get(ofreq,0);
+int osize=ofreq->size,i0=0;
+double fend=gsl_vector_get(ofreq,osize-1);
+if(f0<s1f0){//s1 does not extend down as far as nominal freq range; trim range
+  f0=s1f0;
+  while(gsl_vector_get(ofreq,i0)<f0 && i0<osize-1)i0++;//select old-grid index to immediate left of f0
+}
+//cout<<"start: i0="<<i0<<" n,o sizes = "<<nsize<<", "<<osize<<endl;
+if(fend>s1fend){//s1 does not extend up as far as nominal freq range; trim range
+  fend=s1fend;
+  while(gsl_vector_get(ofreq,osize-1)>fend && i0<osize-1)osize--;//select old-grid index to immediate right of fend
+  //{cout<<"i0="<<i0<<" < "<<osize<<" f = "<<gsl_vector_get(ofreq,osize-1)<<" > "<<fend<<endl;osize--;}
+}
+if(nsize<0){
+  if(grid_rescale_top)
+    nsize=(overlap_grid_rescale*(1.0-grid_frac)+grid_frac)*(osize-i0);//Only set the first time (expected to be 22)
+  else
+    nsize=(1+(overlap_grid_rescale-1)*grid_frac)*(osize-i0);//Only set the first time (expected to be 22)
+}
+//cout<<"end: i0="<<i0<<" n,o sizes = "<<nsize<<", "<<osize<<endl;
+gsl_vector* nfreq = gsl_vector_alloc(nsize);
+double f=f0;
+gsl_vector_set(nfreq,0,f);//first point
+for(int i=1;i<nsize-1;i++){
+  while(gsl_vector_get(ofreq,i0)<f && i0<osize-2)i0++;//select old-grid index to left of f
+  //cout<<"i="<<i<<" i0="<<i0<<" n,o sizes = "<<nsize<<", "<<osize<<endl;
+  double odelta=gsl_vector_get(ofreq,i0+1)-gsl_vector_get(ofreq,i0);
+  double ofremain=gsl_vector_get(ofreq,osize-1)-gsl_vector_get(ofreq,i0);
+  double nfremain=fend-f;
+  double ndelta=odelta*nfremain/ofremain*(double)(osize-i0)/(double)(nsize-i);//rescale df by ratio of old/new mean df of remaining domain.
+  if(i0+1<(int)(osize*grid_frac)){
+    int effosize=osize*grid_frac,effnsize;
+    if(grid_rescale_top)effnsize=nsize/(overlap_grid_rescale*(1.0/grid_frac-1.0)+1.0);
+    else effnsize=nsize*grid_frac*overlap_grid_rescale/((overlap_grid_rescale-1.0)*grid_frac+1.0);
+    //cout<<"effosize="<<effosize<<"  effnsize="<<effnsize<<endl;
+    if(effnsize<1)effnsize=1; //just in case
+    ofremain=gsl_vector_get(ofreq,effosize-1)-gsl_vector_get(ofreq,i0);
+    nfremain=gsl_vector_get(ofreq,effosize-1)-f;
+    ndelta=odelta*nfremain/ofremain*(double)(effosize-i0)/(double)(effnsize-i);//rescale df by ratio of old/new mean df of remaining domain.
+  }
+  //cout<<"  ofreq(i0)="<<gsl_vector_get(ofreq,i0)<<" odelta="<<odelta<<" ofremain="<<ofremain<<endl;;
+  //cout<<"   f,ndelta "<<f<<","<<ndelta<<" fend="<<fend<<endl;
+  f+=ndelta;
+  gsl_vector_set(nfreq,i,f);
+}
+gsl_vector_set(nfreq,nsize-1,fend);//last point
+
+//Also need to work with TDI2 and TDI3
+ListmodesCAmpPhaseFrequencySeries* mode2 = ListmodesCAmpPhaseFrequencySeries_GetMode(signal1->TDI2Signal,mode->l,mode->m);
+ListmodesCAmpPhaseFrequencySeries* mode3 = ListmodesCAmpPhaseFrequencySeries_GetMode(signal1->TDI3Signal,mode->l,mode->m);
+CAmpPhaseSpline * splines1 = ListmodesCAmpPhaseSpline_GetMode(listsplinesgen1,mode->l,mode->m)->splines;
+CAmpPhaseSpline * splines2 = ListmodesCAmpPhaseSpline_GetMode(listsplinesgen2,mode->l,mode->m)->splines;
+CAmpPhaseSpline * splines3 = ListmodesCAmpPhaseSpline_GetMode(listsplinesgen3,mode->l,mode->m)->splines;
+  
+//resize allocated memory
+//CAmpPhaseFrequencySeries_Cleanup(mode->freqseries);
+//mode->freqseries=new CAmpPhaseFrequencySeries;
+CAmpPhaseFrequencySeries_Init(&mode->freqseries,nsize);
+//CAmpPhaseFrequencySeries_Cleanup(mode2->freqseries);
+CAmpPhaseFrequencySeries_Init(&mode2->freqseries,nsize);
+//CAmpPhaseFrequencySeries_Cleanup(mode3->freqseries);
+CAmpPhaseFrequencySeries_Init(&mode3->freqseries,nsize);
+
+//fill new values
+gsl_vector_memcpy(mode->freqseries->freq,nfreq);
+gsl_vector_memcpy(mode2->freqseries->freq,nfreq);
+gsl_vector_memcpy(mode3->freqseries->freq,nfreq);
+
+EvalCAmpPhaseSpline(splines1,mode->freqseries);
+EvalCAmpPhaseSpline(splines2,mode2->freqseries);
+EvalCAmpPhaseSpline(splines3,mode3->freqseries);
+
+//clean up
+gsl_vector_free(nfreq);
+
+mode=mode->next;
+    }//end loop over modes
+    
+    //clean up
+    ListmodesCAmpPhaseSpline_Destroy(listsplinesgen1);
+    ListmodesCAmpPhaseSpline_Destroy(listsplinesgen2);
+    ListmodesCAmpPhaseSpline_Destroy(listsplinesgen3);
+
+  }//end resampling
+
+  /* If LISAGenerateSignal failed (e.g. parameters out of bound), silently return -Infinity logL */
+  if(ret==FAILURE) {
+    overlap = -DBL_MAX;
+  }
+  else if(ret==SUCCESS) {
+    /* Computing the likelihood for each TDI channel - fstartobs is the max between the fstartobs of the injected and generated signals */
+    double fstartobs1 = Newtonianfoft(params1.m1, params1.m2, globalparams->deltatobs);
+    double fstartobs2 = Newtonianfoft(params2.m1, params2.m2, globalparams->deltatobs);
+    double fLow = fmax(__LISASimFD_Noise_fLow, globalparams->minf);
+    double fHigh = fmin(__LISASimFD_Noise_fHigh, globalparams->maxf);
+    ObjectFunction NoiseSn1 = NoiseFunction(globalparams->variant, globalparams->tagtdi, 1);
+    ObjectFunction NoiseSn2 = NoiseFunction(globalparams->variant, globalparams->tagtdi, 2);
+    ObjectFunction NoiseSn3 = NoiseFunction(globalparams->variant, globalparams->tagtdi, 3);
+    
+    overlap = FDListmodesFresnelOverlap3Chan(signal1->TDI1Signal, signal1->TDI2Signal, signal1->TDI3Signal, signal2->TDI1Splines, signal2->TDI2Splines, signal2->TDI3Splines, &NoiseSn1, &NoiseSn2, &NoiseSn3, fLow, fHigh, fstartobs2, fstartobs1);
+    
+  }
+
+  /* Clean up */
+  LISASignalCAmpPhase_Cleanup(signal1);
+  LISAInjectionCAmpPhase_Cleanup(signal2);
+  
+  //cout<<" overlap="<<overlap<<endl;
+  return overlap;
 }
 
 /****************** Functions precomputing relevant values when using simplified likelihood *****************/
