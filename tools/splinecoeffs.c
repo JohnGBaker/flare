@@ -34,7 +34,7 @@ static void SolveTridiagThomas(
     printf("Error: incompatible lengths in SolveTridiagThomas.\n");
     exit(1);
   }
-  
+
   /* Note: we modify the vectors c, y in place */
   double* chat = vectc->data;
   double* yhat = vecty->data;
@@ -74,7 +74,7 @@ void BuildNotAKnotSpline(
   }
   double* x = vectx->data;
   double* y = vecty->data;
-  
+
   /* Computing vecth and vectDeltay */
   gsl_vector* vecth = gsl_vector_alloc(n-1);
   gsl_vector* vectDeltay = gsl_vector_alloc(n-1);
@@ -110,7 +110,7 @@ void BuildNotAKnotSpline(
   c[0] += -h[0]*h[0]/h[1];
   a[n-3] += h[n-2] + h[n-2]*h[n-2]/h[n-3];
   b[n-4] += -h[n-2]*h[n-2]/h[n-3];
-  
+
   /* Solving the tridiagonal system */
   gsl_vector* vectp2 = gsl_vector_alloc(n);
   gsl_vector_view viewp2trunc = gsl_vector_subvector(vectp2, 1, n-2);
@@ -183,7 +183,7 @@ void BuildQuadSpline(
     Deltay[i] = y[i+1] - y[i];
     Deltayoverh[i] = Deltay[i] / h[i];
   }
-  
+
   /* Solving for p1 */
   gsl_vector* vectp1 = gsl_vector_alloc(n);
   double* p1 = vectp1->data;
@@ -252,7 +252,7 @@ void BuildListmodesCAmpPhaseSpline(
 	CAmpPhaseSpline* splines = NULL;
 	BuildSplineCoeffs(&splines, listelementh->freqseries);
 	*listspline = ListmodesCAmpPhaseSpline_AddModeNoCopy(*listspline, splines, l, m);
-	listelementh = listelementh->next;	
+	listelementh = listelementh->next;
       }
     }
 }
@@ -285,7 +285,7 @@ double EvalQuad(
 
 void EvalCAmpPhaseSpline(
   CAmpPhaseSpline* splines,                    //input
-  CAmpPhaseFrequencySeries* freqseries)  //in/out defines CAmpPhase from defined freqs  
+  CAmpPhaseFrequencySeries* freqseries)  //in/out defines CAmpPhase from defined freqs
 {
   int ispline=0;
   //printf("Enter: n=%i\n",freqseries->freq->size);
@@ -295,7 +295,7 @@ void EvalCAmpPhaseSpline(
 
     /* Adjust the index in the spline if necessary and compute */
     while(gsl_matrix_get(splines->quadspline_phase, ispline+1, 0)<f)ispline++;
-   
+
     double eps = f - gsl_matrix_get(splines->quadspline_phase, ispline, 0);
     double eps2 = eps*eps;
     double eps3 = eps2*eps;
@@ -305,10 +305,9 @@ void EvalCAmpPhaseSpline(
     double Ar = EvalCubic(&coeffsampreal.vector, eps, eps2, eps3);
     double Ai = EvalCubic(&coeffsampimag.vector, eps, eps2, eps3);
     double Ph = EvalQuad(&coeffsphase.vector, eps, eps2);
-  
+
     gsl_vector_set(freqseries->amp_real,i,Ar);
     gsl_vector_set(freqseries->amp_imag,i,Ai);
     gsl_vector_set(freqseries->phase,i,Ph);
   }
 };
-

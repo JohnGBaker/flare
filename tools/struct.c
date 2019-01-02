@@ -36,7 +36,7 @@
 
 /* Call a function that references an object */
 double ObjectFunctionCall(const ObjectFunction* this,double f){return this->function(this->object,f);};
-  
+
 /**************************************************************/
 /* Functions computing the max and min between two int */
 int max (int a, int b) { return a > b ? a : b; }
@@ -243,17 +243,28 @@ void CAmpPhaseFrequencySeries_Cleanup(CAmpPhaseFrequencySeries *freqseries) {
 
 /******** Functions to initialize and clean up CAmpPhaseSpline structure ********/
 void CAmpPhaseSpline_Init(CAmpPhaseSpline **splines, const int n) {
-  if(!splines) exit(1);
+  // if(splines != NULL) exit(1);
   /* Create storage for structures */
-  if(!*splines) *splines=malloc(sizeof(CAmpPhaseSpline));
-  else
-  {
-    CAmpPhaseSpline_Cleanup(*splines);
-  }
+
+  /* FIXME!!! Dangerous thing, need "try-except" here otherwise doesn't work with python  */
+
+  *splines=malloc(sizeof(CAmpPhaseSpline));
+  // if(*splines != NULL){
+  //   printf("step-0 \n");
+  //   *splines=malloc(sizeof(CAmpPhaseSpline));
+  //   printf("step1 \n");
+  // }else
+  // {
+  //   CAmpPhaseSpline_Cleanup(*splines);
+  // }
   gsl_set_error_handler(&Err_Handler);
+  // printf("step1.0 \n");
   (*splines)->spline_amp_real = gsl_matrix_alloc(n, 5);
+  // printf("step 2.1 \n");
   (*splines)->spline_amp_imag = gsl_matrix_alloc(n, 5);
+  // printf("step 2.2 \n");
   (*splines)->quadspline_phase = gsl_matrix_alloc(n, 4);
+  // printf("step 2.3 \n");
 }
 void CAmpPhaseSpline_Cleanup(CAmpPhaseSpline *splines) {
   if(splines->spline_amp_real) gsl_matrix_free(splines->spline_amp_real);
