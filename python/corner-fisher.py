@@ -13,11 +13,15 @@ import re
 
 def readCovar(file):
     pars=[]
+    par_names = []
     done=False
     trycount=0
     with open(file,'r') as f:
         line="#"
-        while("#" in line): line=f.readline() #Skip comment
+        while "#" in line:
+            line = f.readline() #Skip comment
+            if line.startswith('#') and 'lambda' in line:
+                par_names = line[1:].split()
         for val in line.split():
             #print val
             pars.append(float(val))
@@ -31,7 +35,7 @@ def readCovar(file):
             covar[i]=np.array(line.split())
             i+=1
         print "done"
-    return covar
+    return covar, par_names
 
 def read_injection(file):
     pars=[]
@@ -87,10 +91,17 @@ for chainfile,fishfile in zip(chainfiles,fishfiles):
     print "reading injection from file:",injfile
     print "output to ",outpath
     print "reading covariance from ",fishfile
-    cov=readCovar(fishfile)
+    cov, param_names = readCovar(fishfile)
     pars,snr=read_injection(injfile)
     print "SNR=",snr
-    names=[r"$m_1$",r"$m_2$",r"$t_0$",r"$D$",r"$\phi_0$",r"$\iota$",r"$\lambda$",r"$\beta$",r"$\psi$"]
+    if 'mchirp' in param_names:
+        # need to convert injected m1, m2 to mchirp, eta
+        m1, m2 = pars[0], pars[1]
+        pars[0] = (m1 * m2) ** (3./5.) * (m1 + m2) ** (-1./5.)
+        pars[1] = m1 * m2 * (m1 + m2) ** (-2)
+        names = [r"$\mathcal{M}$",r"$\eta$",r"$t_0$",r"$D$",r"$\phi_0$",r"$\iota$",r"$\lambda$",r"$\beta$",r"$\psi$"]
+    else:
+        names = [r"$m_1$",r"$m_2$",r"$t_0$",r"$D$",r"$\phi_0$",r"$\iota$",r"$\lambda$",r"$\beta$",r"$\psi$"]
     print "Injected pars=",dict(zip(names,pars))
     Npar=len(pars)
     data=np.loadtxt(chainfile,usecols=range(Npar))
