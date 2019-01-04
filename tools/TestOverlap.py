@@ -1,4 +1,5 @@
 import numpy as np
+import sys
 import flar
 
 from scipy.interpolate import InterpolatedUnivariateSpline as spline
@@ -68,8 +69,8 @@ def GetSignal(p, fmax, obj="XYZ"):
     elif (obj == "AET"):
         A = (Z - X)/np.sqrt(2.0)
         E = (X - 2.0*Y + Z)/np.sqrt(6.0)
-        # T = (X+Y+Z)/np.sqrt(3.0)
-        return (frqs, ph, [A, E])
+        T = (X+Y+Z)/np.sqrt(3.0)
+        return (frqs, ph, [A, E, T])
     else:
         raise ValueError
 
@@ -169,6 +170,28 @@ print ("ellapsed:", en-st, (en-st)/Ntrial)
 
 
 print ("Olap = ", olap)
+
+st = time.time()
+for i in range(Ntrial):
+    frqs, phase, ampls = GetSignal(system, fmax_g, obj="AET")
+    wvf1 = {}
+    wvf1["freq"] = frqs
+    wvf1["ampl"] = np.array(ampls)
+    wvf1["phase"] = phase
+
+    wvf2 = {}
+    wvf2["freq"] = frqs
+    wvf2["ampl"] = np.array(ampls)
+    wvf2["phase"] = phase
+
+    # print (np.shape(wvf1["ampl"]), np.shape(wvf2["ampl"]))
+
+    olap = flar.OverlapFrensel3(wvf1, wvf2, fmin=frqs[0], fmax=frqs[-1], noise="AE")
+    # print (olap)
+    # sys.exit(0)
+en = time.time()
+print ("ellapsed:", en-st, (en-st)/Ntrial)
+
 
 # dat = np.genfromtxt("TestOlap1.dat")
 # print (np.shape(dat))

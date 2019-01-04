@@ -113,6 +113,19 @@ cdef extern from "likelihoodKurz.h":
       double fLow,
       double fHigh)
 
+    double FDSinglemodeFresnelOverlap3Chan(
+      CAmpPhaseFrequencySeries *freqseries1chan1,
+      CAmpPhaseFrequencySeries *freqseries1chan2,
+      CAmpPhaseFrequencySeries *freqseries1chan3,
+      CAmpPhaseSpline *splines2chan1,
+      CAmpPhaseSpline *splines2chan2,
+      CAmpPhaseSpline *splines2chan3,
+      ObjectFunction * Snoisechan1,
+      ObjectFunction * Snoisechan2,
+      ObjectFunction * Snoisechan3,
+      double fLow,
+      double fHigh)
+
 
     void ComputeIntegrandValues(
       CAmpPhaseFrequencySeries** integrand,
@@ -323,7 +336,7 @@ def GetNoise(double f, noise="X"):
 def OverlapFrensel1(FD_wvf1, FD_wvf2, fmin=1.e-5, fmax=0.1, noise="X"):
 
     cdef int N1 = len(FD_wvf1["freq"])
-    cdef np.ndarray[np.float_t, ndim=1] fr1 = FD_wvf1["freq"]
+    cdef np.ndarray[np.double_t, ndim=1, mode='c'] fr1 = FD_wvf1["freq"]
     amp1 = FD_wvf1["ampl"]
     cdef np.ndarray[np.double_t, ndim=1, mode='c'] ph1 = np.copy(FD_wvf1["phase"], order = 'C')
     cdef np.ndarray[np.double_t, ndim=1, mode='c'] Ramp1 =  np.copy(np.real(amp1), order='C')
@@ -331,7 +344,7 @@ def OverlapFrensel1(FD_wvf1, FD_wvf2, fmin=1.e-5, fmax=0.1, noise="X"):
     cdef np.ndarray[np.double_t, ndim=1, mode='c'] Iamp1 = np.copy(np.imag(amp1), order='C')
 
     cdef int N2 = len(FD_wvf2["freq"])
-    cdef np.ndarray[np.float_t, ndim=1] fr2 = FD_wvf2["freq"]
+    cdef np.ndarray[np.double_t, ndim=1, mode='c'] fr2 = FD_wvf2["freq"]
     amp2 = FD_wvf2["ampl"]
     cdef np.ndarray[np.double_t, ndim=1, mode='c'] ph2 = np.copy(FD_wvf2["phase"], order = 'C')
     cdef np.ndarray[np.double_t, ndim=1, mode='c'] Ramp2 =  np.copy(np.real(amp2), order='C')
@@ -346,6 +359,7 @@ def OverlapFrensel1(FD_wvf1, FD_wvf2, fmin=1.e-5, fmax=0.1, noise="X"):
     if (noise == "X"):
         PSD.function = <RealObjectFunctionPtr> SnXProposal
     elif (noise == "AE"):
+        # PSD.function = <RealObjectFunctionPtr> SnTProposal
         PSD.function = <RealObjectFunctionPtr> SnAProposal
 
 
@@ -431,5 +445,156 @@ def OverlapFrensel1(FD_wvf1, FD_wvf2, fmin=1.e-5, fmax=0.1, noise="X"):
     #   double fHigh)
 
     CAmpPhaseSpline_Cleanup(splines)
+
+    return (Olap)
+
+
+#### This function computes inner product assuming three noise independent channels A, E, T
+def OverlapFrensel3(FD_wvf1, FD_wvf2, fmin=1.e-5, fmax=0.1, noise="AE"):
+
+    cdef int N1 = len(FD_wvf1["freq"])
+    cdef np.ndarray[np.double_t, ndim=1, mode='c'] fr1 = FD_wvf1["freq"]
+    amp1 = FD_wvf1["ampl"]
+    AA1 = amp1[0, :]
+    EE1 = amp1[1, :]
+    TT1 = amp1[2, :]
+    cdef np.ndarray[np.double_t, ndim=1, mode='c'] ph1 = np.copy(FD_wvf1["phase"], order = 'C')
+    cdef np.ndarray[np.double_t, ndim=1, mode='c'] RA1 =  np.copy(np.real(AA1), order='C')
+    cdef np.ndarray[np.double_t, ndim=1, mode='c'] IA1 = np.copy(np.imag(AA1), order='C')
+    cdef np.ndarray[np.double_t, ndim=1, mode='c'] RE1 =  np.copy(np.real(EE1), order='C')
+    cdef np.ndarray[np.double_t, ndim=1, mode='c'] IE1 = np.copy(np.imag(EE1), order='C')
+    cdef np.ndarray[np.double_t, ndim=1, mode='c'] RT1 =  np.copy(np.real(TT1), order='C')
+    cdef np.ndarray[np.double_t, ndim=1, mode='c'] IT1 = np.copy(np.imag(TT1), order='C')
+    # print (Ramp1.flags)
+
+    cdef int N2 = len(FD_wvf2["freq"])
+    cdef np.ndarray[np.double_t, ndim=1, mode='c'] fr2 = FD_wvf2["freq"]
+    amp2 = FD_wvf2["ampl"]
+    AA2 = amp2[0, :]
+    EE2 = amp2[1, :]
+    TT2 = amp2[2, :]
+    cdef np.ndarray[np.double_t, ndim=1, mode='c'] ph2 = np.copy(FD_wvf2["phase"], order = 'C')
+    cdef np.ndarray[np.double_t, ndim=1, mode='c'] RA2 =  np.copy(np.real(AA2), order='C')
+    cdef np.ndarray[np.double_t, ndim=1, mode='c'] IA2 = np.copy(np.imag(AA2), order='C')
+    cdef np.ndarray[np.double_t, ndim=1, mode='c'] RE2 =  np.copy(np.real(EE2), order='C')
+    cdef np.ndarray[np.double_t, ndim=1, mode='c'] IE2 = np.copy(np.imag(EE2), order='C')
+    cdef np.ndarray[np.double_t, ndim=1, mode='c'] RT2 =  np.copy(np.real(TT2), order='C')
+    cdef np.ndarray[np.double_t, ndim=1, mode='c'] IT2 = np.copy(np.imag(TT2), order='C')
+
+
+    cdef double fLow = fmin
+    cdef double fHigh = fmax
+    cdef ObjectFunction PSDA
+    cdef ObjectFunction PSDT
+
+
+    PSDA.object = NULL
+    PSDT.object = NULL
+    if (noise == "X"):
+        PSDA.function = <RealObjectFunctionPtr> SnXProposal
+    elif (noise == "AE"):
+        PSDA.function = <RealObjectFunctionPtr> SnAProposal
+        PSDT.function = <RealObjectFunctionPtr> SnTProposal
+
+    ### First data set
+
+    cdef gsl_vector_view freq1
+    cdef gsl_vector_view A1Re
+    cdef gsl_vector_view A1Im
+    cdef gsl_vector_view E1Re
+    cdef gsl_vector_view E1Im
+    cdef gsl_vector_view T1Re
+    cdef gsl_vector_view T1Im
+    cdef gsl_vector_view phase1
+
+    cdef double* fr1_dat = <double *> fr1.data
+    cdef double* A1r_dat = <double *> RA1.data
+    cdef double* A1i_dat = <double *> IA1.data
+    cdef double* E1r_dat = <double *> RE1.data
+    cdef double* E1i_dat = <double *> IE1.data
+    cdef double* T1r_dat = <double *> RT1.data
+    cdef double* T1i_dat = <double *> IT1.data
+
+    freq1 = gsl_vector_view_array(fr1_dat,  N1)
+    phase1 = gsl_vector_view_array(<double *>ph1.data, N1)
+    A1Re = gsl_vector_view_array(A1r_dat, N1)
+    A1Im = gsl_vector_view_array(A1i_dat, N1)
+    E1Re = gsl_vector_view_array(E1r_dat, N1)
+    E1Im = gsl_vector_view_array(E1i_dat, N1)
+    T1Re = gsl_vector_view_array(T1r_dat, N1)
+    T1Im = gsl_vector_view_array(T1i_dat, N1)
+
+    ### Second data set
+
+    cdef gsl_vector_view freq2
+    cdef gsl_vector_view A2Re
+    cdef gsl_vector_view A2Im
+    cdef gsl_vector_view E2Re
+    cdef gsl_vector_view E2Im
+    cdef gsl_vector_view T2Re
+    cdef gsl_vector_view T2Im
+    cdef gsl_vector_view phase2
+    freq2 = gsl_vector_view_array(<double *>fr2.data,  N2)
+    phase2 = gsl_vector_view_array(<double *>ph2.data, N2)
+    A2Re = gsl_vector_view_array(<double *>RA2.data, N2)
+    A2Im = gsl_vector_view_array(<double *>IA2.data, N2)
+    E2Re = gsl_vector_view_array(<double *>RE2.data, N2)
+    E2Im = gsl_vector_view_array(<double *>IE2.data, N2)
+    T2Re = gsl_vector_view_array(<double *>RT2.data, N2)
+    T2Im = gsl_vector_view_array(<double *>IT2.data, N2)
+
+    cdef CAmpPhaseFrequencySeries Afs1
+    cdef CAmpPhaseFrequencySeries Efs1
+    cdef CAmpPhaseFrequencySeries Tfs1
+
+    cdef CAmpPhaseFrequencySeries Afs2
+    cdef CAmpPhaseFrequencySeries Efs2
+    cdef CAmpPhaseFrequencySeries Tfs2
+
+    Afs1.freq = &(freq1.vector)
+    Afs1.amp_real = &(A1Re.vector)
+    Afs1.amp_imag = &(A1Im.vector)
+    Afs1.phase = &(phase1.vector)
+    Efs1.freq = &(freq1.vector)
+    Efs1.amp_real = &(E1Re.vector)
+    Efs1.amp_imag = &(E1Im.vector)
+    Efs1.phase = &(phase1.vector)
+    Tfs1.freq = &(freq1.vector)
+    Tfs1.amp_real = &(T1Re.vector)
+    Tfs1.amp_imag = &(T1Im.vector)
+    Tfs1.phase = &(phase1.vector)
+
+    Afs2.freq = &(freq2.vector)
+    Afs2.amp_real = &(A2Re.vector)
+    Afs2.amp_imag = &(A2Im.vector)
+    Afs2.phase = &(phase2.vector)
+    Efs2.freq = &(freq2.vector)
+    Efs2.amp_real = &(E2Re.vector)
+    Efs2.amp_imag = &(E2Im.vector)
+    Efs2.phase = &(phase2.vector)
+    Tfs2.freq = &(freq2.vector)
+    Tfs2.amp_real = &(T2Re.vector)
+    Tfs2.amp_imag = &(T2Im.vector)
+    Tfs2.phase = &(phase2.vector)
+
+
+    cdef CAmpPhaseSpline* Asplines = NULL
+    cdef CAmpPhaseSpline* Esplines = NULL
+    cdef CAmpPhaseSpline* Tsplines = NULL
+    BuildSplineCoeffs(&Asplines, &Afs1)
+    BuildSplineCoeffs(&Esplines, &Efs1)
+    BuildSplineCoeffs(&Tsplines, &Tfs1)
+
+    cdef double Olap = 0.0
+    # cdef double Olap2 = 0.0
+
+    # Olap = FDSinglemodeFresnelOverlap(&apfs2, splines, &PSD, fLow, fHigh)
+
+    Olap =  FDSinglemodeFresnelOverlap3Chan(&Afs2, &Efs2, &Tfs2, Asplines, Esplines, Tsplines, &PSDA, &PSDA, &PSDT, fLow, fHigh)
+
+
+    CAmpPhaseSpline_Cleanup(Asplines)
+    CAmpPhaseSpline_Cleanup(Esplines)
+    CAmpPhaseSpline_Cleanup(Tsplines)
 
     return (Olap)

@@ -335,6 +335,59 @@ double FDSinglemodeFresnelOverlap(
 }
 
 
+/* Function computing the overlap (h1|h2) between two given modes in amplitude/phase form for each non-correlated channel 1,2,3, one being already interpolated, for a given noise function - uses the amplitude/phase representation (Fresnel) */
+double FDSinglemodeFresnelOverlap3Chan(
+  struct tagCAmpPhaseFrequencySeries *freqseries1chan1, /* First mode h1 for channel 1, in amplitude/phase form */
+  struct tagCAmpPhaseFrequencySeries *freqseries1chan2, /* First mode h1 for channel 2, in amplitude/phase form */
+  struct tagCAmpPhaseFrequencySeries *freqseries1chan3, /* First mode h1 for channel 3, in amplitude/phase form */
+  struct tagCAmpPhaseSpline *splines2chan1,             /* Second mode h2 for channel 1, already interpolated in matrix form */
+  struct tagCAmpPhaseSpline *splines2chan2,             /* Second mode h2 for channel 2, already interpolated in matrix form */
+  struct tagCAmpPhaseSpline *splines2chan3,             /* Second mode h2 for channel 3, already interpolated in matrix form */
+  ObjectFunction * Snoisechan1,                  /* Noise function */
+  ObjectFunction * Snoisechan2,                  /* Noise function */
+  ObjectFunction * Snoisechan3,                  /* Noise function */
+  double fLow,                                      /* Lower bound of the frequency window for the detector */
+  double fHigh)                                     /* Upper bound of the frequency window for the detector */
+{
+  /* Computing the integrand values, on the frequency grid of h1 */
+  CAmpPhaseFrequencySeries* integrand = NULL;
+  if(0>ComputeIntegrandValues3Chan(&integrand, freqseries1chan1, freqseries1chan2, freqseries1chan3, splines2chan1, splines2chan2, splines2chan3, Snoisechan1, Snoisechan2, Snoisechan3, fLow, fHigh))return 0;//if allowed freq range does not exist, return 0 for overlap
+  // ComputeIntegrandValues(&integrand, freqseries1chan1, splines2chan1, Snoisechan1, fLow, fHigh);
+  // ComputeIntegrandValues(&integrand, freqseries1chan3, splines2chan3, Snoisechan3, fLow, fHigh);
+
+  /* Rescaling the integrand */
+  double scaling = 10./gsl_vector_get(integrand->freq, integrand->freq->size-1);
+
+//TEST
+//scaling = 1.;
+
+  gsl_vector_scale(integrand->freq, scaling);
+  gsl_vector_scale(integrand->amp_real, 1./scaling);
+  gsl_vector_scale(integrand->amp_imag, 1./scaling);
+
+  //dump
+  /*
+  for(int ii=0;ii<integrand->freq->size;ii++)
+    printf("ii=%i, f=%g, integrand = ( %g, %g, %g )\n",ii,gsl_vector_get(integrand->freq,ii),gsl_vector_get(integrand->amp_real,ii),gsl_vector_get(integrand->amp_imag,ii),gsl_vector_get(integrand->phase,ii));
+  */
+
+  /* Interpolating the integrand */
+  CAmpPhaseSpline* integrandspline = NULL;
+  BuildSplineCoeffs(&integrandspline, integrand);
+
+  /* Computing the integral - including here the factor 4 and the real part */
+  double overlap = 4.*creal(ComputeInt(integrandspline->spline_amp_real, integrandspline->spline_amp_imag, integrandspline->quadspline_phase));
+
+  /* Clean up */
+  CAmpPhaseSpline_Cleanup(integrandspline);
+  CAmpPhaseFrequencySeries_Cleanup(integrand);
+
+  return overlap;
+}
+
+
+
+
 /* Function computing the integrand values */
 void ComputeIntegrandValues(
   CAmpPhaseFrequencySeries** integrand,     /* Output: values of the integrand on common frequencies (initialized in the function) */
