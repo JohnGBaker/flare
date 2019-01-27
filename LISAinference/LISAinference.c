@@ -13,6 +13,8 @@ void getphysparams(double *Cube, int *ndim) /* Note: ndim not used here */
   /* Order of the 9 original parameters (fixed): m1, m2, tRef, dist, phase, inc, lambda, beta, pol */
   /* Order of the 9 cube parameters (modified for clustering): lambda, beta, tRef, phase, pol, inc, dist, m1, m2 */
 
+  /* NOTE: if sampling in L-frame parameters, the fixed values (either pinned to injection or fixed by user input) are the L-frame values */
+
   /* Sky location (lambda then beta) */
   if (isnan(priorParams->fix_lambda)) {
     lambda = CubeToFlatPrior(Cube[i++], priorParams->lambda_min, priorParams->lambda_max);
@@ -26,22 +28,20 @@ void getphysparams(double *Cube, int *ndim) /* Note: ndim not used here */
   }
 
   /* Time */
+  /* Distinguish wether we are sampling in SSB-frame params or L-frame params */
   /* If sampling in tL, convert tinj SSB to tLinj */
   if (isnan(priorParams->fix_time)) {
-    if(priorParams->sampletimeparam==tSSB) {
+    if( !(priorParams->sampleLframe) ) { /* SSB-frame */
       tRef = CubeToFlatPrior(Cube[i++], injectedparams->tRef - priorParams->deltaT, injectedparams->tRef + priorParams->deltaT);
     }
-    else if(priorParams->sampletimeparam==tL) { /* Here tRef has the meaning of tL */
-      double injectedtL = tLfromtSSB(globalparams->variant, injectedparams->tRef, injectedparams->lambda, injectedparams->beta);
+    else { /* Sampling in L-frame */
+      /* Injected params are always given in the SSB-frame, convert injected time to L-frame */
+      double injectedtL = tLfromSSBframe(globalparams->variant, injectedparams->tRef, injectedparams->lambda, injectedparams->beta);
+      /* The prior range is interpreted as being around injected tL, not tSSB */
       tRef = CubeToFlatPrior(Cube[i++], injectedtL - priorParams->deltaT, injectedtL + priorParams->deltaT);
     }
-  } else { /* fix_time, if defined, has the sense of a SSB time */
-    if(priorParams->sampletimeparam==tSSB) {
-      tRef = priorParams->fix_time;
-    }
-    else if(priorParams->sampletimeparam==tL) { /* Set tRef (meaning tL) to the injected tL (with injected sky position) */
-      tRef = tLfromtSSB(globalparams->variant, priorParams->fix_time, injectedparams->lambda, injectedparams->beta);
-    }
+  } else {
+    tRef = priorParams->fix_time;
   }
 
   /* Orbital phase */
@@ -124,10 +124,21 @@ void getphysparams(double *Cube, int *ndim) /* Note: ndim not used here */
     m2 = m2ofMchirpeta(Mchirp, eta);
   }
 
+  /* If sampling in L-frame parameters, compute the corresponding SSB-frame parameters */
   /* Convert time - if sampling in tL, compute tSSB from tL using (approximate but 3e-6s accurate) inverse relation */
   /* The tRef we output has always the meaning of a SSB time */
-  if(priorParams->sampletimeparam==tL) {
-    tRef = tSSBfromtL(globalparams->variant, tRef, lambda, beta);
+  /* NOTE: no transformation of the phase -- approximant-dependence with e.g. EOBNRv2HMROM setting phiRef at fRef, and freedom in definition */
+  if(priorParams->sampleLframe) {
+    double tRefSSB = 0.;
+    double lambdaSSB = 0.;
+    double betaSSB = 0.;
+    double polSSB = 0.;
+    /* tRef, lambda, beta, pol are L-frame parameters */
+    ConvertLframeParamsToSSBframe(&tRefSSB, &lambdaSSB, &betaSSB, &polSSB, tRef, lambda, beta, pol, globalparams->variant);
+    tRef = tRefSSB;
+    lambda = lambdaSSB;
+    beta = betaSSB;
+    pol = polSSB;
   }
 
   /* Note: here we output physical values in the cube (overwriting), and we keep the original order for physical parameters */
@@ -142,6 +153,7 @@ void getphysparams(double *Cube, int *ndim) /* Note: ndim not used here */
   Cube[8] = pol;
 }
 
+/* FIXME: does not support sampleLframe yet */
 void getcubeparams(double* Cube, int ndim, LISAParams* params, int* freeparamsmap)
 {
   int i = 0;
@@ -344,8 +356,8 @@ int main(int argc, char *argv[])
   int myid = 0;
   noMPI = 0;
 #ifdef PARALLEL
- 	MPI_Init(&argc,&argv);
-	MPI_Comm_rank(MPI_COMM_WORLD,&myid);
+  MPI_Init(&argc, &argv);
+  MPI_Comm_rank(MPI_COMM_WORLD, &myid);
 #endif
 
 	LISARunParams runParams={};

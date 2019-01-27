@@ -32,15 +32,16 @@ typedef enum SampleMassParamstag {
   m1m2,
   Mchirpeta
 } SampleMassParamstag;
-typedef enum SampleTimeParamtag {
-  tSSB,
-  tL
-} SampleTimeParamtag;
+/* Superseded by sampleLframe */
+// typedef enum SampleTimeParamtag {
+//   tSSB,
+//   tL
+// } SampleTimeParamtag;
 
 /* Function to convert string input SampleMassParams to tag */
 SampleMassParamstag ParseSampleMassParamstag(char* string);
 /* Function to convert string input SampleTimeParams to tag */
-SampleTimeParamtag ParseSampleTimeParamtag(char* string);
+//SampleTimeParamtag ParseSampleTimeParamtag(char* string);
 
 /***************** Structure definitions *****************/
 
@@ -115,7 +116,8 @@ typedef struct tagLISAInjectionReIm /* Storing the vectors of frequencies and no
 
 typedef struct tagLISAPrior {
   SampleMassParamstag samplemassparams;   /* Choose the set of mass params to sample from - options are m1m2 and Mchirpeta (default m1m2) */
-  SampleTimeParamtag sampletimeparam;     /* Choose the time param to sample from - options are tSSB and tL (default tSSB) */
+  //SampleTimeParamtag sampletimeparam;     /* Choose the time param to sample from - options are tSSB and tL (default tSSB) */
+  int sampleLframe;          /* flag to sample L-frame params tL, lambdaL, betaL, psiL instead of SSB-frame params -- priors are interpreted for those L-frame params - no phase transformation */
   double deltaT;             /* width of time prior centered on injected value (s) (default 1e5) */
   double comp_min;           /* minimum component mass (solar masses) (default 1e4) */
   double comp_max;           /* maximum component mass (solar masses) (default 1e8) */

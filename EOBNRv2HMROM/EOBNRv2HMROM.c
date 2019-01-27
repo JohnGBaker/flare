@@ -463,8 +463,8 @@ int EOBNRv2HMROMCore(
       gsl_interp_accel_free(accel_phi22);
       }
       else {
-	printf("Error: the first mode in listmode must be the 22 mode to set the changes in phase and time \n");
-	return FAILURE;
+      	printf("Error: the first mode in listmode must be the 22 mode to set the changes in phase and time \n");
+      	return FAILURE;
       }
     }
     /* Total shift in time, and total change in phase for this mode */
@@ -978,6 +978,8 @@ int SimEOBNRv2HMROMExtTF2(
   gsl_interp_accel* accel_phi22 = gsl_interp_accel_alloc();
   gsl_spline* spline_phi22 = gsl_spline_alloc(gsl_interp_cspline, nbfreq);
   gsl_spline_init(spline_phi22, gsl_vector_const_ptr(freq22,0), gsl_vector_const_ptr(phase22,0), nbfreq);
+  /* If fRef was not set (fRef=0), use the last frequency generated for 22 mode -- as is done internally in Core */
+  if (fRef==0.) fRef = freq22->data[freq22->size - 1];
   /* Compute 22 phase at fRef before adjustment, check the extended range */
   if ( (fRef<freq22->data[0]) || (fRef>freq22->data[freq22->size - 1]) ) {
     printf("Error: fRef is not covered by the frequency range of the waveform after extension.\n");

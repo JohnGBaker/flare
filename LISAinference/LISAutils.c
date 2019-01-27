@@ -23,17 +23,18 @@ SampleMassParamstag ParseSampleMassParamstag(char* string) {
   }
   return tag;
 }
-/* Function to convert string input SampleTimeParam to tag */
-SampleTimeParamtag ParseSampleTimeParamtag(char* string) {
-  SampleTimeParamtag tag;
-  if(strcmp(string, "tSSB")==0) tag = tSSB;
-  else if(strcmp(string, "tL")==0) tag = tL;
-  else {
-    printf("Error in ParseSampleTimeParamtag: string not recognized.\n");
-    exit(1);
-  }
-  return tag;
-}
+/* Superseded by sampleLframe */
+// /* Function to convert string input SampleTimeParam to tag */
+// SampleTimeParamtag ParseSampleTimeParamtag(char* string) {
+//   SampleTimeParamtag tag;
+//   if(strcmp(string, "tSSB")==0) tag = tSSB;
+//   else if(strcmp(string, "tL")==0) tag = tL;
+//   else {
+//     printf("Error in ParseSampleTimeParamtag: string not recognized.\n");
+//     exit(1);
+//   }
+//   return tag;
+// }
 
 /************ Functions to initalize and clean up structure for the signals ************/
 
@@ -221,7 +222,8 @@ Arguments are as follows:\n\
 ----- Prior Boundary Settings --------------------\n\
 --------------------------------------------------\n\
  --samplemassparams    Choose the set of mass params to sample from - options are m1m2 and Mchirpeta (default m1m2)\n\
- --sampletimeparam     Choose the time param to sample from - options are tSSB and tL (default tSSB)\n\
+ --sampletimeparam     DEPRECATED - Choose the time param to sample from - options are tSSB and tL (default tSSB)\n\
+ --sampleLframe        flag to sample L-frame params tL, lambdaL, betaL, psiL instead of SSB-frame params -- priors are interpreted for those L-frame params -- no phase transformation -- SSB params are reported in output (default False)\n\
  --deltaT              Half-width of time prior (sec, default=1e5)\n\
  --comp-min            Minimum component mass in Solar masses - when sampling m1m2 (default=1e4)\n\
  --comp-max            Maximum component mass in Solar masses - when sampling m1m2 (default=1e8)\n\
@@ -324,7 +326,8 @@ Syntax: --PARAM-min\n\
 
     /* set default values for the prior limits */
     prior->samplemassparams = m1m2;
-    prior->sampletimeparam = tSSB;
+    //prior->sampletimeparam = tSSB; /* DEPRECATED */
+    prior->sampleLframe = 0;
     prior->deltaT = 3600.;
     prior->comp_min = 1e4;
     prior->comp_max = 1e8;
@@ -467,7 +470,11 @@ Syntax: --PARAM-min\n\
         } else if (strcmp(argv[i], "--samplemassparams") == 0) {
             prior->samplemassparams = ParseSampleMassParamstag(argv[++i]);
         } else if (strcmp(argv[i], "--sampletimeparam") == 0) {
-            prior->sampletimeparam = ParseSampleTimeParamtag(argv[++i]);
+            printf("WARNING: argument sampletimeparam is deprecated, superseded by sampleLframe -- ignored.");
+            ++i;
+            //prior->sampletimeparam = ParseSampleTimeParamtag(argv[++i]);
+        } else if (strcmp(argv[i], "--sampleLframe") == 0) {
+            prior->sampleLframe = 1;
         } else if (strcmp(argv[i], "--deltaT") == 0) {
             prior->deltaT = atof(argv[++i]);
         } else if (strcmp(argv[i], "--comp-min") == 0) {
@@ -595,18 +602,18 @@ Syntax: --PARAM-min\n\
         } else if (strcmp(argv[i], "--seed") == 0) {
             run->seed = 1;
         } else if (strcmp(argv[i], "--variant") == 0) {
-	  i++;
-	  if (strcmp(argv[i], "LISAProposal") == 0) globalparams->variant = &LISAProposal;
-    else if (strcmp(argv[i], "LISA2017") == 0) globalparams->variant = &LISA2017;
-	  else if (strcmp(argv[i], "LISA2010") == 0) globalparams->variant = &LISA2010;
-	  else if (strcmp(argv[i], "fastOrbitLISA") == 0) globalparams->variant = &fastOrbitLISA;
-	  else if (strcmp(argv[i], "slowOrbitLISA") == 0) globalparams->variant = &slowOrbitLISA;
-	  else if (strcmp(argv[i], "tinyOrbitLISA") == 0) globalparams->variant = &tinyOrbitLISA;
-	  else if (strcmp(argv[i], "bigOrbitLISA") == 0) globalparams->variant = &bigOrbitLISA;
-	  else {
-	    printf("Error: --variant option '%s' not recognized\n",argv[i]);
-	    exit(1);
-	  }
+      	  i++;
+      	  if (strcmp(argv[i], "LISAProposal") == 0) globalparams->variant = &LISAProposal;
+          else if (strcmp(argv[i], "LISA2017") == 0) globalparams->variant = &LISA2017;
+      	  else if (strcmp(argv[i], "LISA2010") == 0) globalparams->variant = &LISA2010;
+      	  else if (strcmp(argv[i], "fastOrbitLISA") == 0) globalparams->variant = &fastOrbitLISA;
+      	  else if (strcmp(argv[i], "slowOrbitLISA") == 0) globalparams->variant = &slowOrbitLISA;
+      	  else if (strcmp(argv[i], "tinyOrbitLISA") == 0) globalparams->variant = &tinyOrbitLISA;
+      	  else if (strcmp(argv[i], "bigOrbitLISA") == 0) globalparams->variant = &bigOrbitLISA;
+      	  else {
+      	    printf("Error: --variant option '%s' not recognized\n",argv[i]);
+      	    exit(1);
+      	  }
         } else if (strcmp(argv[i], "--addparams") == 0) {
             /* Must be followed by the values of m1 m2 tRef distance phiRef inclination lambda beta polarization */
             addparams->m1 = atof(argv[++i]);
@@ -646,9 +653,10 @@ Syntax: --PARAM-min\n\
     if(!isnan(priorParams->fix_m1)) priorParams->comp_max = fmax(priorParams->comp_max, priorParams->fix_m1);
     if(!isnan(priorParams->fix_m2)) priorParams->comp_min = fmax(priorParams->comp_min, priorParams->fix_m2);
     /* If using the simplified likelihood, make sure that the masses and time are pinned to injection values - otherwise inconsistent */
+    /* NOTE: slight inconsistency,  */
     if(globalparams->tagsimplelikelihood) {
-      if((priorParams->pin_m1==0) || (priorParams->pin_m2==0) || (priorParams->pin_time==0) || (!(prior->sampletimeparam==tL))) {
-        printf("Error in parse_args_LISA: using simplified likelihood while m1, m2 or tRef is not pinned to injection value, or using tSSB and not tL - inconsistent.");
+      if((priorParams->pin_m1==0) || (priorParams->pin_m2==0) || (priorParams->pin_time==0)) {
+        printf("Error in parse_args_LISA: using simplified likelihood while m1, m2 or tRef is not pinned to injection value - inconsistent.");
         exit(1);
       }
     }
@@ -732,7 +740,8 @@ int print_parameters_to_file_LISA(
   fprintf(f, "Prior parameters:\n");
   fprintf(f, "-----------------------------------------------\n");
   fprintf(f, "samplemassparams:  %.16e\n", prior->samplemassparams);
-  fprintf(f, "sampletimeparam:   %.16e\n", prior->sampletimeparam);
+  //fprintf(f, "sampletimeparam:   %.16e\n", prior->sampletimeparam);
+  fprintf(f, "sampleLframe:      %d\n", prior->sampleLframe);
   fprintf(f, "deltaT:            %.16e\n", prior->deltaT);
   fprintf(f, "comp_min:          %.16e\n", prior->comp_min);
   fprintf(f, "comp_max:          %.16e\n", prior->comp_max);
@@ -1505,7 +1514,7 @@ double CalculateOverlapCAmpPhase(LISAParams params1, LISAParams params2, LISAInj
   bool resampling=true;
   double overlap_grid_rescale=128.0,grid_frac=0.98;
   bool grid_rescale_top=true;
-  
+
   /* Generating the signal in the three detectors for the input parameters */
   LISASignalCAmpPhase* signal1 = NULL;
   LISASignalCAmpPhase_Init(&signal1);
@@ -1524,7 +1533,7 @@ double CalculateOverlapCAmpPhase(LISAParams params1, LISAParams params2, LISAInj
     //Note that the overlap uses signal1 to define the grid, so this realizes a change in the overlap sampling
 
     //First we prepare splines to use later for interpolation
-    
+
     ListmodesCAmpPhaseSpline* listsplinesgen1 = NULL;
     ListmodesCAmpPhaseSpline* listsplinesgen2 = NULL;
     ListmodesCAmpPhaseSpline* listsplinesgen3 = NULL;
@@ -1595,7 +1604,7 @@ ListmodesCAmpPhaseFrequencySeries* mode3 = ListmodesCAmpPhaseFrequencySeries_Get
 CAmpPhaseSpline * splines1 = ListmodesCAmpPhaseSpline_GetMode(listsplinesgen1,mode->l,mode->m)->splines;
 CAmpPhaseSpline * splines2 = ListmodesCAmpPhaseSpline_GetMode(listsplinesgen2,mode->l,mode->m)->splines;
 CAmpPhaseSpline * splines3 = ListmodesCAmpPhaseSpline_GetMode(listsplinesgen3,mode->l,mode->m)->splines;
-  
+
 //resize allocated memory
 //CAmpPhaseFrequencySeries_Cleanup(mode->freqseries);
 //mode->freqseries=new CAmpPhaseFrequencySeries;
@@ -1619,7 +1628,7 @@ gsl_vector_free(nfreq);
 
 mode=mode->next;
     }//end loop over modes
-    
+
     //clean up
     ListmodesCAmpPhaseSpline_Destroy(listsplinesgen1);
     ListmodesCAmpPhaseSpline_Destroy(listsplinesgen2);
@@ -1640,15 +1649,15 @@ mode=mode->next;
     ObjectFunction NoiseSn1 = NoiseFunction(globalparams->variant, globalparams->tagtdi, 1);
     ObjectFunction NoiseSn2 = NoiseFunction(globalparams->variant, globalparams->tagtdi, 2);
     ObjectFunction NoiseSn3 = NoiseFunction(globalparams->variant, globalparams->tagtdi, 3);
-    
+
     overlap = FDListmodesFresnelOverlap3Chan(signal1->TDI1Signal, signal1->TDI2Signal, signal1->TDI3Signal, signal2->TDI1Splines, signal2->TDI2Splines, signal2->TDI3Splines, &NoiseSn1, &NoiseSn2, &NoiseSn3, fLow, fHigh, fstartobs2, fstartobs1);
-    
+
   }
 
   /* Clean up */
   LISASignalCAmpPhase_Cleanup(signal1);
   LISAInjectionCAmpPhase_Cleanup(signal2);
-  
+
   //cout<<" overlap="<<overlap<<endl;
   return overlap;
 }

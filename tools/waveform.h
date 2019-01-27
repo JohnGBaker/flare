@@ -152,6 +152,10 @@ int RestrictFDReImFrequencySeries(
   ReImFrequencySeries* freqseriesin,             /* Input: frequency series */
   double fLow,                                   /* Minimal frequency */
   double fHigh);                                 /* Maximal frequency */
+/* Function for getting a phase mod 2pi (between -pi and pi) */
+double mod2pi(double phase);
+/* Function for getting a phase mod pi (between 0 and pi, e.g. polarization) */
+double modpi(double phase);
 /* Function to unwrap the phase mod 2pi  - acts directly on the gsl_vector representing the phase */
 int UnwrapPhase(
   gsl_vector*  phaseout,   /* Output: unwrapped phase vector - already allocated */

@@ -210,15 +210,91 @@ ResponseApproxtag ParseResponseApproxtag(char* string) {
 }
 
 /* Compute Solar System Barycenter time tSSB from retarded time at the center of the LISA constellation tL */
-double tSSBfromtL(const LISAconstellation *variant, const double tL, const double lambda, const double beta) {
-  double phase=variant->ConstOmega*tL + variant->ConstPhi0 - lambda;
-  double RoC=variant->OrbitR/C_SI;
- return tL + RoC*cos(beta)*cos(phase) - 1./2*variant->ConstOmega*pow(RoC*cos(beta), 2)*sin(2.*phase);
+/* NOTE: depends on the sky position given in SSB parameters */
+double tSSBfromLframe(const LISAconstellation *variant, const double tL, const double lambdaSSB, const double betaSSB) {
+  double phase = variant->ConstOmega*tL + variant->ConstPhi0 - lambdaSSB;
+  double RoC = variant->OrbitR/C_SI;
+ return tL + RoC*cos(betaSSB)*cos(phase) - 1./2*variant->ConstOmega*pow(RoC*cos(betaSSB), 2)*sin(2.*phase);
 }
-double tLfromtSSB(const LISAconstellation *variant, const double tSSB, const double lambda, const double beta) {
-  double phase=variant->ConstOmega*tSSB + variant->ConstPhi0 - lambda;
-  double RoC=variant->OrbitR/C_SI;
-  return tSSB - RoC*cos(beta)*cos(phase);
+/* Compute retarded time at the center of the LISA constellation tL from Solar System Barycenter time tSSB */
+double tLfromSSBframe(const LISAconstellation *variant, const double tSSB, const double lambdaSSB, const double betaSSB) {
+  double phase = variant->ConstOmega*tSSB + variant->ConstPhi0 - lambdaSSB;
+  double RoC = variant->OrbitR/C_SI;
+  return tSSB - RoC*cos(betaSSB)*cos(phase);
+}
+/* Convert L-frame params to SSB-frame params */
+/* NOTE: no transformation of the phase -- approximant-dependence with e.g. EOBNRv2HMROM setting phiRef at fRef, and freedom in definition */
+int ConvertLframeParamsToSSBframe(
+  double* tSSB,
+  double* lambdaSSB,
+  double* betaSSB,
+  double* psiSSB,
+  const double tL,
+  const double lambdaL,
+  const double betaL,
+  const double psiL,
+  const LISAconstellation *variant)
+{
+  double alpha = 0., cosalpha = 0, sinalpha = 0., coslambdaL = 0, sinlambdaL = 0., cosbetaL = 0., sinbetaL = 0., cospsiL = 0., sinpsiL = 0.;
+  double coszeta = cos(PI/3.);
+  double sinzeta = sin(PI/3.);
+  coslambdaL = cos(lambdaL);
+  sinlambdaL = sin(lambdaL);
+  cosbetaL = cos(betaL);
+  sinbetaL = sin(betaL);
+  cospsiL = cos(psiL);
+  sinpsiL = sin(psiL);
+  double lambdaSSB_approx = 0.;
+  double betaSSB_approx = 0.;
+  /* Initially, approximate alpha using tL instead of tSSB - then iterate */
+  double tSSB_approx = tL;
+  for(int k=0; k<3; k++) {
+    alpha = variant->ConstOmega * (tSSB_approx) + variant->ConstPhi0;
+    cosalpha = cos(alpha);
+    sinalpha = sin(alpha);
+    lambdaSSB_approx = atan2(cosalpha*cosalpha*cosbetaL*sinlambdaL -sinalpha*sinbetaL*sinzeta + cosbetaL*coszeta*sinalpha*sinalpha*sinlambdaL -cosalpha*cosbetaL*coslambdaL*sinalpha + cosalpha*cosbetaL*coszeta*coslambdaL*sinalpha, cosbetaL*coslambdaL*sinalpha*sinalpha -cosalpha*sinbetaL*sinzeta + cosalpha*cosalpha*cosbetaL*coszeta*coslambdaL -cosalpha*cosbetaL*sinalpha*sinlambdaL + cosalpha*cosbetaL*coszeta*sinalpha*sinlambdaL);
+    betaSSB_approx = asin(coszeta*sinbetaL + cosalpha*cosbetaL*coslambdaL*sinzeta + cosbetaL*sinalpha*sinzeta*sinlambdaL);
+    tSSB_approx = tSSBfromLframe(variant, tL, lambdaSSB_approx, betaSSB_approx);
+  }
+  *tSSB = tSSB_approx;
+  *lambdaSSB = lambdaSSB_approx;
+  *betaSSB = betaSSB_approx;
+  /* Polarization */
+  *psiSSB = modpi(psiL + atan2(cosalpha*sinzeta*sinlambdaL -coslambdaL*sinalpha*sinzeta, cosbetaL*coszeta -cosalpha*coslambdaL*sinbetaL*sinzeta -sinalpha*sinbetaL*sinzeta*sinlambdaL));
+  
+  return SUCCESS;
+}
+/* Convert SSB-frame params to L-frame params */
+/* NOTE: no transformation of the phase -- approximant-dependence with e.g. EOBNRv2HMROM setting phiRef at fRef, and freedom in definition */
+int ConvertSSBframeParamsToLframe(
+  double* tL,
+  double* lambdaL,
+  double* betaL,
+  double* psiL,
+  const double tSSB,
+  const double lambdaSSB,
+  const double betaSSB,
+  const double psiSSB,
+  const LISAconstellation *variant)
+{
+  double alpha = 0., cosalpha = 0, sinalpha = 0., coslambda = 0, sinlambda = 0., cosbeta = 0., sinbeta = 0., cospsi = 0., sinpsi = 0.;
+  double coszeta = cos(PI/3.);
+  double sinzeta = sin(PI/3.);
+  coslambda = cos(lambdaSSB);
+  sinlambda = sin(lambdaSSB);
+  cosbeta = cos(betaSSB);
+  sinbeta = sin(betaSSB);
+  cospsi = cos(psiSSB);
+  sinpsi = sin(psiSSB);
+  alpha = variant->ConstOmega * (tSSB) + variant->ConstPhi0;
+  cosalpha = cos(alpha);
+  sinalpha = sin(alpha);
+  *tL = tLfromSSBframe(variant, tSSB, lambdaSSB, betaSSB);
+  *lambdaL = atan2(cosalpha*cosalpha*cosbeta*sinlambda + sinalpha*sinbeta*sinzeta + cosbeta*coszeta*sinalpha*sinalpha*sinlambda -cosalpha*cosbeta*coslambda*sinalpha + cosalpha*cosbeta*coszeta*coslambda*sinalpha, cosalpha*sinbeta*sinzeta + cosbeta*coslambda*sinalpha*sinalpha + cosalpha*cosalpha*cosbeta*coszeta*coslambda -cosalpha*cosbeta*sinalpha*sinlambda + cosalpha*cosbeta*coszeta*sinalpha*sinlambda);
+  *betaL = asin(coszeta*sinbeta -cosalpha*cosbeta*coslambda*sinzeta -cosbeta*sinalpha*sinzeta*sinlambda);
+  *psiL = modpi(psiSSB + atan2(coslambda*sinalpha*sinzeta -cosalpha*sinzeta*sinlambda, cosbeta*coszeta + cosalpha*coslambda*sinbeta*sinzeta + sinalpha*sinbeta*sinzeta*sinlambda));
+
+  return SUCCESS;
 }
 
 /* Function cardinal sine */
@@ -510,7 +586,7 @@ double complex G21mode(const LISAconstellation *variant, const double f, const d
 double complex G12mode(const LISAconstellation *variant, const double f, const double t, const double complex Yfactorplus, const double complex Yfactorcross)
 {
 
-  double phase=variant->ConstOmega*t + variant->ConstPhi0;
+  double phase = variant->ConstOmega*t + variant->ConstPhi0;
 
   for(int j=0; j<4; j++) {
     cosarray[j] = cos((j+1) * phase);

@@ -150,12 +150,23 @@ void addendum(int argc, char *argv[],LISARunParams *runParams, int *ndim, int *n
     if(priorParams->pin_eta) priorParams->fix_eta = etaofm1m2(injectedparams->m1, injectedparams->m2);
   }
   if(priorParams->pin_dist) priorParams->fix_dist = injectedparams->distance;
-  if(priorParams->pin_inc) priorParams->fix_inc = injectedparams->inclination;
   if(priorParams->pin_phase) priorParams->fix_phase = injectedparams->phiRef;
-  if(priorParams->pin_pol) priorParams->fix_pol = injectedparams->polarization;
-  if(priorParams->pin_lambda) priorParams->fix_lambda = injectedparams->lambda;
-  if(priorParams->pin_beta) priorParams->fix_beta = injectedparams->beta;
-  if(priorParams->pin_time) priorParams->fix_time = injectedparams->tRef;
+  if(priorParams->pin_inc) priorParams->fix_inc = injectedparams->inclination;
+  /* NOTE: if sampling in L-frame parameters, the pinned values are the L-frame values */
+  double t_pin = 0., lambda_pin = 0., beta_pin = 0., polarization_pin = 0.;
+  if(priorParams->sampleLframe) {
+    ConvertSSBframeParamsToLframe(&t_pin, &lambda_pin, &beta_pin, &polarization_pin, injectedparams->tRef, injectedparams->lambda, injectedparams->beta, injectedparams->polarization, globalparams->variant);
+  }
+  else {
+    t_pin = injectedparams->tRef;
+    lambda_pin = injectedparams->lambda;
+    beta_pin = injectedparams->beta;
+    polarization_pin = injectedparams->polarization;
+  }
+  if(priorParams->pin_time) priorParams->fix_time = t_pin;
+  if(priorParams->pin_lambda) priorParams->fix_lambda = lambda_pin;
+  if(priorParams->pin_beta) priorParams->fix_beta = beta_pin;
+  if(priorParams->pin_pol) priorParams->fix_pol = polarization_pin;
 
   /* Check for fixed parameters, and build the map from the free cube parameters to the orignal 9 parameters */
   /* Order of the 9 original parameters (fixed): m1, m2, tRef, dist, phase, inc, lambda, beta, pol */

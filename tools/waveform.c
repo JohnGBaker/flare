@@ -553,6 +553,15 @@ int RestrictFDReImFrequencySeries(
   return SUCCESS;
 }
 
+/* Function for getting a phase mod 2pi (between -pi and pi) */
+double mod2pi(double phase) {
+  return phase - floor((phase + PI) / (2*PI)) * (2*PI);
+}
+/* Function for getting a phase mod pi (between 0 and pi, e.g. polarization) */
+double modpi(double phase) {
+  return phase - floor(phase / PI) * PI;
+}
+
 /* Function to unwrap the phase mod 2pi  - acts directly on a gsl_vector representing the phase */
 /* WARNING : found significant accumulating difference with the numpy unwrap function - to be understood */
 int UnwrapPhase(

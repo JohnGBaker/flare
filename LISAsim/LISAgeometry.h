@@ -111,8 +111,34 @@ ResponseApproxtag ParseResponseApproxtag(char* string);
 double sinc(const double x);
 
 /* Compute Solar System Barycenter time tSSB from retarded time at the center of the LISA constellation tL */
-double tSSBfromtL(const LISAconstellation *LISAvariant, const double tL, const double lambda, const double beta);
-double tLfromtSSB(const LISAconstellation *LISAvariant, const double tSSB, const double lambda, const double beta);
+/* NOTE: depends on the sky position given in SSB parameters */
+double tSSBfromLframe(const LISAconstellation *variant, const double tL, const double lambdaSSB, const double betaSSB);
+/* Compute retarded time at the center of the LISA constellation tL from Solar System Barycenter time tSSB */
+double tLfromSSBframe(const LISAconstellation *variant, const double tSSB, const double lambdaSSB, const double betaSSB);
+/* Convert L-frame params to SSB-frame params */
+/* NOTE: no transformation of the phase -- approximant-dependence with e.g. EOBNRv2HMROM setting phiRef at fRef, and freedom in definition */
+int ConvertLframeParamsToSSBframe(
+  double* tSSB,
+  double* lambdaSSB,
+  double* betaSSB,
+  double* polSSB,
+  const double tL,
+  const double lambdaL,
+  const double betaL,
+  const double psiL,
+  const LISAconstellation *variant);
+/* Convert SSB-frame params to L-frame params */
+/* NOTE: no transformation of the phase -- approximant-dependence with e.g. EOBNRv2HMROM setting phiRef at fRef, and freedom in definition */
+int ConvertSSBframeParamsToLframe(
+  double* tL,
+  double* lambdaL,
+  double* betaL,
+  double* polL,
+  const double tSSB,
+  const double lambdaSSB,
+  const double betaSSB,
+  const double psiSSB,
+  const LISAconstellation *variant);
 
 /* Function to compute, given a value of a sky position and polarization, all the complicated time-independent trigonometric coefficients entering the response */
 void SetCoeffsG(const double lambda, const double beta, const double psi);

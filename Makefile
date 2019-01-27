@@ -1,29 +1,29 @@
 MESSAGE="Specify which machine to compile for in the Makefile."
-#MACHINE="sylvainsmac"
+MACHINE="sylvainsmac"
 #MACHINE="discover"
-MACHINE="johnsmac"
+#MACHINE="johnsmac"
 #MACHINE="minerva"
 
 ifeq ($(MACHINE),"sylvainsmac")
   MESSAGE="Compiling for Sylvain's Mac"
-  GSLROOT = /opt/local
+  GSLROOT = /usr/local
   BAMBIROOT = $(HOME)/build/bambi
-  CC = gcc-mp-5
-  CPP = g++-mp-5
-	CXX = g++-mp-5
+  CC = gcc-8
+  CPP = g++-8
+	CXX = g++-8
   LD = $(CPP)
   LDFLAGS=  -L$(GSLROOT)/lib
-  #Uncomment this for MPI and specify your needed MPI libraries
-	CFLAGS += -I/usr/local/include -I/opt/local/include
-	CPPFLAGS += -I/usr/local/include -I/opt/local/include
+  #Required include for gsl and cblas
+	CFLAGS += -I/usr/local/include -I/usr/local/opt/openblas/include
+	CPPFLAGS += -I/usr/local/include -I/usr/local/opt/openblas/include
 	#Required for openmp with gcc
 	CFLAGS += -fopenmp
 	CPPFLAGS += -fopenmp
-	LDFLAGS += -fopenmp
+	LDFLAGS += -fopenmp -lgfortran -llapack
   CC += -DPARALLEL
   CPP += -DPARALLEL
   MPILIBS = -lmpi -lmpi_cxx -lmpi_mpifh
-	PTMCMC=$(PWD)/ptmcmc
+  PTMCMC=$(PWD)/ptmcmc
 else ifeq ($(MACHINE),"johnsmac")
   MESSAGE="Compiling for John's Mac"
   GSLROOT = /opt/local
