@@ -54,6 +54,7 @@ Arguments are as follows:\n\
  --deltatobs           Observation duration (years), ignore if 0 (default=0)\n\
  --tagextpn            Tag to allow PN extension of the waveform at low frequencies (default=1)\n\
  --Mfmatch             When PN extension allowed, geometric matching frequency: will use ROM above this value. If <=0, use ROM down to the lowest covered frequency (default=0.)\n\
+ --setphiRefatfRef     Flag for adjusting the FD phase at phiRef at the given fRef, which depends also on tRef - if false, treat phiRef simply as an orbital phase shift (minus an observer phase shift) (default=1)\n\
  --deltaf              When generating frequency series from the mode contributions, deltaf for the output (0 to set automatically at 1/2*1/(2T))\n\
  --twindowbeg          When generating frequency series from file by FFT, twindowbeg (0 to set automatically at 0.05*duration)\n\
  --twindowend          When generating frequency series from file by FFT, twindowend (0 to set automatically at 0.01*duration)\n\
@@ -95,6 +96,7 @@ Arguments are as follows:\n\
     params->deltatobs = 0.;
     params->tagextpn = 1;
     params->Mfmatch = 0.;
+    params->setphiRefatfRef = 1;
     params->deltaf = 0.;
     params->twindowbeg = 0.;
     params->twindowend = 0.;
@@ -150,6 +152,8 @@ Arguments are as follows:\n\
             params->tagextpn = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--Mfmatch") == 0) {
             params->Mfmatch = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--setphiRefatfRef") == 0) {
+          params->setphiRefatfRef = atof(argv[++i]);
         } else if (strcmp(argv[i], "--deltaf") == 0) {
             params->deltaf = atof(argv[++i]);
         } else if (strcmp(argv[i], "--twindowbeg") == 0) {
@@ -500,10 +504,10 @@ int main(int argc, char *argv[])
       int ret;
       if(!(params->tagextpn)){
         //printf("Not Extending signal waveform.  mfmatch=%g\n",globalparams->mfmatch);
-        ret = SimEOBNRv2HMROM(&listhlm, params->nbmode, params->tRef, params->phiRef, params->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+        ret = SimEOBNRv2HMROM(&listhlm, params->nbmode, params->tRef, params->phiRef, params->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI, params->setphiRefatfRef);
       } else {
         //printf("Extending signal waveform.  mfmatch=%g\n",globalparams->mfmatch);
-        ret = SimEOBNRv2HMROMExtTF2(&listhlm, params->nbmode, params->Mfmatch, fmax(params->minf, fstartobs), 0, params->tRef, params->phiRef, params->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+        ret = SimEOBNRv2HMROMExtTF2(&listhlm, params->nbmode, params->Mfmatch, fmax(params->minf, fstartobs), 0, params->tRef, params->phiRef, params->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI, params->setphiRefatfRef);
       }
     }
     /* Read h22 from file - here fstartobs is ignored, use the starting frequency in the file */

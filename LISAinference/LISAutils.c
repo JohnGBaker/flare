@@ -207,6 +207,7 @@ Arguments are as follows:\n\
  --tagextpn            Tag to allow PN extension of the waveform at low frequencies (default=1)\n\
  --tagtRefatLISA       Tag to allow t0 to specify signal offset time at LISA guiding center rather than at SSB (default=0)\n\
  --Mfmatch             When PN extension allowed, geometric matching frequency: will use ROM above this value. If <=0, use ROM down to the lowest covered frequency (default=0.)\n\
+ --setphiRefatfRef     Flag for adjusting the FD phase at phiRef at the given fRef, which depends also on tRef - if false, treat phiRef simply as an orbital phase shift (minus an observer phase shift) (default=1)\n\
  --nbmodeinj           Number of modes of radiation to use for the injection (1-5, default=5)\n\
  --nbmodetemp          Number of modes of radiation to use for the templates (1-5, default=5)\n\
  --tagint              Tag choosing the integrator: 0 for Fresnel (default), 1 for linear integration\n\
@@ -313,6 +314,7 @@ Syntax: --PARAM-min\n\
     globalparams->tagextpn = 1;
     globalparams->tagtRefatLISA = 0;
     globalparams->Mfmatch = 0.;
+    globalparams->setphiRefatfRef = 1;
     globalparams->nbmodeinj = 5;
     globalparams->nbmodetemp = 5;
     globalparams->tagint = 0;
@@ -449,6 +451,8 @@ Syntax: --PARAM-min\n\
             globalparams->tagtRefatLISA = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--Mfmatch") == 0) {
             globalparams->Mfmatch = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--setphiRefatfRef") == 0) {
+            globalparams->setphiRefatfRef = atof(argv[++i]);
         } else if (strcmp(argv[i], "--nbmodeinj") == 0) {
             globalparams->nbmodeinj = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--nbmodetemp") == 0) {
@@ -936,10 +940,10 @@ int LISAGenerateSignalCAmpPhase(
   /* If extending, taking into account both fstartobs and minf */
   if(!(globalparams->tagextpn)) {
     //printf("Not Extending signal waveform.  Mfmatch=%g\n",globalparams->Mfmatch);
-    ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+    ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI, globalparams->setphiRefatfRef);
   } else {
     //printf("Extending signal waveform.  Mfmatch=%g\n",globalparams->Mfmatch);
-    ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, globalparams->Mfmatch, fmax(fstartobs, globalparams->minf), 0, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+    ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, globalparams->Mfmatch, fmax(fstartobs, globalparams->minf), 0, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI, globalparams->setphiRefatfRef);
   }
   if(ret==FAILURE){
     //printf("LISAGenerateSignalCAmpPhase: Generation of ROM for injection failed!\n");
@@ -1044,10 +1048,10 @@ int LISAGenerateInjectionCAmpPhase(
   /* If extending, taking into account both fstartobs and minf */
   if(!(globalparams->tagextpn)) {
     //printf("Not Extending signal waveform.  Mfmatch=%g\n",globalparams->Mfmatch);
-    ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+    ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI, globalparams->setphiRefatfRef);
   } else {
     //printf("Extending signal waveform.  Mfmatch=%g\n",globalparams->Mfmatch);
-    ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, globalparams->Mfmatch, fmax(fstartobs, globalparams->minf), 0, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+    ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, globalparams->Mfmatch, fmax(fstartobs, globalparams->minf), 0, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI, globalparams->setphiRefatfRef);
   }
   /* If the ROM waveform generation failed (e.g. parameters were out of bounds) return FAILURE */
   if(ret==FAILURE){
@@ -1147,10 +1151,10 @@ int LISAGenerateSignalReIm(
   /* If extending, taking into account both fstartobs and minf */
   if(!(globalparams->tagextpn)) {
     //printf("Not Extending signal waveform.  Mfmatch=%g\n",globalparams->Mfmatch);
-    ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+    ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI, globalparams->setphiRefatfRef);
   } else {
     //printf("Extending signal waveform.  Mfmatch=%g\n",globalparams->Mfmatch);
-    ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, globalparams->Mfmatch, fmax(fstartobs, globalparams->minf), 0, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+    ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, globalparams->Mfmatch, fmax(fstartobs, globalparams->minf), 0, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI, globalparams->setphiRefatfRef);
   }
 
   /* If the ROM waveform generation failed (e.g. parameters were out of bounds) return FAILURE */
@@ -1225,10 +1229,10 @@ int LISAGenerateInjectionReIm(
   /* If extending, taking into account both fstartobs and minf */
   if(!(globalparams->tagextpn)) {
     //printf("Not Extending signal waveform.  Mfmatch=%g\n",globalparams->Mfmatch);
-    ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+    ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI, globalparams->setphiRefatfRef);
   } else {
     //printf("Extending signal waveform.  Mfmatch=%g\n",globalparams->Mfmatch);
-    ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, globalparams->Mfmatch, fmax(fstartobs, globalparams->minf), 0, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+    ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, globalparams->Mfmatch, fmax(fstartobs, globalparams->minf), 0, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI, globalparams->setphiRefatfRef);
   }
 
   /* If the ROM waveform generation failed (e.g. parameters were out of bounds) return FAILURE */
@@ -1701,10 +1705,10 @@ int LISAComputeSimpleLikelihoodPrecomputedValues(SimpleLikelihoodPrecomputedValu
   /* If extending, taking into account both fstartobs and minf */
   if(!(globalparams->tagextpn)) {
     //printf("Not Extending signal waveform.  Mfmatch=%g\n",globalparams->Mfmatch);
-    ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+    ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI, globalparams->setphiRefatfRef);
   } else {
     //printf("Extending signal waveform.  Mfmatch=%g\n",globalparams->Mfmatch);
-    ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, globalparams->Mfmatch, fmax(fstartobs, globalparams->minf), 0, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+    ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, globalparams->Mfmatch, fmax(fstartobs, globalparams->minf), 0, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI, globalparams->setphiRefatfRef);
   }
   /* If the ROM waveform generation failed (e.g. parameters were out of bounds) return FAILURE */
   if(ret==FAILURE){

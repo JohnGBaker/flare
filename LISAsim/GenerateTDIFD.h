@@ -71,6 +71,7 @@ typedef struct tagGenTDIFDparams {
   double deltatobs;          /* Observation duration (years, default=2) */
   int tagextpn;              /* Tag to allow PN extension of the waveform at low frequencies (default=1) */
   double Mfmatch;            /* When PN extension allowed, geometric matching frequency: will use ROM above this value. If <=0, use ROM down to the lowest covered frequency (default=0.) */
+  int setphiRefatfRef;       /* Flag for adjusting the FD phase at phiRef at the given fRef, which depends also on tRef - if false, treat phiRef simply as an orbital phase shift (minus an observer phase shift) (default=1) */
   double deltaf;             /* When generating frequency series from the mode contributions, deltaf for the output (0 to set automatically at 1/2*1/(2T)) */
   double twindowbeg;         /* When generating frequency series from file by FFT, twindowbeg (0 to set automatically at 0.05*duration) */
   double twindowend;         /* When generating frequency series from file by FFT, twindowend (0 to set automatically at 0.01*duration) */

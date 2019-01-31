@@ -64,6 +64,7 @@ typedef struct tagGenLLVFDparams {
   double minf;               /* Minimal frequency, ignore if 0 (Hz, default=0) - will use first frequency covered by the ROM if higher */
   double maxf;               /* Maximal frequency, ignore if 0 (Hz, default=0) - will use last frequency covered by the ROM if lower */
   double deltaf;             /* When generating frequency series from the mode contributions, deltaf for the output (0 to set automatically at 1/2*1/(2T)) */
+  int setphiRefatfRef;       /* Flag for adjusting the FD phase at phiRef at the given fRef, which depends also on tRef - if false, treat phiRef simply as an orbital phase shift (minus an observer phase shift) (default=1) */
   int tagnetwork;            /* Tag selecting the desired output format */
   int taggenwave;            /* Tag selecting the desired output format */
   int fromLLVtdfile;         /* Tag for loading time series for LLV detectors and FFTing */

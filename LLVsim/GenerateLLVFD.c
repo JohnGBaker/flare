@@ -47,6 +47,7 @@ Arguments are as follows:\n\
 --------------------------------------------------\n\
  --nbmode              Number of modes of radiation to generate (1-5, default=5)\n\
  --minf                Minimal frequency (Hz, default=0) - when too low, use first frequency covered by the ROM\n\
+ --setphiRefatfRef     Flag for adjusting the FD phase at phiRef at the given fRef, which depends also on tRef - if false, treat phiRef simply as an orbital phase shift (minus an observer phase shift) (default=1)\n\
  --tagnetwork          Tag choosing the set of detectors to use (default LHV)\n\
  --taggenwave          Tag choosing the wf format: LLVhlm (default: downsampled mode contributions to LLV in Amp/Phase form), LLVFD (hlm interpolated and summed accross modes)\n\
  --restorescaledfactor Option to restore the factors scaled out of LLV observables (default: false)\n	\
@@ -77,6 +78,7 @@ Arguments are as follows:\n\
     /* Set default values for the generation params */
     params->nbmode = 5;
     params->minf = 0.;
+    params->setphiRefatfRef = 1;
     params->tagnetwork = LHV;
     params->taggenwave = LLVhlm;
     params->fromLLVtdfile = 0;
@@ -115,6 +117,8 @@ Arguments are as follows:\n\
             params->nbmode = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--minf") == 0) {
             params->minf = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--setphiRefatfRef") == 0) {
+          params->setphiRefatfRef = atof(argv[++i]);
         } else if (strcmp(argv[i], "--tagnetwork") == 0) {
 	          params->tagnetwork = ParseNetworktag(argv[++i]);
         } else if (strcmp(argv[i], "--taggenwave") == 0) {
@@ -288,7 +292,7 @@ int main(int argc, char *argv[])
   else {
     /* Generate Fourier-domain waveform as a list of hlm modes */
     ListmodesCAmpPhaseFrequencySeries* listROM = NULL;
-    SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef, params->phiRef, params->fRef, params->m1*MSUN_SI, params->m2*MSUN_SI, params->distance*1e6*PC_SI);
+    SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef, params->phiRef, params->fRef, params->m1*MSUN_SI, params->m2*MSUN_SI, params->distance*1e6*PC_SI, params->setphiRefatfRef);
 
     /* Process through the Fourier-domain response for LLV observables */
     ListmodesCAmpPhaseFrequencySeries* listLLV1= NULL;

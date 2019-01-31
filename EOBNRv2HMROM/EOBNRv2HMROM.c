@@ -341,7 +341,8 @@ int EOBNRv2HMROMCore(
   double fRef,
   double Mtot_sec,
   double q,
-  double distance)
+  double distance,
+  int setphiRefatfRef)
 {
   int ret = SUCCESS;
   int j;
@@ -458,7 +459,12 @@ int EOBNRv2HMROMCore(
       /* Note : twopishifttime is almost 0 (order 1e-8) by construction for the 22 mode, so it does not intervene here */
       tpeak22estimate = -1./(2*PI) * gsl_spline_eval_deriv(spline_phi22, f22peak, accel_phi22);
       /* Determine the change in phase (to be propagated to all modes) required to have phi22(fRef) = 2*phiRef */
-      phase_change_ref = 2*phiRef + (gsl_spline_eval(spline_phi22, fRef_geom, accel_phi22) - (twopishifttime - 2*PI*tpeak22estimate + 2*PI*deltatRef_geom) * fRef_geom - shiftphase);
+      if(setphiRefatfRef) {
+        phase_change_ref = 2*phiRef + (gsl_spline_eval(spline_phi22, fRef_geom, accel_phi22) - (twopishifttime - 2*PI*tpeak22estimate + 2*PI*deltatRef_geom) * fRef_geom - shiftphase);
+      }
+      else {
+        phase_change_ref = 2*phiRef;
+      }
       gsl_spline_free(spline_phi22);
       gsl_interp_accel_free(accel_phi22);
       }
@@ -469,7 +475,7 @@ int EOBNRv2HMROMCore(
     }
     /* Total shift in time, and total change in phase for this mode */
     double totaltwopishifttime = twopishifttime - 2*PI*tpeak22estimate + 2*PI*deltatRef_geom;
-    double constphaseshift = (double) m/listmode[0][1] * phase_change_ref + shiftphase;
+    double constphaseshift = m/2. * phase_change_ref + shiftphase;
 
     //
     //printf("deltatRef_geom: %g\n", deltatRef_geom);
@@ -534,7 +540,8 @@ int SimEOBNRv2HMROM(
   double fRef,                                   /* Reference frequency (Hz); 0 defaults to fLow */
   double m1SI,                                   /* Mass of companion 1 (kg) */
   double m2SI,                                   /* Mass of companion 2 (kg) */
-  double distance)                               /* Distance of source (m) */
+  double distance,                               /* Distance of source (m) */
+  int setphiRefatfRef)                           /* Flag for adjusting the FD phase at phiRef at the given fRef, which depends also on tRef - if false, treat phiRef simply as an orbital phase shift (minus an observer phase shift) */
 {
   /* Get masses in terms of solar mass */
   double mass1 = m1SI / MSUN_SI;
@@ -555,7 +562,7 @@ int SimEOBNRv2HMROM(
   //printf("Initialization time: %g s\n", (double)(end - beg) / CLOCKS_PER_SEC);
 
   //beg = clock();
-  int retcode = EOBNRv2HMROMCore(listhlm, nbmode, deltatRef, phiRef, fRef, Mtot_sec, q, distance);
+  int retcode = EOBNRv2HMROMCore(listhlm, nbmode, deltatRef, phiRef, fRef, Mtot_sec, q, distance, setphiRefatfRef);
   //end = clock();
   //printf("ROM evaluation time: %g s\n", (double)(end - beg) / CLOCKS_PER_SEC);
 
@@ -752,7 +759,8 @@ int SimEOBNRv2HMROMExtTF2(
   double fRef,                                   /* Reference frequency (Hz); 0 defaults to fLow */
   double m1SI,                                   /* Mass of companion 1 (kg) */
   double m2SI,                                   /* Mass of companion 2 (kg) */
-  double distance)                               /* Distance of source (m) */
+  double distance,                               /* Distance of source (m) */
+  int setphiRefatfRef)                           /* Flag for adjusting the FD phase at phiRef at the given fRef, which depends also on tRef - if false, treat phiRef simply as an orbital phase shift (minus an observer phase shift) */
 {//
   //printf("calling SimEOBNRv2HMROMExtTF2 with minf=%g\n", minf);
   //printf("params: %d %g %g %g %g %g %g %g %g\n", nbmode, Mf_match, minf, deltatRef, phiRef, fRef, m1SI, m2SI, distance);
@@ -764,7 +772,7 @@ int SimEOBNRv2HMROMExtTF2(
   int lout=-1,mout=-1;
 
   /* Generate the waveform with the ROM */
-  ret = SimEOBNRv2HMROM(&listROM, nbmode, deltatRef, phiRef, fRef, m1SI, m2SI, distance);
+  ret = SimEOBNRv2HMROM(&listROM, nbmode, deltatRef, phiRef, fRef, m1SI, m2SI, distance, setphiRefatfRef);
 
   /* If the ROM waveform generation failed (e.g. parameters were out of bounds) return FAILURE */
   //if(ret==FAILURE)printf("SimEOBNRv2HMROMExtTF2: Generation of ROM for injection failed!\n");
@@ -971,40 +979,43 @@ int SimEOBNRv2HMROMExtTF2(
   /* Compute phase shift to set phiRef at fRef */
   /* Covers the case where input fRef is outside the range of the ROM, in which case the Core function defaulted to Mfmax_ROM */
   /* Not very clean and a bit redundant */
-  CAmpPhaseFrequencySeries* h22 = ListmodesCAmpPhaseFrequencySeries_GetMode(listROM, 2, 2)->freqseries;
-  gsl_vector* freq22 = h22->freq;
-  gsl_vector* phase22 = h22->phase;
-  int nbfreq = freq22->size;
-  gsl_interp_accel* accel_phi22 = gsl_interp_accel_alloc();
-  gsl_spline* spline_phi22 = gsl_spline_alloc(gsl_interp_cspline, nbfreq);
-  gsl_spline_init(spline_phi22, gsl_vector_const_ptr(freq22,0), gsl_vector_const_ptr(phase22,0), nbfreq);
-  /* If fRef was not set (fRef=0), use the last frequency generated for 22 mode -- as is done internally in Core */
-  if (fRef==0.) fRef = freq22->data[freq22->size - 1];
-  /* Compute 22 phase at fRef before adjustment, check the extended range */
-  if ( (fRef<freq22->data[0]) || (fRef>freq22->data[freq22->size - 1]) ) {
-    printf("Error: fRef is not covered by the frequency range of the waveform after extension.\n");
-    return FAILURE;
+  if (setphiRefatfRef) {
+    CAmpPhaseFrequencySeries* h22 = ListmodesCAmpPhaseFrequencySeries_GetMode(listROM, 2, 2)->freqseries;
+    gsl_vector* freq22 = h22->freq;
+    gsl_vector* phase22 = h22->phase;
+    int nbfreq = freq22->size;
+    gsl_interp_accel* accel_phi22 = gsl_interp_accel_alloc();
+    gsl_spline* spline_phi22 = gsl_spline_alloc(gsl_interp_cspline, nbfreq);
+    gsl_spline_init(spline_phi22, gsl_vector_const_ptr(freq22,0), gsl_vector_const_ptr(phase22,0), nbfreq);
+    /* If fRef was not set (fRef=0), use the last frequency generated for 22 mode -- as is done internally in Core */
+    if (fRef==0.) fRef = freq22->data[freq22->size - 1];
+    /* Compute 22 phase at fRef before adjustment, check the extended range */
+    if ( (fRef<freq22->data[0]) || (fRef>freq22->data[freq22->size - 1]) ) {
+      printf("Error: fRef is not covered by the frequency range of the waveform after extension.\n");
+      return FAILURE;
+    }
+    double phi22atfRef = gsl_spline_eval(spline_phi22, fRef, accel_phi22);
+    /* Phase shift, as an orbital or observer phase shift (change in 22 is 2*phaseshift) */
+    double phaseshift = (2*phiRef - phi22atfRef)/2.;
+
+    /* Propagate phase shift to full list of modes */
+    listelement = listROM;
+    while(listelement) {
+      int l = listelement->l;
+      int m = listelement->m;
+
+      double phaseshiftlm = m/2. * phaseshift;
+      gsl_vector* philm = listelement->freqseries->phase;
+      gsl_vector_add_constant(philm, phaseshiftlm);
+
+      listelement = listelement->next;
+    }
+
+    /* Cleanup */
+    gsl_spline_free(spline_phi22);
+    gsl_interp_accel_free(accel_phi22);
   }
-  double phi22atfRef = gsl_spline_eval(spline_phi22, fRef, accel_phi22);
-  /* Phase shift, as an orbital or observer phase shift (change in 22 is 2*phaseshift) */
-  double phaseshift = (2*phiRef - phi22atfRef)/2.;
 
-  /* Propagate phase shift to full list of modes */
-  listelement = listROM;
-  while(listelement) {
-    int l = listelement->l;
-    int m = listelement->m;
-
-    double phaseshiftlm = m/2. * phaseshift;
-    gsl_vector* philm = listelement->freqseries->phase;
-    gsl_vector_add_constant(philm, phaseshiftlm);
-
-    listelement = listelement->next;
-  }
-
-  /* Cleanup */
-  gsl_spline_free(spline_phi22);
-  gsl_interp_accel_free(accel_phi22);
 
   /* Output */
   *listhlm = listROM;

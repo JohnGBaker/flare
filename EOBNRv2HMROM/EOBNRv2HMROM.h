@@ -104,7 +104,8 @@ int EOBNRv2HMROMCore(
   double fRef,
   double Mtot_sec,
   double q,
-  double distance);
+  double distance,
+  int setphiRefattRef);
 
 int SimEOBNRv2HMROM(
   ListmodesCAmpPhaseFrequencySeries **listhlm,  /* Output: list of modes in Frequency-domain amplitude and phase form */
@@ -114,7 +115,8 @@ int SimEOBNRv2HMROM(
   double fRef,                                   /* Reference frequency (Hz); 0 defaults to fLow */
   double m1SI,                                   /* Mass of companion 1 (kg) */
   double m2SI,                                   /* Mass of companion 2 (kg) */
-  double distance);                              /* Distance of source (m) */
+  double distance,                               /* Distance of source (m) */
+  int setphiRefattRef);                          /* Flag for adjusting the FD phase at phiRef at the given fRef, which depends also on tRef - if false, treat phiRef simply as an orbital phase shift (minus an observer phase shift) */
 
 int SimEOBNRv2HMROMExtTF2(
   ListmodesCAmpPhaseFrequencySeries **listhlm,   /* Output: list of modes in Frequency-domain amplitude and phase form */
@@ -127,7 +129,8 @@ int SimEOBNRv2HMROMExtTF2(
   double fRef,                                   /* Reference frequency (Hz); 0 defaults to fLow */
   double m1SI,                                   /* Mass of companion 1 (kg) */
   double m2SI,                                   /* Mass of companion 2 (kg) */
-  double distance);                              /* Distance of source (m) */
+  double distance,                               /* Distance of source (m) */
+  int setphiRefattRef);                          /* Flag for adjusting the FD phase at phiRef at the given fRef, which depends also on tRef - if false, treat phiRef simply as an orbital phase shift (minus an observer phase shift) */
 
 #if 0
 { /* so that editors will match succeeding brace */

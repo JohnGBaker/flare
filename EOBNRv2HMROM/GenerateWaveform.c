@@ -48,6 +48,7 @@ Arguments are as follows:\n\
  --deltatobs           Observation duration (years) ignore if 0 (default=2)\n\
  --tagextpn            Tag to allow PN extension of the waveform at low frequencies (default=1)\n\
  --Mfmatch             When PN extension allowed, geometric matching frequency: will use ROM above this value. If <=0, use ROM down to the lowest covered frequency (default=0.)\n\
+ --setphiRefatfRef     Flag for adjusting the FD phase at phiRef at the given fRef, which depends also on tRef - if false, treat phiRef simply as an orbital phase shift (minus an observer phase shift) (default=1)\n\
  --taggenwave          Tag choosing the wf format: hlm (default: downsampled modes, Amp/Phase form),  h22TD (IFFT of h22, Amp/Phase form - currently not supported for higher modes), hphcFD (hlm interpolated and summed, Re/Im form), hphcTD (IFFT of hphcFD, Re/Im form)\n\
  --f1windowbeg         If generating h22TD/hphcTD, start frequency for windowing at the beginning - set to 0 to ignore and use max(fstartobs, fLowROM, minf), where fLowROM is either the lowest frequency covered by the ROM or simply minf if PN extension is used (Hz, default=0)\n\
  --f2windowbeg         If generating h22TD/hphcTD, stop frequency for windowing at the beginning - set to 0 to ignore and use 1.1*f1windowbeg (Hz, default=0)\n\
@@ -81,6 +82,7 @@ Arguments are as follows:\n\
     params->deltatobs = 0.;
     params->tagextpn = 1;
     params->Mfmatch = 0.;
+    params->setphiRefatfRef = 1;
     params->taggenwave = hlm;
     params->f1windowbeg = 0.;
     params->f2windowbeg = 0.;
@@ -126,6 +128,8 @@ Arguments are as follows:\n\
           params->tagextpn = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--Mfmatch") == 0) {
           params->Mfmatch = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--setphiRefatfRef") == 0) {
+          params->setphiRefatfRef = atof(argv[++i]);
         } else if (strcmp(argv[i], "--taggenwave") == 0) {
           params->taggenwave = ParseGenWavetag(argv[++i]);
         } else if (strcmp(argv[i], "--f1windowbeg") == 0) {
@@ -307,10 +311,10 @@ int main(int argc, char *argv[])
     /* If extending, taking into account both fstartobs and minf */
     if(!(params->tagextpn)){
       //printf("Not Extending signal waveform.  mfmatch=%g\n",globalparams->mfmatch);
-      ret = SimEOBNRv2HMROM(&listhlm, params->nbmode, params->tRef, params->phiRef, params->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+      ret = SimEOBNRv2HMROM(&listhlm, params->nbmode, params->tRef, params->phiRef, params->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI, params->setphiRefatfRef);
     } else {
       //printf("Extending signal waveform.  mfmatch=%g\n",globalparams->mfmatch);
-      ret = SimEOBNRv2HMROMExtTF2(&listhlm, params->nbmode, params->Mfmatch, fmax(params->minf, fstartobs), 0, params->tRef, params->phiRef, params->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI);
+      ret = SimEOBNRv2HMROMExtTF2(&listhlm, params->nbmode, params->Mfmatch, fmax(params->minf, fstartobs), 0, params->tRef, params->phiRef, params->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI, params->setphiRefatfRef);
     }
   }
   /* Read h22 from file - here fstartobs is ignored, use the starting frequency in the file */

@@ -38,6 +38,7 @@ typedef struct tagLLVGlobalParams {
   double fRef;               /* reference frequency (Hz, default 0 which is interpreted as Mf=0.14) */
   double minf;               /* Minimal frequency (Hz) - when set to 0 (default), use the first frequency covered by the noise data of the detector */
   double maxf;               /* Maximal frequency (Hz) - when set to 0 (default), use the last frequency covered by the noise data of the detector */
+  int setphiRefatfRef;       /* Flag for adjusting the FD phase at phiRef at the given fRef, which depends also on tRef - if false, treat phiRef simply as an orbital phase shift (minus an observer phase shift) (default=1) */
   int nbmodeinj;             /* number of modes to include in the injection (starting with 22) - defaults to 5 (all modes) */
   int nbmodetemp;            /* number of modes to include in the templates (starting with 22) - defaults to 5 (all modes) */
   int tagint;                /* Tag choosing the integrator: 0 for wip (default), 1 for linear integration */
