@@ -336,18 +336,27 @@ static void Read_TDITD3Chan( RealTimeSeries** TDI1, RealTimeSeries** TDI2, RealT
 static void Write_TDIhlm(const char dir[], const char file[], ListmodesCAmpPhaseFrequencySeries* listhlm, int nbmodes, const int binary)
 {
   /* Initialize output */
-  /* get length from 22 mode - NOTE: assumes the same for all modes */
-  int nbfreq = ListmodesCAmpPhaseFrequencySeries_GetMode(listhlm, 2, 2)->freqseries->freq->size;
-  gsl_matrix* outmatrix = gsl_matrix_alloc(nbfreq, 4*nbmodes);
+  /* length of output is the max for all modes, 0-padding for other modes */
+  int nbfreq_max = 0;
+  for(int i=0; i<nbmodes; i++) {
+    nbfreq_max = max(nbfreq_max, ListmodesCAmpPhaseFrequencySeries_GetMode(listhlm, listmode[i][0], listmode[i][1])->freqseries->freq->size);
+  }
+  gsl_matrix* outmatrix = gsl_matrix_alloc(nbfreq_max, 4*nbmodes);
+  gsl_matrix_set_zero(outmatrix);
 
   /* Get data in the list of modes */
   CAmpPhaseFrequencySeries* mode;
+  int mode_len = 0;
   for(int i=0; i<nbmodes; i++) {
+    printf("%d,%d\n", i, nbmodes);
     mode = ListmodesCAmpPhaseFrequencySeries_GetMode(listhlm, listmode[i][0], listmode[i][1])->freqseries;
-    gsl_matrix_set_col(outmatrix, 0+3*i, mode->freq);
-    gsl_matrix_set_col(outmatrix, 1+3*i, mode->amp_real);
-    gsl_matrix_set_col(outmatrix, 2+3*i, mode->amp_imag); /* amp_imag is important here */
-    gsl_matrix_set_col(outmatrix, 3+3*i, mode->phase);
+    mode_len = mode->freq->size;
+    for(int k=0; k<mode_len; k++) {
+      gsl_matrix_set(outmatrix, k, 0+4*i, mode->freq->data[k]);
+      gsl_matrix_set(outmatrix, k, 1+4*i, mode->amp_real->data[k]);
+      gsl_matrix_set(outmatrix, k, 2+4*i, mode->amp_imag->data[k]); /* amp_imag is important here */
+      gsl_matrix_set(outmatrix, k, 3+4*i, mode->phase->data[k]);
+    }
   }
 
   /* Output */
