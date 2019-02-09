@@ -220,7 +220,7 @@ double SnAXYZNoRescaling(const LISAconstellation *variant, double f) {
   double s2 = sin(twopifL);
   double Spm = 0., Sop = 0.;
   ComputeLISASpmSop(&Spm, &Sop, f, variant->noise);
-  return 2*s2*s2 * (2*(3. + 2*c2 + c4)*SpmLISA2017(f) + (2 + c2)*SopLISA2017(f));
+  return 2*s2*s2 * (2*(3. + 2*c2 + c4)*Spm + (2 + c2)*Sop);
 }
 /* Scaling by 2*sin2pifL^2 put back */
 double SnEXYZNoRescaling(const LISAconstellation *variant, double f) {
