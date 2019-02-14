@@ -962,6 +962,8 @@ double FDListmodesFresnelOverlap(
 /* Function computing the mode-by-mode overlap (hlm1|hlm2) between two waveforms given as list of modes, one being already interpolated, for a given noise function - two additional parameters for the starting 22-mode frequencies (then properly scaled for the other modes) for a limited duration of the observations */
 double FDModeByModeFresnelOverlap(
   gsl_matrix** hlm1hlm2_matrix,                        /* Matrix of overlaps (hlm1|hlm2) */
+  gsl_matrix* listmodes1,                              /* Matrix of modes for first waveform */
+  gsl_matrix* listmodes2,                              /* Matrix of modes for second waveform */
   struct tagListmodesCAmpPhaseFrequencySeries *listh1, /* First waveform, list of modes in amplitude/phase form */
   struct tagListmodesCAmpPhaseSpline *listsplines2,    /* Second waveform, list of modes already interpolated in matrix form */
   ObjectFunction * Snoise,                             /* Noise function */
@@ -975,17 +977,19 @@ double FDModeByModeFresnelOverlap(
     double overlap = 0;
 
     ListmodesCAmpPhaseFrequencySeries* listh1element;
-    ListmodesCAmpPhaseFrequencySeries* listsplines2element;
+    ListmodesCAmpPhaseSpline* listsplines2element;
 
-    *hlm1hlm2_matrix = gsl_matrix_alloc(nbmodemax, nbmodemax);
+    int nbmode1 = listmodes1->size1;
+    int nbmode2 = listmodes2->size1;
+    *hlm1hlm2_matrix = gsl_matrix_alloc(nbmode1, nbmode2);
 
     /* Main loop over the modes - goes through all the modes present */
-    for(int imode1=0; imode1<nbmodemax; imode1++) {
-      for(int imode2=0; imode2<nbmodemax; imode2++) {
-        l1 = listmodes[imode1][0];
-        m1 = listmodes[imode1][1];
-        l2 = listmodes[imode2][0];
-        m2 = listmodes[imode2][1];
+    for(int imode1=0; imode1<nbmode1; imode1++) {
+      for(int imode2=0; imode2<nbmode2; imode2++) {
+        l1 = (int) gsl_matrix_get(listmodes1, imode1, 0);
+        m1 = (int) gsl_matrix_get(listmodes1, imode1, 1);
+        l2 = (int) gsl_matrix_get(listmodes2, imode2, 0);
+        m2 = (int) gsl_matrix_get(listmodes2, imode2, 1);
         listh1element = ListmodesCAmpPhaseFrequencySeries_GetMode(listh1, l1, m1);
         listsplines2element = ListmodesCAmpPhaseSpline_GetMode(listsplines2, l2, m2);
         /* Scaling fstartobs1/2 with the appropriate factor of m (for the 21 mode we use m=2) - setting fmin in the overlap accordingly */

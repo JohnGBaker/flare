@@ -242,6 +242,8 @@ double FDListmodesFresnelOverlap3Chan(
 /* Function computing the mode-by-mode overlap (hlm1|hlm2) between two waveforms given as list of modes, one being already interpolated, for a given noise function - two additional parameters for the starting 22-mode frequencies (then properly scaled for the other modes) for a limited duration of the observations */
 double FDModeByModeFresnelOverlap(
   gsl_matrix** hlm1hlm2_matrix,                        /* Matrix of overlaps (hlm1|hlm2) */
+  gsl_matrix* listmodes1,                              /* Matrix of modes for first waveform */
+  gsl_matrix* listmodes2,                              /* Matrix of modes for second waveform */
   struct tagListmodesCAmpPhaseFrequencySeries *listh1, /* First waveform, list of modes in amplitude/phase form */
   struct tagListmodesCAmpPhaseSpline *listsplines2,    /* Second waveform, list of modes already interpolated in matrix form */
   ObjectFunction * Snoise,                             /* Noise function */
