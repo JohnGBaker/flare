@@ -239,6 +239,17 @@ double FDListmodesFresnelOverlap3Chan(
   double fHigh,                                         /* Upper bound of the frequency window for the detector */
   double fstartobs1,                                    /* Starting frequency for the 22 mode of wf 1 - as determined from a limited duration of the observation - set to 0 to ignore */
   double fstartobs2);                                    /* Starting frequency for the 22 mode of wf 2 - as determined from a limited duration of the observation - set to 0 to ignore */
+/* Function computing the mode-by-mode overlap (hlm1|hlm2) between two waveforms given as list of modes, one being already interpolated, for a given noise function - two additional parameters for the starting 22-mode frequencies (then properly scaled for the other modes) for a limited duration of the observations */
+double FDModeByModeFresnelOverlap(
+  gsl_matrix** hlm1hlm2_matrix,                        /* Matrix of overlaps (hlm1|hlm2) */
+  struct tagListmodesCAmpPhaseFrequencySeries *listh1, /* First waveform, list of modes in amplitude/phase form */
+  struct tagListmodesCAmpPhaseSpline *listsplines2,    /* Second waveform, list of modes already interpolated in matrix form */
+  ObjectFunction * Snoise,                             /* Noise function */
+  double fLow,                                         /* Lower bound of the frequency window for the detector */
+  double fHigh,                                        /* Upper bound of the frequency window for the detector */
+  double fstartobs1,                                   /* Starting frequency for the 22 mode of wf 1 - as determined from a limited duration of the observation - set to 0 to ignore */
+  double fstartobs2,                                   /* Starting frequency for the 22 mode of wf 2 - as determined from a limited duration of the observation - set to 0 to ignore */
+  double flagScalefHighByMode);                        /* Flag to scale the higher freq cut by the mode number, cutting each mode at m/2*fHigh */
 
 #if 0
 { /* so that editors will match succeeding brace */

@@ -549,13 +549,13 @@ double FDLogLikelihoodReIm(
 /***************************** Functions for overlaps using amplitude/phase (Fresnel) ******************************/
 
 /*  Moved these to splinecoeffs.c
- 
-// Note: for the spines in matrix form, the first column contains the x values, so the coeffs start at 1 
+
+// Note: for the spines in matrix form, the first column contains the x values, so the coeffs start at 1
 static double EvalCubic(
-  gsl_vector* coeffs,  
-  double eps,          
-  double eps2,         
-  double eps3)         
+  gsl_vector* coeffs,
+  double eps,
+  double eps2,
+  double eps3)
 {
   double p0 = gsl_vector_get(coeffs, 1);
   double p1 = gsl_vector_get(coeffs, 2);
@@ -564,9 +564,9 @@ static double EvalCubic(
   return p0 + p1*eps + p2*eps2 + p3*eps3;
 }
 static double EvalQuad(
-  gsl_vector* coeffs,  
-  double eps,          
-  double eps2)         
+  gsl_vector* coeffs,
+  double eps,
+  double eps2)
 {
   double p0 = gsl_vector_get(coeffs, 1);
   double p1 = gsl_vector_get(coeffs, 2);
@@ -838,7 +838,7 @@ int ComputeIntegrandValues3Chan(
 	   ampreal2chan1,ampimag2chan1,ampreal2chan2,ampimag2chan2,ampreal2chan3,ampimag2chan3);
     printf("in1=%g, in2=%g, in3=%g\n",invSnchan1,invSnchan2,invSnchan3);
     */
-    
+
     gsl_vector_set(freq, j, f);
     gsl_vector_set(ampreal, j, creal(camp));
     gsl_vector_set(ampimag, j, cimag(camp));
@@ -913,7 +913,7 @@ double FDSinglemodeFresnelOverlap3Chan(
   for(int ii=0;ii<integrand->freq->size;ii++)
     printf("ii=%i, f=%g, integrand = ( %g, %g, %g )\n",ii,gsl_vector_get(integrand->freq,ii),gsl_vector_get(integrand->amp_real,ii),gsl_vector_get(integrand->amp_imag,ii),gsl_vector_get(integrand->phase,ii));
   */
-  
+
   /* Interpolating the integrand */
   CAmpPhaseSpline* integrandspline = NULL;
   BuildSplineCoeffs(&integrandspline, integrand);
@@ -959,6 +959,49 @@ double FDListmodesFresnelOverlap(
   return overlap;
 }
 
+/* Function computing the mode-by-mode overlap (hlm1|hlm2) between two waveforms given as list of modes, one being already interpolated, for a given noise function - two additional parameters for the starting 22-mode frequencies (then properly scaled for the other modes) for a limited duration of the observations */
+double FDModeByModeFresnelOverlap(
+  gsl_matrix** hlm1hlm2_matrix,                        /* Matrix of overlaps (hlm1|hlm2) */
+  struct tagListmodesCAmpPhaseFrequencySeries *listh1, /* First waveform, list of modes in amplitude/phase form */
+  struct tagListmodesCAmpPhaseSpline *listsplines2,    /* Second waveform, list of modes already interpolated in matrix form */
+  ObjectFunction * Snoise,                             /* Noise function */
+  double fLow,                                         /* Lower bound of the frequency window for the detector */
+  double fHigh,                                        /* Upper bound of the frequency window for the detector */
+  double fstartobs1,                                   /* Starting frequency for the 22 mode of wf 1 - as determined from a limited duration of the observation - set to 0 to ignore */
+  double fstartobs2,                                   /* Starting frequency for the 22 mode of wf 2 - as determined from a limited duration of the observation - set to 0 to ignore */
+  double flagScalefHighByMode)                         /* Flag to scale the higher freq cut by the mode number, cutting each mode at m/2*fHigh */
+{
+    int l1, m1, l2, m2;
+    double overlap = 0;
+
+    ListmodesCAmpPhaseFrequencySeries* listh1element;
+    ListmodesCAmpPhaseFrequencySeries* listsplines2element;
+
+    *hlm1hlm2_matrix = gsl_matrix_alloc(nbmodemax, nbmodemax);
+
+    /* Main loop over the modes - goes through all the modes present */
+    for(int imode1=0; imode1<nbmodemax; imode1++) {
+      for(int imode2=0; imode2<nbmodemax; imode2++) {
+        l1 = listmodes[imode1][0];
+        m1 = listmodes[imode1][1];
+        l2 = listmodes[imode2][0];
+        m2 = listmodes[imode2][1];
+        listh1element = ListmodesCAmpPhaseFrequencySeries_GetMode(listh1, l1, m1);
+        listsplines2element = ListmodesCAmpPhaseSpline_GetMode(listsplines2, l2, m2);
+        /* Scaling fstartobs1/2 with the appropriate factor of m (for the 21 mode we use m=2) - setting fmin in the overlap accordingly */
+        int mmax1 = max(2, m1);
+        int mmax2 = max(2, m2);
+        double fcutLow = fmax(fLow, fmax(((double) mmax1)/2. * fstartobs1, ((double) mmax2)/2. * fstartobs2));
+        double fcutHigh = 0;
+        if(flagScalefHighByMode) fcutHigh = fmin( m1/2.*fHigh, m2/2.*fHigh);
+        else fcutHigh = fHigh;
+        overlap = FDSinglemodeFresnelOverlap(listh1element->freqseries, listsplines2element->splines, Snoise, fcutLow, fcutHigh);
+        gsl_matrix_set(*hlm1hlm2_matrix, imode1, imode2, overlap);
+      }
+    }
+    return SUCCESS;
+}
+
 /* Function computing the overlap (h1|h2) between two waveforms given as list of modes for each non-correlated channel 1,2,3, one being already interpolated, for a given noise function - two additional parameters for the starting 22-mode frequencies (then properly scaled for the other modes) for a limited duration of the observations */
 double FDListmodesFresnelOverlap3Chan(
   struct tagListmodesCAmpPhaseFrequencySeries *listh1chan1, /* First waveform channel channel 1, list of modes in amplitude/phase form */
@@ -999,4 +1042,3 @@ double FDListmodesFresnelOverlap3Chan(
 
   return overlap;
 }
-
