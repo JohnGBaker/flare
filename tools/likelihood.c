@@ -536,6 +536,11 @@ double FDLogLikelihoodReIm(
   gsl_vector_sub(diff->h_real, s->h_real);
   gsl_vector_sub(diff->h_imag, s->h_imag);
 
+  // gsl_vector_set(diff->h_real, 0, 0);
+  // gsl_vector_set(diff->h_imag, 0, 0);
+  // gsl_vector_set(diff->h_real, nbpts-1, 0);
+  // gsl_vector_set(diff->h_imag, nbpts-1, 0);
+
   /* Likelihood lnL = -1/2(h-s|h-s) */
   double lnL;
   lnL = -1./2 * FDOverlapReImvsReIm(diff, diff, noisevalues);
