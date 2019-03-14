@@ -8,7 +8,8 @@ LISAGlobalParams* globalparams = NULL;
 LISAPrior* priorParams = NULL;
 LISAAddParams* addparams = NULL;
 double logZdata = 0.;
-SimpleLikelihoodPrecomputedValues* simplelikelihoodinjvals = NULL;
+SimpleLikelihoodPrecomputedValues22* simplelikelihoodinjvals22 = NULL;
+SimpleLikelihoodPrecomputedValuesHM* simplelikelihoodinjvalsHM = NULL;
 
 /***************** Pasring string to choose what masses set to sample for *****************/
 
@@ -151,7 +152,8 @@ void InitGlobalParams(void)
   globalparams->zerolikelihood = 0;
   globalparams->frozenLISA = 0;
   globalparams->responseapprox = full;
-  globalparams->tagsimplelikelihood = 0;
+  globalparams->tagsimplelikelihood22 = 0;
+  globalparams->tagsimplelikelihoodHM = 0;
 
   injectedparams = (LISAParams *)malloc(sizeof(LISAParams));
   memset(injectedparams, 0, sizeof(LISAParams));
@@ -217,7 +219,8 @@ Arguments are as follows:\n\
  --zerolikelihood      Zero out the likelihood to sample from the prior for testing purposes (default 0)\n\
  --frozenLISA          Freeze the orbital configuration to the time of peak of the injection (default 0)\n\
  --responseapprox      Approximation in the GAB and orb response - choices are full (full response, default), lowfL (keep orbital delay frequency-dependence but simplify constellation response) and lowf (simplify constellation and orbital response) - WARNING : at the moment noises are not consistent, and TDI combinations from the GAB are unchanged\n\
- --simplelikelihood    Tag to use simplified, frozen-LISA and lowf likelihood where mode overlaps are precomputed - can only be used when the masses and time (tL) are pinned to injection values (Note: when using --snr, distance adjustment done using responseapprox, not the simple response)\n\
+ --simplelikelihood22  Tag to use simplified, frozen-LISA and lowf likelihood where mode overlaps are precomputed - 22-mode only - can only be used when the masses and time (tL) are pinned to injection values (Note: when using --snr, distance adjustment done using responseapprox, not the simple response)\n\
+ --simplelikelihoodHM  Tag to use simplified, frozen-LISA and lowf likelihood where mode overlaps are precomputed - set of modes - can only be used when the masses and time (tL) are pinned to injection values (Note: when using --snr, distance adjustment done using responseapprox, not the simple response)\n\
 \n\
 --------------------------------------------------\n\
 ----- Prior Boundary Settings --------------------\n\
@@ -324,7 +327,8 @@ Syntax: --PARAM-min\n\
     globalparams->zerolikelihood = 0;
     globalparams->frozenLISA = 0;
     globalparams->responseapprox = full;
-    globalparams->tagsimplelikelihood = 0;
+    globalparams->tagsimplelikelihood22 = 0;
+    globalparams->tagsimplelikelihoodHM = 0;
 
     /* set default values for the prior limits */
     prior->samplemassparams = m1m2;
@@ -469,8 +473,10 @@ Syntax: --PARAM-min\n\
             globalparams->frozenLISA = 1;
         } else if (strcmp(argv[i], "--responseapprox") == 0) {
             globalparams->responseapprox = ParseResponseApproxtag(argv[++i]);
-        } else if (strcmp(argv[i], "--simplelikelihood") == 0) {
-            globalparams->tagsimplelikelihood = 1;
+        } else if (strcmp(argv[i], "--simplelikelihood22") == 0) {
+            globalparams->tagsimplelikelihood22 = 1;
+        } else if (strcmp(argv[i], "--simplelikelihoodHM") == 0) {
+            globalparams->tagsimplelikelihoodHM = 1;
         } else if (strcmp(argv[i], "--samplemassparams") == 0) {
             prior->samplemassparams = ParseSampleMassParamstag(argv[++i]);
         } else if (strcmp(argv[i], "--sampletimeparam") == 0) {
@@ -656,9 +662,14 @@ Syntax: --PARAM-min\n\
     /* Avoids drawing past the boundary - but PriorBoundaryCheck would also reject all these draws */
     if(!isnan(priorParams->fix_m1)) priorParams->comp_max = fmax(priorParams->comp_max, priorParams->fix_m1);
     if(!isnan(priorParams->fix_m2)) priorParams->comp_min = fmax(priorParams->comp_min, priorParams->fix_m2);
+    /* Simplified likelihood options 22 and HM are exclusive to avoid ambiguity */
+    if(globalparams->tagsimplelikelihood22 && globalparams->tagsimplelikelihoodHM) {
+      printf("Error in parse_args_LISA: using tags for both both simplified likelihood 22 and HM - inconsistent.");
+      exit(1);
+    }
     /* If using the simplified likelihood, make sure that the masses and time are pinned to injection values - otherwise inconsistent */
     /* NOTE: slight inconsistency,  */
-    if(globalparams->tagsimplelikelihood) {
+    if(globalparams->tagsimplelikelihood22 || globalparams->tagsimplelikelihoodHM) {
       if((priorParams->pin_m1==0) || (priorParams->pin_m2==0) || (priorParams->pin_time==0)) {
         printf("Error in parse_args_LISA: using simplified likelihood while m1, m2 or tRef is not pinned to injection value - inconsistent.");
         exit(1);
@@ -735,7 +746,8 @@ int print_parameters_to_file_LISA(
   fprintf(f, "zerolikelihood: %d\n", globalparams->zerolikelihood);
   fprintf(f, "frozenLISA:     %d\n", globalparams->frozenLISA);
   fprintf(f, "responseapprox: %d\n", globalparams->responseapprox);
-  fprintf(f, "simplelikelihood: %d\n", globalparams->tagsimplelikelihood);
+  fprintf(f, "simplelikelihood22: %d\n", globalparams->tagsimplelikelihood22);
+  fprintf(f, "simplelikelihoodHM: %d\n", globalparams->tagsimplelikelihoodHM);
   fprintf(f, "-----------------------------------------------\n");
   fprintf(f, "\n");
 
@@ -1313,22 +1325,42 @@ static double funcphiL(LISAParams *params) {
   double fRef = MfROMmax22/((params->m1 + params->m2)*MTSUN_SI);
   return -params->phiRef + PI*params->tRef*fRef;
 }
-static double funclambdaL(LISAParams *params) {
+/* Old L-frame convention */
+/* lambdaL_old = lambdaL_paper - pi/2 */
+static double funclambdaL_old(LISAParams *params) {
   double lambd = params->lambda;
   double beta = params->beta;
   return -atan2(cos(beta)*cos(lambd)*cos(PI/3) + sin(beta)*sin(PI/3), cos(beta)*sin(lambd));
+}
+/* New L-frame convention for the paper */
+/* lambdaL_old = lambdaL_paper - pi/2 */
+static double funclambdaL(LISAParams *params) {
+  double lambd = params->lambda;
+  double beta = params->beta;
+  return atan2(cos(beta)*sin(lambd), cos(beta)*cos(lambd)*cos(PI/3) + sin(beta)*sin(PI/3));
 }
 static double funcbetaL(LISAParams *params) {
   double lambd = params->lambda;
   double beta = params->beta;
   return -asin(cos(beta)*cos(lambd)*sin(PI/3) - sin(beta)*cos(PI/3));
 }
-static double funcpsiL(LISAParams *params) {
+/* The old and new functions for psiL are in fact equivalent - the new one is simpler */
+static double funcpsiL_old(LISAParams *params) {
   double lambd = params->lambda;
   double beta = params->beta;
   double psi = params->polarization;
   return atan2(cos(PI/3)*cos(beta)*sin(psi) - sin(PI/3)*(sin(lambd)*cos(psi) - cos(lambd)*sin(beta)*sin(psi)), cos(PI/3)*cos(beta)*cos(psi) + sin(PI/3)*(sin(lambd)*sin(psi) + cos(lambd)*sin(beta)*cos(psi)));
 }
+/* The old and new functions for psiL are in fact equivalent - the new one is simpler */
+/* Here return polarization modulo pi */
+static double funcpsiL(LISAParams *params) {
+  double lambd = params->lambda;
+  double beta = params->beta;
+  double psi = params->polarization;
+  return modpi(psi + atan2(-sin(PI/3)*sin(lambd), cos(PI/3)*cos(beta) + sin(PI/3)*cos(lambd)*sin(beta)));
+}
+/* Functions computing sa, se for 22 mode only */
+/* NOTE: old convention, differs from new convention by absence of factor 3 absorbed in the inner products <lm|l'm'> */
 static double complex funcsa(double d, double phi, double inc, double lambd, double beta, double psi) {
   double complex Daplus = I*3./4 * (3 - cos(2*beta)) * cos(2*lambd - PI/3);
   double complex Dacross = I*3*sin(beta) * sin(2*lambd - PI/3);
@@ -1343,24 +1375,114 @@ static double complex funcse(double d, double phi, double inc, double lambd, dou
   double complex e2m2 = 1./d*1./2 * sqrt(5/PI) * pow(sin(inc/2), 4) * cexp(2.*I*(-phi+psi)) * 1./2*(Deplus - I*Decross);
   return e22 + e2m2;
 }
+/* Functions computing sa_lm, se_lm for generic modes */
+/* NOTE: new convention, factor 3 absorbed in the inner products <lm|l'm'> */
+static double complex funcsa_lm(int l, int m, double d, double phi, double inc, double lambd, double beta, double psi) {
+  double complex Faplus = 1./2 * (1 + sin(beta)*sin(beta)) * cos(2*lambd - PI/3);
+  double complex Facross = sin(beta) * sin(2*lambd - PI/3);
+  double complex sYlm = SpinWeightedSphericalHarmonic(inc, phi, -2, l, m);
+  double complex sYl_minusm_star = conj(SpinWeightedSphericalHarmonic(inc, phi, -2, l, -m));
+  double complex alpha_lm = 1./d * 1./2 * sYlm * cexp(-2.*I*psi) * (Faplus + I*Facross);
+  double complex alpha_lminusm = 1./d * 1./2 * pow(-1., l) * sYl_minusm_star * cexp(2.*I*psi) * (Faplus - I*Facross);
+  double complex sa = alpha_lm + alpha_lminusm;
+  return sa;
+}
+static double complex funcse_lm(int l, int m, double d, double phi, double inc, double lambd, double beta, double psi) {
+  double complex Feplus = 1./2 * (1 + sin(beta)*sin(beta)) * cos(2*lambd + PI/6);
+  double complex Fecross = sin(beta) * sin(2*lambd + PI/6);
+  double complex sYlm = SpinWeightedSphericalHarmonic(inc, phi, -2, l, m);
+  double complex sYl_minusm_star = conj(SpinWeightedSphericalHarmonic(inc, phi, -2, l, -m));
+  double complex eps_lm = 1./d * 1./2 * sYlm * cexp(-2.*I*psi) * (Feplus + I*Fecross);
+  double complex eps_lminusm = 1./d * 1./2 * pow(-1., l) * sYl_minusm_star * cexp(2.*I*psi) * (Feplus - I*Fecross);
+  double complex se = eps_lm + eps_lminusm;
+  return se;
+}
 
-double CalculateLogLSimpleLikelihood(SimpleLikelihoodPrecomputedValues* simplelikelihoodvals, LISAParams* params)
+double CalculateLogLSimpleLikelihood22(SimpleLikelihoodPrecomputedValues22* simplelikelihoodvals22, LISAParams* params)
 {
   /* Simple likelihood for 22 mode, frozen LISA, lowf */
   /* Only applicable for masses and time pinned to injection values */
   /* Normalization and sainj, seinj must have been precomputed for the injection */
-  double norm = simplelikelihoodvals->normalization;
-  double complex sainj = simplelikelihoodvals->sa;
-  double complex seinj = simplelikelihoodvals->se;
+  double norm = simplelikelihoodvals22->normalization;
+  double complex sainj = simplelikelihoodvals22->sa;
+  double complex seinj = simplelikelihoodvals22->se;
+  double phiL = funcphiL(params);
+  double lambdL = funclambdaL_old(params);
+  double betaL = funcbetaL(params);
+  double psiL = funcpsiL_old(params);
+  double inc = params->inclination;
+  double d = params->distance / injectedparams->distance;
+  double complex sa = funcsa(d, phiL, inc, lambdL, betaL, psiL);
+  double complex se = funcse(d, phiL, inc, lambdL, betaL, psiL);
+  double simplelogL = -1./2 * norm * (pow(cabs(sa - sainj), 2) + pow(cabs(se - seinj), 2));
+  return simplelogL;
+}
+
+double CalculateLogLSimpleLikelihoodHM(SimpleLikelihoodPrecomputedValuesHM* simplelikelihoodvalsHM, LISAParams* params)
+{
+  /* Modes in the injection and the modes in the template have to be the same because of the precomputed overlaps */
+  if ( !((params->nbmode)==(injectedparams->nbmode)) ) {
+    printf("Error in CalculateLogLSimpleLikelihoodHM: nbmode in injection and template must be the same.\n");
+    exit(1);
+  }
+
+  double simplelogL = 0.;
+  double complex sa_lm_val = 0., se_lm_val = 0., sa_lpmp_val = 0., se_lpmp_val = 0.;
+  double complex sa_lm_inj_val = 0., se_lm_inj_val = 0., sa_lpmp_inj_val = 0., se_lpmp_inj_val = 0.;
+  double Lambda_lm_lpmp = 0.;
+
+  /* Simple likelihood for a set of modes, frozen LISA, lowf */
+  /* Only applicable for masses and time pinned to injection values */
+  /* Weighted inner products Lambda_lm_lpmp and sa_lm, se_lm must have been precomputed for the injection */
+  gsl_matrix* matrix_Lambda_lm_lpmp = simplelikelihoodvalsHM->Lambda_lm_lpmp;
+  gsl_vector* sa_lm_inj_real = simplelikelihoodvalsHM->sa_lm_real;
+  gsl_vector* sa_lm_inj_imag = simplelikelihoodvalsHM->sa_lm_imag;
+  gsl_vector* se_lm_inj_real = simplelikelihoodvalsHM->se_lm_real;
+  gsl_vector* se_lm_inj_imag = simplelikelihoodvalsHM->se_lm_imag;
+  /* Compute set of sa_lm and se_lm for template */
   double phiL = funcphiL(params);
   double lambdL = funclambdaL(params);
   double betaL = funcbetaL(params);
   double psiL = funcpsiL(params);
   double inc = params->inclination;
   double d = params->distance / injectedparams->distance;
-  double complex sa = funcsa(d, phiL, inc, lambdL, betaL, psiL);
-  double complex se = funcse(d, phiL, inc, lambdL, betaL, psiL);
-  double simplelogL = -1./2 * norm * (pow(cabs(sa - sainj), 2) + pow(cabs(se - seinj), 2));
+  double complex sa_lm[injectedparams->nbmode];
+  double complex se_lm[injectedparams->nbmode];
+  for(int i=0; i<injectedparams->nbmode; i++) {
+    int l = listmode[i][0];
+    int m = listmode[i][1];
+    sa_lm_val = funcsa_lm(l, m, d, phiL, inc, lambdL, betaL, psiL);
+    se_lm_val = funcse_lm(l, m, d, phiL, inc, lambdL, betaL, psiL);
+    sa_lm[i] = sa_lm_val;
+    se_lm[i] = se_lm_val;
+  }
+  /* Loop on the modes in the injection and the modes in the template (have to be the same because of the precomputed overlaps) */
+  for(int i=0; i<injectedparams->nbmode; i++) {
+    for(int j=0; j<injectedparams->nbmode; j++) {
+      int l = listmode[i][0];
+      int m = listmode[i][1];
+      int lp = listmode[j][0];
+      int mp = listmode[j][1];
+
+      /* sa_lm and se_lm for the template */
+      sa_lm_val = sa_lm[i];
+      se_lm_val = se_lm[i];
+      sa_lpmp_val = sa_lm[j];
+      se_lpmp_val = se_lm[j];
+
+      /* sa_lm and se_lm for the template */
+      sa_lm_inj_val = gsl_vector_get(sa_lm_inj_real, i) + I*gsl_vector_get(sa_lm_inj_imag, i);
+      se_lm_inj_val = gsl_vector_get(se_lm_inj_real, i) + I*gsl_vector_get(se_lm_inj_imag, i);
+      sa_lpmp_inj_val = gsl_vector_get(sa_lm_inj_real, j) + I*gsl_vector_get(sa_lm_inj_imag, j);
+      se_lpmp_inj_val = gsl_vector_get(se_lm_inj_real, j) + I*gsl_vector_get(se_lm_inj_imag, j);
+
+      Lambda_lm_lpmp = gsl_matrix_get(matrix_Lambda_lm_lpmp, i, j);
+
+      /* NOTE: simplelogL is real, but that is guaranteed by the symmetry of the sum over modes lm and lpmp -- individual terms are complex */
+      simplelogL += -1./2 * Lambda_lm_lpmp * creal((sa_lm_val - sa_lm_inj_val) * conj(sa_lpmp_val - sa_lpmp_inj_val) + (se_lm_val - se_lm_inj_val) * conj(se_lpmp_val - se_lpmp_inj_val));
+    }
+  }
+
   return simplelogL;
 }
 
@@ -1668,11 +1790,12 @@ mode=mode->next;
 
 /****************** Functions precomputing relevant values when using simplified likelihood *****************/
 
-/* For now, 22-mode only */
-int LISAComputeSimpleLikelihoodPrecomputedValues(SimpleLikelihoodPrecomputedValues* simplelikelihoodvals, LISAParams* params)
+/* 22-mode only, in old convention */
+/* NOTE: difference in convention, new convention has a factor 3 in the integrand defining <lm|l'm'> */
+int LISAComputeSimpleLikelihoodPrecomputedValues22(SimpleLikelihoodPrecomputedValues22* simplelikelihoodvals22, LISAParams* params)
 {
   /* Check pointer for output */
-  if(simplelikelihoodvals==NULL) {
+  if(simplelikelihoodvals22==NULL) {
     printf("Error in LISAComputeSimpleLikelihoodPrecomputedValues: called with NULL pointer for SimpleLikelihoodPrecomputedValues.\n");
     exit(1);
   }
@@ -1684,9 +1807,9 @@ int LISAComputeSimpleLikelihoodPrecomputedValues(SimpleLikelihoodPrecomputedValu
 
   /* Convert parameters to L-frame */
   double phiL = funcphiL(params);
-  double lambdL = funclambdaL(params);
+  double lambdL = funclambdaL_old(params);
   double betaL = funcbetaL(params);
-  double psiL = funcpsiL(params);
+  double psiL = funcpsiL_old(params);
   double inc = params->inclination;
   double d = params->distance / injectedparams->distance; /* Should be 1., since params should be injectedparams */
 
@@ -1742,13 +1865,124 @@ int LISAComputeSimpleLikelihoodPrecomputedValues(SimpleLikelihoodPrecomputedValu
   normalization = FDSinglemodeFresnelOverlap(h22, splineh22, &NoiseSn, fLow, fHigh);
 
   /* Output */
-  simplelikelihoodvals->normalization = normalization;
-  simplelikelihoodvals->sa = sa;
-  simplelikelihoodvals->se = se;
+  simplelikelihoodvals22->normalization = normalization;
+  simplelikelihoodvals22->sa = sa;
+  simplelikelihoodvals22->se = se;
 
   //TEST
   //printf("%g, %g, %g, %g, %g\n", normalization, creal(sa), cimag(sa), creal(se), cimag(se));
   //exit(0);
+
+  /* NOTE Cleanup */
+  ListmodesCAmpPhaseFrequencySeries_Destroy(listROM);
+  ListmodesCAmpPhaseSpline_Destroy(listsplines);
+
+  return(SUCCESS);
+}
+/* Generalization to set of modes, in new convention */
+/* NOTE: difference in convention, new convention has a factor 3 in the integrand defining <lm|l'm'> */
+/* <lm|l'm'> = \int df/Sn (3L/2 * 2\pi f)^2 h_{lm} h_{l'm'}^{*} */
+int LISAComputeSimpleLikelihoodPrecomputedValuesHM(SimpleLikelihoodPrecomputedValuesHM* simplelikelihoodvalsHM, LISAParams* params)
+{
+  /* Check pointer for output */
+  if(simplelikelihoodvalsHM==NULL) {
+    printf("Error in LISAComputeSimpleLikelihoodPrecomputedValues: called with NULL pointer for SimpleLikelihoodPrecomputedValues.\n");
+    exit(1);
+  }
+
+  int ret;
+  double Lambda_lm_lpmp = 0;
+  double complex sa_lm = 0.;
+  double complex se_lm = 0.;
+
+  /* Allocate output */
+  simplelikelihoodvalsHM->Lambda_lm_lpmp = gsl_matrix_alloc(params->nbmode, params->nbmode);
+  simplelikelihoodvalsHM->sa_lm_real = gsl_vector_alloc(params->nbmode);
+  simplelikelihoodvalsHM->sa_lm_imag = gsl_vector_alloc(params->nbmode);
+  simplelikelihoodvalsHM->se_lm_real = gsl_vector_alloc(params->nbmode);
+  simplelikelihoodvalsHM->se_lm_imag = gsl_vector_alloc(params->nbmode);
+
+  /* Convert parameters to L-frame */
+  double phiL = funcphiL(params);
+  double lambdL = funclambdaL(params);
+  double betaL = funcbetaL(params);
+  double psiL = funcpsiL(params);
+  double inc = params->inclination;
+  double d = params->distance / injectedparams->distance; /* Should be 1., since params should be injectedparams */
+
+  /* Precompute the set of sa_lm, se_lm */
+  for(int k=0; k<params->nbmode; k++) {
+    int l = listmode[k][0];
+    int m = listmode[k][1];
+    sa_lm = funcsa_lm(l, m, d, phiL, inc, lambdL, betaL, psiL);
+    se_lm = funcse_lm(l, m, d, phiL, inc, lambdL, betaL, psiL);
+    gsl_vector_set(simplelikelihoodvalsHM->sa_lm_real, k, creal(sa_lm));
+    gsl_vector_set(simplelikelihoodvalsHM->sa_lm_imag, k, cimag(sa_lm));
+    gsl_vector_set(simplelikelihoodvalsHM->se_lm_real, k, creal(se_lm));
+    gsl_vector_set(simplelikelihoodvalsHM->se_lm_imag, k, cimag(se_lm));
+  }
+
+  /* Generate 22 mode for the fixed mass and time parameters - same fstartobs and PN extension as in the GenerateInjectionCAmpPhase function */
+  ListmodesCAmpPhaseFrequencySeries* listROM = NULL;
+  /* Starting frequency corresponding to duration of observation deltatobs */
+  double fstartobs = 0.;
+  if(!(globalparams->deltatobs==0.)) fstartobs = Newtonianfoft(params->m1, params->m2, globalparams->deltatobs);
+  /* Generate the waveform with the ROM */
+  /* NOTE: SimEOBNRv2HMROM accepts masses and distances in SI units, whereas LISA params is in solar masses and Mpc */
+  /* NOTE: minf and deltatobs are taken into account if extension is allowed, but not maxf - restriction to the relevant frequency interval will occur in both the response prcessing and overlap computation */
+  /* If extending, taking into account both fstartobs and minf */
+  if(!(globalparams->tagextpn)) {
+    //printf("Not Extending signal waveform.  Mfmatch=%g\n",globalparams->Mfmatch);
+    ret = SimEOBNRv2HMROM(&listROM, params->nbmode, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI, globalparams->setphiRefatfRef);
+  } else {
+    //printf("Extending signal waveform.  Mfmatch=%g\n",globalparams->Mfmatch);
+    ret = SimEOBNRv2HMROMExtTF2(&listROM, params->nbmode, globalparams->Mfmatch, fmax(fstartobs, globalparams->minf), 0, params->tRef - injectedparams->tRef, params->phiRef, globalparams->fRef, (params->m1)*MSUN_SI, (params->m2)*MSUN_SI, (params->distance)*1e6*PC_SI, globalparams->setphiRefatfRef);
+  }
+  /* If the ROM waveform generation failed (e.g. parameters were out of bounds) return FAILURE */
+  if(ret==FAILURE){
+    printf("Failed to generate injection ROM\n");
+    return FAILURE;
+  }
+
+  /* Multiply the hlm amplitudes by 3L/2 * 2pi f / c */
+  double L = globalparams->variant->ConstL;
+  for(int k=0; k<params->nbmode; k++) {
+    int l = listmode[k][0];
+    int m = listmode[k][1];
+    CAmpPhaseFrequencySeries* hlm = ListmodesCAmpPhaseFrequencySeries_GetMode(listROM, l, m)->freqseries;
+    gsl_vector* vfreq = hlm->freq;
+    double* freq = vfreq->data;
+    double* areal = hlm->amp_real->data;
+    double* aimag = hlm->amp_imag->data;
+    for(int i=0; i<vfreq->size; i++) {
+      areal[i] *= 3*PI*L/C_SI*freq[i];
+      aimag[i] *= 3*PI*L/C_SI*freq[i];
+    }
+  }
+
+  /* Precompute overlap of frequency-weighted hlm modes with themselves */
+  /* Build spline interpolation */
+  ListmodesCAmpPhaseSpline* listsplines = NULL;
+  BuildListmodesCAmpPhaseSpline(&listsplines, listROM);
+  /* Precompute the inner product (h|h) - takes into account the length of the observation with deltatobs */
+  double fLow = fmax(__LISASimFD_Noise_fLow, globalparams->minf);
+  double fHigh = fmin(__LISASimFD_Noise_fHigh, globalparams->maxf);
+  ObjectFunction NoiseSn = NoiseFunction(globalparams->variant, globalparams->tagtdi, 1); /* We use the first noise function - will be A and E, in this approximation at low-f we simply ignore the T channel - NOTE: we could add some checking that the tagtdi selector as well as LISA variant make sense */
+  /* Compute overlap itself */
+  for(int i=0; i<params->nbmode; i++) {
+    for(int j=0; j<params->nbmode; j++) {
+      int l = listmode[i][0];
+      int m = listmode[i][1];
+      int lp = listmode[j][0];
+      int mp = listmode[j][1];
+      CAmpPhaseSpline* splinehlm = ListmodesCAmpPhaseSpline_GetMode(listsplines, l, m)->splines;
+      CAmpPhaseFrequencySeries* hlpmp = ListmodesCAmpPhaseFrequencySeries_GetMode(listROM, lp, mp)->freqseries;
+      Lambda_lm_lpmp = FDSinglemodeFresnelOverlap(hlpmp, splinehlm, &NoiseSn, fLow, fHigh);
+      gsl_matrix_set(simplelikelihoodvalsHM->Lambda_lm_lpmp, i, j, Lambda_lm_lpmp);
+    }
+  }
+
+  /* Precompute sa_lm, se_lm */
 
   /* NOTE Cleanup */
   ListmodesCAmpPhaseFrequencySeries_Destroy(listROM);

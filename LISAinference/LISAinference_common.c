@@ -24,9 +24,11 @@ void addendum(int argc, char *argv[],LISARunParams *runParams, int *ndim, int *n
   memset(priorParams, 0, sizeof(LISAPrior));
   addparams = (LISAAddParams*) malloc(sizeof(LISAAddParams));
   memset(addparams, 0, sizeof(LISAAddParams));
-  /* This structure is used only for storing precomputed values for the simple likelihood */
-  simplelikelihoodinjvals = (SimpleLikelihoodPrecomputedValues*) malloc(sizeof(SimpleLikelihoodPrecomputedValues));
-  memset(simplelikelihoodinjvals, 0, sizeof(SimpleLikelihoodPrecomputedValues));
+  /* These structures are used only for storing precomputed values for the simple likelihood */
+  simplelikelihoodinjvals22 = (SimpleLikelihoodPrecomputedValues22*) malloc(sizeof(SimpleLikelihoodPrecomputedValues22));
+  memset(simplelikelihoodinjvals22, 0, sizeof(SimpleLikelihoodPrecomputedValues22));
+  simplelikelihoodinjvalsHM = (SimpleLikelihoodPrecomputedValuesHM*) malloc(sizeof(SimpleLikelihoodPrecomputedValuesHM));
+  memset(simplelikelihoodinjvalsHM, 0, sizeof(SimpleLikelihoodPrecomputedValuesHM));
 
   /* Parse commandline to read parameters of injection - copy the number of modes demanded for the injection */
   parse_args_LISA(argc, argv, injectedparams, globalparams, priorParams, runParams, addparams);
@@ -100,8 +102,11 @@ void addendum(int argc, char *argv[],LISARunParams *runParams, int *ndim, int *n
 
   /* If using simple likelihood, initialize precomputed values - note that the other initializations for the injection are done anyway, but will be ignored */
   /* Note: the optional distance adjustment to a given snr is done above using the response as given by responseapprox, not the simplified response */
-  if(globalparams->tagsimplelikelihood) {
-    LISAComputeSimpleLikelihoodPrecomputedValues(simplelikelihoodinjvals, injectedparams);
+  if(globalparams->tagsimplelikelihood22) {
+    LISAComputeSimpleLikelihoodPrecomputedValues22(simplelikelihoodinjvals22, injectedparams);
+  }
+  if(globalparams->tagsimplelikelihoodHM) {
+    LISAComputeSimpleLikelihoodPrecomputedValuesHM(simplelikelihoodinjvalsHM, injectedparams);
   }
 
   /* Print SNR */
@@ -126,14 +131,17 @@ void addendum(int argc, char *argv[],LISARunParams *runParams, int *ndim, int *n
   if (myid == 0 && runParams->writeparams /*&& notLISAlike*/) print_snrlogZ_to_file_LISA(runParams, SNR123, *logZtrue);
 
   /* Set the context pointer */
-  if((globalparams->tagint==0) && (!globalparams->tagsimplelikelihood)) {
+  if((globalparams->tagint==0) && (!globalparams->tagsimplelikelihood22) && (!globalparams->tagsimplelikelihoodHM)) {
     *contextp = injectedsignalCAmpPhase;
   }
-  else if((globalparams->tagint==1) && (!globalparams->tagsimplelikelihood)) {
+  else if((globalparams->tagint==1) && (!globalparams->tagsimplelikelihood22) && (!globalparams->tagsimplelikelihoodHM)) {
     *contextp = injectedsignalReIm;
   }
-  else if(globalparams->tagsimplelikelihood) {
-    *contextp = simplelikelihoodinjvals;
+  else if(globalparams->tagsimplelikelihood22) {
+    *contextp = simplelikelihoodinjvals22;
+  }
+  else if(globalparams->tagsimplelikelihoodHM) {
+    *contextp = simplelikelihoodinjvalsHM;
   }
 
   *nPar = 9;	  /* Total no. of parameters including free & derived parameters */

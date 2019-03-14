@@ -217,7 +217,8 @@ int main(int argc, char *argv[])
   /* These global parameters are set by command line in other programs but fixed here. */
   LISAconstellation *variant = &LISAProposal;
   int tagtRefatLISA = 0;
-  int tagsimplelikelihood = 0;
+  int tagsimplelikelihood22 = 0;
+  int tagsimplelikelihoodHM = 0;
   int zerolikelihood = 0;
   int frozenLISA = 0;
   ResponseApproxtag responseapprox = full;
@@ -326,7 +327,8 @@ int main(int argc, char *argv[])
       globalparams->variant = variant;
       globalparams->tagtRefatLISA = tagtRefatLISA;
       globalparams->frozenLISA = frozenLISA;
-      globalparams->tagsimplelikelihood = tagsimplelikelihood;
+      globalparams->tagsimplelikelihood22 = tagsimplelikelihood22;
+      globalparams->tagsimplelikelihoodHM = tagsimplelikelihoodHM;
       globalparams->zerolikelihood = zerolikelihood;
       globalparams->responseapprox = responseapprox;
 

@@ -263,7 +263,7 @@ void getLogLike(double *Cube, int *ndim, int *npars, double *lnew, void *context
   templateparams.nbmode = globalparams->nbmodetemp; /* Using the global parameter for the number of modes in templates */
 
   /* Note: context points to a LISAContext structure containing a LISASignal* */
-  if((globalparams->tagint==0) && (!globalparams->tagsimplelikelihood)) {
+  if((globalparams->tagint==0) && (!globalparams->tagsimplelikelihood22) && (!globalparams->tagsimplelikelihoodHM)) {
     LISAInjectionCAmpPhase* injection = ((LISAInjectionCAmpPhase*) context);
 
     //TESTING
@@ -274,7 +274,7 @@ void getLogLike(double *Cube, int *ndim, int *npars, double *lnew, void *context
     //printf("time Likelihood: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
     //
   }
-  else if((globalparams->tagint==1) && (!globalparams->tagsimplelikelihood)) {
+  else if((globalparams->tagint==1) && (!globalparams->tagsimplelikelihood22) && (!globalparams->tagsimplelikelihoodHM)) {
     LISAInjectionReIm* injection = ((LISAInjectionReIm*) context);
 
     //TESTING
@@ -285,9 +285,13 @@ void getLogLike(double *Cube, int *ndim, int *npars, double *lnew, void *context
     //printf("time Likelihood: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
     //
   }
-  else if(globalparams->tagsimplelikelihood) {
-    SimpleLikelihoodPrecomputedValues* injection = ((SimpleLikelihoodPrecomputedValues*) context);
-    *lnew = CalculateLogLSimpleLikelihood(injection, &templateparams);
+  else if(globalparams->tagsimplelikelihood22) {
+    SimpleLikelihoodPrecomputedValues22* injection = ((SimpleLikelihoodPrecomputedValues22*) context);
+    *lnew = CalculateLogLSimpleLikelihood22(injection, &templateparams);
+  }
+  else if(globalparams->tagsimplelikelihoodHM) {
+    SimpleLikelihoodPrecomputedValuesHM* injection = ((SimpleLikelihoodPrecomputedValuesHM*) context);
+    *lnew = CalculateLogLSimpleLikelihoodHM(injection, &templateparams);
   }
 }
 
