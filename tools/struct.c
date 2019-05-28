@@ -344,7 +344,7 @@ ReImUniformFrequencySeries * ReImFrequencySeries_ConvertToUniform(ReImFrequencyS
   //range with zero, or extrapolate.  For the latter (edging=1), we do not change the last half bin value,
   //but the integral will effectively change.  If (edging=1) then we reduce the edge values by hald so that
   //the integral of the series will be preserved.  If edging=2 we preserve the square integral.
-  ReImUniformFrequencySeries *freqseries;
+  ReImUniformFrequencySeries *freqseries=NULL;
 
   //Now prepare the result
   ReImUniformFrequencySeries_Init(&freqseries, 0);

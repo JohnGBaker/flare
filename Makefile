@@ -14,7 +14,7 @@ ifeq ($(MACHINE),"sylvainsmac")
   LD = $(CPP)
   LDFLAGS=  -L$(GSLROOT)/lib
   #Uncomment this for MPI and specify your needed MPI libraries
-	CFLAGS += -I/usr/local/include -I/opt/local/include
+	CFLAGS += -I/usr/local/include -I/opt/local/include 
 	CPPFLAGS += -I/usr/local/include -I/opt/local/include
 	#Required for openmp with gcc
 	CFLAGS += -fopenmp
@@ -27,20 +27,21 @@ ifeq ($(MACHINE),"sylvainsmac")
 else ifeq ($(MACHINE),"johnsmac")
   MESSAGE="Compiling for John's Mac"
   GSLROOT = /opt/local
+  FFTWROOT = /opt/local
   BAMBIROOT = ../../BAMBI
-  CC = gcc-mp-5 -g
-  CXX = g++-mp-5
-  CPP = g++-mp-5
+  CC = gcc-mp-8 -g
+  CXX = g++-mp-8
+  CPP = g++-mp-8
   LD = $(CPP)
   #LD = gfortran-mp-4.7
   #LDFLAGS= -fopenmp -L/opt/local/lib -L/opt/local/lib/mpich-mp -lgfortran -llapack  -lblas
-  LDFLAGS= -fopenmp -L/opt/local/lib -L/opt/local/lib/mpich-gcc5 -lgfortran -llapack -latlas -lblas
+  LDFLAGS= -fopenmp -L/opt/local/lib -L/opt/local/lib/mpich-mp -lgfortran -llapack -latlas -lblas
   #Uncomment this for MPI and specify your needed MPI libraries
   MPILIBS = -lmpi -lmpicxx -lmpifort
   #CFLAGS += -g -fopenmp -I/opt/local/include/mpich-mp
   #CPPFLAGS += -g -I/opt/local/include/mpich-mp
-  CFLAGS += -g -O3 -fopenmp -I/opt/local/include/mpich-gcc5
-  CPPFLAGS += -g -O3 -I/opt/local/include/mpich-gcc5
+  CFLAGS += -g -O3 -fopenmp -I/opt/local/include/mpich-gcc8 -I $(GSLROOT)/include -I tools
+  CPPFLAGS += -g -O3 -I/opt/local/include/mpich-gcc8 -I $(GSLROOT)/include 
   CXXFLAGS = -g -O3 -fopenmp
   #Uncomment this for MPI and specify your needed MPI libraries
   CFLAGS += -DPARALLEL

@@ -9,7 +9,7 @@ double tShift=0;
 static void parse_args_ComputeLISASNR(ssize_t argc, char **argv, ComputeLISASNRparams* params)
 {
   char help[] = "\
-ComputeLISASNR by Sylvain Marsat, John Baker, and Philip Graff\n\
+Developed from ComputeLISASNR by Sylvain Marsat, John Baker, and Philip Graff\n\
 Copyright July 2015\n\
 \n\
 This program computes and prints the SNR for a LISA TDI waveform (currently only AET(XYZ) available); it will either:\n\

@@ -42,7 +42,7 @@
 #include <time.h> /* for testing */
 
 //Flags
-int IntProdStyle=0;
+int IntProdStyle=1;
 int NratioCut = 4;
 int half_edges = 0;
 int in_development=1;
