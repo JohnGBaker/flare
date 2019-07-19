@@ -1577,15 +1577,6 @@ double CalculateLogLReIm(LISAParams *params, LISAInjectionReIm* injection)
     //printf("time Overlaps: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
     //
 
-    //TEST
-    // Write_Text_Vector("/Users/marsat/data/flare/test/testlnLlist_v2", "test_reim_inj_freq.txt", injection->TDI1Signal->freq);
-    // Write_Text_Vector("/Users/marsat/data/flare/test/testlnLlist_v2", "test_reim_inj_hreal.txt", injection->TDI1Signal->h_real);
-    // Write_Text_Vector("/Users/marsat/data/flare/test/testlnLlist_v2", "test_reim_inj_himag.txt", injection->TDI1Signal->h_imag);
-    // Write_Text_Vector("/Users/marsat/data/flare/test/testlnLlist_v2", "test_reim_temp_freq.txt", generatedsignal->TDI1Signal->freq);
-    // Write_Text_Vector("/Users/marsat/data/flare/test/testlnLlist_v2", "test_reim_temp_hreal.txt", generatedsignal->TDI1Signal->h_real);
-    // Write_Text_Vector("/Users/marsat/data/flare/test/testlnLlist_v2", "test_reim_temp_himag.txt", generatedsignal->TDI1Signal->h_imag);
-    // Write_Text_Vector("/Users/marsat/data/flare/test/testlnLlist_v2", "test_reim_noise.txt", injection->noisevalues1);
-
     /* Output: value of the loglikelihood for the combined signals, assuming noise independence */
     logL = loglikelihoodTDI1 + loglikelihoodTDI2 + loglikelihoodTDI3;
   }
@@ -1868,10 +1859,6 @@ int LISAComputeSimpleLikelihoodPrecomputedValues22(SimpleLikelihoodPrecomputedVa
   simplelikelihoodvals22->normalization = normalization;
   simplelikelihoodvals22->sa = sa;
   simplelikelihoodvals22->se = se;
-
-  //TEST
-  //printf("%g, %g, %g, %g, %g\n", normalization, creal(sa), cimag(sa), creal(se), cimag(se));
-  //exit(0);
 
   /* NOTE Cleanup */
   ListmodesCAmpPhaseFrequencySeries_Destroy(listROM);

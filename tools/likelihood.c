@@ -906,18 +906,9 @@ double FDSinglemodeFresnelOverlap3Chan(
   /* Rescaling the integrand */
   double scaling = 10./gsl_vector_get(integrand->freq, integrand->freq->size-1);
 
-//TEST
-//scaling = 1.;
-
   gsl_vector_scale(integrand->freq, scaling);
   gsl_vector_scale(integrand->amp_real, 1./scaling);
   gsl_vector_scale(integrand->amp_imag, 1./scaling);
-
-  //dump
-  /*
-  for(int ii=0;ii<integrand->freq->size;ii++)
-    printf("ii=%i, f=%g, integrand = ( %g, %g, %g )\n",ii,gsl_vector_get(integrand->freq,ii),gsl_vector_get(integrand->amp_real,ii),gsl_vector_get(integrand->amp_imag,ii),gsl_vector_get(integrand->phase,ii));
-  */
 
   /* Interpolating the integrand */
   CAmpPhaseSpline* integrandspline = NULL;

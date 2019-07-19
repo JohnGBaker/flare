@@ -43,6 +43,9 @@ Arguments are as follows:\n\
  --tagtdi              Tag choosing the set of TDI variables to use (default TDIAETXYZ)\n\
  --tagint              Tag choosing the integrator: 0 for Fresnel (default), 1 for linear integration\n\
  --nbptsoverlap        Number of points to use for linear integration (default 32768)\n\
+ --variant             String representing the variant of LISA to be applied (default LISAProposal)\n\
+ --frozenLISA          Freeze the orbital configuration to the time of peak of the injection (default 0)\n\
+ --responseapprox      Approximation in the GAB and orb response - choices are full (full response, default), lowfL (keep orbital delay frequency-dependence but simplify constellation response) and lowf (simplify constellation and orbital response) - WARNING : at the moment noises are not consistent, and TDI combinations from the GAB are unchanged\n\
  --fromtditdfile       Option for loading time series for TDI observables and FFTing (default: false)\n\
  --nlinesinfile        Number of lines of inputs file when loading TDI time series from file\n\
  --indir               Input directory when loading TDI time series from file\n\
@@ -67,6 +70,10 @@ Arguments are as follows:\n\
   params->lambda = 0;
   params->beta = 0;
   params->polarization = 0;
+
+  params->frozenLISA = 0;
+  params->responseapprox = full;
+  params->variant = &LISAProposal;
 
   /* Set default values for the generation params */
   params->nbmode = 5;
@@ -132,6 +139,23 @@ Arguments are as follows:\n\
       params->tagint = atoi(argv[++i]);
     } else if (strcmp(argv[i], "--nbptsoverlap") == 0) {
       params->nbptsoverlap = atoi(argv[++i]);
+    } else if (strcmp(argv[i], "--frozenLISA") == 0) {
+        params->frozenLISA = 1;
+    } else if (strcmp(argv[i], "--responseapprox") == 0) {
+        params->responseapprox = ParseResponseApproxtag(argv[++i]);
+    } else if (strcmp(argv[i], "--variant") == 0) {
+      i++;
+      if (strcmp(argv[i], "LISAProposal") == 0) params->variant = &LISAProposal;
+      else if (strcmp(argv[i], "LISA2017") == 0) params->variant = &LISA2017;
+      else if (strcmp(argv[i], "LISA2010") == 0) params->variant = &LISA2010;
+      else if (strcmp(argv[i], "fastOrbitLISA") == 0) params->variant = &fastOrbitLISA;
+      else if (strcmp(argv[i], "slowOrbitLISA") == 0) params->variant = &slowOrbitLISA;
+      else if (strcmp(argv[i], "tinyOrbitLISA") == 0) params->variant = &tinyOrbitLISA;
+      else if (strcmp(argv[i], "bigOrbitLISA") == 0) params->variant = &bigOrbitLISA;
+      else {
+        printf("Error: --variant option '%s' not recognized\n",argv[i]);
+        exit(1);
+      }
     } else if (strcmp(argv[i], "--fromtditdfile") == 0) {
       params->fromtditdfile = 1;
     } else if (strcmp(argv[i], "--nlinesinfile") == 0) {
@@ -215,13 +239,13 @@ static int AllowedTDItag(TDItag tag) {
 int main(int argc, char *argv[])
 {
   /* These global parameters are set by command line in other programs but fixed here. */
-  LISAconstellation *variant = &LISAProposal;
+  //LISAconstellation *variant = &LISAProposal;
   int tagtRefatLISA = 0;
   int tagsimplelikelihood22 = 0;
   int tagsimplelikelihoodHM = 0;
   int zerolikelihood = 0;
-  int frozenLISA = 0;
-  ResponseApproxtag responseapprox = full;
+  // int frozenLISA = 0;
+  // ResponseApproxtag responseapprox = full;
 
   double SNR = 0;
 
@@ -277,13 +301,13 @@ int main(int argc, char *argv[])
       gsl_vector* noisevaluesE = gsl_vector_alloc(sizeE);
       gsl_vector* noisevaluesT = gsl_vector_alloc(sizeT);
       for(int i=0; i<sizeA; i++) {
-        gsl_vector_set(noisevaluesA, i, SnAXYZNoRescaling(variant, gsl_vector_get(TDI1FFTrestr->freq, i)));
+        gsl_vector_set(noisevaluesA, i, SnAXYZNoRescaling(params->variant, gsl_vector_get(TDI1FFTrestr->freq, i)));
       }
       for(int i=0; i<sizeE; i++) {
-        gsl_vector_set(noisevaluesE, i, SnEXYZNoRescaling(variant, gsl_vector_get(TDI2FFTrestr->freq, i)));
+        gsl_vector_set(noisevaluesE, i, SnEXYZNoRescaling(params->variant, gsl_vector_get(TDI2FFTrestr->freq, i)));
       }
       for(int i=0; i<sizeT; i++) {
-        gsl_vector_set(noisevaluesT, i, SnTXYZNoRescaling(variant, gsl_vector_get(TDI3FFTrestr->freq, i)));
+        gsl_vector_set(noisevaluesT, i, SnTXYZNoRescaling(params->variant, gsl_vector_get(TDI3FFTrestr->freq, i)));
       }
       double SNRA2 = FDOverlapReImvsReIm(TDI1FFTrestr, TDI1FFTrestr, noisevaluesA);
       double SNRE2 = FDOverlapReImvsReIm(TDI2FFTrestr, TDI2FFTrestr, noisevaluesE);
@@ -323,14 +347,14 @@ int main(int argc, char *argv[])
       globalparams->tagint = params->tagint;
       globalparams->tagtdi = params->tagtdi;
       globalparams->nbptsoverlap = params->nbptsoverlap;
+      globalparams->variant = params->variant;
+      globalparams->frozenLISA = params->frozenLISA;
+      globalparams->responseapprox = params->responseapprox;
       /* Hardcoded */
-      globalparams->variant = variant;
       globalparams->tagtRefatLISA = tagtRefatLISA;
-      globalparams->frozenLISA = frozenLISA;
       globalparams->tagsimplelikelihood22 = tagsimplelikelihood22;
       globalparams->tagsimplelikelihoodHM = tagsimplelikelihoodHM;
-      globalparams->zerolikelihood = zerolikelihood;
-      globalparams->responseapprox = responseapprox;
+      globalparams->zerolikelihood = 0;
 
       if(params->loadparamsfile==0) {
 
