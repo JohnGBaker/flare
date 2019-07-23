@@ -140,6 +140,7 @@ void InitGlobalParams(void)
   globalparams->deltatobs = 2.;
   globalparams->minf = 0.;
   globalparams->maxf = 1.;
+  globalparams->maxfscaledlm = 0.;
   globalparams->tagextpn = 1;
   globalparams->tagtRefatLISA = 0;
   globalparams->Mfmatch = 0.;
@@ -208,6 +209,7 @@ Arguments are as follows:\n\
  --deltatobs           Observation duration (years, default=2)\n\
  --minf                Minimal frequency (Hz, default=0) - when set to 0, use the lowest frequency where the detector noise model is trusted __LISASimFD_Noise_fLow (set somewhat arbitrarily)\n\
  --maxf                Maximal frequency (Hz, default=1Hz) - when set to 0, use the highest frequency where the detector noise model is trusted __LISASimFD_Noise_fHigh (set somewhat arbitrarily)\n\
+ --maxfscaledlm        Maximal frequency rescaled by m/2 for different modes - useful to implement a time cut\n\
  --tagextpn            Tag to allow PN extension of the waveform at low frequencies (default=1)\n\
  --tagtRefatLISA       Tag to allow t0 to specify signal offset time at LISA guiding center rather than at SSB (default=0)\n\
  --Mfmatch             When PN extension allowed, geometric matching frequency: will use ROM above this value. If <=0, use ROM down to the lowest covered frequency (default=0.)\n\
@@ -318,6 +320,7 @@ Syntax: --PARAM-min\n\
     globalparams->deltatobs = 2.;
     globalparams->minf = 0.;
     globalparams->maxf = 1.;
+    globalparams->maxfscaledlm = 0.;
     globalparams->tagextpn = 1;
     globalparams->tagtRefatLISA = 0;
     globalparams->Mfmatch = 0.;
@@ -455,6 +458,8 @@ Syntax: --PARAM-min\n\
             globalparams->minf = atof(argv[++i]);
         } else if (strcmp(argv[i], "--maxf") == 0) {
             globalparams->maxf = atof(argv[++i]);
+        } else if (strcmp(argv[i], "--maxfscaledlm") == 0) {
+            globalparams->maxfscaledlm = atof(argv[++i]);
         } else if (strcmp(argv[i], "--tagextpn") == 0) {
             globalparams->tagextpn = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--tagtRefatLISA") == 0) {
@@ -746,6 +751,7 @@ int print_parameters_to_file_LISA(
   fprintf(f, "deltatobs:      %.16e\n", globalparams->deltatobs);
   fprintf(f, "minf:           %.16e\n", globalparams->minf);
   fprintf(f, "maxf:           %.16e\n", globalparams->maxf);
+  fprintf(f, "maxfscaledlm:   %.16e\n", globalparams->maxfscaledlm);
   fprintf(f, "tagextpn:       %.16e\n", globalparams->tagextpn);
   fprintf(f, "Mfmatch:        %.16e\n", globalparams->Mfmatch);
   fprintf(f, "nbmodeinj:      %d\n", globalparams->nbmodeinj);
@@ -1010,7 +1016,7 @@ int LISAGenerateSignalCAmpPhase(
   //tbeg = clock();
 
   //#pragma omp critical(LISAgensig)
-  LISASimFDResponseTDI3Chan(globalparams->tagtRefatLISA, globalparams->variant, &listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, globalparams->maxf, globalparams->tagtdi, globalparams->frozenLISA, globalparams->tfrozenLISA, globalparams->responseapprox, globalparams->delaycorrection);
+  LISASimFDResponseTDI3Chan(globalparams->tagtRefatLISA, globalparams->variant, &listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, globalparams->maxf, globalparams->maxfscaledlm, globalparams->tagtdi, globalparams->frozenLISA, globalparams->tfrozenLISA, globalparams->responseapprox, globalparams->delaycorrection);
   //tend = clock();
   //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //exit(0);
@@ -1107,7 +1113,7 @@ int LISAGenerateInjectionCAmpPhase(
   //TESTING
   //clock_t tbeg, tend;
   //tbeg = clock();
-  LISASimFDResponseTDI3Chan(globalparams->tagtRefatLISA, globalparams->variant, &listROM, &listTDI1, &listTDI2, &listTDI3, injectedparams->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, globalparams->maxf, globalparams->tagtdi, globalparams->frozenLISA, globalparams->tfrozenLISA, globalparams->responseapprox, globalparams->delaycorrection);
+  LISASimFDResponseTDI3Chan(globalparams->tagtRefatLISA, globalparams->variant, &listROM, &listTDI1, &listTDI2, &listTDI3, injectedparams->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, globalparams->maxf, globalparams->maxfscaledlm, globalparams->tagtdi, globalparams->frozenLISA, globalparams->tfrozenLISA, globalparams->responseapprox, globalparams->delaycorrection);
   //tend = clock();
   //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
@@ -1191,7 +1197,7 @@ int LISAGenerateSignalReIm(
   //TESTING
   //clock_t tbeg, tend;
   //tbeg = clock();
-  LISASimFDResponseTDI3Chan(globalparams->tagtRefatLISA, globalparams->variant, &listROM, &listTDI1, &listTDI2, &listTDI3, injectedparams->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, globalparams->maxf, globalparams->tagtdi, globalparams->frozenLISA, globalparams->tfrozenLISA, globalparams->responseapprox, globalparams->delaycorrection);
+  LISASimFDResponseTDI3Chan(globalparams->tagtRefatLISA, globalparams->variant, &listROM, &listTDI1, &listTDI2, &listTDI3, injectedparams->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, globalparams->maxf, globalparams->maxfscaledlm, globalparams->tagtdi, globalparams->frozenLISA, globalparams->tfrozenLISA, globalparams->responseapprox, globalparams->delaycorrection);
   //tend = clock();
   //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
@@ -1272,7 +1278,7 @@ int LISAGenerateInjectionReIm(
   //TESTING
   //clock_t tbeg, tend;
   //tbeg = clock();
-  LISASimFDResponseTDI3Chan(globalparams->tagtRefatLISA, globalparams->variant, &listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, globalparams->maxf, globalparams->tagtdi, globalparams->frozenLISA, globalparams->tfrozenLISA, globalparams->responseapprox, globalparams->delaycorrection);
+  LISASimFDResponseTDI3Chan(globalparams->tagtRefatLISA, globalparams->variant, &listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, globalparams->maxf, globalparams->maxfscaledlm, globalparams->tagtdi, globalparams->frozenLISA, globalparams->tfrozenLISA, globalparams->responseapprox, globalparams->delaycorrection);
   //tend = clock();
   //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
@@ -1509,6 +1515,8 @@ double CalculateLogLCAmpPhase(LISAParams *params, LISAInjectionCAmpPhase* inject
   //TESTING
   //clock_t tbeg, tend;
   //tbeg = clock();
+  ///TEST
+  ///printf("In CalculateLogLCAmpPhase before LISAGenerateSignalCAmpPhase\n");
   ret = LISAGenerateSignalCAmpPhase(params, generatedsignal);
   //tend = clock();
   //printf("time GenerateSignal: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);

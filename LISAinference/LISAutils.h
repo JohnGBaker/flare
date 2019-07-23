@@ -65,6 +65,7 @@ typedef struct tagLISAGlobalParams {
   double deltatobs;          /* max duration of observation (years, default 2) - the start of the signals might be cut in time instead of cut in frequency */
   double minf;               /* Minimal frequency (Hz, default=0) - when set to 0, use the lowest frequency where the detector noise model is trusted __LISASimFD_Noise_fLow (set somewhat arbitrarily)*/
   double maxf;               /* Maximal frequency (Hz, default=0) - when set to 0, use the highest frequency where the detector noise model is trusted __LISASimFD_Noise_fHigh (set somewhat arbitrarily)*/
+  double maxfscaledlm;       /* Maximal frequency rescaled by m/2 for different modes - useful to implement a time cut */
   int tagextpn;              /* Tag to allow PN extension of the waveform at low frequencies */
   int tagtRefatLISA;         /* Tag to signal time to be referenced to arrival at LISA rather than at SSB */
   double Mfmatch;            /* When PN extension allowed, geometric matching frequency: will use ROM above this value. If <=0, use ROM down to the lowest covered frequency */

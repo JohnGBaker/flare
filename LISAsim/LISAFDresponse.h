@@ -91,6 +91,7 @@ int LISASimFDResponseTDI3Chan(
   const double m1,                                            /* m1 in solar masses - used for resampling */
   const double m2,                                            /* m2 in solar masses - used for resampling */
   const double maxf,                                          /* Maximal frequency to consider - used to ignore hard-to-resolve response at f>1Hz - NOTE: for now, no recomputation of the boundary, so when not resampling can lose a bit of support between the last frequency point covered and maxf */
+  const double maxfscaledlm,                                  /* Maximal frequency rescaled by m/2 for different modes - useful to implement a time cut - NOTE: for now, no recomputation of the boundary, so when not resampling can lose a bit of support between the last frequency point covered and maxf */
   const TDItag tditag,                                        /* Selector for the set of TDI observables */
   const int tagfrozenLISA,                                    /* Tag to treat LISA as frozen in its motion  */
   const double tfrozenLISA,                                   /* Time in s at which to freeze LISA (default 0.) */

@@ -99,6 +99,8 @@ int main(int argc, char *argv[])
       params->nbmode = globalparams->nbmodetemp; /* Note : read from global parameters */
 
       if(globalparams->tagint==0) {
+        ///TEST
+        printf("Before CalculateLogLCAmpPhase in loop\n");
         logL = CalculateLogLCAmpPhase(params, injectedsignalCAmpPhase);
       }
       else if(globalparams->tagint==1) {

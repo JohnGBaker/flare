@@ -1035,6 +1035,8 @@ double FDListmodesFresnelOverlap3Chan(
       double fcutLow = fmax(fLow, fmax(((double) mmax1)/2. * fstartobs1, ((double) mmax2)/2. * fstartobs2));
       double overlapmode = FDSinglemodeFresnelOverlap3Chan(listelementh1chan1->freqseries, listelementh1chan2->freqseries, listelementh1chan3->freqseries, listelementsplines2chan1->splines, listelementsplines2chan2->splines, listelementsplines2chan3->splines, Snoise1, Snoise2, Snoise3, fcutLow, fHigh);
       overlap += overlapmode;
+      ///TEST
+      ///printf("l1, m1, l2, m2, overlapmode: (%d, %d), (%d, %d), %g\n", listelementsplines2chan1->l, listelementsplines2chan1->m, listelementh1chan1->l, listelementh1chan1->m, overlapmode);
       listelementsplines2chan1 = listelementsplines2chan1->next;
     }
     listelementh1chan1 = listelementh1chan1->next;
