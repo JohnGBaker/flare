@@ -285,11 +285,7 @@ int LISASimFDResponseTDI3Chan(
   const ResponseApproxtag responseapprox,                  /* Tag to select possible low-f approximation level in FD response */
   const int delaycorrection)                               /* Tag to include first order delay correction in ddot */
 {
-  ///TEST
-  ///printf("inside LISASimFDResponseTDI3Chan\n");
-  ///CAmpPhaseFrequencySeries* freqseries = ListmodesCAmpPhaseFrequencySeries_GetMode(*list, 2, 2)->freqseries;
-  ///printf("freqseries->freq[0]: %g\n", freqseries->freq->data[0]);
-  ///TEST
+
   /* Computing the complicated trigonometric coefficients */
   //clock_t begsetcoeffs = clock();
   SetCoeffsG(lambda, beta, psi);
@@ -361,8 +357,6 @@ int LISASimFDResponseTDI3Chan(
     if (maxfscaledlm>0.) fHigh = fmax(freq->data[nbptsmin], fmin(maxf, m/2. * maxfscaledlm));
     else fHigh = maxf;
     gsl_vector* freqrhigh = NULL;
-    ///TEST
-    ///printf("l,m,freq[0],fHigh: %d, %d, %g, %g\n", l, m, freq->data[0], fHigh);
     SetMaxdeltafResampledFrequencies(&freqrhigh, freq, fHigh, 0.002); /* Use 0.002Hz as a default maximal deltaf */
 
     /* Resampling at low f to achieve a deltat of at most 2 weeks */
@@ -372,9 +366,6 @@ int LISASimFDResponseTDI3Chan(
     /* Accuracy in time of this resampling is not critical, estimate should be enough */
     gsl_vector* freqr = NULL;
     SetMaxdeltatResampledFrequencies(&freqr, freqrhigh, 1./24, mchirp, m); /* Use half a month as a default maximal deltaft */
-
-    ///TEST
-    ///Write_Text_Vector("/Users/marsat/Projects/LISA_PE_I/MBH-PE-S0/scripts/tmp/test_freqr_l_%d_m_%d.dat", freqr, l, m);
 
     /* Evaluate resampled waveform */
     CAmpPhaseFrequencySeries* freqseriesr = NULL;

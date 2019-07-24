@@ -1515,15 +1515,10 @@ double CalculateLogLCAmpPhase(LISAParams *params, LISAInjectionCAmpPhase* inject
   //TESTING
   //clock_t tbeg, tend;
   //tbeg = clock();
-  ///TEST
-  ///printf("In CalculateLogLCAmpPhase before LISAGenerateSignalCAmpPhase\n");
   ret = LISAGenerateSignalCAmpPhase(params, generatedsignal);
   //tend = clock();
   //printf("time GenerateSignal: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
-
-  //
-  //printf("in CalculateLogLCAmpPhase: tRef= %g\n", params->tRef);
 
   /* If LISAGenerateSignal failed (e.g. parameters out of bound), silently return -Infinity logL */
   if(ret==FAILURE) {
