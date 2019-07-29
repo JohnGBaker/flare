@@ -68,6 +68,7 @@ typedef struct tagComputeLISASNRparams {
   LISAconstellation *variant;  /* A structure defining the LISA constellation features */
   int frozenLISA;            /* Freeze the orbital configuration to the time of peak of the injection (default 0) */
   ResponseApproxtag responseapprox;    /* Approximation in the GAB and orb response - choices are full (full response, default), lowfL (keep orbital delay frequency-dependence but simplify constellation response) and lowf (simplify constellation and orbital response) - WARNING : at the moment noises are not consistent, and TDI combinations from the GAB are unchanged */
+  int delaycorrection;       /* Include the first-order ddot delay correction in phaseRdelay (default 1) - NOTE: treated separately from frozenLISA, while strictly speaking ddot should be zero for a frozen LISA */
   int fromtditdfile;         /* Option for loading time series for TDI observables and FFTing */
   int nlinesinfile;          /* Number of lines of input file */
   char indir[256];           /* Input directory */

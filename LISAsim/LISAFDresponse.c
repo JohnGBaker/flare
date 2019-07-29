@@ -145,7 +145,8 @@ int LISASimFDResponsey12(
   const double inclination,                                   /* Inclination of the source */
   const double psi,                                           /* Polarization angle */
   const int tagfrozenLISA,                                    /* Tag to treat LISA as frozen at its torb configuration  */
-  const ResponseApproxtag responseapprox)                     /* Tag to select possible low-f approximation level in FD response */
+  const ResponseApproxtag responseapprox,                     /* Tag to select possible low-f approximation level in FD response */
+  const int delaycorrection)                                  /* Tag to include first order delay correction in ddot */
 {
   /* Computing the complicated trigonometric coefficients */
   //clock_t begsetcoeffs = clock();
@@ -214,22 +215,36 @@ int LISASimFDResponsey12(
         tforb = torb;
       }
       //clock_t tbegGAB = clock();
-	  EvaluateGABmode(variant, &g12mode, &g21mode, &g23mode, &g32mode, &g31mode, &g13mode, f, tforb, Yfactorplus, Yfactorcross, 1, responseapprox); /* does include the R-delay term */
+	    EvaluateGABmode(variant, &g12mode, &g21mode, &g23mode, &g32mode, &g31mode, &g13mode, f, tforb, Yfactorplus, Yfactorcross, 0, responseapprox); /* does not include the R-delay term */
+      /* Phase term due to the R-delay, including correction to first order */
+      /* NOTE: tagtRefatLISA not supported */
+      double phaseorb = variant->OrbitOmega*tforb + variant->OrbitPhi0 - lambda;
+      double OrbitRoC = variant->OrbitR/C_SI;
+      double phaseRdelay;
+      double phaseorb0 = variant->OrbitOmega*torb + variant->OrbitPhi0 - lambda;
+      /* Flag for including or ignoring the higher-order ddot correction in the delay */
+      if(delaycorrection==0) phaseRdelay = -2*PI*OrbitRoC*f*cos(beta)*( cos(phaseorb)-cos(phaseorb0) );
+      else phaseRdelay = -2*PI*OrbitRoC*f*cos(beta)*( cos(phaseorb)-cos(phaseorb0) ) * (1 + cos(beta)*OrbitRoC*variant->OrbitOmega*sin(phaseorb));
+      if(responseapprox==lowf) { /* In the full low-f approximation, ignore this delay term */
+        phaseRdelay = 0.;
+      }
+      double phasewithRdelay = gsl_vector_get(phase, j) + phaseRdelay;
       //clock_t tendGAB = clock();
       //timingcumulativeGABmode += (double) (tendGAB-tbegGAB) /CLOCKS_PER_SEC;
+
       /**/
       camp_y = (gsl_vector_get(amp_real, j) + I * gsl_vector_get(amp_imag, j)) * g12mode;
       /**/
       gsl_vector_set(amp_real_y, j, creal(camp_y));
       gsl_vector_set(amp_imag_y, j, cimag(camp_y));
+      gsl_vector_set(phase_y, j, phasewithRdelay);
     }
     //clock_t tendcontesllation = clock();
   //printf("Set constellation time: %g s\n", (double)(tendcontesllation - tbegcontesllation) / CLOCKS_PER_SEC);
   //printf("GAB cumulated time: %g s\n", timingcumulativeGABmode);
 
-    /* Copying the vectors of frequencies and phases */
+    /* Copying the vector of frequencies */
     gsl_vector_memcpy(freq_y, freq);
-    gsl_vector_memcpy(phase_y, phase);
 
     /* Append the modes to the ouput list-of-modes structures */
     *listy12 = ListmodesCAmpPhaseFrequencySeries_AddModeNoCopy(*listy12, modefreqseries, l, m);
@@ -264,7 +279,8 @@ int LISASimFDResponseTDI3Chan(
   const double maxf,                                       /* Maximal frequency to consider - used to ignore hard-to-resolve response at f>1Hz - NOTE: for now, no recomputation of the boundary, so when not resampling can lose a bit of support between the last frequency point covered and maxf */
   const TDItag tditag,                                     /* Selector for the set of TDI observables */
   const int tagfrozenLISA,                                 /* Tag to treat LISA as frozen at its torb configuration  */
-  const ResponseApproxtag responseapprox)                  /* Tag to select possible low-f approximation level in FD response */
+  const ResponseApproxtag responseapprox,                  /* Tag to select possible low-f approximation level in FD response */
+  const int delaycorrection)                               /* Tag to include first order delay correction in ddot */
 {
   /* Computing the complicated trigonometric coefficients */
   //clock_t begsetcoeffs = clock();
@@ -472,18 +488,22 @@ int LISASimFDResponseTDI3Chan(
       camp2 = factor2 * amphtilde;
       camp3 = factor3 * amphtilde;
       /* Phase term due to the R-delay, including correction to first order */
-      double phase=variant->OrbitOmega*tforb + variant->OrbitPhi0 - lambda;
-      double OrbitRoC=variant->OrbitR/C_SI;
+      double phase = variant->OrbitOmega*tforb + variant->OrbitPhi0 - lambda;
+      double OrbitRoC = variant->OrbitR/C_SI;
       //double phaseRdelay = -2*PI*R_SI/C_SI*f*cos(beta)*cos(Omega_SI*tf - lambda) * (1 + R_SI/C_SI*cos(beta)*Omega_SI*sin(Omega_SI*tf - lambda));
       double phaseRdelay;
       if(tagtRefatLISA==0){//delay so that tinj=torb refers to arrival time at SSB
-        phaseRdelay = -2*PI*OrbitRoC*f*cos(beta)*cos(phase) * (1 + cos(beta)*OrbitRoC*variant->OrbitOmega*sin(phase));
+        /* Flag for including or ignoring the higher-order ddot correction in the delay */
+        if(delaycorrection==0) phaseRdelay = -2*PI*OrbitRoC*f*cos(beta)*cos(phase);
+        else phaseRdelay = -2*PI*OrbitRoC*f*cos(beta)*cos(phase) * (1 + cos(beta)*OrbitRoC*variant->OrbitOmega*sin(phase));
       } else {
         //In this version we delay so that tinj=torb is relative to LISAcenter arrival time, so there is no orbital delay when tf = tinj
         //If the original delay realized td=t+d(t), now we want td=t+d(t)-d(t0), that we we change d(t) -> d(t) + d(t0)
         //Then with the approximation d(td)=d(t)(1-ddot(t)),
         double phase0 = variant->OrbitOmega*torb + variant->OrbitPhi0 - lambda;
-        phaseRdelay = -2*PI*OrbitRoC*f*cos(beta)*( cos(phase)-cos(phase0) ) * (1 + cos(beta)*OrbitRoC*variant->OrbitOmega*sin(phase));
+        /* Flag for including or ignoring the higher-order ddot correction in the delay */
+        if(delaycorrection==0) phaseRdelay = -2*PI*OrbitRoC*f*cos(beta)*( cos(phase)-cos(phase0) );
+        else phaseRdelay = -2*PI*OrbitRoC*f*cos(beta)*( cos(phase)-cos(phase0) ) * (1 + cos(beta)*OrbitRoC*variant->OrbitOmega*sin(phase));
       }
       if(responseapprox==lowf) { /* In the full low-f approximation, ignore this delay term */
         phaseRdelay = 0.;

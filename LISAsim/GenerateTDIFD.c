@@ -62,6 +62,7 @@ Arguments are as follows:\n\
  --tagtdi              Tag choosing the set of TDI variables to use (default TDIAETXYZ)\n\
  --frozenLISA          Freeze the orbital configuration to the time of peak of the injection (default 0)\n\
  --responseapprox      Approximation in the GAB and orb response - choices are full (full response, default), lowfL (keep orbital delay frequency-dependence but simplify constellation response) and lowf (simplify constellation and orbital response) - WARNING : at the moment noises are not consistent, and TDI combinations from the GAB are unchanged\n\
+ --delaycorrection     Include the first-order ddot delay correction in phaseRdelay (default 1) - NOTE: treated separately from frozenLISA, while strictly speaking ddot should be zero for a frozen LISA\n\
  --taggenwave          Tag choosing the wf format: TDIhlm (default: downsampled mode contributions to TDI in Amp/Phase form), TDIFD (hlm interpolated and summed accross modes), h22FFT and yslrFFT (used with fomrtditdfile -- loads time series and FFT)\n\
  --restorescaledfactor Option to restore the factors scaled out of TDI observables (default: false)\n	\
  --FFTfromtdfile       Option for loading time series and FFTing (default: false)\n\
@@ -104,6 +105,7 @@ Arguments are as follows:\n\
     params->tagtdi = TDIAETXYZ;
     params->frozenLISA = 0;
     params->responseapprox = full;
+    params->delaycorrection = 1;
     params->taggenwave = TDIhlm;
     params->restorescaledfactor = 0;
     params->FFTfromtdfile = 0;
@@ -168,6 +170,8 @@ Arguments are as follows:\n\
             params->frozenLISA = 1;
         } else if (strcmp(argv[i], "--responseapprox") == 0) {
             params->responseapprox = ParseResponseApproxtag(argv[++i]);
+        } else if (strcmp(argv[i], "--delaycorrection") == 0) {
+          params->delaycorrection = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--taggenwave") == 0) {
 	          params->taggenwave = ParseGenTDIFDtag(argv[++i]);
         } else if (strcmp(argv[i], "--restorescaledfactor") == 0) {
@@ -540,7 +544,7 @@ int main(int argc, char *argv[])
     ListmodesCAmpPhaseFrequencySeries* listTDI2= NULL;
     ListmodesCAmpPhaseFrequencySeries* listTDI3= NULL;
     /* torb is the orbital reference time (role played by injection tRef in the inference) */
-    LISASimFDResponseTDI3Chan(tagtRefatLISA, variant, &listhlm, &listTDI1, &listTDI2, &listTDI3, params->torb, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, params->maxf, params->tagtdi, params->frozenLISA, params->responseapprox);
+    LISASimFDResponseTDI3Chan(tagtRefatLISA, variant, &listhlm, &listTDI1, &listTDI2, &listTDI3, params->torb, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, params->maxf, params->tagtdi, params->frozenLISA, params->responseapprox, params->delaycorrection);
 
     /* If asked for it, rescale the complex amplitudes to include the factors that were scaled out of TDI observables */
     if(params->restorescaledfactor) {

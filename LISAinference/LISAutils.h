@@ -78,6 +78,7 @@ typedef struct tagLISAGlobalParams {
   int zerolikelihood;        /* Tag to zero out the likelihood, to sample from the prior for testing purposes (default 0) */
   int frozenLISA;            /* Freeze the orbital configuration to the time of peak of the injection (default 0) */
   ResponseApproxtag responseapprox;    /* Approximation in the GAB and orb response - choices are full (full response, default), lowfL (keep orbital delay frequency-dependence but simplify constellation response) and lowf (simplify constellation and orbital response) - WARNING : at the moment noises are not consistent, and TDI combinations from the GAB are unchanged */
+  int delaycorrection;       /* Include the first-order ddot delay correction in phaseRdelay (default 1) - NOTE: treated separately from frozenLISA, while strictly speaking ddot should be zero for a frozen LISA */
   int tagsimplelikelihood22; /* Tag to use simplified, frozen-LISA and lowf likelihood where mode overlaps are precomputed - 22-mode only - can only be used when the masses and time (tL) are pinned to injection values (Note: when using --snr, distance adjustment done using responseapprox, not the simple response) */
   int tagsimplelikelihoodHM; /* Tag to use simplified, frozen-LISA and lowf likelihood where mode overlaps are precomputed - set of modes - can only be used when the masses and time (tL) are pinned to injection values (Note: when using --snr, distance adjustment done using responseapprox, not the simple response) */
 } LISAGlobalParams;

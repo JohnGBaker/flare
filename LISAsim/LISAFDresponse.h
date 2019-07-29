@@ -70,7 +70,8 @@ int LISASimFDResponsey12(
   const double inclination,                                   /* Inclination of the source */
   const double psi,                                           /* Polarization angle */
   const int tagfrozenLISA,                                    /* Tag to treat LISA as frozen at its torb configuration  */
-  const ResponseApproxtag responseapprox);                    /* Tag to select possible low-f approximation level in FD response */
+  const ResponseApproxtag responseapprox,                     /* Tag to select possible low-f approximation level in FD response */
+  const int delaycorrection);                                 /* Tag to include first order delay correction in ddot */
 
 //WARNING: tRef is ignored for now in the response - i.e. set to 0
 /* Core function processing a signal (in the form of a list of modes) through the Fourier-domain LISA response, for given values of the inclination, position in the sky and polarization angle */
@@ -91,7 +92,8 @@ int LISASimFDResponseTDI3Chan(
   const double maxf,                                          /* Maximal frequency to consider - used to ignore hard-to-resolve response at f>1Hz - NOTE: for now, no recomputation of the boundary, so when not resampling can lose a bit of support between the last frequency point covered and maxf */
   const TDItag tditag,                                        /* Selector for the set of TDI observables */
   const int tagfrozenLISA,                                    /* Tag to treat LISA as frozen at its torb configuration  */
-  const ResponseApproxtag responseapprox);                    /* Tag to select possible low-f approximation level in FD response */
+  const ResponseApproxtag responseapprox,                     /* Tag to select possible low-f approximation level in FD response */
+  const int delaycorrection);                                 /* Tag to include first order delay correction in ddot */
 
 // int LISASimFDResponseTDI1Chan(
 //   struct tagListmodesCAmpPhaseFrequencySeries **list,      /* Input: list of modes in Frequency-domain amplitude and phase form as produced by the ROM */

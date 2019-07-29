@@ -79,6 +79,7 @@ typedef struct tagGenTDIFDparams {
   int tagtdi;                /* Tag selecting the desired output format */
   int frozenLISA;            /* Freeze the orbital configuration to the time of peak of the injection (default 0) */
   ResponseApproxtag responseapprox;    /* Approximation in the GAB and orb response - choices are full (full response, default), lowfL (keep orbital delay frequency-dependence but simplify constellation response) and lowf (simplify constellation and orbital response) - WARNING : at the moment noises are not consistent, and TDI combinations from the GAB are unchanged */
+  int delaycorrection;       /* Include the first-order ddot delay correction in phaseRdelay (default 1) - NOTE: treated separately from frozenLISA, while strictly speaking ddot should be zero for a frozen LISA */
   int taggenwave;            /* Tag selecting the desired output format */
   int restorescaledfactor;   /* If 1, restore the factors that were scaled out of TDI observables */
   int FFTfromtdfile;         /* Option for loading time series and FFTing (default: false) */
