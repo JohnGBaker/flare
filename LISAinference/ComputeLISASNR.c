@@ -44,7 +44,8 @@ Arguments are as follows:\n\
  --tagint              Tag choosing the integrator: 0 for Fresnel (default), 1 for linear integration\n\
  --nbptsoverlap        Number of points to use for linear integration (default 32768)\n\
  --variant             String representing the variant of LISA to be applied (default LISAProposal)\n\
- --frozenLISA          Freeze the orbital configuration to the time of peak of the injection (default 0)\n\
+ --frozenLISA          Freeze the orbital configuration (default 0)\n\
+ --tfrozenLISA         Time in s at which to freeze LISA (default 0.)\n\
  --responseapprox      Approximation in the GAB and orb response - choices are full (full response, default), lowfL (keep orbital delay frequency-dependence but simplify constellation response) and lowf (simplify constellation and orbital response) - WARNING : at the moment noises are not consistent, and TDI combinations from the GAB are unchanged\n\
  --delaycorrection     Include the first-order ddot delay correction in phaseRdelay (default 1) - NOTE: treated separately from frozenLISA, while strictly speaking ddot should be zero for a frozen LISA\n\
  --fromtditdfile       Option for loading time series for TDI observables and FFTing (default: false)\n\
@@ -73,6 +74,7 @@ Arguments are as follows:\n\
   params->polarization = 0;
 
   params->frozenLISA = 0;
+  params->tfrozenLISA = 0.;
   params->responseapprox = full;
   params->delaycorrection = 1;
   params->variant = &LISAProposal;
@@ -143,6 +145,8 @@ Arguments are as follows:\n\
       params->nbptsoverlap = atoi(argv[++i]);
     } else if (strcmp(argv[i], "--frozenLISA") == 0) {
         params->frozenLISA = 1;
+    } else if (strcmp(argv[i], "--tfrozenLISA") == 0) {
+        params->tfrozenLISA = atof(argv[++i]);
     } else if (strcmp(argv[i], "--responseapprox") == 0) {
         params->responseapprox = ParseResponseApproxtag(argv[++i]);
     } else if (strcmp(argv[i], "--delaycorrection") == 0) {
@@ -353,6 +357,7 @@ int main(int argc, char *argv[])
       globalparams->nbptsoverlap = params->nbptsoverlap;
       globalparams->variant = params->variant;
       globalparams->frozenLISA = params->frozenLISA;
+      globalparams->tfrozenLISA = params->tfrozenLISA;
       globalparams->responseapprox = params->responseapprox;
       globalparams->delaycorrection = params->delaycorrection;
       /* Hardcoded */

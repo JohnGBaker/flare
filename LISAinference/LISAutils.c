@@ -151,6 +151,7 @@ void InitGlobalParams(void)
   globalparams->variant = &LISAProposal;
   globalparams->zerolikelihood = 0;
   globalparams->frozenLISA = 0;
+  globalparams->tfrozenLISA = 0.;
   globalparams->responseapprox = full;
   globalparams->delaycorrection = 1;
   globalparams->tagsimplelikelihood22 = 0;
@@ -218,7 +219,8 @@ Arguments are as follows:\n\
  --nbptsoverlap        Number of points to use for linear integration (default 32768)\n\
  --variant             String representing the variant of LISA to be applied (default LISAProposal)\n\
  --zerolikelihood      Zero out the likelihood to sample from the prior for testing purposes (default 0)\n\
- --frozenLISA          Freeze the orbital configuration to the time of peak of the injection (default 0)\n\
+ --frozenLISA          Freeze the orbital configuration (default 0)\n\
+ --tfrozenLISA         Time in s at which to freeze LISA (default 0.)\n\
  --responseapprox      Approximation in the GAB and orb response - choices are full (full response, default), lowfL (keep orbital delay frequency-dependence but simplify constellation response) and lowf (simplify constellation and orbital response) - WARNING : at the moment noises are not consistent, and TDI combinations from the GAB are unchanged\n\
  --delaycorrection     Include the first-order ddot delay correction in phaseRdelay (default 1) - NOTE: treated separately from frozenLISA, while strictly speaking ddot should be zero for a frozen LISA\n\
  --simplelikelihood22  Tag to use simplified, frozen-LISA and lowf likelihood where mode overlaps are precomputed - 22-mode only - can only be used when the masses and time (tL) are pinned to injection values (Note: when using --snr, distance adjustment done using responseapprox, not the simple response)\n\
@@ -328,6 +330,7 @@ Syntax: --PARAM-min\n\
     globalparams->variant = &LISAProposal;
     globalparams->zerolikelihood = 0;
     globalparams->frozenLISA = 0;
+    globalparams->tfrozenLISA = 0.;
     globalparams->responseapprox = full;
     globalparams->delaycorrection = 1;
     globalparams->tagsimplelikelihood22 = 0;
@@ -474,6 +477,8 @@ Syntax: --PARAM-min\n\
             globalparams->zerolikelihood = 1;
         } else if (strcmp(argv[i], "--frozenLISA") == 0) {
             globalparams->frozenLISA = 1;
+        } else if (strcmp(argv[i], "--tfrozenLISA") == 0) {
+            globalparams->tfrozenLISA = atof(argv[++i]);
         } else if (strcmp(argv[i], "--responseapprox") == 0) {
             globalparams->responseapprox = ParseResponseApproxtag(argv[++i]);
         } else if (strcmp(argv[i], "--delaycorrection") == 0) {
@@ -750,6 +755,7 @@ int print_parameters_to_file_LISA(
   fprintf(f, "nbptsoverlap:   %d\n", globalparams->nbptsoverlap);
   fprintf(f, "zerolikelihood: %d\n", globalparams->zerolikelihood);
   fprintf(f, "frozenLISA:     %d\n", globalparams->frozenLISA);
+  fprintf(f, "tfrozenLISA:    %.16e\n", globalparams->tfrozenLISA);
   fprintf(f, "responseapprox: %d\n", globalparams->responseapprox);
   fprintf(f, "delaycorrection: %d\n", globalparams->delaycorrection);
   fprintf(f, "simplelikelihood22: %d\n", globalparams->tagsimplelikelihood22);
@@ -1004,7 +1010,7 @@ int LISAGenerateSignalCAmpPhase(
   //tbeg = clock();
 
   //#pragma omp critical(LISAgensig)
-  LISASimFDResponseTDI3Chan(globalparams->tagtRefatLISA, globalparams->variant, &listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, globalparams->maxf, globalparams->tagtdi, globalparams->frozenLISA, globalparams->responseapprox, globalparams->delaycorrection);
+  LISASimFDResponseTDI3Chan(globalparams->tagtRefatLISA, globalparams->variant, &listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, globalparams->maxf, globalparams->tagtdi, globalparams->frozenLISA, globalparams->tfrozenLISA, globalparams->responseapprox, globalparams->delaycorrection);
   //tend = clock();
   //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //exit(0);
@@ -1101,7 +1107,7 @@ int LISAGenerateInjectionCAmpPhase(
   //TESTING
   //clock_t tbeg, tend;
   //tbeg = clock();
-  LISASimFDResponseTDI3Chan(globalparams->tagtRefatLISA, globalparams->variant, &listROM, &listTDI1, &listTDI2, &listTDI3, injectedparams->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, globalparams->maxf, globalparams->tagtdi, globalparams->frozenLISA, globalparams->responseapprox, globalparams->delaycorrection);
+  LISASimFDResponseTDI3Chan(globalparams->tagtRefatLISA, globalparams->variant, &listROM, &listTDI1, &listTDI2, &listTDI3, injectedparams->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, globalparams->maxf, globalparams->tagtdi, globalparams->frozenLISA, globalparams->tfrozenLISA, globalparams->responseapprox, globalparams->delaycorrection);
   //tend = clock();
   //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
@@ -1185,7 +1191,7 @@ int LISAGenerateSignalReIm(
   //TESTING
   //clock_t tbeg, tend;
   //tbeg = clock();
-  LISASimFDResponseTDI3Chan(globalparams->tagtRefatLISA, globalparams->variant, &listROM, &listTDI1, &listTDI2, &listTDI3, injectedparams->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, globalparams->maxf, globalparams->tagtdi, globalparams->frozenLISA, globalparams->responseapprox, globalparams->delaycorrection);
+  LISASimFDResponseTDI3Chan(globalparams->tagtRefatLISA, globalparams->variant, &listROM, &listTDI1, &listTDI2, &listTDI3, injectedparams->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, globalparams->maxf, globalparams->tagtdi, globalparams->frozenLISA, globalparams->tfrozenLISA, globalparams->responseapprox, globalparams->delaycorrection);
   //tend = clock();
   //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //
@@ -1266,7 +1272,7 @@ int LISAGenerateInjectionReIm(
   //TESTING
   //clock_t tbeg, tend;
   //tbeg = clock();
-  LISASimFDResponseTDI3Chan(globalparams->tagtRefatLISA, globalparams->variant, &listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, globalparams->maxf, globalparams->tagtdi, globalparams->frozenLISA, globalparams->responseapprox, globalparams->delaycorrection);
+  LISASimFDResponseTDI3Chan(globalparams->tagtRefatLISA, globalparams->variant, &listROM, &listTDI1, &listTDI2, &listTDI3, params->tRef, params->lambda, params->beta, params->inclination, params->polarization, params->m1, params->m2, globalparams->maxf, globalparams->tagtdi, globalparams->frozenLISA, globalparams->tfrozenLISA, globalparams->responseapprox, globalparams->delaycorrection);
   //tend = clock();
   //printf("time LISASimFDResponse: %g\n", (double) (tend-tbeg)/CLOCKS_PER_SEC);
   //

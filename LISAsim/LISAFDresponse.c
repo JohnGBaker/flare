@@ -144,7 +144,8 @@ int LISASimFDResponsey12(
   const double beta,                                          /* Second angle for the position in the sky */
   const double inclination,                                   /* Inclination of the source */
   const double psi,                                           /* Polarization angle */
-  const int tagfrozenLISA,                                    /* Tag to treat LISA as frozen at its torb configuration  */
+  const int tagfrozenLISA,                                    /* Tag to treat LISA as frozen in its motion  */
+  const double tfrozenLISA,                                   /* Time in s at which to freeze LISA (default 0.) */
   const ResponseApproxtag responseapprox,                     /* Tag to select possible low-f approximation level in FD response */
   const int delaycorrection)                                  /* Tag to include first order delay correction in ddot */
 {
@@ -212,7 +213,7 @@ int LISASimFDResponsey12(
       if(!(tagfrozenLISA)) {
         tforb = tf + torb;
       } else {
-        tforb = torb;
+        tforb = tfrozenLISA;
       }
       //clock_t tbegGAB = clock();
 	    EvaluateGABmode(variant, &g12mode, &g21mode, &g23mode, &g32mode, &g31mode, &g13mode, f, tforb, Yfactorplus, Yfactorcross, 0, responseapprox); /* does not include the R-delay term */
@@ -278,7 +279,8 @@ int LISASimFDResponseTDI3Chan(
   const double m2,                                         /* m2 in solar masses - used for resampling */
   const double maxf,                                       /* Maximal frequency to consider - used to ignore hard-to-resolve response at f>1Hz - NOTE: for now, no recomputation of the boundary, so when not resampling can lose a bit of support between the last frequency point covered and maxf */
   const TDItag tditag,                                     /* Selector for the set of TDI observables */
-  const int tagfrozenLISA,                                 /* Tag to treat LISA as frozen at its torb configuration  */
+  const int tagfrozenLISA,                                 /* Tag to treat LISA as frozen in its motion  */
+  const double tfrozenLISA,                                /* Time in s at which to freeze LISA (default 0.) */
   const ResponseApproxtag responseapprox,                  /* Tag to select possible low-f approximation level in FD response */
   const int delaycorrection)                               /* Tag to include first order delay correction in ddot */
 {
@@ -475,7 +477,7 @@ int LISASimFDResponseTDI3Chan(
       if(!(tagfrozenLISA)) {
         tforb = tf + torb;
       } else {
-        tforb = torb;
+        tforb = tfrozenLISA;
       }
       //clock_t tbegGAB = clock();
       EvaluateGABmode(variant, &g12mode, &g21mode, &g23mode, &g32mode, &g31mode, &g13mode, f, tforb, Yfactorplus, Yfactorcross, 0, responseapprox); /* does not include the R-delay term */

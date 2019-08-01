@@ -77,7 +77,8 @@ typedef struct tagGenTDIFDparams {
   double twindowend;         /* When generating frequency series from file by FFT, twindowend (0 to set automatically at 0.01*duration) */
   int tagh22fromfile;        /* Tag choosing wether to load h22 FD downsampled Amp/Phase from file (default 0) */
   int tagtdi;                /* Tag selecting the desired output format */
-  int frozenLISA;            /* Freeze the orbital configuration to the time of peak of the injection (default 0) */
+  int frozenLISA;            /* Freeze the orbital configuration (default 0) */
+  double tfrozenLISA;        /* Time in s at which to freeze LISA (default 0.) */
   ResponseApproxtag responseapprox;    /* Approximation in the GAB and orb response - choices are full (full response, default), lowfL (keep orbital delay frequency-dependence but simplify constellation response) and lowf (simplify constellation and orbital response) - WARNING : at the moment noises are not consistent, and TDI combinations from the GAB are unchanged */
   int delaycorrection;       /* Include the first-order ddot delay correction in phaseRdelay (default 1) - NOTE: treated separately from frozenLISA, while strictly speaking ddot should be zero for a frozen LISA */
   int taggenwave;            /* Tag selecting the desired output format */
