@@ -459,7 +459,7 @@ Syntax: --PARAM-min\n\
         } else if (strcmp(argv[i], "--Mfmatch") == 0) {
             globalparams->Mfmatch = atof(argv[++i]);
         } else if (strcmp(argv[i], "--setphiRefatfRef") == 0) {
-            globalparams->setphiRefatfRef = atof(argv[++i]);
+            globalparams->setphiRefatfRef = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--nbmodeinj") == 0) {
             globalparams->nbmodeinj = atoi(argv[++i]);
         } else if (strcmp(argv[i], "--nbmodetemp") == 0) {
