@@ -40,6 +40,7 @@ Arguments are as follows:\n\
  --minf                Minimal frequency (Hz, default=0) - when set to 0, use the lowest frequency where the detector noise model is trusted __LISASimFD_Noise_fLow (set somewhat arbitrarily)\n\
  --maxf                Maximal frequency (Hz, default=0) - when set to 0, use the highest frequency where the detector noise model is trusted __LISASimFD_Noise_fHigh (set somewhat arbitrarily)\n\
  --tagextpn            Tag to allow PN extension of the waveform at low frequencies (default=1)\n\
+ --setphiRefatfRef     Flag for adjusting the FD phase at phiRef at the given fRef, which depends also on tRef - if false, treat phiRef simply as an orbital phase shift (minus an observer phase shift) (default=1)\n\
  --tagtdi              Tag choosing the set of TDI variables to use (default TDIAETXYZ)\n\
  --tagint              Tag choosing the integrator: 0 for Fresnel (default), 1 for linear integration\n\
  --nbptsoverlap        Number of points to use for linear integration (default 32768)\n\
@@ -86,6 +87,7 @@ Arguments are as follows:\n\
   params->maxf = 0.;
   params->tagextpn = 1;
   params->Mfmatch = 0.;
+  params->setphiRefatfRef = 1;
   params->tagtdi = TDIAETXYZ;
   params->tagint = 0;
   params->nbptsoverlap = 32768;
@@ -137,6 +139,8 @@ Arguments are as follows:\n\
         params->tagextpn = atoi(argv[++i]);
     } else if (strcmp(argv[i], "--Mfmatch") == 0) {
         params->Mfmatch = atof(argv[++i]);
+    } else if (strcmp(argv[i], "--setphiRefatfRef") == 0) {
+        params->setphiRefatfRef = atoi(argv[++i]);
     } else if (strcmp(argv[i], "--tagtdi") == 0) {
       params->tagtdi = ParseTDItag(argv[++i]);
     } else if (strcmp(argv[i], "--tagint") == 0) {
@@ -350,6 +354,7 @@ int main(int argc, char *argv[])
       globalparams->maxf = params->maxf;
       globalparams->tagextpn = params->tagextpn;
       globalparams->Mfmatch = params->Mfmatch;
+      globalparams->setphiRefatfRef = params->setphiRefatfRef;
       globalparams->nbmodeinj = params->nbmode;
       globalparams->nbmodetemp = params->nbmode;
       globalparams->tagint = params->tagint;

@@ -62,6 +62,7 @@ typedef struct tagComputeLISASNRparams {
   double maxf;               /* Maximal frequency (Hz, default=0) - when set to 0, use the highest frequency where the detector noise model is trusted __LISASimFD_Noise_fHigh (set somewhat arbitrarily)*/
   int tagextpn;              /* Tag to allow PN extension of the waveform at low frequencies */
   double Mfmatch;            /* When PN extension allowed, geometric matching frequency: will use ROM above this value. If <=0, use ROM down to the lowest covered frequency */
+  int setphiRefatfRef;       /* Flag for adjusting the FD phase at phiRef at the given fRef, which depends also on tRef - if false, treat phiRef simply as an orbital phase shift (minus an observer phase shift) (default=1) */
   int tagtdi;                /* Tag selecting the desired TDI observables */
   int tagint;                /* Tag choosing the integrator: 0 for Fresnel (default), 1 for linear integration */
   int nbptsoverlap;          /* Number of points to use in loglinear overlaps (default 32768) */
