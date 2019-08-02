@@ -39,6 +39,7 @@ Arguments are as follows:\n\
  --deltatobs           Observation duration (years, default=2)\n\
  --minf                Minimal frequency (Hz, default=0) - when set to 0, use the lowest frequency where the detector noise model is trusted __LISASimFD_Noise_fLow (set somewhat arbitrarily)\n\
  --maxf                Maximal frequency (Hz, default=0) - when set to 0, use the highest frequency where the detector noise model is trusted __LISASimFD_Noise_fHigh (set somewhat arbitrarily)\n\
+ --maxfscaledlm        Maximal frequency rescaled by m/2 for different modes - useful to implement a time cut\n\
  --tagextpn            Tag to allow PN extension of the waveform at low frequencies (default=1)\n\
  --setphiRefatfRef     Flag for adjusting the FD phase at phiRef at the given fRef, which depends also on tRef - if false, treat phiRef simply as an orbital phase shift (minus an observer phase shift) (default=1)\n\
  --tagtdi              Tag choosing the set of TDI variables to use (default TDIAETXYZ)\n\
@@ -85,6 +86,7 @@ Arguments are as follows:\n\
   params->deltatobs = 2.;
   params->minf = 0.;
   params->maxf = 0.;
+  params->maxfscaledlm = 0.;
   params->tagextpn = 1;
   params->Mfmatch = 0.;
   params->setphiRefatfRef = 1;
@@ -135,6 +137,8 @@ Arguments are as follows:\n\
       params->minf = atof(argv[++i]);
     } else if (strcmp(argv[i], "--maxf") == 0) {
       params->maxf = atof(argv[++i]);
+    } else if (strcmp(argv[i], "--maxfscaledlm") == 0) {
+        params->maxfscaledlm = atof(argv[++i]);
     } else if (strcmp(argv[i], "--tagextpn") == 0) {
         params->tagextpn = atoi(argv[++i]);
     } else if (strcmp(argv[i], "--Mfmatch") == 0) {
@@ -352,6 +356,7 @@ int main(int argc, char *argv[])
       globalparams->deltatobs = params->deltatobs; /* Default value */
       globalparams->minf = params->minf;
       globalparams->maxf = params->maxf;
+      globalparams->maxfscaledlm = params->maxfscaledlm;
       globalparams->tagextpn = params->tagextpn;
       globalparams->Mfmatch = params->Mfmatch;
       globalparams->setphiRefatfRef = params->setphiRefatfRef;
