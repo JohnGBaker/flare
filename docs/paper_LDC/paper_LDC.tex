@@ -1,0 +1,171 @@
+\documentclass[aps,showpacs,twocolumn,prd,superscriptaddress,nofootinbib]{revtex4}
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{latexsym}
+\usepackage{graphicx}
+\usepackage{bm}
+\usepackage{color}
+\usepackage{enumerate}
+\usepackage{ulem}
+
+\newcommand{\be}{\begin{equation}}
+\newcommand{\ee}{\end{equation}}
+\newcommand\ud{{\mathrm{d}}}
+\newcommand\uD{{\mathrm{D}}}
+\newcommand\calO{{\mathcal{O}}}
+\newcommand\bfx{\mathbf{x}}
+\newcommand{\ov}[1]{\overline{#1}}
+\newcommand{\ph}[1]{\phantom{#1}}
+\newcommand{\cte}{\mathrm{cte}}
+\newcommand{\nn}{\nonumber}
+\newcommand{\hatk}{\hat{k}}
+\newcommand{\Hz}{\,\mathrm{Hz}}
+\newcommand{\sinc}{\,\mathrm{sinc}}
+\newcommand{\Msol}{M_{\odot}}
+\newcommand{\bsub}{\begin{subequations}}
+\newcommand{\esub}{\end{subequations}}
+\newcommand\betaL{{\beta_{L}}}
+\newcommand\lambdaL{{\lambda_{L}}}
+\newcommand\varphiL{{\varphi_{L}}}
+\newcommand\psiL{{\psi_{L}}}
+
+\begin{document}
+
+\title{Methods for black hole merger parameter estimation with LISA.}
+
+\author{John G. Baker}
+\affiliation{Gravitational Astrophysics Laboratory, NASA Goddard Space Flight Center, 8800 Greenbelt Rd., Greenbelt, MD 20771, USA}
+\author{Sylvain Marsat}
+
+
+
+\date{\today}
+
+\begin{abstract}
+
+[Abstract]
+
+\end{abstract}
+
+\pacs{
+04.70.Bw, % classical black holes
+04.80.Nn, % Gravitational wave detectors and experiments
+95.30.Sf, % relativity and gravitation
+95.55.Ym, % Gravitational radiation detectors
+97.60.Lf  % black holes (astrophysics)
+}
+
+\maketitle
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Introduction}
+\label{sec:intro}
+
+[Introduction]
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Symmetries}
+
+In \cite{MarsatEA2019} we have discussed symmetries which apply to LISA in low-frequency, minimal-motion limit, or more generally any GW instrument in this limit which measures both polarization modes. In this context, we use sky coordinates adapted $\{\beta_{L},\lambda_{a}\}$ adapted to the instrument. Since $\iota \in [0, \pi]$ while $\beta_{L} \in [-\pi/2, \pi/2]$, it will be more convenient to work with $\theta_{L} = \pi/2 - \beta_{L}$ and we further abbreviate notations by using the variables
+\be
+	t_{\iota} \equiv \tan \frac{\iota}{2} \,, \quad t_{\theta} \equiv \tan \frac{\theta_{L}}{2} \,.
+\ee
+We write the response signals for a single-mode circularly radiating source via complex combinations of the two polarization channels (having already factored out the intrinsic parameters and having integrated over the Fourier domain),
+\be
+	\sigma_{\pm} \equiv s_{a}^{22} \pm i s_{e}^{22} \,.
+\ee
+In this notation, we obtain
+\bsub\label{eq:sigmapm}
+\begin{align}
+  \sigma_{+} &= \rho e^{2i\varphi} \left[ t_{\theta}^{4} e^{-2 i \psiL} + t_{\iota}^{4} e^{2 i \psiL} \right] e^{-2i \lambda_{a}} \,, \\
+  \sigma_{-} &= \rho e^{2i\varphi} \left[ e^{-2 i \psiL} + t_{\theta}^{4} t_{\iota}^{4} e^{2 i \psiL} \right] e^{2i \lambda_{a}} \,,
+\end{align}
+\esub
+with a common prefactor 
+\be\label{eq:sigmafactorrho}
+\rho(d, \iota, \theta_{L}) = \frac{1}{4d\left( 1 + t_{\iota}^{2} \right)^{2} \left(1 + t_{\theta}^{2} \right)^{2}} \,.
+\ee
+
+Having measured $\sigma_{+}$ and $\sigma_{-}$ from some observation with assumed intrinsic parameters, we can now count 4 (real) constraints, for the 6 remaining intrinsic parameters.  This leaves us with a degenerate subspace described by disjoint 2-D pieces.
+
+We can regard this as the basic degenerate space for a 2-polarization GW observation, with opportunities for degeneracy breaking with multiple harmonic modes, an accelerating detector, and/or detector with a size comparable to the GW wavelength.  MCMC performance should usually be improved by applying proposals which exploit the symmetries of the degenerate space, which we can understand from examplination of \eqref{eq:sigmapm,eq:sigmafactorrho}.
+
+There are a number of discrete symmetries evident. First, we can rotate the source or instrument through $\pi/4$ with a corresponding rotation of the polarization angle,
+\begin{align}
+  \phi\rightarrow\phi+\pi/4&\mathrm{and}&\psi\rightarrow\psi+\pi/4\\
+  \lambda\rightarrow\lambda+\pi/4&\mathrm{and}&\psi\rightarrow\psi+\pi/4.
+\end{align}
+The first, for instance, just changes the sign on the $\phi$ exponentials and the $\psi$ exponentials. 
+
+Next we note a symmetry associated with reflecting the location of the observation through the instrument plane, 
+\be\label{eq:symmetryresponse}
+\betaL \rightarrow -\betaL\,, \quad \iota \rightarrow \pi - \iota \,, \quad \psiL \rightarrow \pi - \psiL,
+\ee
+whereby  $t^4_{\theta}->t^{-4}_{\theta}$ and $t^4_{\iota}->t^{-4}_{\iota}$,
+leaving the response exactly invariant.
+
+There is also a symmetry which exchanges the altidual angle of the GW receiver and transmitter, i.e. exchanging $\iota \leftrightarrow \theta_{L}$. While leaving $\sigma_-$ unchanged, this conjugates the factor inside brackets for $\sigma_{+}$, which can be compensated using the phase terms $\varphi \pm \lambda_{a}$. If $\Phi = \mathrm{Arg} \left[ t_{\theta}^{4} e^{-2 i \psiL} + t_{\iota}^{4} e^{2 i \psiL} \right]$, we obtain the symmetry
+\begin{align}
+	\iota' = \theta_{L} \,, \qquad \theta_{L}' = \iota \,, \nn\\
+	\varphi' = \varphi + \frac{1}{2} \Phi \quad \mathrm{mod} \; \pi\,, \nn\\
+	\lambda_{a}' = \lambda_{a} - \frac{1}{2} \Phi \quad \mathrm{mod} \; \pi\,.
+\end{align}
+
+We can also describe the continuous symmetry describing movement within the 2-D subspace by exchanging distance $d$ with some combination of $\iota$ and $\beta$ in  \eqref{eq:sigmafactorrho}.  This requires also ensuring that changes to $t^4_{\theta}$ and $t^4_{\iota}$ do not alter \eqref{eq:sigmapm}.
+
+First, for an approximate approach, note that in the limit that either $t^4_\theta<<1$ or $t^4_\iota<<1$, then \eqref{eq:sigmapm} become nearly independent of that quantity except through  \eqref{eq:sigmafactorrho}. Then we have an approximate symmetry
+\begin{align}
+  \iota&\rightarrow\iota'\\
+  d&\rightarrow d\frac{(1+t^2_{\iota})^2}{(1+t'^2_{\iota})^2}
+\end{align}
+A similar symmetry exists when $t^4_\theta<<1$.
+
+It is also possible to explicitly formulate this symmetry in the general case, though here we are still working on a concrete plan.
+To approach this, we represent subspace of the parameter space, with coordinates $\{x=\min\{t^4_\theta,t^4_\iota\},y=\max\{t^4_\theta,t^4_\iota\},C=cos(2\psi),d\}$ trivially related to our basic coordinates, but better adapted for this problem.
+
+We will next consider an exact generalization of the distance-inclination symmetry. For this we use coordinates $\{z=xy,\Delta=(|\sigma_-|^2-|\sigma_+|^2)/\rho^2,S=|\sigma_-|^2/\rho^2,\rho\}$.  Of these latter coordinates, the last 3 will be considered fixed within the orbits of the symmetry, though only 2 combinations of these are fully specified by the observed constraints on \eqref{eq:sigmapm}. The remaining coordinate $z$ is free within $S^{1/2}-1\leq z\leq 1-\Delta$. The transformation to these coordinates is
+\begin{align}
+  z&=xy\\
+  \Delta&=(1-x^2)(1-y^2)\\
+  S&=1+x^2y^2+2xyC\\
+  D&=d(1+x^{1/2})(1+y^{1/2}).
+\end{align}
+The symmetry is realized by any translation in $z\rightarrow z$, the new coordinates are ten recovered from the inverse transformation is 
+\begin{align}
+  x&=\sqrt{\Lambda(z,\Delta)-\delta(z,\Delta)}\\
+  y&=\sqrt{\Lambda(z,\Delta)+\delta(z,\Delta)}\\
+  C&=\frac{S-1-z^2}{2z}\\
+  d&=\frac D{(1+x(z,\Delta)^{1/2})(1+y(z,\Delta)^{1/2})},
+\end{align}
+with $\Lambda=(1+z^2-\Delta^2)/2$ and $\delta=\sqrt{\Lambda^2-z^2}$.
+Then to complete the transformation, since the argument of the complex argument of the factors in square brackets in \eqref{eq:sigmapm} will have changed, it is necessary to complete the specification by choosing $\lambda$ and $\phi$ to preserve the argument of the full expressions.
+
+For application as a proposal, the Jacobian of the transformation is needed.  This is straightforward to compute explicitly for the forward transformation above, and its inverse can be evaluated using the same expression with the transformed coordinates.  It is also necessary to include the Jacobian for the steps not made explicit.
+
+
+We will next consider a full 2-D space of symmstry transformations, this time we use coordinates $\{{z=xy,R=(|\sigma_-/\sigma_+|^2),C,D=|\sigma_-|^{-1}}\}$.  Of these latter coordinates, $R$ and $D$ are fully specified by the observed constraints on \eqref{eq:sigmapm}, but $z$ and $C$ are free within $-1\leq C\leq1$ and $0\leq z\leq T-\sqrt{T^2-1}$ with $T=(1+C)/R-C$. The transformation to this coordinates is
+\begin{align}
+  z&=xy\\
+  R&=\frac{x^2+y^2+2xyC}{1+x^2y^2+2xyC}\\
+  C&=C\\
+  D&=d\frac{(1+x^{1/2})^2(1+y^{1/2})^2}{1+x^2y^2+2xyC}.
+\end{align}
+The symmetry is realized by any translation in $z\rightarrow z$, the new coordinates are ten recovered from the inverse transformation is 
+\begin{align}
+  x&=\sqrt{\Lambda(z,\Delta)-\delta(z,\Delta)}\\
+  y&=\sqrt{\Lambda(z,\Delta)+\delta(z,\Delta)}\\
+  C&=C\\
+  d&=D\frac {1+z^2+2zC}{(1+x(z,\Delta)^{1/2})(1+y(z,\Delta)^{1/2})},
+\end{align}
+with $\Lambda=(1+z^2-\Delta^2)/2$ and $\delta=\sqrt{\Lambda^2-z^2}$.
+The rest of the process follows as above.
+
+An issue with this specification (as with the 1-D version) is that it only encompases transformations which preserve whether $t_\theta$ or $t_\iota$ is larger.  It appears that this can be remedied by starting with a parameter $q=(t_\theta/t_\iota)^{1/4}$ which unlike $z$ is unconstrained. The calculation is similar, using $z=T-\sqrt{T^2-1}$ with $T=((q+q^{-1})/2+C)/R-C$ as intermediates.
+
+
+
+\end{document}
