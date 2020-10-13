@@ -45,7 +45,7 @@
 int IntProdStyle=1;
 int NratioCut = 4;
 int half_edges = 0;
-int in_development=1;
+int in_development=0;
 int use_logarithmic=0;
 
 //Data whitening
@@ -101,7 +101,7 @@ void WhitenData(
 // Functions for computing the integral 
 
 //Perform explicit spline evaluation for inner-product computation of
-//freqseries D with CAmpPhase spline set.  The grid of the D freqseries is summed for a simple integral approximant
+//freqseries D with CAmpPhase spline set.  The grid of the D freqseries is summed for a simple integral approximant.
 double ReIntProdCAmpPhaseSpline(
   CAmpPhaseSpline* splines,                    //input "model"
   ReImUniformFrequencySeries* Dfreqseries,  //input defines ReIm uniform frequency series to be multiplied with spline evals and summed
@@ -153,7 +153,9 @@ double ReIntProdCAmpPhaseSpline(
 };
 
 //Perform explicit spline evaluation for inner-product computation of
-//freqseries D with CAmpPhase spline set.  The grid of the D freqseries is summed for a simple integral approximant
+//freqseries D with CAmpPhase spline set.  
+//Differences of C from plain version (Doesn't include "B" features):
+//  -Switched integration range specification from index-based to freq-based
 double ReIntProdCAmpPhaseSplineC(
   CAmpPhaseSpline* splines,                    //input "model"
   ReImUniformFrequencySeries* Dfreqseries,  //input defines ReIm uniform frequency series to be multiplied with spline evals and summed
@@ -226,7 +228,10 @@ double ReIntProdCAmpPhaseSplineC(
 
 
 //Perform explicit spline evaluation for inner-product computation of
-//freqseries D with CAmpPhase spline set.  The grid of the D freqseries is summed for a simple integral approximant
+//freqseries D with CAmpPhase spline set.
+//Differences in B vs A:
+//  -Added fast computation of exp(i*phase) fac (when sufficient samples in spline interval)
+//  -Also includes diagnostic for estimating the effective time-width of FD spline intervals
 double ReIntProdCAmpPhaseSplineB(
   CAmpPhaseSpline* splines,                    //input "model"
   ReImUniformFrequencySeries* Dfreqseries,  //input defines ReIm uniform frequency series to be multiplied with spline evals and summed
@@ -322,7 +327,10 @@ double ReIntProdCAmpPhaseSplineB(
 };
 
 //Perform explicit spline evaluation for inner-product computation of
-//freqseries D with CAmpPhase spline set.  The grid of the D freqseries is summed for a simple integral approximant
+//freqseries D with CAmpPhase spline set. 
+//Difference from plain version:
+//   -Adds C features: freq-based limits
+//   -Adds B features: fast exp(i*ph)
 double ReIntProdCAmpPhaseSplineD(
   CAmpPhaseSpline* splines,                    //input "model"
   ReImUniformFrequencySeries* Dfreqseries,  //input defines ReIm uniform frequency series to be multiplied with spline evals and summed
@@ -439,8 +447,11 @@ double ReIntProdCAmpPhaseSplineD(
 };
 
 //Perform explicit spline evaluation for inner-product computation of
-//freqseries Data with CAmpPhase spline set.  The grid of the D freqseries is summed for a simple integral approximant
-//In this case we try to decimate the
+//freqseries Data with CAmpPhase spline set. 
+//Difference from D:
+//   -Performs downsampling of data, before computing as appropriate
+//   -Has option for being passed a stack of data where the downsampling has already been performed.
+//   -Special handling of case where amplitude varies faster than phase.
 double ReIntProdCAmpPhaseSplineE(
   CAmpPhaseSpline* splines,                 //input spline "model " to be multiplied with data and summed
   ReImUniformFrequencySeries** datastack ,  //input stack of nstack ReIm uniform frequency series progressively decimated x2

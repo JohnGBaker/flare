@@ -30,7 +30,7 @@
 \newcommand\lambdaL{{\lambda_{L}}}
 \newcommand\varphiL{{\varphi_{L}}}
 \newcommand\psiL{{\psi_{L}}}
-\newcommand\C{{\cos{4\psi}}}
+\newcommand\C{{\cos(4\psi)}}
 
 \begin{document}
 
@@ -121,26 +121,26 @@ We can also describe the continuous symmetry describing movement within the 2-D 
 First, for an approximate approach, note that in the limit that either $t^4_\theta<<1$ or $t^4_\iota<<1$, then \eqref{eq:sigmapm} become nearly independent of that quantity except through  $\rho$ in \eqref{eq:sigmafactorrho}. Similarly if $t^4_\iota>>1$ then dependence is only through $t^4_\iota\rho$. We can approximately represent both possibilities allowing transformations which preserve $d(1+t^2_\iota)^2/(1+t^4_\iota)=2d/(\cos^2(\iota)+1)$,
 \begin{align}
   \iota&\rightarrow\iota'\\
-  d&\rightarrow d\frac{(1+\cos^2{\iota'})}{(1+\cos^2{\iota})}&=d.
+  d&\rightarrow d'\frac{(1+\cos^2{\iota'})}{(1+\cos^2{\iota})}.
 \end{align}
 Another option at the same level of approximation is preserve $d/\cos(\iota)$, but this may be less appropriately when $\cos(\iota)->0$.  In some MCMC tests, the latter form acheived better autocorrelations, although the former had slightly higher acceptance rates. A corresponding symmetry exists when $t^4_\theta<<1$.  
 
-It is also possible to explicitly formulate this symmetry in the general case, though here we are still working on a concrete plan.
-To approach this, we represent subspace of the parameter space, with coordinates $\{x=\min\{t^4_\theta,t^4_\iota\},y=\max\{t^4_\theta,t^4_\iota\},C=cos(2\psi),d\}$ trivially related to our basic coordinates, but better adapted for this problem.
+It is also possible to explicitly formulate this symmetry in the general case.
+To approach this, we represent subspace of the parameter space, with coordinates $\{x=\min\{t^4_\theta,t^4_\iota\},y=\max\{t^4_\theta,t^4_\iota\},C=\cos(4\psi),d\}$ trivially related to our basic coordinates, but better adapted for this problem.
 
-We will next consider an exact generalization of the distance-inclination symmetry. For this we use coordinates $\{z=xy,\Delta=(|\sigma_-|^2-|\sigma_+|^2)/\rho^2,S=|\sigma_-|^2/\rho^2,\rho\}$.  Of these latter coordinates, the last 3 will be considered fixed within the orbits of the symmetry, though only 2 combinations of these are fully specified by the observed constraints on \eqref{eq:sigmapm}. The remaining coordinate $z$ is free within $S^{1/2}-1\leq z\leq 1-\Delta$. The transformation to these coordinates is
+Consider an exact generalization of the distance-inclination symmetry. For this we use coordinates $\{z=xy,\Delta=(|\sigma_-|^2-|\sigma_+|^2)/\rho^2,S=|\sigma_-|^2/\rho^2,\rho\}$.  Of these latter coordinates, the last 3 will be considered fixed within the orbits of the symmetry, though only 2 combinations of these are fully specified by the observed constraints on \eqref{eq:sigmapm}. The remaining coordinate $z$ is free within $S^{1/2}-1\leq z\leq 1-\Delta$. The transformation to these coordinates is
 \begin{align}
   z&=xy\\
   \Delta&=(1-x^2)(1-y^2)\\
   S&=1+x^2y^2+2xyC\\
-  D&=d(1+x^{1/2})(1+y^{1/2}).
+  D&=d(1+x^{1/2})^2(1+y^{1/2})^2.
 \end{align}
 The symmetry is realized by any translation in $z\rightarrow z$, the new coordinates are ten recovered from the inverse transformation is 
 \begin{align}
   x&=\sqrt{\Lambda(z,\Delta)-\delta(z,\Delta)}\\
   y&=\sqrt{\Lambda(z,\Delta)+\delta(z,\Delta)}\\
   C&=\frac{S-1-z^2}{2z}\\
-  d&=\frac D{(1+x(z,\Delta)^{1/2})(1+y(z,\Delta)^{1/2})},
+  d&=\frac D{(1+x(z,\Delta)^{1/2})^2(1+y(z,\Delta)^{1/2})^2},
 \end{align}
 with $\Lambda=(1+z^2-\Delta^2)/2$ and $\delta=\sqrt{\Lambda^2-z^2}$.
 Then to complete the transformation, since the argument of the complex argument of the factors in square brackets in \eqref{eq:sigmapm} will have changed, it is necessary to complete the specification by choosing $\lambda$ and $\phi$ to preserve the argument of the full expressions.
@@ -148,63 +148,50 @@ Then to complete the transformation, since the argument of the complex argument 
 For application as a proposal, the Jacobian of the transformation is needed.  This is straightforward to compute explicitly for the forward transformation above, and its inverse can be evaluated using the same expression with the transformed coordinates.  It is also necessary to include the Jacobian for the steps not made explicit.
 
 
-We will next consider a full 2-D space of symmstry transformations, this time we use coordinates $\{{z=xy,R=(|\sigma_-/\sigma_+|^2),C,D=|\sigma_-|^{-1}}\}$.  Of these latter coordinates, $R$ and $D$ are fully specified by the observed constraints on \eqref{eq:sigmapm}, but $z$ and $C$ are free within $-1\leq C\leq1$ and $0\leq z\leq T-\sqrt{T^2-1}$ with $T=(1+C)/R-C$. The transformation to this coordinates is
-\begin{align}
-  z&=xy\\
-  R&=\frac{x^2+y^2+2xyC}{1+x^2y^2+2xyC}\\
-  C&=C\\
-  D&=d\frac{(1+x^{1/2})^2(1+y^{1/2})^2}{1+x^2y^2+2xyC}.
-\end{align}
-The symmetry is realized by any translation in $z\rightarrow z$, the new coordinates are ten recovered from the inverse transformation is 
-\begin{align}
-  x&=\sqrt{\Lambda(z,\Delta)-\delta(z,\Delta)}\\
-  y&=\sqrt{\Lambda(z,\Delta)+\delta(z,\Delta)}\\
-  C&=C\\
-  d&=D\frac {1+z^2+2zC}{(1+x(z,\Delta)^{1/2})(1+y(z,\Delta)^{1/2})},
-\end{align}
-with $\Lambda=(1+z^2-\Delta^2)/2$ $\Delta=(1-R)*(1+z^2+2*C)$ and $\delta=\sqrt{\Lambda^2-z^2}$.
-The rest of the process follows as above.
-
-An issue with this specification (as with the 1-D version) is that it only encompases transformations which preserve whether $t_\theta$ or $t_\iota$ is larger.  It appears that this can be remedied by starting with a parameter $q=(t_\theta/t_\iota)^{4}$ which unlike $z$ is unconstrained. The calculation is similar, using $z=T-\sqrt{T^2-1}$ with $T=((q+q^{-1})/2+C)/R-C$ as intermediates.
-
-Since we are actually implementing this, we spell it out explicitly.  We use the following notation for convenience:
+Now consider a full 2-D space of symmstry transformations,
+We use the following notation for convenience:
 \begin{align}
   x&=t^4_{\theta}=\tan^4{\theta/2}\\
   y&=t^4_{\iota}=\tan^4{\iota/2}\\
-  z&=xy\\
-  \hat w&=x/y\\
+  z&=xy^s\\
+  \hat w&=x/y^s\\
   R&=|\sigma_-/\sigma_+|^2\\
   &=\frac{x^2+y^2+2xy\C}{1+x^2y^2+2xy\C}\\
-  &=\frac{\hat w+\hat w^{-1}+2\C}{z+z^{-1}+2\C}\\
-  \Delta&=|\sigma_+|^2-|\sigma_-|^2\\
-  &=\frac{(1-x^2)(1-y^2)}{16d^2(1+x^{1/2})^2(1+y^{1/2})^2}\\
-  &=\frac{(1+z^2-z(\hat w+{\hat w}^{-1})}{16d^2(1+({\hat w}z)^{1/4})^2(1+({\hat w}/z)^{1/4})^2}.
+  &=\left(\frac{\hat w+\hat w^{-1}+2\C}{z+z^{-1}+2\C}\right)^s\\
+  \Delta&=16(|\sigma_-|^2-|\sigma_+|^2)\\
+  &=\frac{(1-x^2)(1-y^2)}{d^2(1+x^{1/2})^4(1+y^{1/2})^4}\\
+  &=\frac{1-x^2-y^2+x^2y^2}{d^2(1+x^{1/2})^4(1+y^{1/2})^4}\\
+  &=\frac{(xy)^{-1}-(x/y)-(x/y)^{-1}+xy}{d^2(x^{-1/4}+x^{1/4})^4(y^{-1/4}+y^{1/4})^4}\\
+  &=\frac{s}{d^2}\frac{z+z^{-1}-(\hat w+{\hat w}^{-1})}{(z^{1/2}+z^{-1/2}+{\hat w}^{1/2}+{\hat w}^{-1/2})^4}
 \end{align}
+where $s=\pm1$.
 Using this shorthand, we transform from variables $\{\psi,x,y,d\}$ to $\{\psi,w,R,D\}$.
 Of these latter coordinates, $R$ and $D$ are fully specified by the observed constraints on \eqref{eq:sigmapm},
 but $\psi$ and $w$ are free. The transformation to these coordinates is
 \begin{align}
   \psi&=\psi\\
-  w&=\mathrm{sign}(\ln(xy))x/y\\
+  w&=\mathrm{sign}(\ln(xy))x/y^s\\
   R&=\frac{x^2+y^2+2xy\C}{1+x^2y^2+2xy\C}\\
-  \Delta&=\frac{(1-x^2)(1-y^2)}{16d^2(1+x^{1/2})^2(1+y^{1/2})^2}.
+  \Delta&=\frac{(1-x^2)(1-y^2)}{d^2(1+x^{1/2})^4(1+y^{1/2})^4}.
 \end{align}
 Note that we have added a sign to ${\hat w}=|w|$ as a convenient trick to
 store the information about whether $xy$ is greater than $1$ to provide a bijective map over the full domain. 
+Also, swapping the sign $s$, which we have not yet specified, reverses the roles of $w$ and the intermediate quantitity $z$.
 The symmetry is realized by any translation in $\{\psi,w\}\rightarrow\{\psi',w'\}$ preserving $R$ and $D$.
 The new coordinates are ten recovered from the inverse transformation, 
 \begin{align}
   \psi&=\psi\\
-  x&=z\hat w\\
-  y&=z/{\hat w}\\
-  d&=\Delta^{-1/2}\frac {\sqrt{1+z^2-z(\hat w+{\hat w}^{-1})}}{(1+(z \hat w)^{1/4})(1+(z/{\hat w})^{1/4})},
+  x&=\sqrt{z\hat w}\\
+  y&=\sqrt{z/{\hat w}}\\
+  d&={\Delta^{-1/2}}\frac {\sqrt{1+z^2-z(\hat w+{\hat w}^{-1})}}{(z^{1/2}+z^{-1/2}+{\hat w}^{1/2}+{\hat w}^{-1/2})^2}
 \end{align}
-with $z=T+\mathrm{sign}(w)\sqrt{T^2-1}$ and $T=(({\hat w}+{\hat w}^{-1})/(2R)+\C(1-R)/R$ as intermediates.
+with $z=T+\mathrm{sign}(w)\sqrt{T^2-1}$ and $T=(({\hat w}+{\hat w}^{-1})/(2R^s)+\C(1-R^s)/R^s$ as intermediates.
+Choosing $s=\mathrm{sign}(\ln(R))$, ensures that $0\leq R^s\leq1$, so that $z$ remains real. 
 The Jacobian of the forward coordinate transformation its contribution to the Jacobian of the resulting
 symmetry transformation are conveniently written in mixed notation,
 \begin{align}
-  |J|&=-2\frac{wR\Delta}{xyd}\frac{1-z^2}{1+z^2+2z\C},\\
-  \frac{|J'|}{|J|}&=\frac{w'xyd}{wx'y'd'}\frac{1-z'^2}{1-z^2}\frac{1+z^2+2z\C}{1+z'^2+2z'\cos{4\psi'}}.
+  |J|&=4\frac{wR\Delta}{xyd}\frac{z-z^{-1}}{z+z^{-1}+2\C},\\
+  \frac{|J|}{|J'|}&=\frac{wx'y'd'}{w'xyd}\frac{z-z^{-1}}{z'-z'^{-1}}\frac{z'+z'^{-1}+2\cos(4\psi')}{z+z^{-1}+2\cos(4\psi)}.
 \end{align}
 
 The rest of the calculation proceeds to adjest the angles. Writing $\Psi_{\pm}=\mathrm{Arg}(x^{\pm1}e^{-2i\psi}+ye^{2i\psi})$,
