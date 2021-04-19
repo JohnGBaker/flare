@@ -65,7 +65,10 @@
 \section{Introduction}
 \label{sec:intro}
 
-[Introduction]
+\section{Methodology}
+\subsection{Efficient likelihood computation}
+\subsection{Smapling}
+\section{Results}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -183,7 +186,8 @@ The new coordinates are ten recovered from the inverse transformation,
   \psi&=\psi\\
   x&=\sqrt{z\hat w}\\
   y&=\sqrt{z/{\hat w}}\\
-  d&={\Delta^{-1/2}}\frac {\sqrt{1+z^2-z(\hat w+{\hat w}^{-1})}}{(z^{1/2}+z^{-1/2}+{\hat w}^{1/2}+{\hat w}^{-1/2})^2}
+  d&={\Delta^{-1/2}}\frac {\sqrt{1+z^2-z(\hat w+{\hat w}^{-1})}}{(z^{1/2}+z^{-1/2}+{\hat w}^{1/2}+{\hat w}^{-1/2})^2}\\
+  d&={\Delta^{-1/2}}\frac {\sqrt{z+z^{-1}-(\hat w+{\hat w}^{-1})}}{(z^{1/2}+z^{-1/2}+{\hat w}^{1/2}+{\hat w}^{-1/2})^2} \mathrm{(Which is right?)}
 \end{align}
 with $z=T+\mathrm{sign}(w)\sqrt{T^2-1}$ and $T=(({\hat w}+{\hat w}^{-1})/(2R^s)+\C(1-R^s)/R^s$ as intermediates.
 Choosing $s=\mathrm{sign}(\ln(R))$, ensures that $0\leq R^s\leq1$, so that $z$ remains real. 
