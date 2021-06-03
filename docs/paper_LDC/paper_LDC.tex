@@ -1,4 +1,4 @@
-\documentclass[aps,showpacs,twocolumn,prd,superscriptaddress,nofootinbib]{revtex4}
+\documentclass[aps,showpacs,12pt,onecolumn,prd,superscriptaddress,nofootinbib]{revtex4}
 
 \usepackage{amsmath}
 \usepackage{amsfonts}
@@ -31,6 +31,9 @@
 \newcommand\varphiL{{\varphi_{L}}}
 \newcommand\psiL{{\psi_{L}}}
 \newcommand\C{{\cos(4\psi)}}
+\newcommand\mc{{\mathcal{M}}}
+
+\newcommand{\jgb}[1]{{\color{DarkGreen} #1}}
 
 \begin{document}
 
@@ -64,11 +67,61 @@
 
 \section{Introduction}
 \label{sec:intro}
+This report provides methods and results in a successful effort to characterize a massive black hole binary (MBHB) merger as part fo the first round ``Radler' LISA Data Challenge (LDC) campaign.  The challenge included simulated data for a LISA observation of a single MBHB system with parameters drawn from a simulated population. We conducted a Bayesian treatment of the problem with full-range naive priors for all parameters (except for moderate restriction on the coalescence time. This note provides details on the methodology applied to infer MBHB system parameters and more detailed results beyond those included in the broader LDC Radler analysis.
 
 \section{Methodology}
-\subsection{Efficient likelihood computation}
-\subsection{Smapling}
+
+The simulated MBHB observation in the LDC1.1 dataset included a signal for a non-precessing MBHB system which merged during the observation period using the PhenomD waveform model. The version of LISA assumed in the simulation was ***. The LISA response for the frequency domain dataset was implemented using the leading-order approximation of the approach in Ref.~\cite{MarsatEA2018} in a python implementation.  The dataset corresponds to about 42 million time samples at 10s cadence, adding to the challenge of computing likelihoods fast enough to support a full Bayesian search. Sec.~\ref{sec:definition} specifies the problem definition including the parmeterization and generally naive assumed priors.
+
+To enable a suitably fast likelihood computation required several development through the Radler campaign.  First we developed fast, but python-accessible version of our previous strictly C-based code for the LISA response signal processing defining the core of the \texttt{lisabeta} package, which has also already been applied in several LISA parameter estimation studies. Those other studies provided fast likelihood computation by taking we also required a fast-but-accurate method for computing likelihood, but for the LDC we needed a fast way to compute likelihoods with noisy data. We discuss out straightforward approach to this in Sec.~\ref{sec:likelihood}.
+
+We applied MCMC sampling to characterize the posterior using the code \texttt{ptmcmc} we had previously developed.  That code generally takes a relatively naive brute-force approach to MCMC sampling applying parallel tempering to promote full model space exploration an generally relying on a general-purpose proposal distribution components. For this problem, we added an interface to enable applying ore problem-specific proposal elements. And applied a set of proposals based on approximate symmetries identified in Ref.~\cite{Marsat2020} which can lead to specific parameter degeneracies. The details of that treatment are described in ~\ref{sec:MCMC}.
+
+\subsection{ Parameters and Priors }
+\label{sed:definition}
+(So far this is verbatim from our submission.)
+
+%We have attempted to name the parameters consistently with the LDC conventions, using inclination and polarization angles which should be consistent with LDC manual eqs 16/17. In the samples, CoalescenceTime is measured at the SSB.  These are not quite the same as the parameters used in the sampling (see Prior).  In some cases, for efficiency, we have marginalized over the phi (PhaseAtCoalescence) parameter in the likelihood calculation and though this parameter is present, in should meaninglysly recover the uniform prior.
+
+We generally applied broad uninformative priors across the parameter space. Table~\ref{tab:prior} shows the full list of parameters and their prior distributions.
+
+\begin{table}
+  \label{tab:prior}
+  \centering
+  \begin{tabular}{llll}
+    Name & Symbol & Units & Prior \\
+    \hline
+    chirp mass & $\mc$ & $\Msol$ & $\mathrm{Log}[14650.8,1.46508e+08]$\\
+    mass ratio & $q$ & - &$\mathrm{Log}[0.0333333,1]$\\
+    primary spin & $a1$ & - & $[-0.9,1]$\\
+    secondary spin & $a2$ & - & $[-0.9,1]$\\
+    coalescence time (LISA-frame) & $t_{cL}$ & s & $[2.396e+07,2.596e+07]$\\
+    distance & $d$ & Mpc & $\mathrm{Log}[186.687,1.68018e+07]$\\
+    inclination & $\iota$ & rad & $\mathrm{Polar}[0,3.14159]$\\
+    orbital phase & $\varphi$ & rad & $[0,6.28319]$\\
+    longitude (LISA-frame) & $\lambda_L$ & rad & $[0,6.28319]$\\
+    latitude (LISA-frame) &$\beta_L$ & rad & $\mathrm{CoPolar}[-1.5708,1.5708]$\\
+    polarization angle (LISA-frame) & $\psi_L$ & rad & $[0,3.14159]$\\
+    \hline
+  \end{tabular}
+  \caption{ MBHB parameters and priors. Here $\mathrm{Log}[]$ indicates a log-uniform distribution over the range, while $\mathrm{Polar}[]$ ($\mathrm{CoPolar}[]$) correspond to polar (co-polar) angle distributions consistent a uniform distribution on a sphere.}
+\end{table}
+
+Among the intrisic parameters, rather than in terms of individual component masses, we define our problem in terms of chirp mass $\mc$ and mass ratio $q$ applying broad-range log-uniform priors on each parameter, spanning a factor of $10^4$ in $\mc$ and allowing $q \sim [1/30,1]$.  We applied uniform priors on the spin parameters across almost the full physical range, but excluding relatively extreme anti-aligned spins, for which the waveform model sometimes failed.
+
+The extrinsic parameters which relate to the arrival of the signal at LISA, we use specialized parameters, where the time, sky-location and polarization angle are set with reference to the orientation of LISA at merger time.  We converted these to the Solar-System Barycentric(SSB) referenced parameters for our LDC entry.  We assumed full-range circle or sphere-uniform priors for all angle parameters. The only parameter for which we did not assume more-or-less the full plausible range was the merger time $t_c$.  Our method for accelerating the likelihood so far is inaccurate outside of a rough window. We use a uniform time window with a width of 2 million seconds.
+
+We also note that we have not attempted to relate our orbital phase $\varphi$ reference with that of the LDC.
+
+
+\subsection{Likelihood computation}
+\label{sec:likelihood}
+
+\subsection{Bayesian sampling}
+\label{sec:MCMC}
+
 \section{Results}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
